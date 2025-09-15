@@ -28,6 +28,14 @@ function App() {
   }, []);
 
   const handleLogin = async () => {
+    // Open the popup window immediately to avoid blockers.
+    const popup = window.open('', 'github-login', 'width=600,height=700');
+    if (!popup) {
+      alert('Popup blocked! Please allow popups for this site.');
+      return;
+    }
+
+    // Now, perform async operations.
     const verifier = generateCodeVerifier();
     const challenge = await generateCodeChallenge(verifier);
 
@@ -40,11 +48,8 @@ function App() {
     authUrl.searchParams.set('code_challenge', challenge);
     authUrl.searchParams.set('code_challenge_method', 'S256');
 
-    window.open(
-      authUrl.toString(),
-      'github-login',
-      'width=600,height=700'
-    );
+    // Redirect the existing popup to the GitHub auth URL.
+    popup.location.href = authUrl.toString();
   };
 
   useEffect(() => {
