@@ -53,3 +53,26 @@ The session cookie (`gh_session`) is set with the following flags:
 -   `SameSite=None`: Required for the browser to send the cookie in cross-origin requests (i.e., from your SPA's domain to the worker's domain). Note: `SameSite=None` also requires the `Secure` flag.
 -   `Path=/`: Makes the cookie available across the entire worker domain.
 -   `Max-Age`: Sets an expiration time for the session (e.g., 1 day).
+
+---
+
+## Deployment & Troubleshooting
+
+After making code changes, you may still encounter errors if the new code is not yet deployed or if the GitHub App configuration is incorrect.
+
+### Issue: "redirect_uri is not associated with this application"
+This error from GitHub means that the callback URL in your GitHub OAuth App settings does not exactly match the one the application is using.
+
+-   **Solution:**
+    1.  Go to your [GitHub OAuth App settings](https://github.com/settings/developers).
+    2.  Find the field named **"Authorization callback URL"**.
+    3.  Ensure it contains this **exact** value: `https://edit.strategycontent.agency/callback`
+    4.  It must match perfectly. There can be no typos and **no slash at the end**.
+
+### Issue: Login still fails, or old behavior is observed
+If you see behavior consistent with old versions of the code (e.g., a `code_challenge` parameter appearing in the GitHub URL), it means your browser is still running the old, cached frontend code.
+
+-   **Solution:**
+    1.  **Build the project:** Navigate to the `react-login` directory in your terminal and run `npm run build`.
+    2.  **Deploy to Cloudflare Pages:** This will create a `dist` (or `build`) folder. You must upload the contents of this folder to your Cloudflare Pages site that powers `edit.strategycontent.agency`.
+    3.  **Clear Browser Cache:** After deploying, it's a good practice to clear your browser's cache or perform a hard refresh (Ctrl+Shift+R or Cmd+Shift+R) on your site to ensure you are loading the latest version.
