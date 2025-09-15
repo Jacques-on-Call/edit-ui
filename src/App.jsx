@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { generateCodeVerifier, generateCodeChallenge } from './pkce';
 import './App.css';
 
 // In a real app, these should be in a .env file
@@ -27,29 +26,22 @@ function App() {
     });
   }, []);
 
-  const handleLogin = async () => {
-    // Open the popup window immediately to avoid blockers.
-    const popup = window.open('', 'github-login', 'width=600,height=700');
-    if (!popup) {
-      alert('Popup blocked! Please allow popups for this site.');
-      return;
-    }
-
-    // Now, perform async operations.
-    const verifier = generateCodeVerifier();
-    const challenge = await generateCodeChallenge(verifier);
-
-    sessionStorage.setItem('pkce_code_verifier', verifier);
+  const handleLogin = () => {
+    // Generate a random state string for CSRF protection
+    const state = Math.random().toString(36).substring(2, 15);
+    sessionStorage.setItem('oauth_state', state);
 
     const authUrl = new URL('https://github.com/login/oauth/authorize');
     authUrl.searchParams.set('client_id', GITHUB_CLIENT_ID);
     authUrl.searchParams.set('redirect_uri', REDIRECT_URI);
     authUrl.searchParams.set('scope', 'repo read:user');
-    authUrl.searchParams.set('code_challenge', challenge);
-    authUrl.searchParams.set('code_challenge_method', 'S256');
+    authUrl.searchParams.set('state', state);
 
-    // Redirect the existing popup to the GitHub auth URL.
-    popup.location.href = authUrl.toString();
+    // Open the popup window and redirect it to the GitHub auth URL.
+    const popup = window.open(authUrl.toString(), 'github-login', 'width=600,height=700');
+    if (!popup) {
+      alert('Popup blocked! Please allow popups for this site.');
+    }
   };
 
   useEffect(() => {

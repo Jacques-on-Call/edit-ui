@@ -8,14 +8,15 @@ export default function Callback() {
       try {
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
-        const verifier = sessionStorage.getItem('pkce_code_verifier');
+        const state = params.get('state');
+        const savedState = sessionStorage.getItem('oauth_state');
 
-        if (!code || !verifier) {
-          throw new Error('Authorization code or verifier missing.');
+        // Clean up state from session storage
+        sessionStorage.removeItem('oauth_state');
+
+        if (!code || !state || state !== savedState) {
+          throw new Error('Invalid state or code. Authentication failed.');
         }
-
-        // Clean up the verifier from session storage
-        sessionStorage.removeItem('pkce_code_verifier');
 
         const response = await fetch('https://auth.strategycontent.agency/api/token', {
           method: 'POST',
@@ -24,7 +25,6 @@ export default function Callback() {
           },
           body: JSON.stringify({
             code,
-            verifier,
           }),
         });
 
