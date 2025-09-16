@@ -30,7 +30,9 @@ function App() {
   const handleLogin = () => {
     // Generate a random state string for CSRF protection
     const state = Math.random().toString(36).substring(2, 15);
-    sessionStorage.setItem('oauth_state', state);
+    // Store the state in a temporary, secure cookie.
+    // This is more reliable than sessionStorage across cross-origin redirects.
+    document.cookie = `oauth_state=${state}; path=/; max-age=600; SameSite=Lax; Secure`;
 
     const authUrl = new URL('https://github.com/login/oauth/authorize');
     authUrl.searchParams.set('client_id', GITHUB_CLIENT_ID);

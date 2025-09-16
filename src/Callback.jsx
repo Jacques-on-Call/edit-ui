@@ -9,11 +9,12 @@ export default function Callback() {
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
         const state = params.get('state');
-        const savedState = sessionStorage.getItem('oauth_state');
+        // Read the state from the cookie. This is more reliable than sessionStorage.
+        const savedState = document.cookie.match(/oauth_state=([^;]+)/)?.[1];
 
-        // The state has now been "used", so we must remove it from storage
+        // The state has now been "used", so we must delete the cookie
         // immediately to prevent it from being used again in a replay attack.
-        sessionStorage.removeItem('oauth_state');
+        document.cookie = 'oauth_state=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure';
 
         // Now, we perform the validation using our in-memory variables.
         if (!code || !state || !savedState || state !== savedState) {
