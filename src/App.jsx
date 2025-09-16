@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './App.css';
+import RepoSelector from './RepoSelector';
 
 // The Client ID is now read from the Vite environment variables
 // See https://vitejs.dev/guide/env-and-mode.html
@@ -8,9 +10,16 @@ const REDIRECT_URI = 'https://edit.strategycontent.agency/callback';
 
 function App() {
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
   // Check for an existing session on component mount
   useEffect(() => {
+    const selectedRepo = localStorage.getItem('selectedRepo');
+    if (selectedRepo) {
+      navigate('/explorer');
+      return;
+    }
+
     fetch('/api/me', {
       credentials: 'include',
     })
@@ -25,7 +34,7 @@ function App() {
         setUser(userData);
       }
     });
-  }, []);
+  }, [navigate]);
 
   const handleLogin = () => {
     // Generate a random state string for CSRF protection
@@ -74,22 +83,24 @@ function App() {
     };
   }, []);
 
+  const handleRepoSelect = (repo) => {
+    localStorage.setItem('selectedRepo', repo);
+    navigate('/explorer');
+  };
+
   return (
     <div className="App">
       <header className="App-header">
         <img src="/logo.webp" className="App-logo" alt="logo" />
-        {user ? (
-          <div>
-            <p>Welcome, {user.login}!</p>
-            <p><img src={user.avatar_url} alt="avatar" width="50" height="50" /></p>
-          </div>
-        ) : (
+        {!user ? (
           <div>
             <p>Please login to continue.</p>
             <button className="login-button" onClick={handleLogin}>
               Login with GitHub
             </button>
           </div>
+        ) : (
+          <RepoSelector onRepoSelect={handleRepoSelect} />
         )}
       </header>
     </div>

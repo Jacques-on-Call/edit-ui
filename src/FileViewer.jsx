@@ -1,0 +1,88 @@
+import { useState, useEffect } from 'react';
+
+function FileViewer({ repo, path }) {
+  const [content, setContent] = useState('');
+  const [sha, setSha] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/github/file?repo=${repo}&path=${path}`, {
+      credentials: 'include',
+    })
+    .then(res => {
+      if (res.ok) {
+        return res.json();
+      }
+      throw new Error('Failed to fetch file content');
+    })
+    .then(data => {
+      // The content from the GitHub API is base64 encoded.
+      // We need to decode it before displaying it.
+      setContent(atob(data.content));
+      setSha(data.sha);
+      setLoading(false);
+    })
+    .catch(err => {
+      setError(err.message);
+      setLoading(false);
+    });
+  }, [repo, path]);
+
+  if (loading) {
+    return <div>Loading file...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  const handleSave = () => {
+    fetch('/api/github/file', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        repo,
+        path,
+        content,
+        sha,
+      }),
+    })
+    .then(res => {
+      if (res.ok) {
+        setIsEditing(false);
+      } else {
+        throw new Error('Failed to save file');
+      }
+    })
+    .catch(err => {
+      setError(err.message);
+    });
+  };
+
+  if (isEditing) {
+    return (
+      <div className="file-editor">
+        <h3>Editing: {path}</h3>
+        <textarea value={content} onChange={(e) => setContent(e.target.value)} />
+        <button onClick={handleSave}>Save</button>
+        <button onClick={() => setIsEditing(false)}>Cancel</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="file-viewer">
+      <h3>{path}</h3>
+      <button onClick={() => setIsEditing(true)}>Edit</button>
+      <pre>{content}</pre>
+    </div>
+  );
+}
+
+export default FileViewer;
