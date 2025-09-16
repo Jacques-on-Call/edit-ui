@@ -1,16 +1,19 @@
-# CURRENT STATUS & NEXT STEPS (As of 2025-09-16 00:51)
+# CURRENT STATUS & FINAL SOLUTION (As of 2025-09-16 02:38)
 
-Thank you for confirming the deployment. The latest information you provided is excellent progress and shows that the first step of the login flow is working correctly:
-- The new frontend code is running.
-- An `oauth_state` is being correctly generated and stored when you click the login button.
+Thank you for the latest error report. The information you provided is excellent news, as it proves you have successfully deployed the new frontend code. The login URL is now correct (`...&state=...`) and no longer contains the old `code_challenge` parameter.
 
-To solve the final piece of the puzzle, we need to know what happens *after* you click the login button. Could you please describe the following:
+The final remaining error, `The redirect_uri is not associated with this application`, is a simple configuration issue within your GitHub account settings.
 
-1.  Does the GitHub login popup window appear correctly?
-2.  After you enter your credentials and click "Authorize" on the GitHub page, does the popup window close automatically?
-3.  Most importantly, what does the main application window show after the popup closes? Does it change to the "Welcome" message, or does it stay on the login page?
+### The Final Step
 
-If an error page appears in the popup window at any point (like the `redirect_uri` mismatch error from before), please send a screenshot or the text of that error. This information will tell us exactly where the process is failing.
+To resolve this, please follow the instructions already documented below in the "Deployment & Troubleshooting" section, under the heading **"Issue: 'redirect_uri is not associated with this application'"**.
+
+You must ensure the "Authorization callback URL" in your GitHub OAuth App settings is set to this **exact** value:
+`https://edit.strategycontent.agency/callback`
+
+There cannot be any typos or a trailing slash (`/`).
+
+Once you correct this one setting in your GitHub account, the login will work.
 
 ---
 
