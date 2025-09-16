@@ -11,10 +11,12 @@ export default function Callback() {
         const state = params.get('state');
         const savedState = sessionStorage.getItem('oauth_state');
 
-        // Clean up state from session storage
+        // The state has now been "used", so we must remove it from storage
+        // immediately to prevent it from being used again in a replay attack.
         sessionStorage.removeItem('oauth_state');
 
-        if (!code || !state || state !== savedState) {
+        // Now, we perform the validation using our in-memory variables.
+        if (!code || !state || !savedState || state !== savedState) {
           throw new Error('Invalid state or code. Authentication failed.');
         }
 
