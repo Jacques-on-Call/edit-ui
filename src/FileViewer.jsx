@@ -9,7 +9,7 @@ function FileViewer({ repo, path }) {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/github/file?repo=${repo}&path=${path}`, {
+    fetch(`https://auth.strategycontent.agency/api/github/file?repo=${repo}&path=${path}`, {
       credentials: 'include',
     })
     .then(res => {
@@ -19,8 +19,6 @@ function FileViewer({ repo, path }) {
       throw new Error('Failed to fetch file content');
     })
     .then(data => {
-      // The content from the GitHub API is base64 encoded.
-      // We need to decode it before displaying it.
       setContent(atob(data.content));
       setSha(data.sha);
       setLoading(false);
@@ -31,16 +29,8 @@ function FileViewer({ repo, path }) {
     });
   }, [repo, path]);
 
-  if (loading) {
-    return <div>Loading file...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
-
   const handleSave = () => {
-    fetch('/api/github/file', {
+    fetch('https://auth.strategycontent.agency/api/github/file', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -64,6 +54,14 @@ function FileViewer({ repo, path }) {
       setError(err.message);
     });
   };
+
+  if (loading) {
+    return <div>Loading file...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   if (isEditing) {
     return (

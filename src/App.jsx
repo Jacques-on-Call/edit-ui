@@ -20,7 +20,7 @@ function App() {
       return;
     }
 
-    fetch('/api/me', {
+    fetch('https://auth.strategycontent.agency/api/me', {
       credentials: 'include',
     })
     .then(res => {

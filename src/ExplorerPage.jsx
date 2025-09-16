@@ -9,7 +9,7 @@ function ExplorerPage() {
   const selectedRepo = localStorage.getItem('selectedRepo');
 
   useEffect(() => {
-    fetch('/api/me', {
+    fetch('https://auth.strategycontent.agency/api/me', {
       credentials: 'include',
     })
     .then(res => {
