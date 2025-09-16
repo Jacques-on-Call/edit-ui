@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import './App.css';
 
 // In a real app, these should be in a .env file
-const GITHUB_CLIENT_ID = 'Iv23liy8A2Cj7I0XRB6B';
+const GITHUB_CLIENT_ID = 'Ov23li6LEsxbtoV7ITp1';
 const REDIRECT_URI = 'https://edit.strategycontent.agency/callback';
 
 function App() {
