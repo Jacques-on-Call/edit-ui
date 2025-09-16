@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 
-// In a real app, these should be in a .env file
-const GITHUB_CLIENT_ID = 'Iv23liy8A2Cj7I0XRB6B';
+// The Client ID is now read from the Vite environment variables
+// See https://vitejs.dev/guide/env-and-mode.html
+const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 const REDIRECT_URI = 'https://edit.strategycontent.agency/callback';
 
 function App() {

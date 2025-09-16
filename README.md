@@ -93,6 +93,16 @@ If you see behavior consistent with old versions of the code (e.g., a `code_chal
     2.  **Deploy to Cloudflare Pages:** This will create a `dist` (or `build`) folder. You must upload the contents of this folder to your Cloudflare Pages site that powers `edit.strategycontent.agency`.
     3.  **Clear Browser Cache:** After deploying, it's a good practice to clear your browser's cache or perform a hard refresh (Ctrl+Shift+R or Cmd+Shift+R) on your site to ensure you are loading the latest version.
 
+### Issue: Client ID Mismatch
+The frontend application code reads its GitHub Client ID from an environment variable set by the hosting platform (Cloudflare Pages). If this variable does not exactly match the Client ID used by the backend worker and configured in GitHub, the login will fail.
+
+-   **Solution:**
+    1.  Go to your **Cloudflare Pages** settings for your site (`edit.strategycontent.agency`).
+    2.  Navigate to **Settings > Environment variables**.
+    3.  Ensure you have a variable named `VITE_GITHUB_CLIENT_ID`.
+    4.  Ensure its value **exactly matches** the `OAUTH_GITHUB_CLIENT_ID` used by your worker and configured in your GitHub OAuth App (e.g., `Ov23li6LEsxbtoV7ITp1`).
+    5.  If you make a change, you must **re-deploy** the Pages site for the new variable to take effect.
+
 ---
 
 ## A Note on Authentication Architecture (Standard Web Flow vs. PKCE)
