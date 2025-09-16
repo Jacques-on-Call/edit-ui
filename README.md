@@ -1,3 +1,19 @@
+# CURRENT STATUS & NEXT STEPS (As of 2025-09-16 00:51)
+
+Thank you for confirming the deployment. The latest information you provided is excellent progress and shows that the first step of the login flow is working correctly:
+- The new frontend code is running.
+- An `oauth_state` is being correctly generated and stored when you click the login button.
+
+To solve the final piece of the puzzle, we need to know what happens *after* you click the login button. Could you please describe the following:
+
+1.  Does the GitHub login popup window appear correctly?
+2.  After you enter your credentials and click "Authorize" on the GitHub page, does the popup window close automatically?
+3.  Most importantly, what does the main application window show after the popup closes? Does it change to the "Welcome" message, or does it stay on the login page?
+
+If an error page appears in the popup window at any point (like the `redirect_uri` mismatch error from before), please send a screenshot or the text of that error. This information will tell us exactly where the process is failing.
+
+---
+
 # GitHub OAuth Login for React SPA
 
 This project implements a secure GitHub OAuth2 login flow for a React Single-Page Application (SPA). It uses a Cloudflare Worker as a backend proxy to handle the token exchange securely, avoiding exposure of the client secret on the frontend.
@@ -102,3 +118,12 @@ The login will fail if the frontend and backend are using different methods.
 *   The provided `cloudflare-worker-code.js` speaks the **Standard Flow**.
 
 To ensure success, the frontend in this directory must be paired with a backend that also uses the Standard Web Flow.
+
+---
+
+## Developer & Agent Collaboration Notes
+
+To ensure smooth collaboration and prevent accidental data loss, please adhere to the following guidelines:
+
+*   **Deletion Policy:** Do not delete any files, or remove any content from this `README.md`, without explicit confirmation from the project owner.
+*   **Branch Naming:** To improve traceability, all branches should follow the naming convention `yymmdd-descriptive-name` (e.g., `250916-update-readme-guidelines`).
