@@ -11,7 +11,7 @@ function App() {
 
   // Check for an existing session on component mount
   useEffect(() => {
-    fetch('https://auth.strategycontent.agency/me', {
+    fetch('/api/me', {
       credentials: 'include',
     })
     .then(res => {

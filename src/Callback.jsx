@@ -21,7 +21,7 @@ export default function Callback() {
           throw new Error('Invalid state or code. Authentication failed.');
         }
 
-        const response = await fetch('https://auth.strategycontent.agency/api/token', {
+        const response = await fetch('/api/token', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
