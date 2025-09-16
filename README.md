@@ -76,3 +76,29 @@ If you see behavior consistent with old versions of the code (e.g., a `code_chal
     1.  **Build the project:** Navigate to the `react-login` directory in your terminal and run `npm run build`.
     2.  **Deploy to Cloudflare Pages:** This will create a `dist` (or `build`) folder. You must upload the contents of this folder to your Cloudflare Pages site that powers `edit.strategycontent.agency`.
     3.  **Clear Browser Cache:** After deploying, it's a good practice to clear your browser's cache or perform a hard refresh (Ctrl+Shift+R or Cmd+Shift+R) on your site to ensure you are loading the latest version.
+
+---
+
+## A Note on Authentication Architecture (Standard Web Flow vs. PKCE)
+
+There are two primary, secure methods for handling OAuth2 authentication for an application like this: the Standard Web Application Flow and the PKCE flow. It is critical that the frontend and backend are using the same method.
+
+### 1. Standard Web Flow (This Project's Implementation)
+
+*   **How it Works:** This is the industry-standard flow for applications with a **secure backend** (like a Cloudflare Worker). The backend proves its identity to GitHub using a `client_secret` that is never exposed to the browser. Security is guaranteed because the secret is stored and used exclusively on the server.
+*   **Recommendation:** This is the recommended path for this project. The frontend code in this repository has been built to use this flow, and it should be paired with the matching backend worker provided in `cloudflare-worker-code.js`.
+
+### 2. PKCE (Proof Key for Code Exchange) Flow
+
+*   **How it Works:** This flow was designed for applications **without a secure backend** (e.g., mobile apps, pure SPAs). It adds an extra client-side verification step to compensate for the absence of a server-side secret. The `auth-worker` directory in the parent repository contains a worker that uses this flow.
+*   **Security:** Both flows are considered highly secure when implemented correctly. The choice depends on the application's architecture. Since this project has a secure worker, using the Standard Web Flow is a more direct and traditional architecture.
+
+### The Most Important Thing: Consistency
+
+The login will fail if the frontend and backend are using different methods.
+
+*   This `react-login` frontend speaks the **Standard Flow**.
+*   The `auth-worker/index.js` in the root directory speaks **PKCE**.
+*   The provided `cloudflare-worker-code.js` speaks the **Standard Flow**.
+
+To ensure success, the frontend in this directory must be paired with a backend that also uses the Standard Web Flow.
