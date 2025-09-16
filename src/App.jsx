@@ -56,11 +56,10 @@ function App() {
 
       if (event.data.type === 'github-auth') {
         if (event.data.success) {
-          fetch('https://auth.strategycontent.agency/me', {
-            credentials: 'include',
-          })
-            .then((res) => res.json())
-            .then((userData) => setUser(userData));
+          // The login was successful and the session cookie is now set.
+          // Reload the main window. The useEffect hook at the top of the component
+          // will then automatically fetch the user's data and update the UI.
+          window.location.reload();
         } else if (event.data.error) {
             console.error("Login failed:", event.data.error);
             alert("GitHub login failed: " + event.data.error);
@@ -78,7 +77,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src="/vite.svg" className="App-logo" alt="logo" />
+        <img src="/logo.webp" className="App-logo" alt="logo" />
         {user ? (
           <div>
             <p>Welcome, {user.login}!</p>
