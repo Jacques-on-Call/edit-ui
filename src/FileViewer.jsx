@@ -9,7 +9,7 @@ function FileViewer({ repo, path }) {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/github/file?repo=${repo}&path=${path}`, {
+    fetch(`https://auth.strategycontent.agency/api/github/file?repo=${repo}&path=${path}`, {
       credentials: 'include',
     })
     .then(res => {
@@ -30,8 +30,8 @@ function FileViewer({ repo, path }) {
   }, [repo, path]);
 
   const handleSave = () => {
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/github/file`, {
-      method: 'PUT',
+    fetch('https://auth.strategycontent.agency/api/github/file', {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },

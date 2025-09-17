@@ -9,12 +9,7 @@ function ExplorerPage() {
   const selectedRepo = localStorage.getItem('selectedRepo');
 
   useEffect(() => {
-    if (!selectedRepo) {
-      navigate('/');
-      return;
-    }
-
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/me`, {
+    fetch('https://auth.strategycontent.agency/api/me', {
       credentials: 'include',
     })
     .then(res => {
@@ -30,9 +25,12 @@ function ExplorerPage() {
       setLoading(false);
     })
     .catch(() => {
-      localStorage.removeItem('selectedRepo');
       navigate('/');
     });
+
+    if (!selectedRepo) {
+      navigate('/');
+    }
   }, [navigate, selectedRepo]);
 
   if (loading) {

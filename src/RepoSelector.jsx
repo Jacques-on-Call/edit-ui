@@ -6,7 +6,7 @@ function RepoSelector({ onRepoSelect }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/github/repos`, {
+    fetch('https://auth.strategycontent.agency/api/github/repos', {
       credentials: 'include',
     })
     .then(res => {
