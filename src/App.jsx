@@ -41,7 +41,7 @@ function App() {
     // This is more reliable than sessionStorage across cross-origin redirects.
     // SameSite=None is required for the cookie to be sent in the cross-site
     // redirect from GitHub.
-    document.cookie = `oauth_state=${state}; path=/; max-age=600; SameSite=None; Secure`;
+    document.cookie = `oauth_state=${state}; path=/; max-age=600; SameSite=Lax; Secure`;
 
     const authUrl = new URL('https://github.com/login/oauth/authorize');
     authUrl.searchParams.set('client_id', GITHUB_CLIENT_ID);
