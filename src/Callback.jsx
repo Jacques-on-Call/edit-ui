@@ -14,7 +14,7 @@ export default function Callback() {
 
         // The state has now been "used", so we must delete the cookie
         // immediately to prevent it from being used again in a replay attack.
-        document.cookie = 'oauth_state=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure';
+        document.cookie = 'oauth_state=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=None; Secure';
 
         // Now, we perform the validation using our in-memory variables.
         if (!code || !state || !savedState || state !== savedState) {

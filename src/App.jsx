@@ -14,13 +14,7 @@ function App() {
 
   // Check for an existing session on component mount
   useEffect(() => {
-    const selectedRepo = localStorage.getItem('selectedRepo');
-    if (selectedRepo) {
-      navigate('/explorer');
-      return;
-    }
-
-    fetch('https://auth.strategycontent.agency/api/me', {
+    fetch('/api/me', {
       credentials: 'include',
     })
     .then(res => {
@@ -32,6 +26,10 @@ function App() {
     .then(userData => {
       if (userData && userData.login) {
         setUser(userData);
+        const selectedRepo = localStorage.getItem('selectedRepo');
+        if (selectedRepo) {
+          navigate('/explorer');
+        }
       }
     });
   }, [navigate]);
@@ -41,7 +39,9 @@ function App() {
     const state = Math.random().toString(36).substring(2, 15);
     // Store the state in a temporary, secure cookie.
     // This is more reliable than sessionStorage across cross-origin redirects.
-    document.cookie = `oauth_state=${state}; path=/; max-age=600; SameSite=Lax; Secure`;
+    // SameSite=None is required for the cookie to be sent in the cross-site
+    // redirect from GitHub.
+    document.cookie = `oauth_state=${state}; path=/; max-age=600; SameSite=None; Secure`;
 
     const authUrl = new URL('https://github.com/login/oauth/authorize');
     authUrl.searchParams.set('client_id', GITHUB_CLIENT_ID);
