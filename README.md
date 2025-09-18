@@ -155,3 +155,47 @@ To ensure smooth collaboration and prevent accidental data loss, please adhere t
 
 *   **Deletion Policy:** Do not delete any files, or remove any content from this `README.md`, without explicit confirmation from the project owner.
 *   **Branch Naming:** To improve traceability, all branches should follow the naming convention `yymmdd-descriptive-name` (e.g., `250916-update-readme-guidelines`).
+
+---
+
+# Mobile-First File Explorer (v1.0 - As of 2025-09-18)
+
+This section details the features and architecture of the file explorer interface.
+
+## Core Features
+
+*   **Responsive Grid Layout:** Files and folders are displayed in a responsive grid that shows 2-3 columns on mobile and expands on larger screens.
+*   **Bottom Toolbar:** A thumb-friendly toolbar provides quick access to core actions:
+    *   **Open:** Opens a selected file or navigates into a directory.
+    *   **Create:** Opens a modal to create new files or folders.
+    *   **Duplicate:** Creates a copy of the selected file.
+    *   **Up:** Navigates to the parent directory.
+*   **Contextual Actions (Long-Press):** Long-pressing (or right-clicking) an item opens a context menu with more options:
+    *   **Rename:** Allows renaming a file.
+    *   **Delete:** Deletes a file or folder with a confirmation step.
+    *   **Duplicate:** Same as the toolbar action.
+    *   **Share:** Copies a direct link to the file to the clipboard.
+*   **Progressive Metadata:** File tiles display the last modified date and author. This data is loaded progressively and cached to ensure a fast initial load time.
+
+## Client-Side Caching Strategy
+
+Purpose: To minimize network requests and provide a instantaneous, responsive UI when browsing files by caching file metadata locally.
+
+Implementation:
+
+1.  **Cache Location:** Browser's `localStorage` (for simplicity).
+2.  **Cache Key:** `filemeta-[sha]` where `[sha]` is the Git SHA of the file returned from the `/api/files` endpoint. The SHA ensures we have a unique identifier that changes with the file's content.
+3.  **Cache Data:** An object containing `{ author, date }` for the file's last commit.
+4.  **Cache TTL:** Cached items have a Time-To-Live (TTL) of 5 minutes to ensure eventual consistency with external changes.
+5.  **Cache Workflow:**
+    *   On loading a directory, the frontend first requests the basic file list from `/api/files`.
+    *   For each file in the list, it checks the cache for a key matching its SHA.
+    *   If found and not expired, the metadata is used immediately.
+    *   If not found, the file is queued for a metadata network request to the GitHub API.
+    *   Upon a successful network response, the result is stored in the cache under the file's SHA key with a 5-minute expiry.
+6.  **Cache Invalidation:**
+    *   **Explicit Invalidation:** The cache for a specific file is invalidated (deleted) after any operation that modifies it (`Delete`, `Rename`). The frontend logic for these actions includes `localStorage.removeItem('filemeta-' + fileSha)`.
+    *   **Creation:** When new files are created, no specific cache invalidation is performed. The directory will show the new file, and its metadata will be fetched and cached on its first appearance.
+
+### Future-Proofing
+This caching layer is an optimization for the current API. When the backend is enhanced to provide metadata directly from `/api/files`, the caching logic can be simplified or removed, as the initial response will be fast and complete. The core principle of caching expensive operations remains valuable.

@@ -38,10 +38,12 @@ function ExplorerPage() {
   }
 
   if (!user) {
-    return <div>Redirecting to login...</div>;
+    // This can happen briefly before the redirect.
+    // Or if the /api/me call fails.
+    return <div>Authenticating...</div>;
   }
 
-  return <FileExplorer repo={selectedRepo} />;
+  return <FileExplorer user={user} repo={selectedRepo} />;
 }
 
 export default ExplorerPage;
