@@ -1,19 +1,6 @@
-# CURRENT STATUS & FINAL SOLUTION (As of 2025-09-16 02:38)
+# Project Status: Fully Functional
 
-Thank you for the latest error report. The information you provided is excellent news, as it proves you have successfully deployed the new frontend code. The login URL is now correct (`...&state=...`) and no longer contains the old `code_challenge` parameter.
-
-The final remaining error, `The redirect_uri is not associated with this application`, is a simple configuration issue within your GitHub account settings.
-
-### The Final Step
-
-To resolve this, please follow the instructions already documented below in the "Deployment & Troubleshooting" section, under the heading **"Issue: 'redirect_uri is not associated with this application'"**.
-
-You must ensure the "Authorization callback URL" in your GitHub OAuth App settings is set to this **exact** value:
-`https://edit.strategycontent.agency/callback`
-
-There cannot be any typos or a trailing slash (`/`).
-
-Once you correct this one setting in your GitHub account, the login will work.
+After a comprehensive debugging process, the GitHub OAuth login and subsequent application flow are now fully functional. This document details the final, working architecture and provides a guide for future troubleshooting.
 
 ---
 
@@ -83,6 +70,11 @@ The session cookie (`gh_session`) is set with the following flags:
 ## Deployment & Troubleshooting
 
 After making code changes, you may still encounter errors if the new code is not yet deployed or if the GitHub App configuration is incorrect.
+
+### Issue: Secrets (like Client ID) Disappear After Deploy
+-   **Symptom:** You set secrets like `OAUTH_GITHUB_CLIENT_ID` in the Cloudflare dashboard, but they are gone after you deploy the worker.
+-   **Cause:** By default, Wrangler treats the `wrangler.toml` file as the absolute "source of truth". If secrets are not defined in the file, Wrangler deletes them from the dashboard on deploy.
+-   **Solution:** Add `keep_vars = true` to the top-level of your `wrangler.toml` file. This tells Wrangler to preserve variables and secrets set in the UI.
 
 ### Issue: "redirect_uri is not associated with this application"
 This error from GitHub means that the callback URL in your GitHub OAuth App settings does not exactly match the one the application is using.
