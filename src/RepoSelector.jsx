@@ -6,7 +6,7 @@ function RepoSelector({ onRepoSelect }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('https://auth.strategycontent.agency/api/github/repos', {
+    fetch('/api/repos', {
       credentials: 'include',
     })
     .then(res => {

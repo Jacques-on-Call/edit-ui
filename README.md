@@ -62,7 +62,12 @@ The worker requires the following secrets to be configured in the Cloudflare das
 
 ### Endpoints:
 -   **`POST /api/token`**: Expects a JSON body with a `code` property. Handles the OAuth token exchange and sets the session cookie.
--   **`GET /me`**: Reads the session cookie and uses the token to fetch and return the authenticated user's GitHub profile.
+-   **`GET /api/me`**: Reads the session cookie and uses the token to fetch and return the authenticated user's GitHub profile.
+-   **`GET /api/repos`**: Fetches the authenticated user's repositories from GitHub.
+-   **`GET /api/files`**: Fetches the contents of a directory in a given repository. Requires query parameters `repo` and `path`.
+-   **`GET /api/file`**: Fetches the content of a single file. Requires query parameters `repo` and `path`.
+-   **`POST /api/file`**: Creates or updates a file in a given repository.
+-   **`DELETE /api/file`**: Deletes a file in a given repository.
 -   **`OPTIONS /*`**: Handles CORS preflight requests from the browser, which are necessary for cross-domain communication between the SPA and the worker.
 
 ### Cookie Security:
