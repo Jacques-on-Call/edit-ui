@@ -19,7 +19,7 @@ const UpIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
 const OpenIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>;
 
 
-function FileExplorer({ user, repo }) {
+function FileExplorer({ repo }) {
   const [files, setFiles] = useState([]);
   const [path, setPath] = useState('src/pages');
   const [loading, setLoading] = useState(true);
@@ -35,29 +35,24 @@ function FileExplorer({ user, repo }) {
   const fetchMetadata = useCallback(async (file) => {
     if (file.type === 'dir') return; // No metadata for directories
     try {
-      // Note: This makes a direct request to GitHub API.
-      // This assumes the user is authenticated in the browser session with GitHub
-      // or that the API is public. A better long-term solution would be
-      // to proxy this through our own backend to protect API keys.
-      const res = await fetch(`https://api.github.com/repos/${user.login}/${repo}/commits?path=${file.path}&per_page=1`);
+      // This now calls our secure backend endpoint instead of the raw GitHub API
+      const res = await fetch(`/api/metadata?repo=${repo}&path=${file.path}`, {
+        credentials: 'include',
+      });
       if (!res.ok) {
-          throw new Error(`GitHub API error: ${res.status}`);
+        // The error will be logged but won't crash the page.
+        // The UI will just show the "--" placeholder.
+        throw new Error(`Failed to fetch metadata: ${res.statusText}`);
       }
-      const data = await res.json();
-      if (data && data.length > 0) {
-        const lastCommit = data[0];
-        const metadata = {
-          author: lastCommit.commit.author.name,
-          date: lastCommit.commit.author.date,
-        };
+      const metadata = await res.json();
+      if (metadata && metadata.author) {
         setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
         cache.set(file.sha, metadata);
       }
     } catch (err) {
       console.error(`Failed to fetch metadata for ${file.path}:`, err);
-      // Don't set an error for the whole page, just for this one file.
     }
-  }, [user.login, repo]);
+  }, [repo]);
 
 
   const fetchFiles = useCallback(() => {
@@ -140,7 +135,7 @@ function FileExplorer({ user, repo }) {
       if (!createRes.ok) throw new Error('Could not create duplicate file.');
 
       fetchFiles();
-    } catch (err) => {
+    } catch (err) {
       setError(err.message);
     }
   };
@@ -168,7 +163,7 @@ function FileExplorer({ user, repo }) {
       cache.remove(fileToDelete.sha); // Invalidate cache
       setFileToDelete(null);
       fetchFiles();
-    } catch (err) => {
+    } catch (err) {
       setError(err.message);
       setFileToDelete(null);
     }
@@ -294,7 +289,6 @@ function FileExplorer({ user, repo }) {
       {fileToRename && (
         <RenameModal
           file={fileToRename}
-          repo={repo}
           onClose={() => setFileToRename(null)}
           onRename={handleRenameConfirm}
         />

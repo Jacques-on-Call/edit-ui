@@ -18,6 +18,16 @@ function formatRelativeDate(dateString) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function formatDisplayName(name) {
+  if (!name) return '';
+  // Remove .astro extension
+  if (name.endsWith('.astro')) {
+    name = name.slice(0, -6);
+  }
+  // Capitalize the first letter
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
 
 function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
   const isDirectory = file.type === 'dir';
@@ -59,7 +69,7 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
       onContextMenu={handleContextMenu}
     >
       <div className="icon">{icon}</div>
-      <div className="name">{file.name}</div>
+      <div className="name">{formatDisplayName(file.name)}</div>
       <div className="metadata">
         {metadata ? (
           <>
@@ -67,7 +77,7 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
             <span className="metadata-date">{formatRelativeDate(metadata.date)}</span>
           </>
         ) : (
-          <span className="metadata-placeholder">&nbsp;</span>
+          <span className="metadata-placeholder">--</span>
         )}
       </div>
     </div>

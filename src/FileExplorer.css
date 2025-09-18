@@ -97,3 +97,14 @@
 .toolbar-button:disabled svg {
   stroke: #bdbdbd;
 }
+
+/* On smaller screens, hide the text to save space */
+@media (max-width: 480px) {
+  .toolbar-button span {
+    display: none;
+  }
+
+  .toolbar-button svg {
+    margin-bottom: 0; /* Remove margin when text is hidden */
+  }
+}

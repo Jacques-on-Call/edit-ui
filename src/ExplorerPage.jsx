@@ -43,7 +43,7 @@ function ExplorerPage() {
     return <div>Authenticating...</div>;
   }
 
-  return <FileExplorer user={user} repo={selectedRepo} />;
+  return <FileExplorer repo={selectedRepo} />;
 }
 
 export default ExplorerPage;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './CreateModal.css'; // Reuse styles from CreateModal
 
-function RenameModal({ file, repo, onClose, onRename }) {
+function RenameModal({ file, onClose, onRename }) {
   const [newName, setNewName] = useState(file.name);
   const [error, setError] = useState(null);
   const [isRenaming, setIsRenaming] = useState(false);
