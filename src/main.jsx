@@ -7,6 +7,16 @@ import ExplorerPage from './ExplorerPage.jsx';
 import FileViewerPage from './FileViewerPage.jsx';
 import './App.css';
 
+// Conditionally import and initialize vConsole for on-screen debugging
+// Trigger with ?debug=true in the URL
+if (new URLSearchParams(window.location.search).has('debug')) {
+  import('vconsole').then((module) => {
+    const VConsole = module.default;
+    new VConsole();
+    console.log('vConsole is now enabled for on-screen debugging.');
+  });
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>

@@ -108,6 +108,24 @@ The frontend application code reads its GitHub Client ID from an environment var
 
 ---
 
+## Debugging
+
+This project includes `vConsole`, a powerful on-screen debugging tool, to help diagnose issues directly on any device, especially mobile.
+
+### Activating the On-Screen Console
+
+To activate the debugger, append the `?debug=true` query parameter to the URL.
+
+-   **Example:** `https://edit.strategycontent.agency/?debug=true`
+
+When activated, a green "vConsole" button will appear in the bottom-right corner of the screen. Tapping it will open a full-featured console with tabs for logs, network requests, storage, and more.
+
+### Key Feature: Debugging the Popup
+
+A critical feature is that `vConsole` is also injected into the GitHub login popup window. This allows you to see console logs and network requests that are happening *inside* the popup, which is essential for debugging the token exchange process. When the popup appears, `vConsole` will be active there as well.
+
+---
+
 ## A Note on Authentication Architecture (Standard Web Flow vs. PKCE)
 
 There are two primary, secure methods for handling OAuth2 authentication for an application like this: the Standard Web Application Flow and the PKCE flow. It is critical that the frontend and backend are using the same method.

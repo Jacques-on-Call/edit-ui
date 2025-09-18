@@ -4,24 +4,43 @@ export default function Callback() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // --- vConsole DEBUG BLOCK ---
+    // Initialize vConsole in the popup as well
+    const initVConsole = async () => {
+      // Only load if ?debug=true is in the popup's URL
+      if (new URLSearchParams(window.location.search).has('debug')) {
+        const { default: VConsole } = await import('vconsole');
+        new VConsole();
+        console.log('vConsole enabled in popup. Debugging token exchange...');
+
+        // Log crucial info immediately
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+        console.log("URL Code param:", code);
+        console.log("URL State param:", state);
+        console.log("Document Cookies:", document.cookie);
+      }
+    };
+    initVConsole();
+    // --- END DEBUG BLOCK ---
+
     const exchangeCodeForToken = async () => {
-      console.log('Callback.jsx loaded. Cookies:', document.cookie);
       try {
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
         const state = params.get('state');
-        // Read the state from the cookie. This is more reliable than sessionStorage.
         const savedState = document.cookie.match(/oauth_state=([^;]+)/)?.[1];
 
-        // The state has now been "used", so we must delete the cookie
-        // immediately to prevent it from being used again in a replay attack.
         document.cookie = 'oauth_state=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure';
 
-        // Now, we perform the validation using our in-memory variables.
         if (!code || !state || !savedState || state !== savedState) {
+          console.error("State validation failed!", { state, savedState });
           throw new Error('Invalid state or code. Authentication failed.');
         }
+        console.log("State validation successful.");
 
+        console.log("Starting token exchange...");
         const response = await fetch('/api/token', {
           method: 'POST',
           headers: {
@@ -32,19 +51,21 @@ export default function Callback() {
           }),
         });
 
+        console.log("Token exchange response status:", response.status);
+
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Token exchange failed.' }));
-          throw new Error(errorData.message || 'Token exchange failed.');
+          const errorText = await response.text();
+          console.error("Token exchange failed. Full response:", response, "Body:", errorText);
+          throw new Error(`Token exchange failed. Server said: ${errorText}`);
         }
 
-        // Notify the main window that auth was successful
+        console.log("Token exchange successful!");
         window.opener.postMessage({ type: 'github-auth', success: true }, window.location.origin);
         window.close();
 
       } catch (err) {
-        console.error('Authentication Error:', err);
+        console.error('Full authentication error:', err);
         setError(err.message);
-        // Also notify opener of failure
         window.opener.postMessage({ type: 'github-auth', success: false, error: err.message }, window.location.origin);
       }
     };
