@@ -6,6 +6,7 @@ import './ContextMenu.css';
 import './ConfirmDialog.css';
 import Header from './Header';
 import FAB from './FAB';
+import Icon from './Icon';
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
 import ContextMenu from './ContextMenu';
@@ -14,11 +15,10 @@ import RenameModal from './RenameModal';
 import * as cache from './cache';
 
 
-// SVG Icons for the toolbar
-const CreateIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>;
-const DuplicateIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>;
-const UpIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>;
-const OpenIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>;
+// The old SVG icon definitions are now replaced by the central Icon component.
+const DuplicateIcon = () => <Icon name="duplicate" />;
+const UpIcon = () => <Icon name="arrow-up" />;
+const OpenIcon = () => <Icon name="document" />;
 
 
 function FileExplorer({ repo }) {

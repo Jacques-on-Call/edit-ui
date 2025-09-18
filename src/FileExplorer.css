@@ -24,12 +24,12 @@
   overflow-y: auto;
 }
 
-/* Mobile-first: 2 columns for small screens */
+/* On mobile, switch to a single column layout */
 @media (max-width: 480px) {
   .file-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    padding: 12px;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 10px;
   }
 }
 

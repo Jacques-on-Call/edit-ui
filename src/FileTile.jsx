@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import './FileTile.css';
+import Icon from './Icon';
 
 function formatRelativeDate(dateString) {
   if (!dateString) return '';
@@ -28,39 +29,16 @@ function formatDisplayName(name) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-const getIconForFile = (fileName, fileType) => {
+const getIconNameForFile = (fileType) => {
   if (fileType === 'dir') {
-    return '📁';
+    return 'folder';
   }
-  const extension = fileName.split('.').pop().toLowerCase();
-  switch (extension) {
-    case 'jpg':
-    case 'jpeg':
-    case 'png':
-    case 'gif':
-    case 'webp':
-      return '🖼️';
-    case 'md':
-    case 'markdown':
-      return '📝';
-    case 'astro':
-    case 'html':
-    case 'jsx':
-    case 'js':
-      return '💻';
-    case 'css':
-      return '🎨';
-    case 'json':
-      return '⚙️';
-    case 'txt':
-    default:
-      return '📄';
-  }
+  return 'document';
 };
 
 function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
-  const icon = getIconForFile(file.name, file.type);
-  const tileClassName = `file-tile ${isSelected ? 'selected' : ''}`;
+  const iconName = getIconNameForFile(file.type);
+  const tileClassName = `file-tile ${isSelected ? 'selected' : ''} ${file.type === 'dir' ? 'is-folder' : ''}`;
 
   const pressTimer = useRef(null);
 
@@ -96,7 +74,9 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
       onTouchEnd={handlePointerUp}
       onContextMenu={handleContextMenu}
     >
-      <div className="icon">{icon}</div>
+      <div className="icon">
+        <Icon name={iconName} />
+      </div>
       <div className="name">{formatDisplayName(file.name)}</div>
       <div className="metadata">
         {metadata ? (
