@@ -42,6 +42,8 @@ function App() {
     // SameSite=None is required for the cookie to be sent in the cross-site
     // redirect from GitHub.
     document.cookie = `oauth_state=${state}; path=/; max-age=600; SameSite=Lax; Secure`;
+    console.log('OAuth state cookie set in App.jsx:', document.cookie);
+    console.log('OAuth state cookie set:', document.cookie);
 
     const authUrl = new URL('https://github.com/login/oauth/authorize');
     authUrl.searchParams.set('client_id', GITHUB_CLIENT_ID);

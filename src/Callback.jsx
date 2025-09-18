@@ -5,6 +5,7 @@ export default function Callback() {
 
   useEffect(() => {
     const exchangeCodeForToken = async () => {
+      console.log('Callback.jsx loaded. Cookies:', document.cookie);
       try {
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
