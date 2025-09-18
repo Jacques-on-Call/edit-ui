@@ -21,7 +21,7 @@ const OpenIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="non
 
 function FileExplorer({ user, repo }) {
   const [files, setFiles] = useState([]);
-  const [path, setPath] = useState('StrategyContent/src/pages');
+  const [path, setPath] = useState('src/pages');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -111,10 +111,9 @@ function FileExplorer({ user, repo }) {
   };
 
   const handleUpOneLayer = () => {
-    const newRoot = 'StrategyContent/src/pages';
-    if (path === newRoot) return;
+    if (path === 'src/pages') return;
     const newPath = path.substring(0, path.lastIndexOf('/'));
-    setPath(newPath.length < newRoot.length ? newRoot : newPath);
+    setPath(newPath || 'src/pages');
   };
 
   const handleDuplicate = async (fileToDuplicate) => {
@@ -223,7 +222,7 @@ function FileExplorer({ user, repo }) {
   if (loading) return <div>Loading files...</div>;
   if (error) return <div>Error: {error}</div>;
 
-  const isAtRoot = path === 'StrategyContent/src/pages';
+  const isAtRoot = path === 'src/pages';
   const canDuplicate = selectedFile && selectedFile.type !== 'dir';
 
   return (
