@@ -28,10 +28,38 @@ function formatDisplayName(name) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
+const getIconForFile = (fileName, fileType) => {
+  if (fileType === 'dir') {
+    return '📁';
+  }
+  const extension = fileName.split('.').pop().toLowerCase();
+  switch (extension) {
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+    case 'gif':
+    case 'webp':
+      return '🖼️';
+    case 'md':
+    case 'markdown':
+      return '📝';
+    case 'astro':
+    case 'html':
+    case 'jsx':
+    case 'js':
+      return '💻';
+    case 'css':
+      return '🎨';
+    case 'json':
+      return '⚙️';
+    case 'txt':
+    default:
+      return '📄';
+  }
+};
 
 function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
-  const isDirectory = file.type === 'dir';
-  const icon = isDirectory ? '📁' : '📄';
+  const icon = getIconForFile(file.name, file.type);
   const tileClassName = `file-tile ${isSelected ? 'selected' : ''}`;
 
   const pressTimer = useRef(null);

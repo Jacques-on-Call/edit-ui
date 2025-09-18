@@ -51,6 +51,24 @@ The authentication process works as follows:
 
 ---
 
+## User Experience Features
+
+The file explorer is designed with a mobile-first, user-friendly interface.
+
+-   **Breadcrumb Navigation:** A header at the top of the screen shows the current folder path (e.g., `Home > Decide`), allowing for easy navigation back to parent directories.
+-   **Floating Action Button (FAB):** A prominent `+` button is fixed to the bottom-right of the screen, providing a consistent and accessible way to create new files and folders.
+-   **File-Specific Icons:** To make content easily scannable, different icons are used for different file types:
+    -   `📁` for folders
+    -   `🖼️` for images (e.g., `.jpg`, `.png`)
+    -   `📝` for markdown files
+    -   `💻` for code files (e.g., `.js`, `.astro`)
+    -   `📄` for other text files
+-   **Responsive Toolbar:** The bottom toolbar adapts to screen size. On narrow mobile screens, it displays icons only, preventing layout issues and ensuring all buttons are visible.
+-   **Formatted File Names:** File names are cleaned up for display. For example, `about.astro` is shown as `About`.
+-   **File Metadata:** Each file tile displays the author of the last change and how long ago it was made (e.g., "Jacques, 2h ago"), providing at-a-glance context. This data is fetched securely through the backend worker.
+
+---
+
 ## Technical Details of the Cloudflare Worker
 
 The reference implementation is in `cloudflare-worker-code.js`. It is designed to be deployed as a Cloudflare Worker.

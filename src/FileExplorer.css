@@ -15,23 +15,6 @@
   background-color: var(--background-color);
 }
 
-.top-bar {
-  padding: 10px;
-  border-bottom: 1px solid var(--border-color);
-  background-color: var(--background-color);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.top-bar input {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-}
-
 .file-grid {
   flex-grow: 1;
   display: grid;

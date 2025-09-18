@@ -4,6 +4,8 @@ import './FileExplorer.css';
 import './CreateModal.css';
 import './ContextMenu.css';
 import './ConfirmDialog.css';
+import Header from './Header';
+import FAB from './FAB';
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
 import ContextMenu from './ContextMenu';
@@ -222,9 +224,7 @@ function FileExplorer({ repo }) {
 
   return (
     <div className="file-explorer">
-      <div className="top-bar">
-        <input type="search" placeholder="Search files..." disabled />
-      </div>
+      <Header path={path} onNavigate={setPath} />
       <div className="file-grid">
         {Array.isArray(files) && files.map(file => (
           <FileTile
@@ -242,10 +242,6 @@ function FileExplorer({ repo }) {
           <OpenIcon />
           <span>Open</span>
         </button>
-        <button className="toolbar-button" onClick={() => setCreateModalOpen(true)}>
-          <CreateIcon />
-          <span>Create</span>
-        </button>
         <button className="toolbar-button" onClick={() => handleDuplicate()} disabled={!canDuplicate}>
           <DuplicateIcon />
           <span>Duplicate</span>
@@ -255,6 +251,7 @@ function FileExplorer({ repo }) {
           <span>Up</span>
         </button>
       </div>
+      <FAB onClick={() => setCreateModalOpen(true)} />
       {isCreateModalOpen && (
         <CreateModal
           path={path}
