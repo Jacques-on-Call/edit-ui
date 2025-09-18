@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import './FileTile.css';
-import Icon from './Icon';
+import Icon from './Icon'; // Using the new SVG Icon component
 
 function formatRelativeDate(dateString) {
   if (!dateString) return '';
@@ -29,15 +29,18 @@ function formatDisplayName(name) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-const getIconNameForFile = (fileType) => {
-  if (fileType === 'dir') {
+// Updated logic to be more specific with icons in the future
+const getIconNameForFile = (file) => {
+  if (file.type === 'dir') {
     return 'folder';
   }
+  // This can be expanded later with more file types
+  // For now, all files are considered 'document'
   return 'document';
 };
 
 function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
-  const iconName = getIconNameForFile(file.type);
+  const iconName = getIconNameForFile(file);
   const tileClassName = `file-tile ${isSelected ? 'selected' : ''} ${file.type === 'dir' ? 'is-folder' : ''}`;
 
   const pressTimer = useRef(null);
@@ -75,6 +78,7 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
       onContextMenu={handleContextMenu}
     >
       <div className="icon">
+        {/* The Icon component now renders our SVG */}
         <Icon name={iconName} />
       </div>
       <div className="name">{formatDisplayName(file.name)}</div>

@@ -1,31 +1,58 @@
+:root {
+  /* Defining colors here to be used in this component and potentially others */
+  --blue: #003971;
+  --soft-blue-bg: hsl(208, 100%, 97%);
+  --soft-blue-border: hsl(208, 100%, 90%);
+  --neutral-grey-bg: #f8f9fa;
+  --neutral-grey-border: #e9ecef;
+}
+
 .file-tile {
+  background-color: var(--neutral-grey-bg);
+  border: 1px solid var(--neutral-grey-border);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between; /* Changed to space-between */
-  padding: 16px 8px;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  cursor: pointer;
-  text-align: center;
-  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  position: relative;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
 }
 
 .file-tile:hover {
-  background-color: #f5f5f5;
+  transform: translateY(-4px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
 }
 
 .file-tile.selected {
-  background-color: #e3f2fd;
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px var(--accent-color);
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px hsla(208, 100%, 22%, 0.3); /* Blue shadow */
 }
 
+/* --- Folder vs. File Differentiation --- */
+.file-tile.is-folder {
+  background-color: var(--soft-blue-bg);
+  border-color: var(--soft-blue-border);
+}
+
+.file-tile.is-folder .icon {
+  color: var(--blue);
+}
+
+/* --- Icons --- */
 .file-tile .icon {
-  font-size: 48px;
-  line-height: 1;
-  margin-bottom: 8px; /* Add margin below icon */
+  margin-bottom: 0.75rem;
+  color: #555;
+  /* SVG inherits color via 'currentColor', so we set it here */
+}
+
+.file-tile .icon svg {
+  width: 48px; /* Larger, clearer icons */
+  height: 48px;
 }
 
 .file-tile .name {

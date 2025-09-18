@@ -15,12 +15,6 @@ import RenameModal from './RenameModal';
 import * as cache from './cache';
 
 
-// The old SVG icon definitions are now replaced by the central Icon component.
-const DuplicateIcon = () => <Icon name="duplicate" />;
-const UpIcon = () => <Icon name="arrow-up" />;
-const OpenIcon = () => <Icon name="document" />;
-
-
 function FileExplorer({ repo }) {
   const [files, setFiles] = useState([]);
   const [path, setPath] = useState('src/pages');
@@ -222,9 +216,15 @@ function FileExplorer({ repo }) {
   const isAtRoot = path === 'src/pages';
   const canDuplicate = selectedFile && selectedFile.type !== 'dir';
 
+  const getParentFolderName = () => {
+    if (isAtRoot) return '';
+    const segments = path.split('/');
+    return segments[segments.length - 2];
+  };
+
   return (
     <div className="file-explorer">
-      <Header path={path} onNavigate={setPath} />
+      <Header path={path} onNavigate={setPath} repo={repo} />
       <div className="file-grid">
         {Array.isArray(files) && files.map(file => (
           <FileTile
@@ -239,16 +239,16 @@ function FileExplorer({ repo }) {
       </div>
       <div className="bottom-toolbar">
         <button className="toolbar-button" onClick={() => handleOpen()} disabled={!selectedFile}>
-          <OpenIcon />
+          <Icon name="document" />
           <span>Open</span>
         </button>
         <button className="toolbar-button" onClick={() => handleDuplicate()} disabled={!canDuplicate}>
-          <DuplicateIcon />
+          <Icon name="duplicate" />
           <span>Duplicate</span>
         </button>
         <button className="toolbar-button" onClick={handleUpOneLayer} disabled={isAtRoot}>
-          <UpIcon />
-          <span>Up</span>
+          <Icon name="arrow-up" />
+          <span>{isAtRoot ? 'Up' : `Up to "${getParentFolderName()}"`}</span>
         </button>
       </div>
       <FAB onClick={() => setCreateModalOpen(true)} />

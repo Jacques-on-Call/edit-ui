@@ -1,7 +1,8 @@
 import React from 'react';
+import Search from './Search'; // Import the new Search component
 import './Header.css';
 
-const Header = ({ path, onNavigate }) => {
+const Header = ({ path, onNavigate, repo }) => { // Add repo to props
   const formatPath = (currentPath) => {
     if (!currentPath.startsWith('src/pages')) {
       return [];
@@ -42,6 +43,9 @@ const Header = ({ path, onNavigate }) => {
           ))}
         </ol>
       </nav>
+      <div className="header-actions">
+        <Search repo={repo} />
+      </div>
     </header>
   );
 };
