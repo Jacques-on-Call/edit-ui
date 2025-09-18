@@ -12,7 +12,7 @@ function FileExplorer({ repo }) {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`https://auth.strategycontent.agency/api/github/files?repo=${repo}&path=${path}`, {
+    fetch(`/api/files?repo=${repo}&path=${path}`, {
       credentials: 'include',
     })
     .then(res => {
