@@ -9,7 +9,9 @@ function FileViewer({ repo, path }) {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`https://auth.strategycontent.agency/api/github/file?repo=${repo}&path=${path}`, {
+    // The API endpoint was hardcoded to an old auth service.
+    // The README implies the API is at the same origin, e.g., /api/file
+    fetch(`/api/file?repo=${repo}&path=${path}`, {
       credentials: 'include',
     })
     .then(res => {
@@ -30,7 +32,7 @@ function FileViewer({ repo, path }) {
   }, [repo, path]);
 
   const handleSave = () => {
-    fetch('https://auth.strategycontent.agency/api/github/file', {
+    fetch('/api/file', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -39,7 +41,7 @@ function FileViewer({ repo, path }) {
       body: JSON.stringify({
         repo,
         path,
-        content,
+        content: btoa(content), // Content should be base64 encoded
         sha,
       }),
     })
@@ -55,6 +57,18 @@ function FileViewer({ repo, path }) {
     });
   };
 
+  const getFriendlyTitle = (filePath) => {
+    if (!filePath) return '';
+    const filename = filePath.split('/').pop();
+    const lastDotIndex = filename.lastIndexOf('.');
+    if (lastDotIndex > 0) { // Ensure it's not a leading dot
+      return filename.substring(0, lastDotIndex);
+    }
+    return filename;
+  };
+
+  const title = getFriendlyTitle(path);
+
   if (loading) {
     return <div>Loading file...</div>;
   }
@@ -66,7 +80,7 @@ function FileViewer({ repo, path }) {
   if (isEditing) {
     return (
       <div className="file-editor">
-        <h3>Editing: {path}</h3>
+        <h3>Editing: {title}</h3>
         <textarea value={content} onChange={(e) => setContent(e.target.value)} />
         <button onClick={handleSave}>Save</button>
         <button onClick={() => setIsEditing(false)}>Cancel</button>
@@ -76,7 +90,7 @@ function FileViewer({ repo, path }) {
 
   return (
     <div className="file-viewer">
-      <h3>{path}</h3>
+      <h3>{title}</h3>
       <button onClick={() => setIsEditing(true)}>Edit</button>
       <pre>{content}</pre>
     </div>
