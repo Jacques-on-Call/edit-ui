@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import './FileTile.css';
-import Icon from './icons.jsx'; // Using the new SVG Icon component
+import Icon from './Icon'; // Using the new SVG Icon component
 
 function formatRelativeDate(dateString) {
   if (!dateString) return '';

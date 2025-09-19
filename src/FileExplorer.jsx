@@ -6,7 +6,7 @@ import './ContextMenu.css';
 import './ConfirmDialog.css';
 import Header from './Header';
 import FAB from './FAB';
-import Icon from './icons.jsx';
+import Icon from './Icon';
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
 import ContextMenu from './ContextMenu';

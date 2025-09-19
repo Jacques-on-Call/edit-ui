@@ -92,6 +92,7 @@ const Editor = forwardRef(({ initialContent, onContentChange }, ref) => {
             setFrontmatter(fm);
             if (fm.contentBlocks) {
               const tiptapContent = jsonToTiptap(fm.contentBlocks);
+              console.log('Tiptap Content:', JSON.stringify(tiptapContent, null, 2));
               editor.commands.setContent(tiptapContent);
             }
           }
