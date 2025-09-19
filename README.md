@@ -305,3 +305,42 @@ A significant challenge was encountered throughout the development process:
 ### **Outstanding Questions**
 
 *   The primary outstanding question is the nature of the file persistence issue. Future developers should be aware that this problem may reoccur. If it does, a thorough investigation into the environment's caching and volume mounting would be necessary.
+
+---
+
+## UI Redesign & Dependency Woes (250919)
+
+This section documents the UI redesign based on user feedback and the subsequent dependency issues that arose.
+
+### **The Goal: A Modern, Apple-Inspired UI**
+
+The objective was to refactor the file explorer's UI to be more modern, clean, and in line with Apple's design principles. The key requests were:
+1.  **Modernize the Search Bar:** Make it more subtle and integrated.
+2.  **Two-Column Mobile Layout:** Display files and folders in a two-column grid on mobile portrait view.
+3.  **Redesign the Bottom Toolbar:**
+    *   Move the 'Create' button to the center of the toolbar, styled as a prominent, floating-style button.
+    *   Remove the 'Open' and 'Duplicate' buttons to simplify the UI.
+    *   Replace the breadcrumb navigation in the toolbar with a simple "Home" icon and the current folder's name.
+4.  **Polish File Tiles:** Give the file and folder tiles a cleaner, more consistent look.
+
+### **The Implementation: A CSS & JSX Overhaul**
+
+*   **Search Bar (`search-bar.css`):** The search bar was restyled to have a softer, borderless look with a light grey background, making it less intrusive.
+*   **File Grid (`FileExplorer.css`):** The grid system was updated to use fixed column counts for different screen sizes (`repeat(2, 1fr)` for mobile), ensuring a consistent two-column layout as requested.
+*   **Toolbar (`FileExplorer.jsx`, `FileExplorer.css`):** The bottom toolbar was significantly refactored.
+    *   The JSX was restructured into a three-part flex container (`left`, `center`, `right`) to ensure the 'Create' button was perfectly centered.
+    *   The 'Open' and 'Duplicate' buttons were removed from the JSX.
+    *   The `MiniBreadcrumb` component was removed and replaced with a `<span>` containing the current folder's name.
+    *   CSS was added to style the 'Create' button as a circular, elevated button that overlaps the toolbar.
+*   **File Tiles (`FileTile.css`):** The tiles were given a transparent background, removing the distinction between file and folder backgrounds. The folder icon is now colored with an accent color to differentiate it. Typography was also refined for a cleaner look.
+
+### **The Struggle: Dependency Hell**
+
+A significant amount of time was spent trying to get the development server running to verify the changes. The root cause was a missing dependency, `@tiptap/extension-image`, which was required by `Editor.jsx`.
+
+*   **The Problem:** Adding the missing dependency caused a cascade of peer dependency conflicts with the other `@tiptap` packages, which were on an older version.
+*   **The Solution:**
+    1.  Updated all `@tiptap` packages in `package.json` to the same version (`^2.5.0-rc.1`).
+    2.  Deleted `node_modules` and `package-lock.json` to ensure a clean installation.
+    3.  Ran `npm install` to fetch the correct, compatible versions of all packages.
+*   **The Environment Issues:** Even after fixing the dependencies, I encountered persistent issues with the `run_in_bash_session` tool, which prevented me from starting the dev server. The tool seemed to have an issue with sticky working directories and would fail with "Missing script: dev" errors, even though the script was present. Due to these environment issues, I was unable to visually verify the final design.

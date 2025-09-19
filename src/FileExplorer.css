@@ -18,16 +18,25 @@
 .file-grid {
   flex-grow: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(5, 1fr); /* Desktop default */
   gap: 16px;
   padding: 16px;
   overflow-y: auto;
 }
 
-/* On mobile, switch to a single column layout */
+/* Tablet view */
+@media (max-width: 768px) {
+  .file-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+}
+
+/* Mobile view */
 @media (max-width: 480px) {
   .file-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
     padding: 10px;
   }
@@ -36,14 +45,29 @@
 
 .bottom-toolbar {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
+  align-items: center;
   height: var(--toolbar-height);
-  padding: var(--toolbar-padding);
+  padding: 0 var(--toolbar-padding); /* Remove vertical padding */
   border-top: 1px solid var(--border-color);
   background-color: var(--background-color);
   position: sticky;
   bottom: 0;
   z-index: 10;
+}
+
+.toolbar-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  height: 100%;
+}
+
+.toolbar-section.left {
+  justify-content: flex-start;
+}
+.toolbar-section.right {
+  justify-content: flex-end;
 }
 
 .toolbar-button {
@@ -56,7 +80,8 @@
   color: var(--text-color-secondary);
   font-size: 12px;
   cursor: pointer;
-  flex-grow: 1;
+  padding: 0 16px;
+  height: 100%;
   border-radius: 8px;
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
@@ -81,13 +106,44 @@
   stroke: #bdbdbd;
 }
 
-/* On smaller screens, hide the text to save space */
-@media (max-width: 480px) {
-  .toolbar-button span {
-    display: none;
-  }
+.toolbar-button.create-button {
+  background-color: #202020;
+  color: white;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  min-width: 56px; /* Ensure it doesn't shrink */
+  padding: 0;
+  margin-top: -35px; /* Pulls the button up from the toolbar */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 3px solid var(--background-color);
+  transition: transform 0.2s ease-in-out;
+}
 
-  .toolbar-button svg {
-    margin-bottom: 0; /* Remove margin when text is hidden */
-  }
+.toolbar-button.create-button:hover {
+    transform: scale(1.05);
+}
+
+
+.toolbar-button.create-button svg {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 0;
+}
+
+.folder-name {
+  font-size: 11px;
+  margin-top: 2px;
+  text-transform: capitalize;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  color: var(--text-color-primary);
+}
+
+
+/* On smaller screens, adjust padding */
+@media (max-width: 480px) {
+    .toolbar-button {
+        padding: 0 8px;
+    }
 }

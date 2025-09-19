@@ -11,7 +11,6 @@ import CreateModal from './CreateModal';
 import ContextMenu from './ContextMenu';
 import ConfirmDialog from './ConfirmDialog';
 import RenameModal from './RenameModal';
-import MiniBreadcrumb from './MiniBreadcrumb.jsx';
 import * as cache from './cache';
 
 
@@ -246,28 +245,19 @@ function FileExplorer({ repo }) {
         ))}
       </div>
       <div className="bottom-toolbar">
-        <div className="toolbar-section">
-          <button className="toolbar-button" onClick={() => handleOpen()} disabled={!selectedFile}>
-            <Icon name="document" />
-            <span>Open</span>
-          </button>
-          <button className="toolbar-button" onClick={() => handleDuplicate()} disabled={!canDuplicate}>
-            <Icon name="duplicate" />
-            <span>Duplicate</span>
-          </button>
+        <div className="toolbar-section left">
+          {/* Deliberately empty to push other elements */}
         </div>
-        <div className="toolbar-section-center">
+        <div className="toolbar-section center">
           <button className="toolbar-button create-button" onClick={() => setCreateModalOpen(true)}>
             <Icon name="plus" />
           </button>
         </div>
-        <div className="toolbar-section">
-          <div className="up-button-container">
-            <button className="toolbar-button" onClick={handleGoHome} disabled={isAtRoot}>
-              <Icon name="home" />
-            </button>
-            <MiniBreadcrumb path={path} onNavigate={setPath} />
-          </div>
+        <div className="toolbar-section right">
+          <button className="toolbar-button" onClick={handleGoHome} disabled={isAtRoot}>
+            <Icon name="home" />
+            <span className="folder-name">{getCurrentFolderName()}</span>
+          </button>
         </div>
       </div>
       {isCreateModalOpen && (
