@@ -1,5 +1,5 @@
 import React from 'react';
-import Search from './Search'; // Import the new Search component
+import SearchBar from './search-bar.jsx'; // Import the new Search component
 import './Header.css';
 
 const Header = ({ path, onNavigate, repo }) => { // Add repo to props
@@ -44,7 +44,7 @@ const Header = ({ path, onNavigate, repo }) => { // Add repo to props
         </ol>
       </nav>
       <div className="header-actions">
-        <Search repo={repo} />
+        <SearchBar repo={repo} />
       </div>
     </header>
   );
