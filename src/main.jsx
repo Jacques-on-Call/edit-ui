@@ -5,6 +5,7 @@ import App from './App.jsx';
 import Callback from './Callback.jsx';
 import ExplorerPage from './ExplorerPage.jsx';
 import FileViewerPage from './FileViewerPage.jsx';
+import Editor from './Editor.jsx'; // import the Editor component
 import './App.css';
 
 // Conditionally import and initialize vConsole for on-screen debugging
@@ -25,6 +26,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/callback" element={<Callback />} />
         <Route path="/explorer" element={<ExplorerPage />} />
         <Route path="/explorer/file" element={<FileViewerPage />} />
+        <Route path="/edit/*" element={<Editor />} /> {/* add the editor route */}
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
