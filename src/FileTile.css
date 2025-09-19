@@ -5,6 +5,16 @@
   --soft-blue-border: hsl(208, 100%, 90%);
   --neutral-grey-bg: #f8f9fa;
   --neutral-grey-border: #e9ecef;
+  --rename-blue: #007bff;
+  --delete-red: #dc3545;
+}
+
+.tile-swipe-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  overflow: hidden; /* Hide the actions panel */
 }
 
 .file-tile {
@@ -14,23 +24,94 @@
   padding: 1rem;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  /* transition is now handled inline for swipe vs. snap */
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   aspect-ratio: 1 / 1;
+  width: 100%;
+  height: 100%;
+  z-index: 2; /* Ensure tile is above actions */
+}
+
+.tile-content {
+  /* This new wrapper is needed for the ripple effect to work correctly */
+  /* with the new swipe container structure. */
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* --- Ripple Effect --- */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: scale(0);
+  animation: ripple-animation 0.6s linear;
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
 }
 
 .file-tile:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+  /* Hover effect is disabled when swiping might occur */
+  /* A different UX would be needed for hover on touch devices */
 }
 
 .file-tile.selected {
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px hsla(208, 100%, 22%, 0.3); /* Blue shadow */
+  box-shadow: 0 0 0 3px hsla(208, 100%, 22%, 0.3);
+}
+
+/* --- Swipe Actions --- */
+.tile-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  display: flex;
+  z-index: 1; /* Below the tile */
+}
+
+.action-button {
+  height: 100%;
+  border: none;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0 1rem;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.action-button.rename {
+  background-color: var(--rename-blue);
+}
+.action-button.rename:hover {
+  background-color: #0056b3;
+}
+
+.action-button.delete {
+  background-color: var(--delete-red);
+}
+.action-button.delete:hover {
+  background-color: #c82333;
 }
 
 /* --- Folder vs. File Differentiation --- */
