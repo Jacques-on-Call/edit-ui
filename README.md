@@ -257,57 +257,6 @@ To ensure smooth collaboration and prevent accidental data loss, please adhere t
 ---
 ---
 
-## Developer's Journey & Notes (250919)
-
-This section documents the development process for the UX overhaul, including goals, implementation details, and challenges faced.
-
-### **The Goal: A Modern, Intuitive File Explorer**
-
-The primary objective was to transform the file explorer's user experience into something more modern, visually appealing, and efficient, especially for mobile users. The key goals were:
-1.  **Improve Visual Hierarchy:** Clearly distinguish between folders and files.
-2.  **Enhance Navigational Clarity:** Make moving through the file system more intuitive.
-3.  **Modernize the Layout:** Create a cleaner, more consolidated UI.
-4.  **Add Search Functionality:** Allow users to quickly find files by name or content.
-
-### **The Implementation: What, How, and Why**
-
-To achieve these goals, a series of iterative changes were made:
-
-1.  **Search Functionality (What & How):**
-    *   A new `/api/search` endpoint was added to the `cloudflare-worker-code.js`. This endpoint uses the official GitHub Search API, which is far more efficient than manually traversing the file tree.
-    *   A new `search-bar.jsx` component was created to provide a live, debounced search input field at the top of the application.
-    *   **Why:** This provides a powerful, fast, and user-friendly way to find content without manually clicking through folders.
-
-2.  **Responsive Grid Layout (What & How):**
-    *   The CSS in `FileExplorer.css` was modified to use a responsive grid: `grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));`.
-    *   The previous mobile-specific, single-column layout was removed.
-    *   **Why:** This change ensures file tiles have a consistent, predictable size across all devices. It naturally creates a denser, multi-column layout on portrait and landscape views, improving information density as requested.
-
-3.  **Unified UI & Toolbar Redesign (What & How):**
-    *   The old `Header.jsx` and `FAB.jsx` (Floating Action Button) components were deleted.
-    *   The search bar was moved to the top of the `FileExplorer` view.
-    *   The 'Create' (`+`) button was moved from the FAB into the center of the bottom toolbar. This required restructuring the toolbar with flexbox containers (`.toolbar-section`, `.toolbar-section-center`) for proper alignment.
-    *   A new `MiniBreadcrumb.jsx` component was created to display a "Home" icon and the current folder's name. This was placed directly under the "Up" button by wrapping them in a flexbox container (`.up-button-container`).
-    *   **Why:** These changes consolidate all primary actions into predictable locations (search at the top, actions at the bottom), creating a much cleaner and more ergonomic interface that is easier to use with one hand on mobile devices.
-
-### **The Struggle: A Persistent File Environment Issue**
-
-A significant challenge was encountered throughout the development process:
-
-*   **The Problem:** The development environment exhibited a severe file persistence issue. Newly created files (e.g., `icons.jsx`, `search-bar.jsx`) would be successfully created and verified with `ls`, only to become invisible to other tools (`read_file`, `replace_with_git_merge_diff`, and the code review system) in subsequent steps. This led to a frustrating loop of creating, verifying, and then failing code reviews because the files were reported as missing.
-
-*   **The Workarounds:** Several workarounds were attempted in collaboration with the user:
-    1.  **Renaming Files:** The initial hypothesis was that specific filenames might be causing a conflict. Renaming the files (`Icon.jsx` -> `icons.jsx`, etc.) appeared to work temporarily but the issue persisted.
-    2.  **Embedding Code in README:** As a final attempt to deliver the code, the content of the missing files was embedded directly into the `README.md`. While this allowed the user to manually create the files, it was not a true fix.
-
-*   **Resolution:** The issue seemed to resolve itself unpredictably after multiple attempts. The root cause was never definitively identified but appears to be a flaw in the development environment's state management or file system virtualization.
-
-### **Outstanding Questions**
-
-*   The primary outstanding question is the nature of the file persistence issue. Future developers should be aware that this problem may reoccur. If it does, a thorough investigation into the environment's caching and volume mounting would be necessary.
-
----
-
 ## UI Redesign & Dependency Woes (250919)
 
 This section documents the UI redesign based on user feedback and the subsequent dependency issues that arose.
@@ -365,39 +314,20 @@ The fix was to modify the `handleDeleteFileRequest` function in `cloudflare-work
 
 ---
 
-## UI Redesign & Dependency Woes (250919)
+## Cloudflare Build Cache Issues (250919)
 
-This section documents the UI redesign based on user feedback and the subsequent dependency issues that arose.
+This section documents a persistent issue with the Cloudflare build environment and the workaround that was implemented.
 
-### **The Goal: A Modern, Apple-Inspired UI**
+### **The Problem: Stale Dependencies**
 
-The objective was to refactor the file explorer's UI to be more modern, clean, and in line with Apple's design principles. The key requests were:
-1.  **Modernize the Search Bar:** Make it more subtle and integrated.
-2.  **Two-Column Mobile Layout:** Display files and folders in a two-column grid on mobile portrait view.
-3.  **Redesign the Bottom Toolbar:**
-    *   Move the 'Create' button to the center of the toolbar, styled as a prominent, floating-style button.
-    *   Remove the 'Open' and 'Duplicate' buttons to simplify the UI.
-    *   Replace the breadcrumb navigation in the toolbar with a simple "Home" icon and the current folder's name.
-4.  **Polish File Tiles:** Give the file and folder tiles a cleaner, more consistent look.
+The Cloudflare build process was repeatedly failing due to missing dependencies, even after they were correctly added to the `package.json` file. This indicated that the build environment was using a cached version of the `node_modules` directory or the `package-lock.json` file, which did not include the new dependencies.
 
-### **The Implementation: A CSS & JSX Overhaul**
+### **The Solution: Forcing a Clean Install**
 
-*   **Search Bar (`search-bar.css`):** The search bar was restyled to have a softer, borderless look with a light grey background, making it less intrusive.
-*   **File Grid (`FileExplorer.css`):** The grid system was updated to use fixed column counts for different screen sizes (`repeat(2, 1fr)` for mobile), ensuring a consistent two-column layout as requested.
-*   **Toolbar (`FileExplorer.jsx`, `FileExplorer.css`):** The bottom toolbar was significantly refactored.
-    *   The JSX was restructured into a three-part flex container (`left`, `center`, `right`) to ensure the 'Create' button was perfectly centered.
-    *   The 'Open' and 'Duplicate' buttons were removed from the JSX.
-    *   The `MiniBreadcrumb` component was removed and replaced with a `<span>` containing the current folder's name.
-    *   CSS was added to style the 'Create' button as a circular, elevated button that overlaps the toolbar.
-*   **File Tiles (`FileTile.css`):** The tiles were given a transparent background, removing the distinction between file and folder backgrounds. The folder icon is now colored with an accent color to differentiate it. Typography was also refined for a cleaner look.
+To resolve this, the `build` script in `react-login/package.json` was modified to force a clean installation of all dependencies before running the build. The new script is:
 
-### **The Struggle: Dependency Hell**
+```json
+"build": "rm -rf node_modules && rm -f package-lock.json && npm install && vite build"
+```
 
-A significant amount of time was spent trying to get the development server running to verify the changes. The root cause was a missing dependency, `@tiptap/extension-image`, which was required by `Editor.jsx`.
-
-*   **The Problem:** Adding the missing dependency caused a cascade of peer dependency conflicts with the other `@tiptap` packages, which were on an older version.
-*   **The Solution:**
-    1.  Updated all `@tiptap` packages in `package.json` to the same version (`^2.5.0-rc.1`).
-    2.  Deleted `node_modules` and `package-lock.json` to ensure a clean installation.
-    3.  Ran `npm install` to fetch the correct, compatible versions of all packages.
-*   **The Environment Issues:** Even after fixing the dependencies, I encountered persistent issues with the `run_in_bash_session` tool, which prevented me from starting the dev server. The tool seemed to have an issue with sticky working directories and would fail with "Missing script: dev" errors, even though the script was present. Due to these environment issues, I was unable to visually verify the final design.
+This ensures that the latest dependencies are always used, bypassing any potential caching issues in the build environment.
