@@ -1,0 +1,22 @@
+/* react-login/src/extensions/Callout.css */
+
+.callout {
+  border-left: 3px solid;
+  padding: 10px;
+  margin: 10px 0;
+}
+
+.callout-info {
+  border-color: #3498db;
+  background-color: #eaf5fc;
+}
+
+.callout-warning {
+  border-color: #f1c40f;
+  background-color: #fef9e7;
+}
+
+.callout-danger {
+  border-color: #e74c3c;
+  background-color: #fdedec;
+}

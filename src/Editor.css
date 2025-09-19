@@ -1,0 +1,15 @@
+/* react-login/src/Editor.css */
+
+.editor-container {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.tiptap-editor {
+  min-height: 300px;
+}
+
+.tiptap-editor:focus {
+  outline: none;
+}
