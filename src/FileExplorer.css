@@ -15,28 +15,28 @@
   background-color: var(--background-color);
 }
 
+.search-wrapper {
+  padding: 16px;
+  background-color: var(--background-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
 .file-grid {
   flex-grow: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  /* This is the core of the responsive grid.
+     It creates as many 140px columns as can fit, and grows them to fill the space. */
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 16px;
   padding: 16px;
   overflow-y: auto;
 }
 
-/* On mobile, switch to a single column layout */
-@media (max-width: 480px) {
-  .file-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-    padding: 10px;
-  }
-}
-
 
 .bottom-toolbar {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
+  align-items: center;
   height: var(--toolbar-height);
   padding: var(--toolbar-padding);
   border-top: 1px solid var(--border-color);
@@ -44,6 +44,30 @@
   position: sticky;
   bottom: 0;
   z-index: 10;
+}
+
+.toolbar-section, .toolbar-section-center {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.toolbar-section {
+  justify-content: flex-start;
+}
+
+.toolbar-section:last-child {
+  justify-content: flex-end;
+}
+
+.toolbar-section-center {
+  justify-content: center;
+}
+
+.up-button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .toolbar-button {
@@ -80,6 +104,28 @@
 .toolbar-button:disabled svg {
   stroke: #bdbdbd;
 }
+
+.create-button {
+  background-color: var(--accent-color);
+  color: white;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  margin: 0 8px;
+  flex-grow: 0;
+  flex-shrink: 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.create-button:hover:not(:disabled) {
+  background-color: #1e4ac8; /* A slightly darker blue */
+}
+
+.create-button svg {
+  stroke: white;
+}
+
 
 /* On smaller screens, hide the text to save space */
 @media (max-width: 480px) {

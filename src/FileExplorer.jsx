@@ -4,14 +4,14 @@ import './FileExplorer.css';
 import './CreateModal.css';
 import './ContextMenu.css';
 import './ConfirmDialog.css';
-import Header from './Header';
-import FAB from './FAB';
-import Icon from './Icon';
+import SearchBar from './search-bar.jsx';
+import Icon from './icons.jsx';
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
 import ContextMenu from './ContextMenu';
 import ConfirmDialog from './ConfirmDialog';
 import RenameModal from './RenameModal';
+import MiniBreadcrumb from './MiniBreadcrumb.jsx';
 import * as cache from './cache';
 
 
@@ -224,7 +224,9 @@ function FileExplorer({ repo }) {
 
   return (
     <div className="file-explorer">
-      <Header path={path} onNavigate={setPath} repo={repo} />
+      <div className="search-wrapper">
+        <SearchBar repo={repo} />
+      </div>
       <div className="file-grid">
         {Array.isArray(files) && files.map(file => (
           <FileTile
@@ -238,20 +240,31 @@ function FileExplorer({ repo }) {
         ))}
       </div>
       <div className="bottom-toolbar">
-        <button className="toolbar-button" onClick={() => handleOpen()} disabled={!selectedFile}>
-          <Icon name="document" />
-          <span>Open</span>
-        </button>
-        <button className="toolbar-button" onClick={() => handleDuplicate()} disabled={!canDuplicate}>
-          <Icon name="duplicate" />
-          <span>Duplicate</span>
-        </button>
-        <button className="toolbar-button" onClick={handleUpOneLayer} disabled={isAtRoot}>
-          <Icon name="arrow-up" />
-          <span>{isAtRoot ? 'Up' : `Up to "${getParentFolderName()}"`}</span>
-        </button>
+        <div className="toolbar-section">
+          <button className="toolbar-button" onClick={() => handleOpen()} disabled={!selectedFile}>
+            <Icon name="document" />
+            <span>Open</span>
+          </button>
+          <button className="toolbar-button" onClick={() => handleDuplicate()} disabled={!canDuplicate}>
+            <Icon name="duplicate" />
+            <span>Duplicate</span>
+          </button>
+        </div>
+        <div className="toolbar-section-center">
+          <button className="toolbar-button create-button" onClick={() => setCreateModalOpen(true)}>
+            <Icon name="plus" />
+          </button>
+        </div>
+        <div className="toolbar-section">
+          <div className="up-button-container">
+            <button className="toolbar-button" onClick={handleUpOneLayer} disabled={isAtRoot}>
+              <Icon name="arrow-up" />
+              <span>{isAtRoot ? 'Up' : `Up to "${getParentFolderName()}"`}</span>
+            </button>
+            <MiniBreadcrumb path={path} onNavigate={setPath} />
+          </div>
+        </div>
       </div>
-      <FAB onClick={() => setCreateModalOpen(true)} />
       {isCreateModalOpen && (
         <CreateModal
           path={path}
