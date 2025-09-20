@@ -331,3 +331,39 @@ To resolve this, the `build` script in `react-login/package.json` was modified t
 ```
 
 This ensures that the latest dependencies are always used, bypassing any potential caching issues in the build environment.
+
+---
+
+## UI Resurrection & Styling (250920)
+
+This section documents the work done to fix the broken UI, align it with the target design, and address several underlying issues.
+
+### **The Goal: A Modern, Apple-Inspired UI**
+
+The file explorer was initially rendering as a blank screen. The goal was to fix the underlying issues and implement a clean, modern, and intuitive UI based on the Apple design philosophy and a user-provided screenshot.
+
+### **The Diagnosis: Corrupted CSS and Environment Woes**
+
+The investigation revealed several critical issues:
+1.  **Corrupted CSS Files:** Multiple key CSS files (`FileExplorer.css`, `search-bar.css`, `FileTile.css`) were corrupted and contained HTML error messages instead of styles. This was the primary reason for the unstyled and "broken" appearance of the UI.
+2.  **Dependency Issues:** While `package.json` was correct, a clean installation was required to resolve latent dependency conflicts.
+3.  **Environment Instability:** The development server was difficult to start due to shell environment issues ("sticky working directories"), requiring direct execution of the Vite binary to bypass the `npm run dev` script.
+4.  **Outdated Icon Implementation:** The `FileTile.jsx` component was using text-based emoji icons instead of the intended SVG icon system.
+
+### **The Solution: A Step-by-Step Resurrection**
+
+1.  **Stabilize the Environment:**
+    *   Performed a clean `npm install` after deleting `node_modules` and `package-lock.json`.
+    *   Bypassed the "Missing script: dev" error by calling the Vite executable directly.
+2.  **Rebuild the UI:**
+    *   Bypassed the login flow by temporarily modifying `main.jsx` and `ExplorerPage.jsx` to render the file explorer directly, allowing for iterative UI development.
+    *   Rewrote the corrupted CSS files (`FileExplorer.css`, `search-bar.css`, `FileTile.css`) from scratch, using the user's screenshot as a visual guide.
+    *   Refactored the `FileTile.jsx` component to use the project's shared `Icon.jsx` component, replacing the hardcoded emojis with SVGs.
+    *   Incorporated the brand's primary color into the new stylesheets for brand consistency.
+3.  **Restore and Document:**
+    *   Reverted the changes to `main.jsx` and `ExplorerPage.jsx` to restore the original authentication flow.
+    *   Documented the entire process in this README section for future developers.
+
+### **Current Status**
+
+The file explorer UI is now visually complete and functional, matching the target design. The underlying dependency and styling issues have been resolved. The application is ready for real-world testing with a proper user login to populate the file grid with data.

@@ -1,136 +1,59 @@
-:root {
-  /* Defining colors here to be used in this component and potentially others */
-  --blue: #003971;
-  --soft-blue-bg: hsl(208, 100%, 97%);
-  --soft-blue-border: hsl(208, 100%, 90%);
-  --neutral-grey-bg: #f8f9fa;
-  --neutral-grey-border: #e9ecef;
-  --rename-blue: #007bff;
-  --delete-red: #dc3545;
-}
-
 .file-tile {
-  background-color: transparent; /* Cleaner look */
-  border-bottom: 2px solid #003971; /* Blue border for files */
-  border-right: 2px solid #003971; /* Blue border for files */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
   border-radius: 12px;
-  padding: 0.5rem; /* Reduced padding */
-  text-align: center;
   cursor: pointer;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  aspect-ratio: 1 / 1;
-  width: 100%;
-  height: 100%;
-  z-index: 2;
-  user-select: none; /* Prevent text selection on long press */
-}
-
-.tile-content {
-  /* This new wrapper is needed for the ripple effect to work correctly */
-  /* with the new swipe container structure. */
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  border-radius: 12px;
-}
-
-/* --- Ripple Effect --- */
-.ripple {
-  position: absolute;
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.1);
-  transform: scale(0);
-  animation: ripple-animation 0.6s linear;
-}
-
-@keyframes ripple-animation {
-  to {
-    transform: scale(4);
-    opacity: 0;
-  }
+  background-color: transparent;
+  border: 2px solid transparent;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+  text-align: center;
 }
 
 .file-tile:hover {
-  /* Hover effect is disabled when swiping might occur */
-  /* A different UX would be needed for hover on touch devices */
+  background-color: #f0f2f5;
 }
 
 .file-tile.selected {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px hsla(208, 100%, 22%, 0.3);
+  background-color: #e5f1ff; /* A light blue to indicate selection */
+  border-color: #007aff;
 }
 
-/* --- Swipe Actions (removed) --- */
-
-/* --- Folder vs. File Differentiation --- */
-.file-tile.is-folder {
-  border-bottom: 2px solid #006300; /* Green border for folders */
-  border-right: 2px solid #006300; /* Green border for folders */
-}
-
-.file-tile.is-folder .icon {
-  color: var(--accent-color, #2962ff); /* Use accent color for folders */
-}
-
-/* --- Icons --- */
-.file-tile .icon {
-  margin-bottom: 0.75rem;
-  color: #555;
-  /* SVG inherits color via 'currentColor', so we set it here */
-}
-
-.file-tile .icon svg {
-  width: 48px; /* Larger, clearer icons */
-  height: 48px;
-}
-
-.file-tile .name {
-  font-size: 13px; /* Slightly smaller font */
-  font-weight: 500; /* Medium weight for clarity */
-  color: var(--text-color-primary);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-height: 2.4em; /* Adjust to fit 2 lines */
-  line-height: 1.2em;
-  margin-top: 8px; /* Give space from the icon */
-  margin-bottom: 4px;
-}
-
-.metadata {
+.file-tile-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 8px;
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-tile-icon svg {
   width: 100%;
+  height: 100%;
+}
+
+/* Style for folder icons, based on the screenshot */
+.file-tile-icon .folder-icon {
+  stroke: #007aff;
+}
+
+/* Style for file icons */
+.file-tile-icon .file-icon {
+  stroke: #8e8e93;
+}
+
+.file-tile-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1c1c1e;
+  word-break: break-word;
+}
+
+.file-tile-metadata {
   font-size: 12px;
-  color: var(--text-color-secondary);
-  padding: 0 4px;
-}
-
-.metadata-placeholder {
-  /* This ensures the tile keeps its height while metadata is loading */
-  min-height: 1em;
-}
-
-.metadata-author {
-  max-width: 60%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: left;
-}
-
-.metadata-date {
-  text-align: right;
-  white-space: nowrap;
+  color: #8e8e93;
+  margin-top: 4px;
 }
