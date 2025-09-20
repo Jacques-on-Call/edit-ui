@@ -45,6 +45,7 @@ const getIconNameForFile = (file) => {
       return 'image';
     case 'md':
     case 'mdx':
+    case 'astro':
       return 'file-text';
     case 'js':
     case 'jsx':
@@ -53,7 +54,6 @@ const getIconNameForFile = (file) => {
     case 'css':
     case 'html':
     case 'json':
-    case 'astro':
       return 'code';
     default:
       return 'file'; // Use the new generic 'file' icon
