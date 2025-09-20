@@ -511,3 +511,4 @@ After reverting all previous changes and carefully re-examining the original `cl
 ### **Open Questions**
 
 *   **Search Snippets:** The GitHub Search API can return snippets of the matching text within a file. The frontend could be enhanced to display these snippets in the search results, providing users with more context about why a particular file was returne
+<!-- Triggering deployment for environment variable update -->
