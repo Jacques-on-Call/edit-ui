@@ -39,59 +39,25 @@ const getIconNameForFile = (file) => {
   return 'document';
 };
 
-function FileTile({ file, isSelected, metadata, onClick, onLongPress, onRename, onDelete }) {
+function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
   const iconName = getIconNameForFile(file);
   const tileClassName = `file-tile ${isSelected ? 'selected' : ''} ${file.type === 'dir' ? 'is-folder' : ''}`;
 
-  const [translateX, setTranslateX] = useState(0);
   const [ripples, setRipples] = useState([]);
-  const swipeStartX = useRef(null);
   const pressTimer = useRef(null);
-  const isSwiping = useRef(false);
 
   const handlePointerDown = (e) => {
     if (e.button === 2) return;
-    swipeStartX.current = e.clientX;
-    isSwiping.current = false;
     pressTimer.current = setTimeout(() => {
       onLongPress(file, e);
     }, 500);
   };
   
-  const handlePointerMove = (e) => {
-    if (swipeStartX.current === null) return;
-
-    const currentX = e.clientX;
-    const diff = currentX - swipeStartX.current;
-
-    // Start swiping only after a certain threshold
-    if (Math.abs(diff) > 10 || isSwiping.current) {
-      isSwiping.current = true;
-      clearTimeout(pressTimer.current); // Prevent long press if swiping
-      // Allow swiping left only, up to a max of 120px
-      const newTranslateX = Math.min(0, Math.max(-120, diff));
-      setTranslateX(newTranslateX);
-    }
-  };
-
   const handlePointerUp = () => {
     clearTimeout(pressTimer.current);
-    swipeStartX.current = null;
-
-    // Snap logic
-    if (translateX < -60) { // If swiped more than halfway
-      setTranslateX(-120); // Snap open
-    } else {
-      setTranslateX(0); // Snap closed
-    }
   };
 
   const handleOnClick = (e) => {
-    if (isSwiping.current) {
-        isSwiping.current = false;
-        return; // Don't trigger click if it was a swipe
-    }
-    
     // --- Ripple Effect Logic (React Way) ---
     const tile = e.currentTarget.querySelector('.tile-content');
     if (!tile) return;
@@ -123,58 +89,43 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress, onRename, 
     onLongPress(file, e);
   };
   
-  const handleActionClick = (e, action) => {
-      e.stopPropagation(); // Prevent click from bubbling to the tile itself
-      setTranslateX(0); // Close the tile
-      action(file);
-  }
-
   return (
-    <div className="tile-swipe-container">
-      <div className="tile-actions">
-        <button className="action-button rename" onClick={(e) => handleActionClick(e, onRename)}>Rename</button>
-        <button className="action-button delete" onClick={(e) => handleActionClick(e, onDelete)}>Delete</button>
-      </div>
-      <div
-        className={tileClassName}
-        style={{ transform: `translateX(${translateX}px)`, transition: swipeStartX.current === null ? 'transform 0.3s ease' : 'none' }}
-        onClick={handleOnClick}
-        onMouseDown={handlePointerDown}
-        onMouseMove={handlePointerMove}
-        onMouseUp={handlePointerUp}
-        onMouseLeave={handlePointerUp} // End swipe if mouse leaves tile
-        onTouchStart={handlePointerDown}
-        onTouchMove={handlePointerMove}
-        onTouchEnd={handlePointerUp}
-        onContextMenu={handleContextMenu}
-      >
-        <div className="tile-content">
-          {ripples.map(r => (
-            <span
-              key={r.key}
-              className="ripple"
-              style={{
-                left: r.x,
-                top: r.y,
-                width: r.size,
-                height: r.size,
-              }}
-            />
-          ))}
-          <div className="icon">
-            <Icon name={iconName} />
-          </div>
-          <div className="name">{formatDisplayName(file.name)}</div>
-          <div className="metadata">
-            {metadata ? (
-              <>
-                <span className="metadata-author">{metadata.author.split(' ')[0]}</span>
-                <span className="metadata-date">{formatRelativeDate(metadata.date)}</span>
-              </>
-            ) : (
-              <span className="metadata-placeholder">--</span>
-            )}
-          </div>
+    <div
+      className={tileClassName}
+      onClick={handleOnClick}
+      onMouseDown={handlePointerDown}
+      onMouseUp={handlePointerUp}
+      onMouseLeave={handlePointerUp}
+      onTouchStart={handlePointerDown}
+      onTouchEnd={handlePointerUp}
+      onContextMenu={handleContextMenu}
+    >
+      <div className="tile-content">
+        {ripples.map(r => (
+          <span
+            key={r.key}
+            className="ripple"
+            style={{
+              left: r.x,
+              top: r.y,
+              width: r.size,
+              height: r.size,
+            }}
+          />
+        ))}
+        <div className="icon">
+          <Icon name={iconName} />
+        </div>
+        <div className="name">{formatDisplayName(file.name)}</div>
+        <div className="metadata">
+          {metadata ? (
+            <>
+              <span className="metadata-author">{metadata.author.split(' ')[0]}</span>
+              <span className="metadata-date">{formatRelativeDate(metadata.date)}</span>
+            </>
+          ) : (
+            <span className="metadata-placeholder">--</span>
+          )}
         </div>
       </div>
     </div>

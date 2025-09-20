@@ -9,17 +9,10 @@
   --delete-red: #dc3545;
 }
 
-.tile-swipe-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: 12px;
-  overflow: hidden; /* Hide the actions panel */
-}
-
 .file-tile {
   background-color: transparent; /* Cleaner look */
-  border: none; /* Remove border */
+  border-bottom: 2px solid #003971; /* Blue border for files */
+  border-right: 2px solid #003971; /* Blue border for files */
   border-radius: 12px;
   padding: 0.5rem; /* Reduced padding */
   text-align: center;
@@ -34,7 +27,6 @@
   height: 100%;
   z-index: 2;
   user-select: none; /* Prevent text selection on long press */
-  box-shadow: 0 2px 4px rgba(0, 100, 0, 0.2); /* Green shadow for files */
 }
 
 .tile-content {
@@ -77,47 +69,12 @@
   box-shadow: 0 0 0 3px hsla(208, 100%, 22%, 0.3);
 }
 
-/* --- Swipe Actions --- */
-.tile-actions {
-  position: absolute;
-  top: 0;
-  right: 0;
-  height: 100%;
-  display: flex;
-  z-index: 1; /* Below the tile */
-}
-
-.action-button {
-  height: 100%;
-  border: none;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 0 1rem;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s ease;
-}
-
-.action-button.rename {
-  background-color: #5c9be4; /* Lighter blue */
-}
-.action-button.rename:hover {
-  background-color: #4a8ad9;
-}
-
-.action-button.delete {
-  background-color: #e4717a; /* Lighter red */
-}
-.action-button.delete:hover {
-  background-color: #d9626b;
-}
+/* --- Swipe Actions (removed) --- */
 
 /* --- Folder vs. File Differentiation --- */
 .file-tile.is-folder {
-  box-shadow: 0 2px 4px rgba(0, 57, 113, 0.3); /* Blue shadow for folders */
+  border-bottom: 2px solid #006300; /* Green border for folders */
+  border-right: 2px solid #006300; /* Green border for folders */
 }
 
 .file-tile.is-folder .icon {
