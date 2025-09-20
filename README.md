@@ -367,3 +367,28 @@ The investigation revealed several critical issues:
 ### **Current Status**
 
 The file explorer UI is now visually complete and functional, matching the target design. The underlying dependency and styling issues have been resolved. The application is ready for real-world testing with a proper user login to populate the file grid with data.
+
+---
+
+## UI Regression Fixes (250920)
+
+This section documents the fixes implemented to address several UI regressions that were identified after the initial redesign.
+
+### **The Regressions**
+
+After the UI resurrection, several issues were reported:
+1.  **Broken Search:** The search functionality was no longer displaying results.
+2.  **Missing Styles:** The intended styles for SVG icons (size, color) and metadata text were not being applied.
+3.  **Incorrect Selection Color:** The selection highlight was not using the correct brand colors for files vs. folders.
+4.  **Context Menu Issues:** The long-press context menu was still triggering the native browser text selection menu.
+
+### **The Investigation and Solutions**
+
+*   **Missing Styles:** The investigation revealed that the previous attempt to apply the corrected CSS styles had failed to save correctly. The primary fix was to **re-apply the correct styles** to `FileTile.css`, which resolved the issues with SVG icon size/color, metadata spacing, and selection colors.
+*   **Broken Search:** The search results dropdown was being hidden by other UI elements. This was fixed by increasing the `z-index` of the `.search-results` class in `search-bar.css`.
+*   **Context Menu:** The issue with the native text selection menu was resolved by adding `user-select: none;` to the `.file-tile` class, preventing the browser from interpreting a long press as a text selection event. The positioning was also corrected in `FileExplorer.jsx` to use page-relative coordinates.
+*   **Build Integrity:** A major underlying issue was discovered where running `npm install` only within the `react-login` directory created an inconsistent `package-lock.json`, breaking the root project's Astro build. The solution was to delete the incorrect lockfile and run `npm install` from the project root, which generated a unified and correct lockfile for the entire project.
+
+### **Current Status**
+
+All reported UI regressions have been addressed. The application now correctly displays the modern UI, and the build process is stable. The component is ready for use.
