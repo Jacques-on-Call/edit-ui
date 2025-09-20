@@ -32,28 +32,28 @@
   border-color: #006300; /* Green for files */
 }
 
-.icon {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 12px; /* Increased space for a cleaner look */
+.file-tile-icon {
+  width: 80px; /* Increased size */
+  height: 80px; /* Increased size */
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.icon svg {
+.file-tile-icon svg {
   width: 100%;
   height: 100%;
 }
 
-/* Set icon color for folders */
-.is-folder .icon {
-  color: #003971; /* Brand Blue */
+/* Style for folder icons */
+.file-tile-icon .folder-icon {
+  stroke: #003971; /* Brand Blue */
 }
 
-/* Set icon color for files */
-.is-file .icon {
-  color: #006300; /* Brand Green */
+/* Style for file icons */
+.file-tile-icon .file-icon {
+  stroke: #006300; /* Brand Green */
 }
 
 .file-tile-name {
