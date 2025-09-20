@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import './App.css';
 import RepoSelector from './RepoSelector';
 
-// The Client ID is now read from the Vite environment variables
+// The Client ID and Redirect URI are now read from Vite environment variables
 // See https://vitejs.dev/guide/env-and-mode.html
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
-const REDIRECT_URI = 'https://edit.strategycontent.agency/callback';
+const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
 
 function App() {
   const [user, setUser] = useState(null);
@@ -40,10 +40,9 @@ function App() {
     // Store the state in a temporary, secure cookie.
     // This is more reliable than sessionStorage across cross-origin redirects.
     // SameSite=None is required for the cookie to be sent in the cross-site
-    // redirect from GitHub.
-    document.cookie = `oauth_state=${state}; path=/; max-age=600; SameSite=Lax; Secure`;
+    // redirect from GitHub. The Secure attribute is also required.
+    document.cookie = `oauth_state=${state}; path=/; max-age=600; SameSite=None; Secure`;
     console.log('OAuth state cookie set in App.jsx:', document.cookie);
-    console.log('OAuth state cookie set:', document.cookie);
 
     const authUrl = new URL('https://github.com/login/oauth/authorize');
     authUrl.searchParams.set('client_id', GITHUB_CLIENT_ID);

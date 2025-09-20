@@ -1,3 +1,46 @@
+# Architect's High-Level Debugging Analysis (250920)
+
+**Note from Jules, Software Architect:** This analysis was conducted on 250920 to provide a fresh, high-level perspective on the state of the `react-login` project. It is intended to guide future developers by summarizing the architecture and highlighting the most critical areas for attention. The detailed historical log below this section is invaluable and should be read for context.
+
+---
+
+## 1. Architectural Overview
+
+This project is a sophisticated **frontend-only application** designed to interact with a separate, proprietary **backend service**.
+
+-   **Frontend:** A React Single-Page Application (SPA) built with Vite. It handles the user interface for file exploration and content editing.
+-   **Backend (External):** The backend is hosted at `https://edit.strategycontent.agency`. It manages the entire GitHub OAuth2 flow, session management (via `HttpOnly` cookies), and all interactions with the GitHub API.
+
+**Key Implication:** The frontend cannot run standalone. For local development, the `vite.config.js` is correctly configured to proxy all `/api` requests to the production backend. However, any work on the authentication flow itself will be difficult to test without access to the backend's logic or logs.
+
+## 2. Key Areas of Concern & Recommendations
+
+The codebase is functional, but several underlying issues pose significant risks to future development, stability, and maintainability.
+
+### a. Configuration Management
+
+-   **Issue:** The OAuth `REDIRECT_URI` is hardcoded in `src/App.jsx`. This tethers the application to the production domain and complicates local testing or deployment to a staging environment.
+-   **Recommendation:** Convert the `REDIRECT_URI` into an environment variable (e.g., `VITE_REDIRECT_URI`), similar to how `VITE_GITHUB_CLIENT_ID` is handled. This is the single most important change to improve the developer experience.
+
+### b. Authentication Flow
+
+-   **Potential Bug:** In `src/App.jsx`, the CSRF state cookie is set with `SameSite=Lax`. For cross-origin OAuth redirects, this should almost certainly be `SameSite=None; Secure`. This is a potential bug that could cause the login to fail under specific browser conditions.
+-   **UX Improvement:** The flow relies on `window.location.reload()` after a successful login. A more modern approach would be to update the application's state in place, providing a smoother user experience without a full page refresh.
+
+### c. Dependency Management & Build Process
+
+-   **Symptom:** The `build` script in `package.json` (`rm -rf node_modules && ...`) is a forceful workaround, not a solution.
+-   **Root Cause:** The `README.md` history strongly suggests this project is part of a larger monorepo (with an Astro project at the root). The aggressive build script is likely necessary to resolve conflicting dependencies or a corrupted `package-lock.json` between the two projects.
+-   **Recommendation:** The dependency issues are a major source of friction. A proper fix would involve setting up a formal monorepo using tools like **npm workspaces** or **pnpm**. This would resolve the dependency conflicts, stabilize the build process, and eliminate the need for the aggressive build script.
+
+### d. Environment Stability (Critical Risk)
+
+-   **Issue:** The `README.md` contains numerous reports of a **highly unstable development environment**. This includes file changes being silently reverted, inconsistent shell behavior, and tools failing without clear cause.
+-   **Recommendation:** This is the **highest priority risk** for any developer. Before attempting significant feature work, the stability of the development and deployment environment must be investigated. The current state has led to lost work and regressions, and it will continue to do so until the root cause is found and fixed. It is unclear if the issue lies with the sandbox environment, the Cloudflare build cache, or the monorepo dependency conflicts, but it must be addressed.
+
+---
+
+
 # CURRENT STATUS & FINAL SOLUTION (As of 2025-09-16 02:38)
 
 Thank you for the latest error report. The information you provided is excellent news, as it proves you have successfully deployed the new frontend code. The login URL is now correct (`...&state=...`) and no longer contains the old `code_challenge` parameter.

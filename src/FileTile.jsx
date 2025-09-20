@@ -29,14 +29,37 @@ function formatDisplayName(name) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-// Updated logic to be more specific with icons in the future
+// Updated logic to be more specific with icons
 const getIconNameForFile = (file) => {
   if (file.type === 'dir') {
     return 'folder';
   }
-  // This can be expanded later with more file types
-  // For now, all files are considered 'document'
-  return 'document';
+  const extension = file.name.split('.').pop().toLowerCase();
+  switch (extension) {
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+    case 'gif':
+    case 'webp':
+    case 'svg':
+      return 'image';
+    case 'js':
+    case 'jsx':
+    case 'ts':
+    case 'tsx':
+      return 'code';
+    case 'css':
+    case 'scss':
+      return 'code';
+    case 'html':
+      return 'code';
+    case 'json':
+      return 'code';
+    case 'md':
+      return 'document';
+    default:
+      return 'document';
+  }
 };
 
 function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {

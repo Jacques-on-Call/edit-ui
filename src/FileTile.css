@@ -1,70 +1,96 @@
+/* FileTile.css */
+
 .file-tile {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 16px;
   border-radius: 12px;
+  padding: 16px;
   cursor: pointer;
-  background-color: transparent;
-  border: 2px solid transparent;
-  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
-  text-align: center;
-  user-select: none; /* Prevent text selection on long press */
+  transition: background-color 0.2s ease-in-out;
+  background-color: #f0f0f0; /* Light grey background */
+  border: 1px solid transparent;
+  user-select: none; /* Prevents text selection on long press */
 }
 
-.file-tile:hover {
-  background-color: #f0f2f5;
+.file-tile.is-folder {
+  background-color: #e0eafc; /* Light blue for folders */
 }
 
-/* Default selected state */
 .file-tile.selected {
-  border-color: #003971; /* Default to blue */
+  background-color: #c7d7fe; /* A darker blue for selection */
+  border-color: #a3bffa;
 }
 
-/* Specific selection color for folders */
-.file-tile.selected.is-folder {
-  border-color: #003971; /* Blue for folders */
-}
-
-/* Specific selection color for files */
-.file-tile.selected.is-file {
-  border-color: #006300; /* Green for files */
-}
-
-.icon {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 12px; /* Increased space for a cleaner look */
+.file-tile .tile-content {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-}
-
-.icon svg {
+  text-align: center;
   width: 100%;
-  height: 100%;
+  position: relative;
+  overflow: hidden; /* For ripple effect */
 }
 
-/* Set icon color for folders */
-.is-folder .icon {
-  color: #003971; /* Brand Blue */
+.file-tile .icon {
+  margin-bottom: 8px;
 }
 
-/* Set icon color for files */
-.is-file .icon {
-  color: #006300; /* Brand Green */
+/* Style the SVG icons from icons.jsx */
+.file-tile .icon svg {
+  width: 48px;
+  height: 48px;
+  stroke-width: 1.5;
+  color: #555;
 }
 
-.file-tile-name {
+.file-tile.is-folder .icon svg {
+    color: #4a80f0; /* Blue for folder icons */
+}
+
+.file-tile .name {
   font-size: 14px;
   font-weight: 500;
-  color: #1c1c1e;
+  color: #333;
   word-break: break-word;
-  margin-bottom: 8px; /* Add space between name and metadata */
+  line-height: 1.2;
+  max-height: 2.4em; /* Limit to 2 lines */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.file-tile-metadata {
-  font-size: 10px; /* Smaller font size */
-  color: #8e8e93; /* Grey color */
+.file-tile .metadata {
+  font-size: 12px;
+  color: #777;
+  margin-top: 4px;
+}
+
+.file-tile .metadata-author {
+  font-weight: 500;
+}
+
+.file-tile .metadata-date {
+  margin-left: 4px;
+}
+
+.file-tile .metadata-placeholder {
+  color: #bbb;
+}
+
+/* Ripple effect styles */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: scale(0);
+  animation: ripple-animation 0.6s linear;
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
 }
