@@ -392,3 +392,43 @@ After the UI resurrection, several issues were reported:
 ### **Current Status**
 
 All reported UI regressions have been addressed. The application now correctly displays the modern UI, and the build process is stable. The component is ready for use.
+
+---
+## UI Refinement & Fixes (250920)
+
+This section documents the work done to address user feedback, fix a major UI regression, and resolve a critical bug in the "Create New" modal.
+
+### **The Goal: A Polished and Functional UI**
+The objective was to fix several issues reported by the user after a series of unstable updates. The key tasks were:
+1.  **Fix UI Regression:** Restore all the "Apple-inspired" UI refinements that were lost, including icon colors, file-type specific icons, and layout spacing.
+2.  **Fix Create Modal:** Correct the "Create New" modal, which was missing its "Create" button and had flawed logic.
+3.  **Refine Iconography:** Ensure `.astro` files were treated as documents (paper icon), not code (`<>` icon).
+
+### **The Implementation: A Full Restoration**
+
+After a series of environment-related issues that caused previous changes to be lost, a full restoration of all features was required. This was done by systematically overwriting the relevant files with their correct and final content.
+
+*   **`FileTile.css`:** The stylesheet for file/folder tiles was overwritten to restore the correct icon coloring (blue for folders, green for files via the `.is-folder`/`.is-file` classes) and the increased `margin-bottom` for better spacing.
+*   **`icons.jsx`:** The icon library was overwritten to re-introduce the full set of file-type specific icons (`file-text`, `image`, `code`) that had been lost.
+*   **`FileTile.jsx`:** The component was overwritten to restore the `getIconNameForFile` logic, which correctly assigns icons based on file extension (including mapping `.astro` to `file-text`).
+*   **`CreateModal.jsx`:** This file was overwritten with a fully functional version that includes:
+    *   A visible "Create" button to allow form submission.
+    *   Corrected logic to only append the `.astro` extension to files, not folders.
+    *   An `alert()` to confirm successful creation.
+    *   More descriptive UI text for a better user experience.
+
+### **The Struggle: A Hostile and Unreliable Environment**
+
+This task was dominated by severe and persistent issues with the development environment. These issues were the root cause of the UI regression and the multiple failed attempts to fix the "Create" modal.
+
+*   **The Problem:** The agent's workspace was unstable. Changes made to files were being silently reverted, leading to a state where the local files appeared correct to the agent's tools (`read_file`), but were not being correctly included in commits. This created a frustrating loop where fixes were implemented but never reached the user.
+*   **Key Symptoms:**
+    *   `npm install` failures due to peer dependency conflicts in the monorepo.
+    *   Unreliable shell commands (`cd` failing).
+    *   File patch/write tools (`replace_with_git_merge_diff`, `create_file_with_block`) appearing to succeed, but the changes not persisting in the final commit.
+*   **The Solution:** The only successful method for applying changes was to use the forceful `overwrite_file_with_block` command for every single affected file in sequence. This "scorched earth" approach was necessary to bypass the environment's state-management flaws and ensure the final commit contained the correct code.
+
+### **Questions for Future Developers**
+
+*   **Environment Stability:** The primary question is how to create a stable local development environment for this project. The root-level dependency conflicts between the Astro site and the React app need to be resolved. Can this be done with `npm workspaces` or a similar monorepo tool?
+*   **Toolchain Reliability:** Why were file modifications being silently reverted? Understanding this is key to trusting the development tools in the future. A thorough investigation into the sandbox or container setup may be required.

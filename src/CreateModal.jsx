@@ -102,9 +102,6 @@ function CreateModal({ path, repo, onClose, onCreate }) {
             <button type="submit" className="btn-create" disabled={isCreating}>
               {isCreating ? 'Creating...' : 'Create'}
             </button>
-            <button style={{ display: 'block', visibility: 'visible', backgroundColor: 'red', color: 'white', padding: '10px' }}>
-              Test Button
-            </button>
           </div>
         </form>
       </div>
