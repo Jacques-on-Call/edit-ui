@@ -41,7 +41,7 @@ const getIconNameForFile = (file) => {
 
 function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
   const iconName = getIconNameForFile(file);
-  const tileClassName = `file-tile ${isSelected ? 'selected' : ''} ${file.type === 'dir' ? 'is-folder' : ''}`;
+  const tileClassName = `file-tile ${isSelected ? 'selected' : ''} ${file.type === 'dir' ? 'is-folder' : 'is-file'}`;
 
   const [ripples, setRipples] = useState([]);
   const pressTimer = useRef(null);

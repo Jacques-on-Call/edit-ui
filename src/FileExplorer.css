@@ -2,7 +2,7 @@
 .file-explorer {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100svh; /* Use small viewport height to account for mobile browser UI */
   background-color: #f0f2f5; /* A light grey, clean background */
 }
 
@@ -31,6 +31,8 @@
   background-color: #ffffff;
   border-top: 1px solid #d9d9d9;
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  bottom: 0;
 }
 
 .toolbar-section {

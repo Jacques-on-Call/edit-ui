@@ -10,20 +10,31 @@
   border: 2px solid transparent;
   transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
   text-align: center;
+  user-select: none; /* Prevent text selection on long press */
 }
 
 .file-tile:hover {
   background-color: #f0f2f5;
 }
 
+/* Default selected state */
 .file-tile.selected {
-  background-color: #e5f1ff; /* A light blue to indicate selection */
-  border-color: #007aff;
+  border-color: #003971; /* Default to blue */
+}
+
+/* Specific selection color for folders */
+.file-tile.selected.is-folder {
+  border-color: #003971; /* Blue for folders */
+}
+
+/* Specific selection color for files */
+.file-tile.selected.is-file {
+  border-color: #006300; /* Green for files */
 }
 
 .file-tile-icon {
-  width: 64px;
-  height: 64px;
+  width: 80px; /* Increased size */
+  height: 80px; /* Increased size */
   margin-bottom: 8px;
   display: flex;
   align-items: center;
@@ -35,14 +46,14 @@
   height: 100%;
 }
 
-/* Style for folder icons, based on the screenshot */
+/* Style for folder icons */
 .file-tile-icon .folder-icon {
-  stroke: #007aff;
+  stroke: #003971; /* Brand Blue */
 }
 
 /* Style for file icons */
 .file-tile-icon .file-icon {
-  stroke: #8e8e93;
+  stroke: #006300; /* Brand Green */
 }
 
 .file-tile-name {
@@ -50,10 +61,10 @@
   font-weight: 500;
   color: #1c1c1e;
   word-break: break-word;
+  margin-bottom: 8px; /* Add space between name and metadata */
 }
 
 .file-tile-metadata {
-  font-size: 12px;
-  color: #8e8e93;
-  margin-top: 4px;
+  font-size: 10px; /* Smaller font size */
+  color: #8e8e93; /* Grey color */
 }
