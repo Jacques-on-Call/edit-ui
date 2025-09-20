@@ -432,3 +432,39 @@ This task was dominated by severe and persistent issues with the development env
 
 *   **Environment Stability:** The primary question is how to create a stable local development environment for this project. The root-level dependency conflicts between the Astro site and the React app need to be resolved. Can this be done with `npm workspaces` or a similar monorepo tool?
 *   **Toolchain Reliability:** Why were file modifications being silently reverted? Understanding this is key to trusting the development tools in the future. A thorough investigation into the sandbox or container setup may be required.
+=======
+
+## Search Functionality Fix (250920)
+
+This section documents the debugging and resolution of a critical bug where the in-app search was returning no results.
+
+### **The Problem: A Dysfunctional Search**
+
+The primary issue reported was that the search feature was completely non-functional. Searching for terms that were known to exist in file contents and filenames (e.g., "let's chat" or even "let") would consistently return "No results found." This indicated that the search API was being called successfully but was returning an empty set, rather than an error.
+
+### **The Investigation: A Journey of Incorrect Hypotheses**
+
+The debugging process was complex and involved several incorrect theories before the root cause was identified.
+
+1.  **Initial Hypothesis (Incorrect): Restrictive Query.** My first attempt involved making the search query *more* restrictive by wrapping the search term in double quotes (`"${query}"`). The rationale was to improve phrase searching. This was incorrect and likely exacerbated the problem.
+2.  **Second Hypothesis (Incorrect): CSS `z-index` Issue.** The `README.md` mentioned a previous "Broken Search" issue caused by a low `z-index`. I investigated `search-bar.css` and found that the `z-index` was already set to a high value (`100`), ruling this out.
+3.  **Third Hypothesis (Incorrect): Path Filtering.** I then theorized that the `path:src/pages` filter was too restrictive or syntactically incorrect. A diagnostic test was attempted to remove this filter, but this was hampered by a misunderstanding of the testing workflow (I learned that I must submit changes for the user to test, making small, iterative diagnostics impossible).
+
+### **The Solution: The `in:file,path` Qualifier**
+
+After reverting all previous changes and carefully re-examining the original `cloudflare-worker-code.js` and the GitHub API documentation, the true root cause was identified.
+
+*   **What:** The original search query was only searching within file **content**.
+*   **Where:** The bug was located in the `handleSearchRequest` function within `cloudflare-worker-code.js`.
+*   **How:** The original query string was constructed as `` `${query} in:file repo:${repo} path:src/pages` ``. The `in:file` qualifier explicitly told the GitHub API to *only* look at file content.
+*   **Why:** The fix was to change this qualifier to `in:file,path`. This instructs the API to search in **both** the file content and the file path, which includes the filename. This aligns with the user's requirements and provides a comprehensive search. The final, correct query is: `` `${query} in:file,path repo:${repo} path:src/pages` ``.
+
+### **Struggles & Learnings for Future Developers**
+
+*   **Trust the `README`:** The `README.md` for this project is incredibly detailed. The clue about the `z-index` fix, even though it wasn't the current problem, was a valuable part of the debugging process. Always read it carefully.
+*   **Test Workflow:** A key learning was that changes are not testable by the user until they are submitted via a pull request. This makes small, iterative diagnostic changes impractical. Future fixes should be developed with a higher degree of confidence before submission.
+*   **Start with the Basics:** The bug was not in a complex part of the system, but in a single word in the API query. When debugging, it's often best to revert to the original state and question the most basic assumptions about the code's functionality.
+
+### **Open Questions**
+
+*   **Search Snippets:** The GitHub Search API can return snippets of the matching text within a file. The frontend could be enhanced to display these snippets in the search results, providing users with more context about why a particular file was returne

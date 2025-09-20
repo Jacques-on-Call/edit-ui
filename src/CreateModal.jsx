@@ -16,19 +16,9 @@ function CreateModal({ path, repo, onClose, onCreate }) {
     setIsCreating(true);
     setError(null);
 
-    let fullPath;
-    let displayName;
-
-    if (type === 'file') {
-      displayName = `${name}.astro`;
-      fullPath = `${path}/${displayName}`;
-    } else { // type === 'folder'
-      displayName = name;
-      // For folders, GitHub API requires creating a file within it. A .gitkeep is standard.
-      fullPath = `${path}/${displayName}/.gitkeep`;
-    }
-
-    const content = '';
+    // For folders, GitHub API requires creating a file within it. A .gitkeep is standard.
+    const fullPath = type === 'folder' ? `${path}/${name}/.gitkeep` : `${path}/${name}`;
+    const content = ''; // New files will be empty.
 
     try {
       const response = await fetch('/api/file', {
@@ -43,8 +33,7 @@ function CreateModal({ path, repo, onClose, onCreate }) {
         throw new Error(errData.error || 'Failed to create item.');
       }
 
-      alert(`Successfully created ${type}: ${displayName}`);
-      onCreate();
+      onCreate(); // This will trigger a refresh in the parent
       onClose();
     } catch (err) {
       setError(err.message);
@@ -65,7 +54,7 @@ function CreateModal({ path, repo, onClose, onCreate }) {
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={type === 'file' ? "Enter page name (without extension)" : "Enter folder name"}
+              placeholder="Enter name..."
               autoFocus
             />
           </div>
@@ -80,7 +69,7 @@ function CreateModal({ path, repo, onClose, onCreate }) {
                   checked={type === 'file'}
                   onChange={() => setType('file')}
                 />
-                Web Page (.astro)
+                File
               </label>
               <label>
                 <input
