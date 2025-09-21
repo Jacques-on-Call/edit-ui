@@ -4,6 +4,7 @@
   margin-bottom: 16px;
   overflow: hidden;
   transition: all 0.3s ease-in-out;
+  flex-shrink: 0; /* Prevent the component from shrinking in a flex container */
 }
 
 .readme-display.hidden .readme-content {
