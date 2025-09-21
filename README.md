@@ -1,3 +1,43 @@
+# Tiptap to TinyMCE Migration (250921)
+
+This section documents the migration from the Tiptap editor to the TinyMCE editor, including the rationale and the new data pipeline implementation.
+
+---
+
+### Developer Notes: The "Why"
+
+The previous Tiptap implementation was built around a custom, brittle data pipeline.
+
+*   **Old System:** It did not edit Markdown or HTML directly. Instead, it converted a proprietary JSON structure, stored in a `contentBlocks` key inside the file's YAML frontmatter, into a Tiptap-compatible format. This meant it was incapable of editing the content of standard `.md` files or the HTML content within `.astro` files, which was the primary goal.
+*   **New System:** The new implementation using TinyMCE removes the `contentBlocks` abstraction entirely and works with file content directly. It detects the file type and uses a robust data pipeline:
+    *   For **`.astro` files**, it extracts the HTML from the `content` fields in the `sections` array, allows editing, and then reconstructs the file.
+    *   For **`.md` files**, it uses the `marked` library to convert the Markdown body to HTML for the editor, and the `turndown` library to convert the HTML back to Markdown on save.
+
+This new approach is more flexible, more robust, and directly supports the project's actual file formats.
+
+---
+
+### Migration Plan
+
+This was the phased plan followed for the migration.
+
+#### **Phase 1: Foundational Setup & Tiptap Removal**
+The goal of this phase was to remove all legacy Tiptap code and integrate a basic, functional TinyMCE editor.
+*   **Update Dependencies:** Remove all `@tiptap/*` packages and add `@tinymce/tinymce-react`, `marked`, and `turndown`.
+*   **Cleanup Old Code:** Delete obsolete files (`converter.js`, `Toolbar.jsx`, `extensions/`).
+*   **Basic TinyMCE Integration:** Add the TinyMCE CDN script to `index.html`.
+
+#### **Phase 2: Implement New Data Pipeline (Load & Save)**
+This phase focused on correctly reading and writing to `.astro` and `.md` files.
+*   **Refactor File Loading:** The `useEffect` hook in `Editor.jsx` was rewritten to detect file type. It now parses `.astro` file YAML to extract HTML from `sections`, or uses `marked` to convert the body of `.md` files to HTML.
+*   **Refactor File Saving:** The `handleSave` function was rewritten. It now takes the HTML from TinyMCE and either updates the YAML structure for `.astro` files or uses `turndown` to convert the HTML back to Markdown for `.md` files.
+
+#### **Phase 3: Configure the Editor UI/UX**
+With the data pipeline functional, this phase configured the editor to match the user's minimalist, mobile-first vision.
+*   The TinyMCE `init` object was configured with the specified plugins, toolbar, and with the menubar disabled to provide a clean writing experience.
+
+---
+
 # Architect's High-Level Debugging Analysis (250920)
 
 **Note from Jules, Software Architect:** This analysis was conducted on 250920 to provide a fresh, high-level perspective on the state of the `react-login` project. It is intended to guide future developers by summarizing the architecture and highlighting the most critical areas for attention. The detailed historical log below this section is invaluable and should be read for context.
