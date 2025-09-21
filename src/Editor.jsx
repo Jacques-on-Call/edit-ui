@@ -64,7 +64,7 @@ const TinyEditor = () => {
       setFileType(type);
 
       try {
-        const workerUrl = import.meta.env.VITE_WORKER_URL;
+        const workerUrl = import.meta.env.VITE_WORKER_URL || '';
         const apiUrl = `${workerUrl}/api/file?repo=${import.meta.env.VITE_GITHUB_REPO}&path=${path}`;
         console.log(`DEBUG: Fetching file content from: ${apiUrl}`);
         const res = await fetch(apiUrl);
@@ -154,7 +154,7 @@ const TinyEditor = () => {
 
     console.log("DEBUG: Final file content to be saved length:", newFullContent.length);
     const encodedContent = btoa(newFullContent);
-    const workerUrl = import.meta.env.VITE_WORKER_URL;
+    const workerUrl = import.meta.env.VITE_WORKER_URL || '';
     const apiUrl = `${workerUrl}/api/file?repo=${import.meta.env.VITE_GITHUB_REPO}`;
     console.log(`DEBUG: Sending save request to: ${apiUrl}`);
 
