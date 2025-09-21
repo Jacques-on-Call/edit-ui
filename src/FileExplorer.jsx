@@ -131,12 +131,6 @@ function FileExplorer({ repo }) {
     setPath('src/pages');
   };
 
-  const handleUpOneLayer = () => {
-    if (path === 'src/pages') return;
-    const newPath = path.substring(0, path.lastIndexOf('/'));
-    setPath(newPath || 'src/pages');
-  };
-
   const handleDuplicate = async (fileToDuplicate) => {
     const file = fileToDuplicate || selectedFile;
     if (!file || file.type === 'dir') return;
@@ -248,7 +242,6 @@ function FileExplorer({ repo }) {
   if (error) return <div>Error: {error}</div>;
 
   const isAtRoot = path === 'src/pages';
-  const canDuplicate = selectedFile && selectedFile.type !== 'dir';
 
   const getCurrentFolderName = () => {
     if (isAtRoot) return 'Home';

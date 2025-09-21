@@ -7,7 +7,7 @@ import TurndownService from 'turndown';
 
 import './Editor.css';
 
-const TinyEditor = forwardRef(({ initialContent, onContentChange }, ref) => {
+const TinyEditor = forwardRef((props, ref) => {
   const location = useLocation();
   const [file, setFile] = useState(null);
   const [frontmatter, setFrontmatter] = useState({});
@@ -119,7 +119,7 @@ const TinyEditor = forwardRef(({ initialContent, onContentChange }, ref) => {
         onInit={(evt, editor) => editorRef.current = editor}
         initialValue="<p>Loading content...</p>"
         value={content}
-        onEditorChange={(newContent, editor) => setContent(newContent)}
+        onEditorChange={(newContent) => setContent(newContent)}
         init={{
           height: '100%',
           menubar: false,
