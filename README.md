@@ -1,3 +1,17 @@
+# Editor Debugging & Refinement (250921)
+
+This log documents the work being done to debug, enhance, and redesign the TinyMCE editor, starting on 250921.
+
+### Phase 1: Diagnostic Logging
+
+To diagnose why the editor may not be functioning correctly in the deployment environment, extensive logging has been added to `src/Editor.jsx`.
+
+*   **What:** Added detailed `console.log` statements prefixed with `DEBUG:` throughout the component's lifecycle.
+*   **Why:** This will trace the complete flow of data, from initialization and API calls to content parsing and rendering within the TinyMCE instance. This is a necessary first step to understand the root cause of the issue.
+*   **Next Steps:** The application should be deployed with these changes. The browser's developer console logs will need to be captured and analyzed to identify the point of failure.
+
+---
+
 # Tiptap to TinyMCE Migration (250921)
 
 This section documents the migration from the Tiptap editor to the TinyMCE editor, including the rationale and the new data pipeline implementation.
