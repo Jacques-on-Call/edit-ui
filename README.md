@@ -40,6 +40,43 @@ The codebase is functional, but several underlying issues pose significant risks
 
 ---
 
+## Monorepo Stabilization & UI Bug Squashing (250921)
+
+This section documents the work done by agent Jules to stabilize the monorepo environment and fix critical UI bugs.
+
+### The Problem: A Tale of Two Reacts
+
+The primary source of instability in this project was a fundamental dependency conflict between the root Astro project and the `react-login` workspace.
+
+*   **What:** The root project used `astro-decap-cms`, which required an older version of React (~18.x). The `react-login` app was built on React 19.
+*   **Why:** This conflict caused `npm install` to fail with numerous peer dependency warnings, leading to an unstable `node_modules` directory. This was the true root cause of the issues previously attributed to an unstable development environment.
+*   **How:** The user clarified that `decap-cms` is being deprecated. This allowed us to solve the problem by completely removing the `astro-decap-cms` dependency from the root `package.json`.
+
+After removing the conflicting package, we successfully set up the project as a formal **npm workspace**. This unified the dependency management and created a stable foundation for future development.
+
+### UI Bug Fixes
+
+With a stable environment, two critical UI bugs were addressed:
+
+1.  **Broken Search:**
+    *   **Symptom:** Search was returning no results.
+    *   **Root Cause:** A data mismatch between the backend and frontend. The backend worker at `/api/search` returned a direct JSON array of results, but the frontend component (`src/search-bar.jsx`) was incorrectly expecting an object with a `.items` property (i.e., `data.items`).
+    *   **Fix:** The frontend was corrected to handle the array directly (`setResults(data || [])`), immediately fixing the search functionality.
+
+2.  **"Create New" Modal Failures:**
+    *   **Symptom:** The modal showed a "Failed to create item" error.
+    *   **Root Cause:** The component (`src/CreateModal.jsx`) was sending empty content for new files, which is rejected by the GitHub API. It also lacked the logic to automatically append the `.astro` extension, a feature that was previously implemented but had been lost in a prior update.
+    *   **Fix:** The modal logic was rewritten to:
+        *   Automatically append `.astro` to filenames if not already present.
+        *   Provide a default placeholder content (`---\n# Add your frontmatter here\n---\n\n# Start your content here\n`) for all new files, satisfying the GitHub API requirement.
+        *   Correctly handle file creation in the repository root.
+
+### Questions for Future Developers
+
+*   **TinyMCE Integration:** The user mentioned a future goal of integrating TinyMCE. How will this interact with the existing TipTap editor pipeline? Will it replace it, or will they coexist?
+*   **Astro Project Dependencies:** With `decap-cms` removed, are there other dependencies in the root `package.json` that are no longer needed for the Astro site? A review could simplify the project further.
+
+---
 
 # CURRENT STATUS & FINAL SOLUTION (As of 2025-09-16 02:38)
 
@@ -294,6 +331,7 @@ An open question I have is how to best handle the API endpoints for saving and l
 
 To ensure smooth collaboration and prevent accidental data loss, please adhere to the following guidelines:
 
+*   **A Note for Future Agents:** Be aware you may run into issues beyond your control with the development environment returning unstable errors. If this occurs, document the symptoms and actions taken in the log below.
 *   **Deletion Policy:** Do not delete any files, or remove any content from this `README.md`, without explicit confirmation from the project owner.
 *   **Branch Naming:** To improve traceability, all branches should follow the naming convention `yymmdd-descriptive-name` (e.g., `250916-update-readme-guidelines`).
 
