@@ -4,7 +4,6 @@
   margin-bottom: 16px;
   overflow: hidden;
   transition: all 0.3s ease-in-out;
-  flex-shrink: 0; /* Prevent the component from shrinking in a flex container */
 }
 
 .readme-display.hidden .readme-content {
@@ -42,8 +41,6 @@
   background-color: white;
   font-family: inherit; /* Explicitly inherit font to avoid code-like styling */
   color: #333; /* Set a default text color */
-  height: 18rem; /* Set a fixed height (approx. 12 lines) */
-  overflow-y: auto; /* Add a scrollbar when content overflows */
 }
 
 /* Styles for rendered markdown */

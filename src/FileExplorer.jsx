@@ -261,14 +261,6 @@ function FileExplorer({ repo }) {
       <div className="search-wrapper">
         <SearchBar repo={repo} />
       </div>
-      {isReadmeLoading && <div className="readme-loading">Loading README...</div>}
-      {readmeContent && !isReadmeLoading && (
-        <ReadmeDisplay
-          content={readmeContent}
-          isVisible={isReadmeVisible}
-          onToggle={handleToggleReadme}
-        />
-      )}
       <div className="file-grid">
         {Array.isArray(files) && files.map(file => (
           <FileTile
@@ -283,6 +275,14 @@ function FileExplorer({ repo }) {
           />
         ))}
       </div>
+      {isReadmeLoading && <div className="readme-loading">Loading README...</div>}
+      {readmeContent && !isReadmeLoading && (
+        <ReadmeDisplay
+          content={readmeContent}
+          isVisible={isReadmeVisible}
+          onToggle={handleToggleReadme}
+        />
+      )}
       <div className="bottom-toolbar">
         <div className="toolbar-section left">
           {/* Deliberately empty to push other elements */}
