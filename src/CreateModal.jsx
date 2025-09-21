@@ -16,11 +16,23 @@ function CreateModal({ path, repo, onClose, onCreate }) {
     setIsCreating(true);
     setError(null);
 
-    // For folders, GitHub API requires creating a file within it. A .gitkeep is standard.
-    const fullPath = type === 'folder' ? `${path}/${name}/.gitkeep` : `${path}/${name}`;
-    const content = ''; // New files will be empty.
+    let fullPath;
+    let content;
+
+    if (type === 'folder') {
+      // For folders, create a .gitkeep file so the directory is not empty.
+      fullPath = `${path}/${name}/.gitkeep`;
+      content = ''; // .gitkeep files are empty.
+    } else {
+      // For files, automatically append .astro if not present.
+      const fileName = name.endsWith('.astro') ? name : `${name}.astro`;
+      fullPath = path === '/' ? fileName : `${path}/${fileName}`;
+      // GitHub API requires content for new files. We'll start with a placeholder.
+      content = '---\n# Add your frontmatter here\n---\n\n# Start your content here\n';
+    }
 
     try {
+      // The repo is now part of the body, not a query param, for consistency.
       const response = await fetch('/api/file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
