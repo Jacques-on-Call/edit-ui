@@ -77,12 +77,10 @@ function FileExplorer({ repo }) {
           fetch(`/api/file?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' })
             .then(res => {
               if (!res.ok) throw new Error('Could not fetch README content.');
-              return res.json(); // The worker returns a JSON object
+              return res.text();
             })
             .then(data => {
-              // The content is Base64 encoded in the 'content' field
-              const decodedContent = atob(data.content);
-              setReadmeContent(decodedContent);
+              setReadmeContent(data);
               setReadmeLoading(false);
             })
             .catch(err => {
