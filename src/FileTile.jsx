@@ -52,13 +52,13 @@ const getIconNameForFile = (file) => {
     case 'scss':
       return 'code';
     case 'html':
-      return 'code';
     case 'json':
       return 'code';
     case 'md':
-      return 'document';
+    case 'astro':
+      return 'file-text';
     default:
-      return 'document';
+      return 'file-text'; // Use 'file-text' as the default, which exists in icons.jsx
   }
 };
 
