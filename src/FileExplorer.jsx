@@ -11,6 +11,7 @@ import CreateModal from './CreateModal';
 import ContextMenu from './ContextMenu';
 import ConfirmDialog from './ConfirmDialog';
 import RenameModal from './RenameModal';
+import ReadmeDisplay from './ReadmeDisplay';
 import * as cache from './cache';
 
 
@@ -25,6 +26,9 @@ function FileExplorer({ repo }) {
   const [fileToDelete, setFileToDelete] = useState(null);
   const [fileToRename, setFileToRename] = useState(null);
   const [metadataCache, setMetadataCache] = useState({});
+  const [readmeContent, setReadmeContent] = useState(null);
+  const [isReadmeLoading, setReadmeLoading] = useState(false);
+  const [isReadmeVisible, setReadmeVisible] = useState(true);
   const navigate = useNavigate();
 
   const fetchMetadata = useCallback(async (file) => {
@@ -54,6 +58,9 @@ function FileExplorer({ repo }) {
     setLoading(true);
     setSelectedFile(null);
     setMetadataCache({});
+    setReadmeContent(null); // Reset README content on new folder load
+    setReadmeLoading(false); // Reset loading state
+
     fetch(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' })
       .then(res => {
         if (res.ok) return res.json();
@@ -62,7 +69,27 @@ function FileExplorer({ repo }) {
       .then(data => {
         setFiles(data);
         setLoading(false);
-        // After fetching files, check cache and fetch metadata for misses
+
+        // After fetching files, check for a README
+        const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');
+        if (readmeFile) {
+          setReadmeLoading(true);
+          fetch(`/api/file?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' })
+            .then(res => {
+              if (!res.ok) throw new Error('Could not fetch README content.');
+              return res.text();
+            })
+            .then(content => {
+              setReadmeContent(content);
+              setReadmeLoading(false);
+            })
+            .catch(err => {
+              console.error(err); // Log README fetch error but don't block UI
+              setReadmeLoading(false);
+            });
+        }
+
+        // Fetch metadata for all files
         data.forEach(file => {
           const cachedData = cache.get(file.sha);
           if (cachedData) {
@@ -183,6 +210,10 @@ function FileExplorer({ repo }) {
     setFileToRename(file);
   };
 
+  const handleToggleReadme = () => {
+    setReadmeVisible(prev => !prev);
+  };
+
   const handleRenameConfirm = async (file, newName) => {
     const oldPath = file.path;
     const newPath = oldPath.substring(0, oldPath.lastIndexOf('/') + 1) + newName;
@@ -230,6 +261,14 @@ function FileExplorer({ repo }) {
       <div className="search-wrapper">
         <SearchBar repo={repo} />
       </div>
+      {isReadmeLoading && <div className="readme-loading">Loading README...</div>}
+      {readmeContent && !isReadmeLoading && (
+        <ReadmeDisplay
+          content={readmeContent}
+          isVisible={isReadmeVisible}
+          onToggle={handleToggleReadme}
+        />
+      )}
       <div className="file-grid">
         {Array.isArray(files) && files.map(file => (
           <FileTile
