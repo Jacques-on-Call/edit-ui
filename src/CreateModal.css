@@ -90,7 +90,7 @@
 }
 
 .btn-create {
-  background-color: var(--accent-color);
+  background-color: #006300; /* Use direct hex code to avoid variable issues */
   color: white;
 }
 

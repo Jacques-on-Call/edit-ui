@@ -4,6 +4,7 @@
   --blue: #003971;
   --green: #006300;
   --light-green: #C7EA46;
+  --accent-color: var(--green);
 }
 
 body {

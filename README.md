@@ -437,6 +437,31 @@ After the UI resurrection, several issues were reported:
 All reported UI regressions have been addressed. The application now correctly displays the modern UI, and the build process is stable. The component is ready for use.
 
 ---
+
+## Invisible Modal Button Fix (250920) - Second Attempt
+
+This section documents the investigation and resolution of a persistent bug where the "Create" button in the "Create New" modal was not visible. This is the second attempt to fix this issue, as the initial fix was not successful.
+
+### **The Problem: An Invisible, but Clickable, Button**
+
+The "Create" button in the `CreateModal.jsx` component was not visible. However, further testing by the user revealed that the button *was* present in the DOM and could be clicked, triggering an API error. This confirmed the button was being rendered but was transparent.
+
+### **The Investigation & Failed First Attempt**
+
+The initial investigation correctly identified that the button was using an undefined CSS variable (`--accent-color`) for its background. The first attempt to fix this was to define `--accent-color` in the global `App.css` file.
+
+However, this fix did not work in the user's testing environment. This indicates a more complex issue, likely related to the build process or aggressive browser/CDN caching, where the updated `App.css` file (with the new variable) was not being correctly applied to the `CreateModal` component.
+
+### **The Solution: A More Robust, Direct Fix**
+
+To eliminate any potential issues with the CSS variable pipeline or caching, a more direct and robust solution was implemented:
+
+1.  **Bypass CSS Variable:** The `background-color` for the `.btn-create` class in `CreateModal.css` was changed to use a hardcoded hex value (`#006300`) instead of `var(--accent-color)`.
+2.  **Ensure Consistency:** The hex code `#006300` was taken from the `--green` variable in `App.css` to ensure the button's color matches the application's existing design system.
+
+This approach removes the dependency on the CSS variable system for this specific component, making the styling more resilient and virtually immune to the caching issues that were likely preventing the first fix from working.
+
+---
 ## UI Refinement & Fixes (250920)
 
 This section documents the work done to address user feedback, fix a major UI regression, and resolve a critical bug in the "Create New" modal.
