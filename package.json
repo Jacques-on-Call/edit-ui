@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tinymce/tinymce-react": "^5.1.1",
     "js-yaml": "^4.1.0",
     "marked": "^13.0.1",
     "node-html-parser": "^7.0.1",
