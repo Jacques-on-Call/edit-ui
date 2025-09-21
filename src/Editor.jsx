@@ -30,10 +30,12 @@ const TinyEditor = () => {
     }
     console.log("DEBUG: Initializing TinyMCE...");
     tinymce.init({
-      selector: `#${textareaRef.current.id}`,
+      target: textareaRef.current,
       plugins: 'lists link image code table',
       toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter | bullist numlist | link image | code',
       menubar: false,
+      skin_url: '/tinymce',
+      content_css: '/tinymce/skins/content/default/content.min.css',
       setup: (editor) => {
         editor.on('init', () => {
           console.log("DEBUG: TinyMCE 'init' event fired. Editor is ready.");
