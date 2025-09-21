@@ -41,6 +41,8 @@
   background-color: white;
   font-family: inherit; /* Explicitly inherit font to avoid code-like styling */
   color: #333; /* Set a default text color */
+  max-height: 400px; /* Set a max height */
+  overflow-y: auto; /* Add a scrollbar when content overflows */
 }
 
 /* Styles for rendered markdown */
