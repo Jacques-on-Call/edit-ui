@@ -462,6 +462,26 @@ To eliminate any potential issues with the CSS variable pipeline or caching, a m
 This approach removes the dependency on the CSS variable system for this specific component, making the styling more resilient and virtually immune to the caching issues that were likely preventing the first fix from working.
 
 ---
+
+## Robust File Creation (250920)
+
+This section documents an improvement to the file and folder creation logic to make it more robust against invalid user input.
+
+### **The Problem: Invalid Filenames**
+
+The "Create New" modal was sending the user's raw input directly to the backend API to create a file or folder. This meant that inputs containing spaces, capital letters, or special characters (e.g., "My New Post!") would result in an invalid path, causing the API request to fail.
+
+### **The Solution: Input Sanitization ("Slugify")**
+
+To fix this, a `slugify` function was added to the `CreateModal.jsx` component. This function processes the user's input before it is used in the API call. The process is as follows:
+1.  **Convert to Lowercase:** "My New Post!" -> "my new post!"
+2.  **Replace Spaces with Hyphens:** "my new post!" -> "my-new-post!"
+3.  **Remove Invalid Characters:** "my-new-post!" -> "my-new-post"
+4.  **Append Extension:** For files, the `.astro` extension is automatically appended, resulting in a final, clean filename: `my-new-post.astro`.
+
+This ensures that all files and folders are created with clean, URL-friendly, and filesystem-safe names, preventing a wide range of potential user-input errors.
+
+---
 ## UI Refinement & Fixes (250920)
 
 This section documents the work done to address user feedback, fix a major UI regression, and resolve a critical bug in the "Create New" modal.
