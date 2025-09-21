@@ -140,6 +140,7 @@ const TinyEditor = () => {
           plugins: 'lists link image code table',
           toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter | bullist numlist | link image | code',
           menubar: false,
+          script_url: '/tinymce/tinymce.min.js', // Explicitly point to the self-hosted script
           skin_url: '/tinymce', // For self-hosted skins
           content_css: '/tinymce/skins/content/default/content.min.css', // For self-hosted content CSS
           height: 500,
