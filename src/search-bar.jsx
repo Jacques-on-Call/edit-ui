@@ -26,7 +26,8 @@ const SearchBar = ({ repo }) => {
         throw new Error(`Search failed: ${res.statusText}`);
       }
       const data = await res.json();
-      setResults(data.items || []);
+      // The backend returns an array directly, not an object with an 'items' property.
+      setResults(data || []);
     } catch (err) {
       setError(err.message);
       setResults([]);
