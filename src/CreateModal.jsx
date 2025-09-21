@@ -7,18 +7,6 @@ function CreateModal({ path, repo, onClose, onCreate }) {
   const [error, setError] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  // Slugify function to create a URL-friendly and filesystem-friendly name
-  const slugify = (text) => {
-    return text
-      .toString()
-      .toLowerCase()
-      .replace(/\s+/g, '-')       // Replace spaces with -
-      .replace(/[^\w\-]+/g, '')   // Remove all non-word chars
-      .replace(/\-\-+/g, '-')       // Replace multiple - with single -
-      .replace(/^-+/, '')          // Trim - from start of text
-      .replace(/-+$/, '');         // Trim - from end of text
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name) {
@@ -28,12 +16,8 @@ function CreateModal({ path, repo, onClose, onCreate }) {
     setIsCreating(true);
     setError(null);
 
-    const slug = slugify(name);
-    // Append .astro for files, but not for folders
-    const finalName = type === 'file' ? `${slug}.astro` : slug;
-
     // For folders, GitHub API requires creating a file within it. A .gitkeep is standard.
-    const fullPath = type === 'folder' ? `${path}/${finalName}/.gitkeep` : `${path}/${finalName}`;
+    const fullPath = type === 'folder' ? `${path}/${name}/.gitkeep` : `${path}/${name}`;
     const content = ''; // New files will be empty.
 
     try {

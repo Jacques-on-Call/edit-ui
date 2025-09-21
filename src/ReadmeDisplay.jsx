@@ -10,7 +10,7 @@ function ReadmeDisplay({ content, onToggle, isVisible }) {
       <div className="readme-header" onClick={onToggle}>
         <h3>
           <Icon name="book-open" />
-          README.md
+          README
         </h3>
         <button className="toggle-button">
           <Icon name={isVisible ? 'chevron-up' : 'chevron-down'} />

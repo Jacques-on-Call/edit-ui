@@ -37,8 +37,10 @@
 }
 
 .readme-content {
-  padding: 16px;
+  padding: 24px;
   background-color: white;
+  font-family: inherit; /* Explicitly inherit font to avoid code-like styling */
+  color: #333; /* Set a default text color */
 }
 
 /* Styles for rendered markdown */
@@ -51,7 +53,8 @@
 }
 
 .readme-content p {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  line-height: 1.6;
 }
 
 .readme-content a {
