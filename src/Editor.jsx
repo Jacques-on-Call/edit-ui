@@ -7,7 +7,7 @@ import TurndownService from 'turndown';
 
 import './Editor.css';
 
-const TinyEditor = forwardRef((props, ref) => {
+const TinyEditor = forwardRef(({ initialContent, onContentChange }, ref) => {
   const location = useLocation();
   const [file, setFile] = useState(null);
   const [frontmatter, setFrontmatter] = useState({});
@@ -21,6 +21,7 @@ const TinyEditor = forwardRef((props, ref) => {
   useEffect(() => {
     const path = location.pathname.replace('/edit/', '');
     if (path) {
+      setContent('<h2>Loading file...</h2>');
       const type = path.endsWith('.md') ? 'md' : 'astro';
       setFileType(type);
 
@@ -28,37 +29,53 @@ const TinyEditor = forwardRef((props, ref) => {
       fetch(`${workerUrl}/api/file?repo=${import.meta.env.VITE_GITHUB_REPO}&path=${path}`)
         .then(res => res.json())
         .then(data => {
-          setFile(data);
-          const decodedContent = atob(data.content);
-          const frontmatterRegex = /^---\n(.*)\n---\n(.*)/s;
-          const match = decodedContent.match(frontmatterRegex);
+          try {
+            if (!data || typeof data.content !== 'string') {
+              throw new Error('Invalid or missing file content from API.');
+            }
 
-          if (match) {
-            const fm = jsyaml.load(match[1]);
-            setFrontmatter(fm);
-            const fileBody = match[2] || '';
-            setBody(fileBody);
+            setFile(data);
+            const decodedContent = atob(data.content);
+            const frontmatterRegex = /^---\n(.*)\n---\n(.*)/s;
+            const match = decodedContent.match(frontmatterRegex);
 
-            if (type === 'astro') {
-              if (fm.sections && Array.isArray(fm.sections)) {
-                const htmlContent = fm.sections
-                  .filter(section => section.type === 'text_block' && section.content)
-                  .map(section => section.content)
-                  .join('\\n<hr>\\n'); // Separate sections with a line
+            if (match) {
+              const fm = jsyaml.load(match[1]);
+              setFrontmatter(fm);
+              const fileBody = match[2] || '';
+              setBody(fileBody);
+
+              if (type === 'astro') {
+                if (fm.sections && Array.isArray(fm.sections)) {
+                  const htmlContent = fm.sections
+                    .filter(section => section.type === 'text_block' && section.content)
+                    .map(section => section.content)
+                    .join('\\n<hr>\\n');
+                  setContent(htmlContent);
+                } else {
+                  setContent(''); // Astro file with frontmatter but no valid sections
+                }
+              } else { // md
+                const htmlContent = marked(fileBody);
                 setContent(htmlContent);
               }
-            } else { // md
-              const htmlContent = marked(fileBody);
-              setContent(htmlContent);
-            }
-          } else {
-            // No frontmatter, treat as plain markdown/text
-            if (type === 'md') {
-              setContent(marked(decodedContent));
             } else {
-              setContent(decodedContent); // Assume it's HTML if it's an astro file without frontmatter
+              // No frontmatter, treat as plain markdown/text
+              if (type === 'md') {
+                setContent(marked(decodedContent));
+              } else {
+                // For astro files without frontmatter, it's ambiguous. Displaying as text is safest.
+                setContent(decodedContent);
+              }
             }
+          } catch (error) {
+            console.error("Error parsing file content:", error);
+            setContent(`<h2>Error Loading File</h2><p>Could not parse the file content. Please check the browser console for details.</p><p>Error: ${error.message}</p>`);
           }
+        })
+        .catch(error => {
+            console.error("Error fetching file:", error);
+            setContent(`<h2>Error Fetching File</h2><p>Could not fetch the file from the server. Please check the browser console for details.</p>`);
         });
     }
   }, [location.pathname]);
@@ -119,7 +136,7 @@ const TinyEditor = forwardRef((props, ref) => {
         onInit={(evt, editor) => editorRef.current = editor}
         initialValue="<p>Loading content...</p>"
         value={content}
-        onEditorChange={(newContent) => setContent(newContent)}
+        onEditorChange={(newContent, editor) => setContent(newContent)}
         init={{
           height: '100%',
           menubar: false,
