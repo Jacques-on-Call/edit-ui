@@ -19,65 +19,68 @@ const TinyEditor = forwardRef(({ initialContent, onContentChange }, ref) => {
   const turndownService = new TurndownService();
 
   useEffect(() => {
-    const path = location.pathname.replace('/edit/', '');
-    if (path) {
+    const loadContent = async () => {
+      const path = location.pathname.replace('/edit/', '');
+      if (!path) return;
+
       setContent('<h2>Loading file...</h2>');
       const type = path.endsWith('.md') ? 'md' : 'astro';
       setFileType(type);
 
-      const workerUrl = import.meta.env.VITE_WORKER_URL;
-      fetch(`${workerUrl}/api/file?repo=${import.meta.env.VITE_GITHUB_REPO}&path=${path}`)
-        .then(res => res.json())
-        .then(data => {
-          try {
-            if (!data || typeof data.content !== 'string') {
-              throw new Error('Invalid or missing file content from API.');
-            }
+      try {
+        const workerUrl = import.meta.env.VITE_WORKER_URL;
+        const res = await fetch(`${workerUrl}/api/file?repo=${import.meta.env.VITE_GITHUB_REPO}&path=${path}`);
+        if (!res.ok) {
+          throw new Error(`Failed to fetch file: ${res.status} ${res.statusText}`);
+        }
+        const data = await res.json();
 
-            setFile(data);
-            const decodedContent = atob(data.content);
-            const frontmatterRegex = /^---\n(.*)\n---\n(.*)/s;
-            const match = decodedContent.match(frontmatterRegex);
+        console.log("Received data from API:", data); // Enhanced logging
 
-            if (match) {
-              const fm = jsyaml.load(match[1]);
-              setFrontmatter(fm);
-              const fileBody = match[2] || '';
-              setBody(fileBody);
+        if (!data || typeof data.content !== 'string') {
+          throw new Error('Invalid or missing file content from API.');
+        }
 
-              if (type === 'astro') {
-                if (fm.sections && Array.isArray(fm.sections)) {
-                  const htmlContent = fm.sections
-                    .filter(section => section.type === 'text_block' && section.content)
-                    .map(section => section.content)
-                    .join('\\n<hr>\\n');
-                  setContent(htmlContent);
-                } else {
-                  setContent(''); // Astro file with frontmatter but no valid sections
-                }
-              } else { // md
-                const htmlContent = marked(fileBody);
-                setContent(htmlContent);
-              }
+        setFile(data);
+        const decodedContent = atob(data.content);
+        const frontmatterRegex = /^---\n(.*)\n---\n(.*)/s;
+        const match = decodedContent.match(frontmatterRegex);
+
+        if (match) {
+          const fm = jsyaml.load(match[1]);
+          setFrontmatter(fm);
+          const fileBody = match[2] || '';
+          setBody(fileBody);
+
+          if (type === 'astro') {
+            if (fm.sections && Array.isArray(fm.sections)) {
+              const htmlContent = fm.sections
+                .filter(section => section.type === 'text_block' && section.content)
+                .map(section => section.content)
+                .join('\\n<hr>\\n');
+              setContent(htmlContent);
             } else {
-              // No frontmatter, treat as plain markdown/text
-              if (type === 'md') {
-                setContent(marked(decodedContent));
-              } else {
-                // For astro files without frontmatter, it's ambiguous. Displaying as text is safest.
-                setContent(decodedContent);
-              }
+              setContent(''); // Handle Astro file with no sections gracefully
             }
-          } catch (error) {
-            console.error("Error parsing file content:", error);
-            setContent(`<h2>Error Loading File</h2><p>Could not parse the file content. Please check the browser console for details.</p><p>Error: ${error.message}</p>`);
+          } else { // md
+            const htmlContent = marked(fileBody);
+            setContent(htmlContent);
           }
-        })
-        .catch(error => {
-            console.error("Error fetching file:", error);
-            setContent(`<h2>Error Fetching File</h2><p>Could not fetch the file from the server. Please check the browser console for details.</p>`);
-        });
-    }
+        } else {
+          // No frontmatter
+          if (type === 'md') {
+            setContent(marked(decodedContent));
+          } else {
+            setContent(decodedContent);
+          }
+        }
+      } catch (error) {
+        console.error("A fatal error occurred during file load:", error);
+        setContent(`<h2>Error Loading File</h2><p>The file could not be loaded or parsed. Please check the browser console for details.</p><p>Error: ${error.message}</p>`);
+      }
+    };
+
+    loadContent();
   }, [location.pathname]);
 
   const handleSave = () => {
