@@ -1,6 +1,19 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      window.onerror = function(message, source, lineno, colno, error) {
+        alert(
+          'An error occurred:\n' +
+          'Message: ' + message + '\n' +
+          'Source: ' + source + '\n' +
+          'Line: ' + lineno + '\n' +
+          'Column: ' + colno + '\n' +
+          'Error object: ' + JSON.stringify(error)
+        );
+        return true; // Prevent the browser's default error handling
+      };
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,6 +25,7 @@
     <meta name="apple-mobile-web-app-title" content="Content Editor">
     <link rel="apple-touch-icon" href="/logo.webp">
     <title>Content Editor | Strategy Content Agency</title>
+    <script src="/tinymce/tinymce.min.js" referrerpolicy="origin"></script>
   </head>
   <body>
     <div id="root"></div>

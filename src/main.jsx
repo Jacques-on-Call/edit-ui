@@ -8,31 +8,26 @@ import FileViewerPage from './FileViewerPage.jsx';
 import Editor from './Editor.jsx'; // import the Editor component
 import './App.css';
 
-const renderApp = () => {
-  ReactDOM.createRoot(document.getElementById('root')).render(
-    <React.StrictMode>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<App />} />
-          <Route path="/callback" element={<Callback />} />
-          <Route path="/explorer" element={<ExplorerPage />} />
-          <Route path="/explorer/file" element={<FileViewerPage />} />
-          <Route path="/edit/*" element={<Editor />} /> {/* add the editor route */}
-        </Routes>
-      </BrowserRouter>
-    </React.StrictMode>,
-  );
-};
-
 // Conditionally import and initialize vConsole for on-screen debugging
 // Trigger with ?debug=true in the URL
 if (new URLSearchParams(window.location.search).has('debug')) {
   import('vconsole').then((module) => {
     const VConsole = module.default;
     new VConsole();
-    console.log('vConsole is now enabled. Rendering app...');
-    renderApp();
+    console.log('vConsole is now enabled for on-screen debugging.');
   });
-} else {
-  renderApp();
 }
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<App />} />
+        <Route path="/callback" element={<Callback />} />
+        <Route path="/explorer" element={<ExplorerPage />} />
+        <Route path="/explorer/file" element={<FileViewerPage />} />
+        <Route path="/edit/*" element={<Editor />} /> {/* add the editor route */}
+      </Routes>
+    </BrowserRouter>
+  </React.StrictMode>,
+);
