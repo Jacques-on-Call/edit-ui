@@ -4,26 +4,30 @@ import { Editor as TinyMCEEditor } from '@tinymce/tinymce-react';
 const SectionEditor = ({ section, onSectionChange }) => {
   const editorRef = useRef(null);
 
-  // This effect ensures that the editor's content is synchronized with the parent's state.
-  // It manually sets the content if the prop changes, which is necessary for
-  // rich text editors that maintain their own internal state.
+  // This effect synchronizes the editor's content with the parent's state.
+  // It only sets the content if the editor is initialized and the content
+  // has actually changed, preventing unnecessary re-renders and cursor jumps.
   useEffect(() => {
-    if (editorRef.current && editorRef.current.getContent() !== section.content) {
-      editorRef.current.setContent(section.content || '');
+    const editor = editorRef.current;
+    if (editor && editor.initialized) {
+      const currentContent = editor.getContent();
+      if (currentContent !== section.content) {
+        editor.setContent(section.content || '');
+      }
     }
   }, [section.content]);
 
-  // Handles changes from simple <input> fields
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    const updatedSection = { ...section, [name]: value };
-    onSectionChange(updatedSection);
+    onSectionChange({ ...section, [name]: value });
   };
 
-  // Handles changes from a TinyMCE editor instance
   const handleEditorChange = (content, editor) => {
-    const updatedSection = { ...section, content: content };
-    onSectionChange(updatedSection);
+    // We only call the onSectionChange callback if the content has
+    // actually changed from the prop to prevent infinite loops.
+    if (content !== section.content) {
+      onSectionChange({ ...section, content: content });
+    }
   };
 
   const renderEditor = () => {
@@ -36,10 +40,12 @@ const SectionEditor = ({ section, onSectionChange }) => {
             initialValue={section.content || ''}
             onEditorChange={handleEditorChange}
             init={{
-              height: 250,
+              height: 550,
               menubar: false,
               plugins: 'lists link image code table placeholder',
-              toolbar: 'undo redo | formatselect | bold italic | bullist numlist | link image | code',
+              toolbar: window.innerWidth < 600
+                ? 'undo redo | bold italic | bullist numlist'
+                : 'undo redo | formatselect | bold italic | bullist numlist | link image | code',
               license_key: 'gpl',
               skin_url: '/tinymce/skins/ui/oxide',
               content_css: '/tinymce/skins/content/default/content.css',

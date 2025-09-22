@@ -337,50 +337,6 @@ To ensure success, the frontend in this directory must be paired with a backend 
 
 ---
 
-## TipTap Editor and Content Pipeline
-
-This project includes a powerful, mobile-first content editor built with [TipTap](https://tiptap.dev/). The editor is designed to provide a clean, intuitive writing experience, while also ensuring that the content is saved in a structured, predictable format.
-
-### What it is
-
-The TipTap editor is a rich text editor that allows for the creation of various content blocks, including headings, paragraphs, images, callouts, and code blocks. It features a user-friendly toolbar for formatting and a sophisticated paste-handling mechanism that cleans and transforms content from various sources like Google Docs and Microsoft Word.
-
-### Why we built it
-
-The primary motivation for building this custom editor was to create a content creation experience that is optimized for mobile devices. Existing solutions like Decap CMS, while powerful, often have a user experience that is better suited for desktop environments.
-
-By building our own editor, we have full control over the user interface and can ensure that it is as intuitive and efficient as possible for on-the-go content creation and editing.
-
-Furthermore, by saving the content as a structured JSON object, we create a clean separation between the content and its presentation. This makes the content more portable, easier to analyze, and future-proofs it for use with other systems, including AI agents.
-
-### How it works
-
-The content pipeline consists of several key components:
-
-1.  **The Editor (`Editor.jsx`):** This is the main React component that houses the TipTap editor. It is responsible for rendering the editor, handling user input, and managing the editor's state.
-
-2.  **The Toolbar (`Toolbar.jsx`):** This component provides the user with a set of tools for formatting the content, such as applying bold or italic styles, creating headings, and inserting images.
-
-3.  **The Sanitizer (`sanitizer.js`):** When content is pasted into the editor, it first goes through a sanitization process. This process, which uses the `sanitize-html` library, removes any unwanted HTML tags and attributes, ensuring that the content is clean and secure.
-
-4.  **The Heuristic Transformer (`Editor.jsx`):** After sanitization, the content goes through a transformation process that applies a set of heuristic rules to detect the semantic intent of the pasted content. For example, a paragraph with a background color is converted into a "callout" block, and text with a monospace font is converted into a "code" block.
-
-5.  **The JSON Converter (`converter.js`):** The editor's content is stored internally as a Prosemirror document (a JSON-like structure). The `converter.js` module contains functions to convert this internal representation to our custom JSON schema and back. This custom schema is what gets saved to the file's frontmatter.
-
-6.  **The Astro Renderer (`ContentRenderer.astro`):** On the Astro side, the `ContentRenderer.astro` component is responsible for taking the structured JSON data from the frontmatter and rendering it into HTML using a set of corresponding Astro components (`Heading.astro`, `Paragraph.astro`, etc.).
-
-### Struggles and Questions
-
-During the development of this feature, I encountered a few challenges:
-
-*   **Build Process:** I faced some persistent issues with the `run_in_bash_session` tool, which prevented me from running the `npm run build` command in the `react-login` directory. This was a significant blocker for the Decap CMS integration, which ultimately led to the decision to remove it.
-*   **Decap CMS Integration:** My initial plan was to integrate the TipTap editor with Decap CMS as a custom widget. However, I was unable to find a straightforward way to do this with the `astro-decap-cms` integration. This, combined with the user's feedback that Decap CMS is not ideal for mobile users, led to the decision to build the editor as a standalone component.
-*   **Content Rendering Bug:** I am currently investigating a bug where the editor is displaying raw JSON instead of the rendered content. I have added a `console.log` statement to help debug this issue and am waiting for feedback from the user.
-
-An open question I have is how to best handle the API endpoints for saving and loading content. Currently, the editor communicates directly with a Cloudflare Worker. It might be beneficial to create a more abstract API layer in the future to decouple the frontend from the specific backend implementation.
-
----
-
 ## Developer & Agent Collaboration Notes
 
 To ensure smooth collaboration and prevent accidental data loss, please adhere to the following guidelines:
@@ -657,3 +613,26 @@ After reverting all previous changes and carefully re-examining the original `cl
     -   The mystery of why the `Editor` component was mounting on the `FileViewer` page was never definitively solved, only worked around. This might indicate a subtle issue in the React Router setup that could be worth a future investigation.
     -   The editor's current logic combines all `text_block` sections into a single editable area. A significant future enhancement would be to create a true block editor where each section could be edited, reordered, or deleted independently.
     -   The application's state management for the selected repository relies on `localStorage`. Migrating this to a React Context would make the state more robust and easier to manage across components.
+
+
+---
+### Multi-Section Editor & Draft Workflow (250922)
+
+-   **What:** A complete overhaul of the editing experience to support a "what you see is what you get" (WYSIWYG) interface for both Astro and Markdown files, underpinned by a robust auto-saving draft system.
+-   **Why:** The previous editor was not user-friendly and did not meet the user's goal of editing content in a document-like manner. There was no protection against data loss from accidental navigation or crashes. The user explicitly requested a "Google Docs" like experience with auto-saving.
+-   **Where:**
+    -   `react-login/src/Editor.jsx` (Major Refactor)
+    -   `react-login/src/SectionEditor.jsx` (New Component)
+    -   `react-login/src/FileViewer.jsx` (Major Refactor)
+    -   `react-login/src/Editor.css` & `react-login/src/FileViewer.css` (New Styles & Mobile Polish)
+-   **How:**
+    1.  **Section-Based Editing:** A new `SectionEditor.jsx` component was created to render a dedicated editor for each object in an Astro file's `sections` array. This allows for modular editing of the page's content, preserving the structure.
+    2.  **Auto-Save to Drafts:** The `Editor.jsx` component was refactored to automatically save all changes to a draft in the browser's `localStorage`. This happens on a debounced timer, ensuring minimal performance impact while providing strong data loss protection.
+    3.  **Draft-Aware Preview:** The `FileViewer.jsx` component was updated to first check for a local draft. If one exists, it renders the draft content and displays a "Publish" / "Discard" UI, giving the user full control over their unpublished changes.
+    4.  **State Management Fix:** A critical bug was fixed in the `SectionEditor` where it was not correctly updating when its props changed (an "uncontrolled component" bug). This was resolved by using a `ref` to the TinyMCE instance and manually setting its content, ensuring the UI is always in sync with the application's state.
+    5.  **Mobile UI Polish:** Based on user feedback, multiple iterations of UI fixes were applied to ensure the editor and viewer are fully responsive and user-friendly on mobile devices. This included adjusting padding, margins, button sizes, and simplifying the editor toolbar for narrow screens.
+-   **Thoughts & Questions:**
+    -   The development and verification process was significantly hampered by an unstable sandbox environment, particularly with the shell's working directory and `npm` dependency installation. Stabilizing this environment is the highest priority for future development to improve efficiency and reliability.
+    -   The current `SectionRenderer.jsx` is quite basic. A future improvement would be to build out this component to accurately render all possible section types (e.g., `hero`, `cta`), providing a true 1-to-1 preview of the final page.
+    -   The `SectionEditor.jsx` could be enhanced to allow users to add, remove, and reorder sections, turning it into a true "block editor".
+======

@@ -49,12 +49,8 @@ const Editor = () => {
           body = match[2] || '';
         }
 
-        if (type === 'astro') {
-          setFileData({ sha: data.sha, frontmatter: fm, body: body, path: data.path, sections: fm.sections || [] });
-        } else { // md file
-          const htmlBody = marked(body);
-          setFileData({ sha: data.sha, frontmatter: fm, body: body, path: data.path, htmlBody: htmlBody });
-        }
+        setFileData({ sha: data.sha, frontmatter: fm, body: body, path: data.path, sections: fm.sections || [] });
+
       } catch (err) { setError(err.message); } finally { setLoading(false); }
     };
     loadFile();
@@ -78,15 +74,12 @@ const Editor = () => {
 
   const handleBodyChange = (newHtmlBody) => {
     const newMarkdownBody = turndownService.turndown(newHtmlBody);
-    setFileData(prev => ({ ...prev, htmlBody: newHtmlBody, body: newMarkdownBody }));
+    setFileData(prev => ({ ...prev, body: newMarkdownBody }));
   };
 
   const handlePreview = () => {
     navigate(`/explorer/file?path=${path}`);
   };
-
-  if (loading) return <div className="editor-container">Loading...</div>;
-  if (error) return <div className="editor-container">Error: {error}</div>;
 
   const getFriendlyTitle = (filePath) => {
     if (!filePath) return '';
@@ -98,6 +91,9 @@ const Editor = () => {
     }
     return filename;
   };
+
+  if (loading || !fileData) return <div className="editor-container">Loading...</div>;
+  if (error) return <div className="editor-container">Error: {error}</div>;
 
   return (
     <div className="editor-container">
@@ -116,7 +112,7 @@ const Editor = () => {
           ))
         ) : (
           <SectionEditor
-            section={{ type: 'main_content', content: fileData.htmlBody || '' }}
+            section={{ type: 'main_content', content: marked(fileData.body || '') }}
             onSectionChange={(updatedSection) => handleBodyChange(updatedSection.content)}
           />
         )}
