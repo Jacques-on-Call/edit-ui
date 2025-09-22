@@ -631,3 +631,29 @@ After reverting all previous changes and carefully re-examining the original `cl
 <!-- Triggering deployment for environment variable update -->
 <!-- Triggering deployment for ExplorerPage hotfix -->
 <!-- Triggering deployment for file icon fix -->
+
+---
+
+### End-to-End Viewer and Editor Fix (250922)
+
+-   **What:** A comprehensive fix for the entire file viewing and editing workflow. This addressed a series of cascading bugs, from the initial "string did not match the expected pattern" error to UI/UX problems and a critical data corruption bug.
+-   **Why:** The core functionality of the application was broken. Users could not open, edit, or save files correctly. The UI was unfinished, and the data flow between the frontend and backend was inconsistent and buggy.
+-   **Where:**
+    -   `cloudflare-worker-code.js` (Backend)
+    -   `react-login/src/FileViewer.jsx` (Frontend)
+    -   `react-login/src/Editor.jsx` (Frontend)
+    -   `react-login/src/SectionRenderer.jsx` (New Component)
+    -   `react-login/src/FileViewer.css` (New Styles)
+-   **How:** The solution involved a multi-stage process of debugging and fixing:
+    1.  **Backend Unification:** The `/api/file` endpoint was refactored to be the single source of truth, consistently returning the full JSON object (with Base64 content and SHA) from the GitHub API. This resolved data inconsistencies between the viewer and editor.
+    2.  **File Viewer Overhaul:** The `FileViewer` was transformed from a simple text display to a smart component that parses `.astro` frontmatter and uses the new `SectionRenderer` to display the content of the `sections` array. It was also restyled with a mobile-friendly, centered UI.
+    3.  **Editor Fixes:** The `Editor` component was repaired by:
+        -   Fixing the TinyMCE configuration (`license_key: 'gpl'`) to enable the self-hosted version.
+        -   Fixing the file loading logic to use the correct, user-selected repository from `localStorage`.
+        -   Improving the save logic to correctly create new `text_block` sections in empty files.
+    4.  **UX Improvements:** Post-save navigation was added to automatically return the user to the viewer. A true placeholder was implemented in the editor.
+    5.  **Encoding Corruption Fix:** A critical bug that was double-encoding content on save was fixed by making the backend responsible for the final `btoa()` encoding. The frontend now sends plain text to the save endpoint.
+-   **Thoughts & Questions:**
+    -   The mystery of why the `Editor` component was mounting on the `FileViewer` page was never definitively solved, only worked around. This might indicate a subtle issue in the React Router setup that could be worth a future investigation.
+    -   The editor's current logic combines all `text_block` sections into a single editable area. A significant future enhancement would be to create a true block editor where each section could be edited, reordered, or deleted independently.
+    -   The application's state management for the selected repository relies on `localStorage`. Migrating this to a React Context would make the state more robust and easier to manage across components.
