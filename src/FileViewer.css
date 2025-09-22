@@ -1,134 +1,140 @@
-/* react-login/src/FileViewer.css */
-
 .file-viewer-page {
-  background-color: #f0f2f5; /* A light grey/blue background */
-  min-height: 100vh;
-  padding: 2rem;
-  box-sizing: border-box;
+  padding: 1rem;
 }
 
 .file-viewer-container {
-  background-color: #ffffff; /* White content area */
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   max-width: 900px;
-  margin: 0 auto; /* Center the container */
-  padding: 2rem 3rem;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .file-viewer-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #e8e8e8;
-  padding-bottom: 1rem;
   margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .file-viewer-header h1 {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
+  color: #333;
   margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.file-viewer-header .action-buttons {
-    display: flex;
-    gap: 1rem;
+.action-buttons {
+  display: flex;
+  gap: 1rem;
 }
 
-.file-viewer-header .viewer-button {
-  background: none;
-  border: 1px solid #d9d9d9;
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
+.viewer-button {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+  transition: background-color 0.2s, box-shadow 0.2s;
 }
 
-.file-viewer-header .viewer-button:hover {
+.viewer-button:hover {
+  background-color: #e0e0e0;
+}
+
+.edit-button {
+  background-color: #007aff;
+  color: white;
+  border-color: #007aff;
+}
+
+.edit-button:hover {
+  background-color: #005ecb;
+}
+
+.raw-content-viewer {
   background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 1rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
+  font-size: 0.9rem;
 }
 
-.file-viewer-header .edit-button {
-    border-color: #006300;
-    color: #006300;
+/* Draft Banner Styles */
+.draft-banner {
+  background-color: #fffbe6;
+  border: 1px solid #ffe58f;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.file-viewer-header .edit-button:hover {
-    background-color: #006300;
-    color: #ffffff;
+.draft-banner p {
+  margin: 0;
+  font-weight: 500;
+  color: #8a6d3b;
 }
 
+.draft-actions {
+  display: flex;
+  gap: 1rem;
+}
 
-.section-renderer {
+.publish-button {
+  background-color: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.publish-button:hover {
+  background-color: #218838;
+}
+
+.discard-button {
+  background-color: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+.discard-button:hover {
+  background-color: #c82333;
+}
+
+.markdown-preview {
+  padding: 1rem;
   line-height: 1.6;
   color: #333;
 }
 
-/* Basic styles for rendered HTML content */
-.section-renderer .content-section h1,
-.section-renderer .content-section h2,
-.section-renderer .content-section h3,
-.section-renderer .content-section h4 {
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-  line-height: 1.2;
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3 {
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 0.3em;
 }
 
-.section-renderer .content-section p {
-  margin-bottom: 1em;
+.markdown-preview p {
+  margin-top: 0;
+  margin-bottom: 1rem;
 }
 
-.section-renderer .content-section a {
-  color: #006300;
-  text-decoration: none;
+.markdown-preview code {
+  background-color: #f6f8fa;
+  border-radius: 3px;
+  padding: 0.2em 0.4em;
+  font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
 }
 
-.section-renderer .content-section a:hover {
-  text-decoration: underline;
-}
-
-.section-renderer .content-section ul,
-.section-renderer .content-section ol {
-  padding-left: 1.5em;
-  margin-bottom: 1em;
-}
-
-.section-renderer .content-section blockquote {
-  border-left: 3px solid #e8e8e8;
-  padding-left: 1em;
-  margin-left: 0;
-  font-style: italic;
-  color: #666;
-}
-
-.raw-content-viewer {
-    background-color: #2d2d2d;
-    color: #f8f8f2;
-    padding: 1rem;
-    border-radius: 6px;
-    overflow-x: auto;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-}
-
-@media (max-width: 768px) {
-  .file-viewer-page {
-    padding: 1rem;
-  }
-
-  .file-viewer-container {
-    padding: 1.5rem 1rem;
-  }
-
-  .file-viewer-header h1 {
-    font-size: 1.2rem;
-  }
-
-  .file-viewer-header .viewer-button {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.9rem;
-  }
+.markdown-preview pre {
+  background-color: #f6f8fa;
+  border-radius: 3px;
+  padding: 1rem;
+  overflow: auto;
 }
