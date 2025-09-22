@@ -165,7 +165,6 @@ const TinyEditor = () => {
     }
 
     console.log("DEBUG: Final file content to be saved length:", newFullContent.length);
-    const encodedContent = btoa(newFullContent);
     const workerUrl = import.meta.env.VITE_WORKER_URL || '';
     const repo = localStorage.getItem('selectedRepo');
     const apiUrl = `${workerUrl}/api/file?repo=${repo}`;
@@ -174,7 +173,7 @@ const TinyEditor = () => {
     fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: file.path, content: encodedContent, sha: file.sha }),
+      body: JSON.stringify({ path: file.path, content: newFullContent, sha: file.sha }),
     })
     .then(res => {
       if (!res.ok) {
