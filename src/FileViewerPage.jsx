@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import FileViewer from './FileViewer';
+import './FileViewer.css'; // Import the new CSS
 
 function FileViewerPage() {
   const navigate = useNavigate();
@@ -19,8 +20,7 @@ function FileViewerPage() {
   }
 
   return (
-    <div>
-      <button onClick={() => navigate('/explorer')}>Back to Explorer</button>
+    <div className="file-viewer-page">
       <FileViewer repo={repo} path={path} />
     </div>
   );
