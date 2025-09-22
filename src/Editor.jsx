@@ -88,10 +88,21 @@ const Editor = () => {
   if (loading) return <div className="editor-container">Loading...</div>;
   if (error) return <div className="editor-container">Error: {error}</div>;
 
+  const getFriendlyTitle = (filePath) => {
+    if (!filePath) return '';
+    const filename = filePath.split('/').pop();
+    const lastDotIndex = filename.lastIndexOf('.');
+    if (lastDotIndex > 0) {
+      const name = filename.substring(0, lastDotIndex);
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+    return filename;
+  };
+
   return (
     <div className="editor-container">
       <div className="editor-header">
-        <h2>Editing: {fileData.path.split('/').pop()}</h2>
+        <h2>Editing: {getFriendlyTitle(fileData.path)}</h2>
         <button onClick={handlePreview} className="preview-button">Preview</button>
       </div>
       <div className="sections-list">

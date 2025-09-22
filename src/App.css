@@ -12,7 +12,7 @@ body {
   font-family: 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--blue);
+  background-color: var(--white); /* Set a neutral default background */
 }
 
 .App {
@@ -20,6 +20,7 @@ body {
 }
 
 .App-header {
+  background-color: var(--blue); /* Move the blue background here */
   min-height: 100vh;
   display: flex;
   flex-direction: column;

@@ -108,7 +108,19 @@ function FileViewer({ repo, path }) {
     }
   };
 
-  const title = path.split('/').pop();
+  const getFriendlyTitle = (filePath) => {
+    if (!filePath) return '';
+    const filename = filePath.split('/').pop();
+    const lastDotIndex = filename.lastIndexOf('.');
+    if (lastDotIndex > 0) {
+      // Capitalize the first letter for a nicer look
+      const name = filename.substring(0, lastDotIndex);
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+    return filename;
+  };
+
+  const title = getFriendlyTitle(path);
 
   const renderContent = () => {
     // For .astro files, render sections if they exist
