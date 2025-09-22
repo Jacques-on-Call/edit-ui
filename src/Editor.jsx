@@ -34,6 +34,8 @@ const TinyEditor = () => {
       plugins: 'lists link image code table',
       toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter | bullist numlist | link image | code',
       menubar: false,
+      skin_url: '/tinymce/skins/ui/oxide',
+      content_css: '/tinymce/skins/content/default/content.css',
       setup: (editor) => {
         editor.on('init', () => {
           console.log("DEBUG: TinyMCE 'init' event fired. Editor is ready.");
@@ -67,7 +69,7 @@ const TinyEditor = () => {
         const workerUrl = import.meta.env.VITE_WORKER_URL || '';
         const apiUrl = `${workerUrl}/api/file?repo=${import.meta.env.VITE_GITHUB_REPO}&path=${path}`;
         console.log(`DEBUG: Fetching file content from: ${apiUrl}`);
-        const res = await fetch(apiUrl);
+        const res = await fetch(apiUrl, { credentials: 'include' });
 
         if (!res.ok) {
           throw new Error(`Failed to fetch file: ${res.status} ${res.statusText}`);
