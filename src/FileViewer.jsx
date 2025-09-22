@@ -18,7 +18,7 @@ function FileViewer({ repo, path }) {
     setSections(null);
     setRawContent('');
 
-    fetch(`/api/file?repo=${repo}&path=${path}`, {
+    fetch(`/api/file-json?repo=${repo}&path=${path}`, {
       credentials: 'include',
     })
     .then(res => {

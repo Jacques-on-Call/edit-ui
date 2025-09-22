@@ -57,6 +57,9 @@ const TinyEditor = () => {
   // Effect for loading file content
   useEffect(() => {
     const loadFileContent = async () => {
+      if (!location.pathname.startsWith('/edit/')) {
+        return; // Do not run if we are not on an edit page.
+      }
       const path = location.pathname.replace('/edit/', '');
       console.log(`DEBUG: loadFileContent effect triggered. Path: "${path}", Editor Initialized: ${isEditorInitialized}`);
       if (!path || !isEditorInitialized) return;
