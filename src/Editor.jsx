@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import jsyaml from 'js-yaml';
 import { marked } from 'marked';
 import TurndownService from 'turndown';
@@ -11,6 +11,7 @@ const { tinymce } = window;
 
 const TinyEditor = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const editorRef = useRef(null); // Ref to the TinyMCE editor instance
   const textareaRef = useRef(null); // Ref to the textarea element
 
@@ -31,12 +32,13 @@ const TinyEditor = () => {
     console.log("DEBUG: Initializing TinyMCE...");
     tinymce.init({
       selector: `#${textareaRef.current.id}`,
-      plugins: 'lists link image code table',
+      plugins: 'lists link image code table placeholder',
       toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter | bullist numlist | link image | code',
       menubar: false,
       license_key: 'gpl',
       skin_url: '/tinymce/skins/ui/oxide',
       content_css: '/tinymce/skins/content/default/content.css',
+      placeholder: 'Start writing your content here...',
       setup: (editor) => {
         editor.on('init', () => {
           console.log("DEBUG: TinyMCE 'init' event fired. Editor is ready.");
@@ -102,10 +104,6 @@ const TinyEditor = () => {
 
           if (type === 'astro') {
             htmlContent = fm.sections?.filter(s => s.type === 'text_block' && s.content).map(s => s.content).join('<hr>') || '';
-            if (!htmlContent) {
-              htmlContent = '<p>Start writing your content here...</p>';
-              console.log("DEBUG: Astro file has no text_block sections, using placeholder content.");
-            }
             console.log("DEBUG: Generated HTML for Astro sections:", htmlContent);
           } else {
             htmlContent = marked(fileBody);
@@ -187,6 +185,7 @@ const TinyEditor = () => {
     .then(data => {
       console.log('DEBUG: File saved successfully. API response:', data);
       alert('File saved successfully!');
+      navigate(-1); // Go back to the previous page (FileViewer)
     })
     .catch(error => {
       console.error("DEBUG: Error saving file:", error);
