@@ -34,6 +34,7 @@ const TinyEditor = () => {
       plugins: 'lists link image code table',
       toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter | bullist numlist | link image | code',
       menubar: false,
+      license_key: 'gpl',
       skin_url: '/tinymce/skins/ui/oxide',
       content_css: '/tinymce/skins/content/default/content.css',
       setup: (editor) => {
@@ -57,7 +58,6 @@ const TinyEditor = () => {
   // Effect for loading file content
   useEffect(() => {
     const loadFileContent = async () => {
-      console.log("DEBUG: [Editor.jsx] Checking location.pathname:", location.pathname);
       if (!location.pathname.startsWith('/edit/')) {
         return; // Do not run if we are not on an edit page.
       }
@@ -71,7 +71,8 @@ const TinyEditor = () => {
 
       try {
         const workerUrl = import.meta.env.VITE_WORKER_URL || '';
-        const apiUrl = `${workerUrl}/api/file?repo=${import.meta.env.VITE_GITHUB_REPO}&path=${path}`;
+        const repo = localStorage.getItem('selectedRepo');
+        const apiUrl = `${workerUrl}/api/file?repo=${repo}&path=${path}`;
         console.log(`DEBUG: Fetching file content from: ${apiUrl}`);
         const res = await fetch(apiUrl, { credentials: 'include' });
 
@@ -161,7 +162,8 @@ const TinyEditor = () => {
     console.log("DEBUG: Final file content to be saved length:", newFullContent.length);
     const encodedContent = btoa(newFullContent);
     const workerUrl = import.meta.env.VITE_WORKER_URL || '';
-    const apiUrl = `${workerUrl}/api/file?repo=${import.meta.env.VITE_GITHUB_REPO}`;
+    const repo = localStorage.getItem('selectedRepo');
+    const apiUrl = `${workerUrl}/api/file?repo=${repo}`;
     console.log(`DEBUG: Sending save request to: ${apiUrl}`);
 
     fetch(apiUrl, {
