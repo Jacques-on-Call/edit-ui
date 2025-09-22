@@ -102,6 +102,10 @@ const TinyEditor = () => {
 
           if (type === 'astro') {
             htmlContent = fm.sections?.filter(s => s.type === 'text_block' && s.content).map(s => s.content).join('<hr>') || '';
+            if (!htmlContent) {
+              htmlContent = '<p>Start writing your content here...</p>';
+              console.log("DEBUG: Astro file has no text_block sections, using placeholder content.");
+            }
             console.log("DEBUG: Generated HTML for Astro sections:", htmlContent);
           } else {
             htmlContent = marked(fileBody);
@@ -144,11 +148,14 @@ const TinyEditor = () => {
       const firstTextBlockIndex = newFrontmatter.sections?.findIndex(s => s.type === 'text_block');
       if (firstTextBlockIndex > -1) {
         newFrontmatter.sections[firstTextBlockIndex].content = newHtmlContent;
-        console.log("DEBUG: Updated 'text_block' in frontmatter sections.");
+        console.log("DEBUG: Updated existing 'text_block' in frontmatter sections.");
       } else {
-        console.warn("DEBUG: No 'text_block' section found in frontmatter to save to.");
-        alert("Save failed: Could not find a 'text_block' section in the file's frontmatter.");
-        return;
+        // If no text_block exists, create one.
+        if (!newFrontmatter.sections) {
+          newFrontmatter.sections = [];
+        }
+        newFrontmatter.sections.push({ type: 'text_block', content: newHtmlContent });
+        console.log("DEBUG: No 'text_block' section found. Created a new one.");
       }
       newFullContent = `---\n${jsyaml.dump(newFrontmatter)}---\n${body}`;
     } else {
