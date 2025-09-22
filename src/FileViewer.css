@@ -113,3 +113,22 @@
     white-space: pre-wrap;
     word-wrap: break-word;
 }
+
+@media (max-width: 768px) {
+  .file-viewer-page {
+    padding: 1rem;
+  }
+
+  .file-viewer-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .file-viewer-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .file-viewer-header .viewer-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+}
