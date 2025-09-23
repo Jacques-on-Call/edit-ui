@@ -62,7 +62,7 @@ function CreateModal({ path, repo, onClose, onCreate }) {
       onCreate();
       onClose();
       if (type === 'file') {
-        navigate(`/edit/${fullPath}`);
+        navigate(`/edit/${repo}/${fullPath}`);
       }
     } catch (err) {
       console.error('Error in handleSubmit:', err);

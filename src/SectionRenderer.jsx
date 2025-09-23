@@ -1,4 +1,5 @@
 import React from 'react';
+import { marked } from 'marked';
 
 function SectionRenderer({ sections }) {
   if (!sections || !Array.isArray(sections) || sections.length === 0) {
@@ -19,7 +20,7 @@ function SectionRenderer({ sections }) {
         <div
           key={index}
           className="content-section"
-          dangerouslySetInnerHTML={{ __html: section.content }}
+          dangerouslySetInnerHTML={{ __html: marked(section.content) }}
         />
       ))}
     </div>

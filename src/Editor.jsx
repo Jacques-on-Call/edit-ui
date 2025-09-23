@@ -15,7 +15,12 @@ const Editor = () => {
   const [error, setError] = useState(null);
 
   const turndownService = new TurndownService();
-  const path = location.pathname.replace('/edit/', '');
+  const pathWithRepo = location.pathname.replace('/edit/', '');
+  const pathParts = pathWithRepo.split('/');
+  const repoOwner = pathParts.shift();
+  const repoName = pathParts.shift();
+  const repo = `${repoOwner}/${repoName}`;
+  const path = pathParts.join('/');
   const draftKey = `draft-content-${path}`;
 
   // Load content
@@ -35,7 +40,6 @@ const Editor = () => {
       }
 
       try {
-        const repo = localStorage.getItem('selectedRepo');
         const res = await fetch(`/api/file?repo=${repo}&path=${path}`, { credentials: 'include' });
         if (!res.ok) throw new Error(`Fetch failed: ${res.statusText}`);
         const data = await res.json();
