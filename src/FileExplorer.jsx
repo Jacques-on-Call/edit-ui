@@ -67,7 +67,12 @@ function FileExplorer({ repo }) {
         throw new Error('Failed to fetch files');
       })
       .then(data => {
-        setFiles(data);
+        const sortedData = data.sort((a, b) => {
+          if (a.type === 'dir' && b.type !== 'dir') return -1;
+          if (a.type !== 'dir' && b.type === 'dir') return 1;
+          return a.name.localeCompare(b.name);
+        });
+        setFiles(sortedData);
         setLoading(false);
 
         // After fetching files, check for a README
