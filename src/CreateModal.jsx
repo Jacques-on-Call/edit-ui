@@ -62,6 +62,7 @@ function CreateModal({ path, repo, onClose, onCreate }) {
       onCreate();
       onClose();
       if (type === 'file') {
+        console.log('Navigating to editor for new file:', `/edit/${repo}/${fullPath}`);
         navigate(`/edit/${repo}/${fullPath}`);
       }
     } catch (err) {

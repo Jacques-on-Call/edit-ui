@@ -1,5 +1,4 @@
 import React from 'react';
-import { marked } from 'marked';
 
 function SectionRenderer({ sections }) {
   if (!sections || !Array.isArray(sections) || sections.length === 0) {
@@ -14,23 +13,15 @@ function SectionRenderer({ sections }) {
     return <p>No viewable content found in sections.</p>;
   }
 
-  const isHtml = (str) => /^\s*<[a-z][\s\S]*>/i.test(str);
-
   return (
     <div className="section-renderer">
-      {contentSections.map((section, index) => {
-        const htmlContent = isHtml(section.content)
-          ? section.content
-          : marked(section.content);
-
-        return (
-          <div
-            key={index}
-            className="content-section"
-            dangerouslySetInnerHTML={{ __html: htmlContent }}
-          />
-        );
-      })}
+      {contentSections.map((section, index) => (
+        <div
+          key={index}
+          className="content-section"
+          dangerouslySetInnerHTML={{ __html: section.content }}
+        />
+      ))}
     </div>
   );
 }
