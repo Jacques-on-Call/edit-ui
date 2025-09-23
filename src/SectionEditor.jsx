@@ -22,7 +22,7 @@ const SectionEditor = ({ section, onSectionChange }) => {
     onSectionChange({ ...section, [name]: value });
   };
 
-  const handleEditorChange = (content, editor) => {
+  const handleEditorChange = (content) => {
     // We only call the onSectionChange callback if the content has
     // actually changed from the prop to prevent infinite loops.
     if (content !== section.content) {
@@ -31,7 +31,7 @@ const SectionEditor = ({ section, onSectionChange }) => {
   };
 
   const renderEditor = () => {
-    if (section.hasOwnProperty('content')) {
+    if (Object.prototype.hasOwnProperty.call(section, 'content')) {
       return (
         <div className="form-group">
           <label>Content:</label>

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { debounce } from 'lodash';
 import './search-bar.css';
 
@@ -8,7 +8,7 @@ const SearchBar = ({ repo }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const performSearch = async (searchQuery) => {
+  const performSearch = useCallback(async (searchQuery) => {
     if (!searchQuery) {
       setResults([]);
       setLoading(false);
@@ -34,9 +34,9 @@ const SearchBar = ({ repo }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [repo]);
 
-  const debouncedSearch = useCallback(debounce(performSearch, 300), [repo]);
+  const debouncedSearch = useMemo(() => debounce(performSearch, 300), [performSearch]);
 
   const handleChange = (e) => {
     const newQuery = e.target.value;

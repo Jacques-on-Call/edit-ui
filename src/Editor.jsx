@@ -61,7 +61,9 @@ const Editor = () => {
       } catch (err) { setError(err.message); } finally { setLoading(false); }
     };
     loadFile();
+
   }, [repo, path, draftKey]);
+
 
   // Debounced auto-save effect
   useEffect(() => {

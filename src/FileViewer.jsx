@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import jsyaml from 'js-yaml';
 import { marked } from 'marked';
 import SectionRenderer from './SectionRenderer';
+import HeadEditor from './HeadEditor';
 import './FileViewer.css';
 
 function FileViewer({ repo, path }) {
+  const [isHeadEditorOpen, setIsHeadEditorOpen] = useState(false);
   const [content, setContent] = useState({
     sections: null,
     rawContent: '',
@@ -19,7 +21,15 @@ function FileViewer({ repo, path }) {
   const navigate = useNavigate();
   const draftKey = `draft-content-${path}`;
 
-  const fetchFromServer = () => {
+  // This effect runs when content changes, saving it to a local draft
+  useEffect(() => {
+    // Only save if it's a draft and not in the initial loading state
+    if (isDraft && !loading) {
+      localStorage.setItem(draftKey, JSON.stringify(content));
+    }
+  }, [content, isDraft, loading, draftKey]);
+
+  const fetchFromServer = useCallback(() => {
     setLoading(true);
     fetch(`/api/file?repo=${repo}&path=${path}`, { credentials: 'include' })
     .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch')))
@@ -46,7 +56,7 @@ function FileViewer({ repo, path }) {
       setError(err.message);
       setLoading(false);
     });
-  };
+  }, [repo, path]);
 
   useEffect(() => {
     const localDraft = localStorage.getItem(draftKey);
@@ -56,11 +66,14 @@ function FileViewer({ repo, path }) {
         setContent({ ...draftData, rawContent: 'Draft loaded' });
         setIsDraft(true);
         setLoading(false);
-      } catch (e) { fetchFromServer(); }
+      } catch (e) {
+        console.error("Failed to parse draft, fetching from server.", e);
+        fetchFromServer();
+      }
     } else {
       fetchFromServer();
     }
-  }, [repo, path, draftKey]);
+  }, [draftKey, fetchFromServer]);
 
   const handlePublish = async () => {
     const draftString = localStorage.getItem(draftKey);
@@ -108,6 +121,17 @@ function FileViewer({ repo, path }) {
     }
   };
 
+  const handleFrontmatterChange = (updatedFrontmatter) => {
+    // When head is edited, update content and ensure we are in a draft state
+    setContent(prev => ({
+        ...prev,
+        frontmatter: updatedFrontmatter,
+    }));
+    if (!isDraft) {
+        setIsDraft(true);
+    }
+  };
+
   const getFriendlyTitle = (filePath) => {
     if (!filePath) return '';
     const filename = filePath.split('/').pop();
@@ -141,6 +165,13 @@ function FileViewer({ repo, path }) {
 
   return (
     <div className="file-viewer-container">
+       {isHeadEditorOpen && (
+        <HeadEditor
+          frontmatter={content.frontmatter}
+          onUpdate={handleFrontmatterChange}
+          onClose={() => setIsHeadEditorOpen(false)}
+        />
+      )}
       {isDraft && (
         <div className="draft-banner">
           <p>You are viewing a draft. Your changes are not yet published.</p>
@@ -153,8 +184,9 @@ function FileViewer({ repo, path }) {
       <div className="file-viewer-header">
         <h1>{title}</h1>
         <div className="action-buttons">
-          <button className="viewer-button" onClick={() => navigate('/explorer')}>Back to Explorer</button>
-          <button className="viewer-button edit-button" onClick={() => navigate(`/edit/${repo}/${path}`)}>Edit</button>
+          <button className="viewer-button" onClick={() => navigate('/explorer')}>Back</button>
+          <button className="viewer-button" onClick={() => setIsHeadEditorOpen(true)}>Page Details</button>
+          <button className="viewer-button edit-button" onClick={() => navigate(`/edit/${repo}/${path}`)}>Edit Body</button>
         </div>
       </div>
       {renderContent()}
