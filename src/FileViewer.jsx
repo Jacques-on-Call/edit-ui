@@ -154,7 +154,7 @@ function FileViewer({ repo, path }) {
         <h1>{title}</h1>
         <div className="action-buttons">
           <button className="viewer-button" onClick={() => navigate('/explorer')}>Back to Explorer</button>
-          <button className="viewer-button edit-button" onClick={() => navigate(`/edit/${path}`)}>Edit</button>
+          <button className="viewer-button edit-button" onClick={() => navigate(`/edit/${repo}/${path}`)}>Edit</button>
         </div>
       </div>
       {renderContent()}

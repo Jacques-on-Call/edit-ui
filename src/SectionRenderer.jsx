@@ -14,15 +14,23 @@ function SectionRenderer({ sections }) {
     return <p>No viewable content found in sections.</p>;
   }
 
+  const isHtml = (str) => /^\s*<[a-z][\s\S]*>/i.test(str);
+
   return (
     <div className="section-renderer">
-      {contentSections.map((section, index) => (
-        <div
-          key={index}
-          className="content-section"
-          dangerouslySetInnerHTML={{ __html: marked(section.content) }}
-        />
-      ))}
+      {contentSections.map((section, index) => {
+        const htmlContent = isHtml(section.content)
+          ? section.content
+          : marked(section.content);
+
+        return (
+          <div
+            key={index}
+            className="content-section"
+            dangerouslySetInnerHTML={{ __html: htmlContent }}
+          />
+        );
+      })}
     </div>
   );
 }
