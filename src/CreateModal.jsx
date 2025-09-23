@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './CreateModal.css';
 
 function CreateModal({ path, repo, onClose, onCreate }) {
+  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [type, setType] = useState('file'); // 'file' or 'folder'
   const [error, setError] = useState(null);
@@ -16,8 +18,8 @@ function CreateModal({ path, repo, onClose, onCreate }) {
     setIsCreating(true);
     setError(null);
 
+    let fullPath;
     try {
-      let fullPath;
       let content;
 
       if (type === 'folder') {
@@ -59,6 +61,9 @@ function CreateModal({ path, repo, onClose, onCreate }) {
       console.log('File created successfully.');
       onCreate();
       onClose();
+      if (type === 'file') {
+        navigate(`/edit/${fullPath}`);
+      }
     } catch (err) {
       console.error('Error in handleSubmit:', err);
       setError(err.message);
