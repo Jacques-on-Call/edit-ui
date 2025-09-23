@@ -1,3 +1,28 @@
+## Editor Redesign & Two-Mode Workflow (250923)
+
+-   **What:** A complete redesign of the editor to create a more intuitive, mobile-first, and non-technical user experience. The system is now split into two distinct modes:
+    1.  **Writing Mode:** A clean, distraction-free editor with a white background and a blue header/footer. The editor toolbars are fixed to the header and footer, and the content area is the primary focus.
+    2.  **Settings Mode:** A "Search Preview" modal launched from the file viewer. This modal contains all page and section metadata, including a live preview of how the page will appear in search results, character counters for SEO fields, and an input to edit the URL slug.
+-   **Why:** The previous editor design was not meeting user expectations. It was cluttered, the distinction between body and metadata was unclear, and it lacked user-friendly features for SEO. This redesign separates the concerns of writing and configuration, providing a better experience for both.
+-   **How:**
+    -   The main layout was implemented in `Editor.css` using a flexbox model to create the fixed header/footer and scrolling content area.
+    -   The TinyMCE editor in `SectionEditor.jsx` was reconfigured to be a pure rich-text editor. Its main toolbar is now rendered into the parent's `.editor-header` using the `fixed_toolbar_container` option.
+    -   The `HeadEditor.jsx` component was significantly enhanced to include the new slug field, character counters, and a sub-form for editing the metadata of each individual page section.
+    -   The file publishing logic in `FileViewer.jsx` was refactored to handle file renaming. When a user changes the slug and publishes, the component now creates the new file, deletes the old one, and navigates the user to the new URL.
+-   **Where:**
+    -   `react-login/src/Editor.jsx`: Refactored to be a simple layout container with a header, content area, and footer.
+    -   `react-login/src/Editor.css`: Rewritten to implement the new "blue header/footer on white background" layout.
+    -   `react-login/src/SectionEditor.jsx`: Refactored into a pure rich-text editor with a new TinyMCE toolbar configuration.
+    -   `react-login/src/HeadEditor.jsx`: Heavily modified to include slug editing, character counters, and section metadata forms.
+    -   `react-login/src/FileViewer.jsx`: Updated to handle the complex logic of publishing with a potential file rename.
+-   **Thoughts & Suggestions:**
+    -   **Bottom Toolbar:** The user requested a bottom toolbar with specific tools. TinyMCE's support for a *fixed* bottom toolbar is limited. I used the main top toolbar to house all essential items for now to ensure stability. A future improvement would be to build a custom React component for the footer that uses the TinyMCE API to apply formatting, which would provide full control over the layout and content of the bottom bar.
+    -   **Component Complexity:** `FileViewer.jsx` and `HeadEditor.jsx` have grown in complexity. They could be broken down into smaller, more specialized components (e.g., `useFileActions` hook for publishing/renaming, `SectionMetadataForm` component within `HeadEditor`) to improve maintainability.
+-   **Questions & Challenges:**
+    -   **Environment Instability:** The development sandbox environment presented significant challenges, particularly with "sticky working directories" that made running scripts via `cd` unreliable. Using `npm run <script> --workspace=<workspace>` was a necessary and effective workaround.
+    -   **Tooling File Access:** The verification workflow was hampered because the `read_image_file` and `frontend_verification_complete` tools could not access temporary files created by the `run_in_bash_session` tool. This prevented direct visual confirmation of screenshots within the agent's context.
+
+---
 # Editor Debugging & Refinement (250921)
 
 This log documents the work being done to debug, enhance, and redesign the TinyMCE editor, starting on 250921.
