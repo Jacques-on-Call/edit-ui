@@ -59,7 +59,23 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-bottom: 24px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.char-counter {
+    font-size: 0.8rem;
+    color: #6b7280;
+    text-align: right;
+    margin-top: 4px;
+}
+
+.char-counter.over-limit {
+    color: #ef4444;
+    font-weight: 600;
 }
 
 .form-section label {

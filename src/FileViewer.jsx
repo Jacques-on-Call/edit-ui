@@ -18,6 +18,7 @@ function FileViewer({ repo, path }) {
   const [isDraft, setIsDraft] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [newSlug, setNewSlug] = useState(null);
   const navigate = useNavigate();
   const draftKey = `draft-content-${path}`;
 
@@ -82,35 +83,75 @@ function FileViewer({ repo, path }) {
     try {
       const draftData = JSON.parse(draftString);
       let newContent;
+      const fileExtension = path.substring(path.lastIndexOf('.'));
+      const originalSlug = path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'));
+      const parentPath = path.substring(0, path.lastIndexOf('/'));
 
+      // Reconstruct the file content from draft data
       if (path.endsWith('.md')) {
-        const fmString = Object.keys(draftData.frontmatter).length
-          ? `---\n${jsyaml.dump(draftData.frontmatter)}---\n`
-          : '';
+        const fmString = Object.keys(draftData.frontmatter).length ? `---\n${jsyaml.dump(draftData.frontmatter)}---\n` : '';
         newContent = `${fmString}${draftData.body}`;
-      } else { // .astro file
+      } else {
         const newFrontmatter = { ...draftData.frontmatter, sections: draftData.sections };
         newContent = `---\n${jsyaml.dump(newFrontmatter)}---\n${draftData.body}`;
       }
 
-      const res = await fetch('/api/file', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          repo, path, content: btoa(newContent), sha: draftData.sha,
-        }),
-      });
+      // Check if slug has changed
+      if (newSlug && newSlug !== originalSlug) {
+        // --- RENAME LOGIC ---
+        const newPath = `${parentPath}/${newSlug}${fileExtension}`;
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(`Publish failed: ${errorData.message || res.statusText}`);
+        // 1. Create the new file
+        const createRes = await fetch('/api/file', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repo, path: newPath, content: btoa(newContent), sha: null }), // No SHA for new file
+        });
+
+        if (!createRes.ok) {
+            const errorData = await createRes.json();
+            throw new Error(`Failed to create new file at '${newPath}': ${errorData.message || createRes.statusText}`);
+        }
+        await createRes.json(); // Consume the response but don't need the data
+
+        // 2. Delete the old file
+        const deleteRes = await fetch(`/api/file?repo=${repo}&path=${path}&sha=${draftData.sha}`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+
+        if (!deleteRes.ok) {
+            // This is a partial failure state. The new file was created, but the old one wasn't deleted.
+            // Inform the user clearly.
+            alert(`Rename partially failed! The new page was created at '${newSlug}', but we could not remove the old page. Please remove it manually.`);
+        } else {
+            alert('Page successfully renamed and published!');
+        }
+
+        // 3. Cleanup and navigate
+        localStorage.removeItem(draftKey);
+        navigate(`/explorer/file?path=${newPath}`); // Navigate to the new page
+
+      } else {
+        // --- UPDATE IN-PLACE LOGIC ---
+        const res = await fetch('/api/file', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repo, path, content: btoa(newContent), sha: draftData.sha }),
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(`Publish failed: ${errorData.message || res.statusText}`);
+        }
+        alert('Publish successful!');
+        localStorage.removeItem(draftKey);
+        fetchFromServer();
       }
-      alert('Publish successful!');
-      localStorage.removeItem(draftKey);
-      fetchFromServer();
     } catch (err) {
-      alert(`Error publishing file: ${err.message}`);
+      alert(`An error occurred: ${err.message}`);
     }
   };
 
@@ -127,6 +168,27 @@ function FileViewer({ repo, path }) {
         ...prev,
         frontmatter: updatedFrontmatter,
     }));
+    if (!isDraft) {
+        setIsDraft(true);
+    }
+  };
+
+  const handleSectionUpdate = (newSections) => {
+    setContent(prev => ({
+        ...prev,
+        sections: newSections,
+        frontmatter: { ...prev.frontmatter, sections: newSections },
+    }));
+    if (!isDraft) {
+        setIsDraft(true);
+    }
+  };
+
+  const handleSlugUpdate = (slug) => {
+    setNewSlug(slug);
+    // Also update the local draft so the slug change is persisted
+    // before publishing.
+    setContent(prev => ({ ...prev }));
     if (!isDraft) {
         setIsDraft(true);
     }
@@ -170,6 +232,10 @@ function FileViewer({ repo, path }) {
           frontmatter={content.frontmatter}
           onUpdate={handleFrontmatterChange}
           onClose={() => setIsHeadEditorOpen(false)}
+          path={path}
+          sections={content.sections}
+          onSectionUpdate={handleSectionUpdate}
+          onSlugUpdate={handleSlugUpdate}
         />
       )}
       {isDraft && (
@@ -185,8 +251,8 @@ function FileViewer({ repo, path }) {
         <h1>{title}</h1>
         <div className="action-buttons">
           <button className="viewer-button" onClick={() => navigate('/explorer')}>Back</button>
-          <button className="viewer-button" onClick={() => setIsHeadEditorOpen(true)}>Page Details</button>
-          <button className="viewer-button edit-button" onClick={() => navigate(`/edit/${repo}/${path}`)}>Edit Body</button>
+          <button className="viewer-button" onClick={() => setIsHeadEditorOpen(true)}>Search Preview</button>
+          <button className="viewer-button edit-button" onClick={() => navigate(`/edit/${repo}/${path}`)}>Edit</button>
         </div>
       </div>
       {renderContent()}

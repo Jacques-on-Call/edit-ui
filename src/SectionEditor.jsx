@@ -4,9 +4,6 @@ import { Editor as TinyMCEEditor } from '@tinymce/tinymce-react';
 const SectionEditor = ({ section, onSectionChange }) => {
   const editorRef = useRef(null);
 
-  // This effect synchronizes the editor's content with the parent's state.
-  // It only sets the content if the editor is initialized and the content
-  // has actually changed, preventing unnecessary re-renders and cursor jumps.
   useEffect(() => {
     const editor = editorRef.current;
     if (editor && editor.initialized) {
@@ -17,72 +14,56 @@ const SectionEditor = ({ section, onSectionChange }) => {
     }
   }, [section.content]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    onSectionChange({ ...section, [name]: value });
-  };
-
   const handleEditorChange = (content) => {
-    // We only call the onSectionChange callback if the content has
-    // actually changed from the prop to prevent infinite loops.
     if (content !== section.content) {
       onSectionChange({ ...section, content: content });
     }
   };
 
-  const renderEditor = () => {
-    if (Object.prototype.hasOwnProperty.call(section, 'content')) {
-      return (
-        <div className="form-group">
-          <label>Content:</label>
-          <TinyMCEEditor
+  // This component now only renders the TinyMCE editor.
+  // All other fields have been moved to the HeadEditor.
+  if (!Object.prototype.hasOwnProperty.call(section, 'content')) {
+    return null;
+  }
+
+  return (
+    <div className="section-editor-container">
+        <TinyMCEEditor
             onInit={(evt, editor) => editorRef.current = editor}
             initialValue={section.content || ''}
             onEditorChange={handleEditorChange}
             init={{
-              height: 550,
-              menubar: false,
-              plugins: 'lists link image code table placeholder',
-              toolbar: window.innerWidth < 600
-                ? 'undo redo | bold italic | bullist numlist'
-                : 'undo redo | formatselect | bold italic | bullist numlist | link image | code',
-              license_key: 'gpl',
-              skin_url: '/tinymce/skins/ui/oxide',
-              content_css: '/tinymce/skins/content/default/content.css',
-              placeholder: 'Start writing your content here...',
+                height: "100%",
+                menubar: false,
+                inline: false, // Using iframe editor for better style isolation
+                plugins: [
+                    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                    'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                    'insertdatetime', 'media', 'table', 'help', 'wordcount', 'quickbars'
+                ],
+                // Top toolbar configuration
+                toolbar: 'undo redo | ' +
+                         'blocks | ' + // Heading styles
+                         'bold italic underline strikethrough | ' +
+                         'forecolor backcolor | ' +
+                         'alignleft aligncenter alignright alignjustify | ' +
+                         'bullist numlist outdent indent | ' +
+                         'link image media table | ' +
+                         'removeformat | help',
+
+                // Contextual toolbar for text selection
+                quickbars_selection_toolbar: 'bold italic | forecolor | link | quicktable',
+
+                // Simulates the bottom bar for quick actions
+                quickbars_insert_toolbar: 'image table media | hr pagebreak',
+
+                content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size:16px }',
+                placeholder: 'Start writing your content here...',
+                license_key: 'gpl',
+                skin_url: '/tinymce/skins/ui/oxide',
+                content_css: '/tinymce/skins/content/default/content.css'
             }}
-          />
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const renderFields = () => {
-    return Object.keys(section).map(key => {
-      if (key === 'type' || key === 'content') return null;
-      return (
-        <div className="form-group" key={key}>
-          <label>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
-          <input
-            type="text"
-            name={key}
-            value={section[key] || ''}
-            onChange={handleInputChange}
-            className="form-control"
-          />
-        </div>
-      );
-    });
-  };
-
-  return (
-    <div className="section-editor-container">
-      <h4 className="section-type-header">{section.type}</h4>
-      <div className="section-fields">
-        {renderFields()}
-        {renderEditor()}
-      </div>
+        />
     </div>
   );
 };

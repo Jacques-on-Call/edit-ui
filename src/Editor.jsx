@@ -21,9 +21,6 @@ const Editor = () => {
   const repoName = pathParts.shift();
   const repo = `${repoOwner}/${repoName}`;
   const path = pathParts.join('/');
-  console.log('Editor location.pathname:', location.pathname);
-  console.log('Editor parsed repo:', repo);
-  console.log('Editor parsed path:', path);
   const draftKey = `draft-content-${path}`;
 
   // Load content
@@ -61,9 +58,7 @@ const Editor = () => {
       } catch (err) { setError(err.message); } finally { setLoading(false); }
     };
     loadFile();
-
-  }, [repo, path, draftKey]);
-
+  }, [path, repo, draftKey]);
 
   // Debounced auto-save effect
   useEffect(() => {
@@ -111,20 +106,22 @@ const Editor = () => {
         <button onClick={handlePreview} className="preview-button">Preview</button>
       </div>
       <div className="sections-list">
-        {fileType === 'astro' ? (
-          fileData.sections.map((section, index) => (
+        <div className="page-wrapper">
+            {fileType === 'astro' ? (
+            (fileData.sections || []).map((section, index) => (
+                <SectionEditor
+                key={index}
+                section={section}
+                onSectionChange={(updatedSection) => handleSectionChange(index, updatedSection)}
+                />
+            ))
+            ) : (
             <SectionEditor
-              key={index}
-              section={section}
-              onSectionChange={(updatedSection) => handleSectionChange(index, updatedSection)}
+                section={{ type: 'main_content', content: marked(fileData.body || '') }}
+                onSectionChange={(updatedSection) => handleBodyChange(updatedSection.content)}
             />
-          ))
-        ) : (
-          <SectionEditor
-            section={{ type: 'main_content', content: marked(fileData.body || '') }}
-            onSectionChange={(updatedSection) => handleBodyChange(updatedSection.content)}
-          />
-        )}
+            )}
+        </div>
       </div>
     </div>
   );
