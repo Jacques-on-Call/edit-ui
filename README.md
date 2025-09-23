@@ -510,6 +510,27 @@ To eliminate any potential issues with the CSS variable pipeline or caching, a m
 This approach removes the dependency on the CSS variable system for this specific component, making the styling more resilient and virtually immune to the caching issues that were likely preventing the first fix from working.
 
 ---
+### Multi-Section Editor & Draft Workflow (250922)
+
+-   **What:** A complete overhaul of the editing experience to support a "what you see is what you get" (WYSIWYG) interface for both Astro and Markdown files, underpinned by a robust auto-saving draft system.
+-   **Why:** The previous editor was not user-friendly and did not meet the user's goal of editing content in a document-like manner. There was no protection against data loss from accidental navigation or crashes. The user explicitly requested a "Google Docs" like experience with auto-saving.
+-   **Where:**
+    -   `react-login/src/Editor.jsx` (Major Refactor)
+    -   `react-login/src/SectionEditor.jsx` (New Component)
+    -   `react-login/src/FileViewer.jsx` (Major Refactor)
+    -   `react-login/src/Editor.css` & `react-login/src/FileViewer.css` (New Styles & Mobile Polish)
+-   **How:**
+    1.  **Section-Based Editing:** A new `SectionEditor.jsx` component was created to render a dedicated editor for each object in an Astro file's `sections` array. This allows for modular editing of the page's content, preserving the structure.
+    2.  **Auto-Save to Drafts:** The `Editor.jsx` component was refactored to automatically save all changes to a draft in the browser's `localStorage`. This happens on a debounced timer, ensuring minimal performance impact while providing strong data loss protection.
+    3.  **Draft-Aware Preview:** The `FileViewer.jsx` component was updated to first check for a local draft. If one exists, it renders the draft content and displays a "Publish" / "Discard" UI, giving the user full control over their unpublished changes.
+    4.  **State Management Fix:** A critical bug was fixed in the `SectionEditor` where it was not correctly updating when its props changed (an "uncontrolled component" bug). This was resolved by using a `ref` to the TinyMCE instance and manually setting its content, ensuring the UI is always in sync with the application's state.
+    5.  **Mobile UI Polish:** Based on user feedback, multiple iterations of UI fixes were applied to ensure the editor and viewer are fully responsive and user-friendly on mobile devices. This included adjusting padding, margins, button sizes, and simplifying the editor toolbar for narrow screens.
+-   **Thoughts & Questions:**
+    -   The development and verification process was significantly hampered by an unstable sandbox environment, particularly with the shell's working directory and `npm` dependency installation. Stabilizing this environment is the highest priority for future development to improve efficiency and reliability.
+    -   The current `SectionRenderer.jsx` is quite basic. A future improvement would be to build out this component to accurately render all possible section types (e.g., `hero`, `cta`), providing a true 1-to-1 preview of the final page.
+    -   The `SectionEditor.jsx` could be enhanced to allow users to add, remove, and reorder sections, turning it into a true "block editor".
+
+---
 ## UI Refinement & Fixes (250920)
 
 This section documents the work done to address user feedback, fix a major UI regression, and resolve a critical bug in the "Create New" modal.
@@ -614,7 +635,6 @@ After reverting all previous changes and carefully re-examining the original `cl
     -   The editor's current logic combines all `text_block` sections into a single editable area. A significant future enhancement would be to create a true block editor where each section could be edited, reordered, or deleted independently.
     -   The application's state management for the selected repository relies on `localStorage`. Migrating this to a React Context would make the state more robust and easier to manage across components.
 
-
 ---
 ### Multi-Section Editor & Draft Workflow (250922)
 
@@ -635,4 +655,3 @@ After reverting all previous changes and carefully re-examining the original `cl
     -   The development and verification process was significantly hampered by an unstable sandbox environment, particularly with the shell's working directory and `npm` dependency installation. Stabilizing this environment is the highest priority for future development to improve efficiency and reliability.
     -   The current `SectionRenderer.jsx` is quite basic. A future improvement would be to build out this component to accurately render all possible section types (e.g., `hero`, `cta`), providing a true 1-to-1 preview of the final page.
     -   The `SectionEditor.jsx` could be enhanced to allow users to add, remove, and reorder sections, turning it into a true "block editor".
-======
