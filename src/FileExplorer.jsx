@@ -262,7 +262,7 @@ function FileExplorer({ repo }) {
         <SearchBar repo={repo} />
       </div>
       <div className="file-grid">
-        {Array.isArray(files) && files.map(file => (
+        {Array.isArray(files) && files.filter(file => !file.name.startsWith('_')).map(file => (
           <FileTile
             key={file.sha}
             file={file}
