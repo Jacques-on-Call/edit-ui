@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import jsyaml from 'js-yaml';
 import { marked } from 'marked';
 import TurndownService from 'turndown';
@@ -8,7 +8,6 @@ import './Editor.css';
 
 const Editor = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [fileData, setFileData] = useState(null);
   const [fileType, setFileType] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -81,47 +80,32 @@ const Editor = () => {
     setFileData(prev => ({ ...prev, body: newMarkdownBody }));
   };
 
-  const handlePreview = () => {
-    navigate(`/explorer/file?path=${path}`);
-  };
-
-  const getFriendlyTitle = (filePath) => {
-    if (!filePath) return '';
-    const filename = filePath.split('/').pop();
-    const lastDotIndex = filename.lastIndexOf('.');
-    if (lastDotIndex > 0) {
-      const name = filename.substring(0, lastDotIndex);
-      return name.charAt(0).toUpperCase() + name.slice(1);
-    }
-    return filename;
-  };
-
   if (loading || !fileData) return <div className="editor-container">Loading...</div>;
   if (error) return <div className="editor-container">Error: {error}</div>;
 
   return (
     <div className="editor-container">
       <div className="editor-header">
-        <h2>Editing: {getFriendlyTitle(fileData.path)}</h2>
-        <button onClick={handlePreview} className="preview-button">Preview</button>
+        {/* The TinyMCE top toolbar will be rendered here by SectionEditor */}
       </div>
       <div className="sections-list">
-        <div className="page-wrapper">
-            {fileType === 'astro' ? (
-            (fileData.sections || []).map((section, index) => (
-                <SectionEditor
-                key={index}
-                section={section}
-                onSectionChange={(updatedSection) => handleSectionChange(index, updatedSection)}
-                />
-            ))
-            ) : (
+        {fileType === 'astro' ? (
+        (fileData.sections || []).map((section, index) => (
             <SectionEditor
-                section={{ type: 'main_content', content: marked(fileData.body || '') }}
-                onSectionChange={(updatedSection) => handleBodyChange(updatedSection.content)}
+            key={index}
+            section={section}
+            onSectionChange={(updatedSection) => handleSectionChange(index, updatedSection)}
             />
-            )}
-        </div>
+        ))
+        ) : (
+        <SectionEditor
+            section={{ type: 'main_content', content: marked(fileData.body || '') }}
+            onSectionChange={(updatedSection) => handleBodyChange(updatedSection.content)}
+        />
+        )}
+      </div>
+      <div className="editor-footer">
+        {/* The TinyMCE bottom toolbar will be rendered here */}
       </div>
     </div>
   );

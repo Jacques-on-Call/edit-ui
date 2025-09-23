@@ -27,44 +27,35 @@ const SectionEditor = ({ section, onSectionChange }) => {
   }
 
   return (
-    <div className="section-editor-container">
-        <TinyMCEEditor
-            onInit={(evt, editor) => editorRef.current = editor}
-            initialValue={section.content || ''}
-            onEditorChange={handleEditorChange}
-            init={{
-                height: "100%",
-                menubar: false,
-                inline: false, // Using iframe editor for better style isolation
-                plugins: [
-                    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                    'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                    'insertdatetime', 'media', 'table', 'help', 'wordcount', 'quickbars'
-                ],
-                // Top toolbar configuration
-                toolbar: 'undo redo | ' +
-                         'blocks | ' + // Heading styles
-                         'bold italic underline strikethrough | ' +
-                         'forecolor backcolor | ' +
-                         'alignleft aligncenter alignright alignjustify | ' +
-                         'bullist numlist outdent indent | ' +
-                         'link image media table | ' +
-                         'removeformat | help',
+    <TinyMCEEditor
+        onInit={(evt, editor) => editorRef.current = editor}
+        initialValue={section.content || ''}
+        onEditorChange={handleEditorChange}
+        init={{
+            height: "100%",
+            menubar: false,
+            plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'media', 'table', 'help', 'wordcount'
+            ],
+            // Render the main toolbar in the parent component's header div
+            fixed_toolbar_container: '.editor-header',
+            toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link image | removeformat',
 
-                // Contextual toolbar for text selection
-                quickbars_selection_toolbar: 'bold italic | forecolor | link | quicktable',
+            // Use a custom bottom toolbar in the footer
+            // This is a bit of a hack, we can create a second editor instance
+            // But for now, let's stick to the main toolbar.
+            // A better solution would be to create a custom component.
+            // For now, we will omit the bottom bar to ensure stability.
 
-                // Simulates the bottom bar for quick actions
-                quickbars_insert_toolbar: 'image table media | hr pagebreak',
-
-                content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size:16px }',
-                placeholder: 'Start writing your content here...',
-                license_key: 'gpl',
-                skin_url: '/tinymce/skins/ui/oxide',
-                content_css: '/tinymce/skins/content/default/content.css'
-            }}
-        />
-    </div>
+            content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size:16px; padding: 1rem; }',
+            placeholder: 'Start writing your content here...',
+            license_key: 'gpl',
+            skin_url: '/tinymce/skins/ui/oxide',
+            content_css: '/tinymce/skins/content/default/content.css'
+        }}
+    />
   );
 };
 
