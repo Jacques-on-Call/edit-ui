@@ -16,23 +16,33 @@ function CreateModal({ path, repo, onClose, onCreate }) {
     setIsCreating(true);
     setError(null);
 
-    let fullPath;
-    let content;
-
-    if (type === 'folder') {
-      // For folders, create a .gitkeep file so the directory is not empty.
-      fullPath = `${path}/${name}/.gitkeep`;
-      content = ''; // .gitkeep files are empty.
-    } else {
-      // For files, automatically append .astro if not present.
-      const fileName = name.endsWith('.astro') ? name : `${name}.astro`;
-      fullPath = path === '/' ? fileName : `${path}/${fileName}`;
-      // GitHub API requires content for new files. We'll start with a placeholder.
-      content = '---\n# Add your frontmatter here\n---\n\n# Start your content here\n';
-    }
-
     try {
-      // The repo is now part of the body, not a query param, for consistency.
+      let fullPath;
+      let content;
+
+      if (type === 'folder') {
+        fullPath = `${path}/${name}/.gitkeep`;
+        content = '';
+      } else {
+        console.log('Fetching template...');
+        const templateRes = await fetch(`/api/file?repo=${repo}&path=src/pages/_template.astro`, { credentials: 'include' });
+
+        if (!templateRes.ok) {
+          console.error('Failed to load template file:', templateRes.status, templateRes.statusText);
+          throw new Error('Could not load template file.');
+        }
+
+        const templateData = await templateRes.json();
+        console.log('Template data received:', templateData);
+
+        content = atob(templateData.content);
+        console.log('Decoded template content:', content);
+
+        const fileName = name.endsWith('.astro') ? name : `${name}.astro`;
+        fullPath = path === '/' ? fileName : `${path}/${fileName}`;
+      }
+
+      console.log('Creating file with path:', fullPath);
       const response = await fetch('/api/file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -42,12 +52,15 @@ function CreateModal({ path, repo, onClose, onCreate }) {
 
       if (!response.ok) {
         const errData = await response.json();
+        console.error('Failed to create item:', errData);
         throw new Error(errData.error || 'Failed to create item.');
       }
 
-      onCreate(); // This will trigger a refresh in the parent
+      console.log('File created successfully.');
+      onCreate();
       onClose();
     } catch (err) {
+      console.error('Error in handleSubmit:', err);
       setError(err.message);
     } finally {
       setIsCreating(false);
