@@ -21,6 +21,9 @@ const Editor = () => {
   const repoName = pathParts.shift();
   const repo = `${repoOwner}/${repoName}`;
   const path = pathParts.join('/');
+  console.log('Editor location.pathname:', location.pathname);
+  console.log('Editor parsed repo:', repo);
+  console.log('Editor parsed path:', path);
   const draftKey = `draft-content-${path}`;
 
   // Load content
@@ -58,7 +61,7 @@ const Editor = () => {
       } catch (err) { setError(err.message); } finally { setLoading(false); }
     };
     loadFile();
-  }, [path, draftKey]);
+  }, [repo, path, draftKey]);
 
   // Debounced auto-save effect
   useEffect(() => {
