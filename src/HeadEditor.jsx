@@ -18,6 +18,7 @@ const HeadEditor = ({
 }) => {
 
   const [slug, setSlug] = useState('');
+  const [activeTab, setActiveTab] = useState('meta');
 
   useEffect(() => {
     if (path) {
@@ -43,38 +44,10 @@ const HeadEditor = ({
 
   if (!frontmatter) return null;
 
-  return (
-    <div className="head-editor-overlay">
-      <div className="head-editor-modal">
-        <div className="head-editor-header">
-          <h2>Search Preview & Settings</h2>
-        </div>
-        <div className="head-editor-content">
-          {/* Preview Section */}
-          <div className="preview-section">
-            <h4>Search Result Preview</h4>
-            <div className="search-result-preview">
-              <div className="preview-title">{title || 'Your Title Here'}</div>
-              <div className="preview-url">www.strategycontent.agency/{slug || 'your-page-slug'}</div>
-              <div className="preview-description">{description || 'Your meta description will appear here. Keep it concise and compelling.'}</div>
-            </div>
-          </div>
-
-          {/* Metadata Section */}
-          <div className="form-section">
-             <div className="form-group">
-              <label htmlFor="title">SEO Title</label>
-              <input id="title" type="text" value={title} onChange={handleTitleChange} placeholder="The title that appears in search results" maxLength={TITLE_MAX_LENGTH + 10} />
-              <span className={`char-counter ${title.length > TITLE_MAX_LENGTH ? 'over-limit' : ''}`}>{title.length}/{TITLE_MAX_LENGTH}</span>
-            </div>
-            <div className="form-group">
-              <label htmlFor="description">Meta Description</label>
-              <textarea id="description" value={description} onChange={handleDescriptionChange} placeholder="A brief summary for search results" rows="4" maxLength={DESC_MAX_LENGTH + 20} />
-              <span className={`char-counter ${description.length > DESC_MAX_LENGTH ? 'over-limit' : ''}`}>{description.length}/{DESC_MAX_LENGTH}</span>
-            </div>
-          </div>
-
-          {/* Settings Section */}
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'settings':
+        return (
           <div className="form-section">
             <div className="form-group">
               <label htmlFor="slug">URL Slug</label>
@@ -82,6 +55,47 @@ const HeadEditor = ({
               <input id="slug" type="text" value={slug} onChange={handleSlugChange} placeholder="your-page-slug" />
             </div>
           </div>
+        );
+      case 'meta':
+      default:
+        return (
+          <>
+            <div className="preview-section">
+              <h4>Search Result Preview</h4>
+              <div className="search-result-preview">
+                <div className="preview-title">{title || 'Your Title Here'}</div>
+                <div className="preview-url">www.strategycontent.agency/{slug || 'your-page-slug'}</div>
+                <div className="preview-description">{description || 'Your meta description will appear here. Keep it concise and compelling.'}</div>
+              </div>
+            </div>
+            <div className="form-section">
+              <div className="form-group">
+                <label htmlFor="title">SEO Title</label>
+                <input id="title" type="text" value={title} onChange={handleTitleChange} placeholder="The title that appears in search results" maxLength={TITLE_MAX_LENGTH + 10} />
+                <span className={`char-counter ${title.length > TITLE_MAX_LENGTH ? 'over-limit' : ''}`}>{title.length}/{TITLE_MAX_LENGTH}</span>
+              </div>
+              <div className="form-group">
+                <label htmlFor="description">Meta Description</label>
+                <textarea id="description" value={description} onChange={handleDescriptionChange} placeholder="A brief summary for search results" rows="4" maxLength={DESC_MAX_LENGTH + 20} />
+                <span className={`char-counter ${description.length > DESC_MAX_LENGTH ? 'over-limit' : ''}`}>{description.length}/{DESC_MAX_LENGTH}</span>
+              </div>
+            </div>
+          </>
+        );
+    }
+  };
+
+  return (
+    <div className="head-editor-overlay">
+      <div className="head-editor-modal">
+        <div className="head-editor-header">
+          <div className="tabs">
+            <button className={`tab-button ${activeTab === 'meta' ? 'active' : ''}`} onClick={() => setActiveTab('meta')}>Meta & Preview</button>
+            <button className={`tab-button ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>Settings</button>
+          </div>
+        </div>
+        <div className="head-editor-content">
+          {renderContent()}
         </div>
         <div className="head-editor-footer">
             <button onClick={onClose} className="done-button">Done</button>
