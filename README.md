@@ -1,3 +1,32 @@
+## Editor UX Overhaul & Bug Squashing (250924)
+
+-   **What:** A complete architectural refactor of the editor to deliver on the user's vision for a mobile-first, intuitive writing experience. This involved building a new UI with custom toolbars, redesigning the settings modal, and fixing numerous bugs related to styling, functionality, and data flow.
+-   **Why:** The previous implementation had significant UX and functional issues. The user wanted an editor that felt like a hybrid of Google Docs and MS Word, with specific top and bottom toolbars. The settings page was considered "dysfunctional," and many UI elements were not working as expected. This overhaul was necessary to address the user's detailed feedback and create a stable, polished product.
+-   **How:**
+    -   **Single Editor Architecture:** The core change was refactoring `Editor.jsx` to use a single TinyMCE instance. The content from all of a file's `text_block` sections is now combined into one document, which resolved the "two editor windows" bug and simplified the UI.
+    -   **Custom Toolbars:** New React components were built for the `TopToolbar` and `BottomToolbar`. These components are decoupled from the TinyMCE configuration and receive the editor instance as a prop, allowing for greater control.
+    -   **Active State Feedback:** The editor now listens for `NodeChange` events. This allows the toolbars to update in real-time, applying an `active` class to buttons (e.g., making the 'B' button light up when the cursor is in bold text). This makes the editor feel much more responsive and professional.
+    -   **Controlled Settings Page:** The `HeadEditor` component was refactored to be a fully "controlled" component. It now receives its `title` and `description` as direct props from `FileViewer`, which fixed the persistent bug where the metadata tabs would appear empty due to a race condition.
+    -   **UX Polish:** A "click outside" event listener was added to the `TopToolbar` to automatically close the dropdown menus, a small but important usability improvement.
+    -   **Styling Fixes:** Persistent CSS issues (e.g., the footer background color, the file explorer's create button color) were resolved by applying inline styles to the components. This was a "brute-force" fix to override suspected caching or specificity issues in the environment.
+-   **Where:**
+    -   `react-login/src/Editor.jsx`: Major refactor for the single editor architecture, state management (`editorInstance`, `activeFormats`), and integration of new toolbars.
+    -   `react-login/src/HeadEditor.jsx`: Re-architected into a controlled component.
+    -   `react-login/src/FileViewer.jsx`: Modified to pass individual props (`title`, `description`) to `HeadEditor`.
+    -   `react-login/src/TopToolbar.jsx`: New component; implemented "click outside" hook.
+    -   `react-login/src/BottomToolbar.jsx`, `FormatMenu.jsx`, `AddMenu.jsx`: New components to build the toolbars.
+    -   `react-login/src/icons.jsx`: Added several new icons for the toolbars.
+    -   `react-login/src/Editor.css`, `TopToolbar.css`, etc.: New and updated styles.
+    -   `react-login/src/FileExplorer.jsx`: Added an inline style to fix a button color regression.
+-   **Thoughts & Suggestions:**
+    -   The single-editor architecture is a significant improvement and the correct path forward. It aligns the data model with the user's "single document" mental model.
+    -   The active state feedback on the toolbars is a critical feature for a good WYSIWYG editor.
+    -   A future improvement would be to implement the color picker menus on the bottom toolbar, which are currently placeholders. This would likely involve adding a color picker library.
+-   **Struggles & Questions:**
+    -   **Hostile Environment:** The biggest struggle throughout this task was the unstable development environment. The Vite dev server repeatedly served stale or cached versions of components, even after restarts and cache-busting attempts. This made debugging incredibly difficult, leading to multiple rounds of fixes for the same issues. The final solution often required using inline styles to guarantee a style was applied, which is not ideal.
+    -   **Question for Future Devs:** Why is the development server's cache so persistent? A thorough investigation into the Vite configuration, potential monorepo-related conflicts, or the sandbox's own caching mechanisms is highly recommended. Solving this would dramatically improve development speed and reliability.
+
+---
 ## Editor Redesign & Two-Mode Workflow (250923)
 
 -   **What:** A complete redesign of the editor to create a more intuitive, mobile-first, and non-technical user experience. The system is now split into two distinct modes:
@@ -364,11 +393,10 @@ To ensure success, the frontend in this directory must be paired with a backend 
 
 ## Developer & Agent Collaboration Notes
 
-To ensure smooth collaboration and prevent accidental data loss, please adhere to the following guidelines:
-
-*   **A Note for Future Agents:** Be aware you may run into issues beyond your control with the development environment returning unstable errors. If this occurs, document the symptoms and actions taken in the log below.
-*   **Deletion Policy:** Do not delete any files, or remove any content from this `README.md`, without explicit confirmation from the project owner.
-*   **Branch Naming:** To improve traceability, all branches should follow the naming convention `yymmdd-descriptive-name` (e.g., `250916-update-readme-guidelines`).
+To ensure smooth collaboration and prevent accidental data loss, please adhere to the following guidelines:.
+-   **A Note for Future Agents:** Be aware you may run into issues beyond your control with the development environment returning unstable errors. If this occurs, document the symptoms and actions taken in the log below.
+-   **Deletion Policy:** Do not delete any files, or remove any content from this `README.md`, without explicit confirmation from the project owner.
+-   **Branch Naming:** To improve traceability, all branches should follow the naming convention `yymmdd-descriptive-name` (e.g., `250916-update-readme-guidelines`).
 
 ---
 ---
@@ -672,7 +700,7 @@ After reverting all previous changes and carefully re-examining the original `cl
     -   `react-login/src/Editor.css` & `react-login/src/FileViewer.css` (New Styles & Mobile Polish)
 -   **How:**
     1.  **Section-Based Editing:** A new `SectionEditor.jsx` component was created to render a dedicated editor for each object in an Astro file's `sections` array. This allows for modular editing of the page's content, preserving the structure.
-    2.  **Auto-Save to Drafts:** The `Editor.jsx` component was refactored to automatically save all changes to a draft in the browser's `localStorage`. This happens on a debounced timer, ensuring minimal performance impact while providing strong data loss protection.
+    2.  **Auto-Save to Drafts:** The `Editor.jsx` component was refactored to automatically save all changes to a draft in the browser's `localStorage`. This happens on a debounced timer, ensuring minimal performance impact while providing strong data loss.
     3.  **Draft-Aware Preview:** The `FileViewer.jsx` component was updated to first check for a local draft. If one exists, it renders the draft content and displays a "Publish" / "Discard" UI, giving the user full control over their unpublished changes.
     4.  **State Management Fix:** A critical bug was fixed in the `SectionEditor` where it was not correctly updating when its props changed (an "uncontrolled component" bug). This was resolved by using a `ref` to the TinyMCE instance and manually setting its content, ensuring the UI is always in sync with the application's state.
     5.  **Mobile UI Polish:** Based on user feedback, multiple iterations of UI fixes were applied to ensure the editor and viewer are fully responsive and user-friendly on mobile devices. This included adjusting padding, margins, button sizes, and simplifying the editor toolbar for narrow screens.
