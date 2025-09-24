@@ -36,18 +36,31 @@ function FileViewer({ repo, path }) {
     .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch')))
     .then(data => {
       const decodedContent = atob(data.content);
-      const match = decodedContent.match(/^---\n(.*)\n---\n(.*)/s);
+
+      // New JS Frontmatter Parsing Logic
+      const frontmatterRegex = /^---([\s\S]*?)---/;
+      const frontmatterMatch = decodedContent.match(frontmatterRegex);
+
       let fm = {};
-      let body = decodedContent;
-      if (match) {
-        fm = jsyaml.load(match[1]);
-        body = match[2] || '';
+      let body = ''; // Body is now part of the template, not frontmatter
+
+      if (frontmatterMatch) {
+        const frontmatterContent = frontmatterMatch[1];
+        const metaRegex = /const\s+meta\s*=\s*{([\s\S]*?)};/m;
+        const metaMatch = frontmatterContent.match(metaRegex);
+
+        if (metaMatch) {
+          const metaBody = metaMatch[1];
+          // Safely parse the JS object string
+          fm = Function(`"use strict"; return ({${metaBody}})`)();
+        }
       }
+
       setContent({
-        sections: fm.sections,
-        rawContent: decodedContent,
+        sections: fm.sections || [],
+        rawContent: decodedContent, // Keep the original full content for reconstruction
         sha: data.sha,
-        body,
+        body: '', // Body is managed by Astro template now
         frontmatter: fm,
       });
       setLoading(false);
@@ -82,19 +95,18 @@ function FileViewer({ repo, path }) {
 
     try {
       const draftData = JSON.parse(draftString);
-      let newContent;
+      const { frontmatter, rawContent, sha } = draftData;
+
+      // New JS Frontmatter Saving Logic
+      const newMetaString = `const meta = ${JSON.stringify(frontmatter, null, 2)};`;
+      const metaRegex = /const\s+meta\s*=\s*{([\s\S]*?)};/m;
+
+      // Replace the old meta block with the new one in the original raw content
+      const newFileContent = rawContent.replace(metaRegex, newMetaString);
+
       const fileExtension = path.substring(path.lastIndexOf('.'));
       const originalSlug = path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'));
       const parentPath = path.substring(0, path.lastIndexOf('/'));
-
-      // Reconstruct the file content from draft data
-      if (path.endsWith('.md')) {
-        const fmString = Object.keys(draftData.frontmatter).length ? `---\n${jsyaml.dump(draftData.frontmatter)}---\n` : '';
-        newContent = `${fmString}${draftData.body}`;
-      } else {
-        const newFrontmatter = { ...draftData.frontmatter, sections: draftData.sections };
-        newContent = `---\n${jsyaml.dump(newFrontmatter)}---\n${draftData.body}`;
-      }
 
       // Check if slug has changed
       if (newSlug && newSlug !== originalSlug) {
@@ -106,7 +118,7 @@ function FileViewer({ repo, path }) {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ repo, path: newPath, content: btoa(newContent), sha: null }), // No SHA for new file
+            body: JSON.stringify({ repo, path: newPath, content: btoa(newFileContent), sha: null }), // No SHA for new file
         });
 
         if (!createRes.ok) {
@@ -139,7 +151,7 @@ function FileViewer({ repo, path }) {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ repo, path, content: btoa(newContent), sha: draftData.sha }),
+            body: JSON.stringify({ repo, path, content: btoa(newFileContent), sha: sha }),
         });
 
         if (!res.ok) {
