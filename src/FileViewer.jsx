@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import jsyaml from 'js-yaml';
 import { marked } from 'marked';
+import { parseJsFrontmatter } from './utils/frontmatterParser';
 import SectionRenderer from './SectionRenderer';
 import HeadEditor from './HeadEditor';
 import './FileViewer.css';
@@ -36,31 +36,13 @@ function FileViewer({ repo, path }) {
     .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch')))
     .then(data => {
       const decodedContent = atob(data.content);
-
-      // New JS Frontmatter Parsing Logic
-      const frontmatterRegex = /^---([\s\S]*?)---/;
-      const frontmatterMatch = decodedContent.match(frontmatterRegex);
-
-      let fm = {};
-      let body = ''; // Body is now part of the template, not frontmatter
-
-      if (frontmatterMatch) {
-        const frontmatterContent = frontmatterMatch[1];
-        const metaRegex = /const\s+meta\s*=\s*{([\s\S]*?)};/m;
-        const metaMatch = frontmatterContent.match(metaRegex);
-
-        if (metaMatch) {
-          const metaBody = metaMatch[1];
-          // Safely parse the JS object string
-          fm = Function(`"use strict"; return ({${metaBody}})`)();
-        }
-      }
+      const fm = parseJsFrontmatter(decodedContent);
 
       setContent({
         sections: fm.sections || [],
-        rawContent: decodedContent, // Keep the original full content for reconstruction
+        rawContent: decodedContent,
         sha: data.sha,
-        body: '', // Body is managed by Astro template now
+        body: '',
         frontmatter: fm,
       });
       setLoading(false);
@@ -221,9 +203,12 @@ function FileViewer({ repo, path }) {
   const title = getFriendlyTitle(path);
 
   const renderContent = () => {
-    // For .astro files, render sections if they exist
-    if (path.endsWith('.astro') && content.sections) {
-      return <SectionRenderer sections={content.sections} />;
+    // For .astro files, render sections if they exist and are not empty
+    if (path.endsWith('.astro')) {
+      if (content.sections && content.sections.length > 0) {
+        return <SectionRenderer sections={content.sections} />;
+      }
+      return <p>No viewable content found in sections.</p>;
     }
     // For .md files, render the body as markdown
     if (path.endsWith('.md')) {

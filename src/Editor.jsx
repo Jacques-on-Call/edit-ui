@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import jsyaml from 'js-yaml';
 import { marked } from 'marked';
 import TurndownService from 'turndown';
+import { parseJsFrontmatter } from './utils/frontmatterParser';
 import SectionEditor from './SectionEditor';
 import BottomToolbar from './BottomToolbar';
 import TopToolbar from './TopToolbar';
@@ -56,16 +56,9 @@ const Editor = () => {
         if (!res.ok) throw new Error(`Fetch failed: ${res.statusText}`);
         const data = await res.json();
         const decodedContent = atob(data.content);
-        const match = decodedContent.match(/^---\n(.*)\n---\n(.*)/s);
+        const fm = parseJsFrontmatter(decodedContent);
 
-        let fm = {};
-        let body = decodedContent;
-        if (match) {
-          fm = jsyaml.load(match[1]);
-          body = match[2] || '';
-        }
-
-        const fullFileData = { sha: data.sha, frontmatter: fm, body: body, path: data.path, sections: fm.sections || [] };
+        const fullFileData = { sha: data.sha, frontmatter: fm, body: '', path: data.path, sections: fm.sections || [] };
         setFileData(fullFileData);
 
         if (type === 'astro') {
