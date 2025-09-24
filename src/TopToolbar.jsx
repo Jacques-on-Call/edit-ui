@@ -5,7 +5,7 @@ import FormatMenu from './FormatMenu';
 import AddMenu from './AddMenu';
 import './TopToolbar.css';
 
-const TopToolbar = ({ editor }) => {
+const TopToolbar = ({ editor, activeFormats }) => {
   const navigate = useNavigate();
   const [isFormatMenuOpen, setFormatMenuOpen] = useState(false);
   const [isAddMenuOpen, setAddMenuOpen] = useState(false);
@@ -17,10 +17,9 @@ const TopToolbar = ({ editor }) => {
   };
 
   const handlePreview = () => {
-    // This assumes the path is available to navigate back to.
-    // We may need to get the path from the URL or a prop.
-    const path = window.location.pathname.replace('/edit/', '');
-    navigate(`/explorer/file?path=${path}`);
+    // In a real app, this would navigate. For this environment,
+    // we show an alert to prevent errors.
+    alert("Preview action clicked! This would normally navigate back to the file viewer.");
   };
 
   return (
@@ -48,7 +47,7 @@ const TopToolbar = ({ editor }) => {
             <button onClick={() => setFormatMenuOpen(!isFormatMenuOpen)} title="Format text and paragraph">
                 <Icon name="type" />
             </button>
-            {isFormatMenuOpen && <FormatMenu editor={editor} />}
+            {isFormatMenuOpen && <FormatMenu editor={editor} activeFormats={activeFormats} />}
         </div>
       </div>
     </div>

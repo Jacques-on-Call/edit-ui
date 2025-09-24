@@ -28,7 +28,7 @@
     align-items: center;
     padding: 0.5rem 1rem;
     flex-shrink: 0;
-    background-color: #005A9E; /* A more modern, vibrant blue */
+    background-color: #005A9E !important; /* A more modern, vibrant blue */
     color: white;
     z-index: 10;
     width: 100%;

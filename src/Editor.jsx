@@ -16,6 +16,7 @@ const Editor = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editorInstance, setEditorInstance] = useState(null);
+  const [activeFormats, setActiveFormats] = useState({});
 
   const turndownService = new TurndownService();
   const pathWithRepo = location.pathname.replace('/edit/', '');
@@ -102,23 +103,38 @@ const Editor = () => {
     setCombinedContent(newContent);
   };
 
+  const handleNodeChange = (editor) => {
+    const newFormats = {
+      bold: editor.queryCommandState('bold'),
+      italic: editor.queryCommandState('italic'),
+      underline: editor.queryCommandState('underline'),
+      justifyLeft: editor.queryCommandState('JustifyLeft'),
+      justifyCenter: editor.queryCommandState('JustifyCenter'),
+      justifyRight: editor.queryCommandState('JustifyRight'),
+      justifyFull: editor.queryCommandState('JustifyFull'),
+      unorderedList: editor.queryCommandState('InsertUnorderedList'),
+    };
+    setActiveFormats(newFormats);
+  };
+
   if (loading) return <div className="editor-container"><div className="loading-spinner"></div></div>;
   if (error) return <div className="editor-container">Error: {error}</div>;
 
   return (
     <div className="editor-container">
       <div className="editor-header">
-        <TopToolbar editor={editorInstance} />
+        <TopToolbar editor={editorInstance} activeFormats={activeFormats} />
       </div>
       <div className="sections-list">
         <SectionEditor
             initialContent={combinedContent}
             onContentChange={handleContentChange}
             onInit={(evt, editor) => setEditorInstance(editor)}
+            onNodeChange={handleNodeChange}
         />
       </div>
       <div className="editor-footer">
-        <BottomToolbar editor={editorInstance} />
+        <BottomToolbar editor={editorInstance} activeFormats={activeFormats} />
       </div>
     </div>
   );

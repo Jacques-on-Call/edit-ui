@@ -1,7 +1,7 @@
 import React from 'react';
 import { Editor as TinyMCEEditor } from '@tinymce/tinymce-react';
 
-const SectionEditor = ({ initialContent, onContentChange, onInit }) => {
+const SectionEditor = ({ initialContent, onContentChange, onInit, onNodeChange }) => {
 
   return (
     <TinyMCEEditor
@@ -10,6 +10,9 @@ const SectionEditor = ({ initialContent, onContentChange, onInit }) => {
         onEditorChange={onContentChange}
         init={{
             height: "100%",
+            setup: (editor) => {
+                editor.on('NodeChange', () => onNodeChange(editor));
+            },
             menubar: false,
             plugins: [
                 'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',

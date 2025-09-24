@@ -227,7 +227,7 @@ function FileViewer({ repo, path }) {
 
   return (
     <div className="file-viewer-container">
-       {isHeadEditorOpen && (
+       {isHeadEditorOpen && content.sha && (
         <HeadEditor
           frontmatter={content.frontmatter}
           onUpdate={handleFrontmatterChange}
