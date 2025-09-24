@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import jsyaml from 'js-yaml';
 import { marked } from 'marked';
 import TurndownService from 'turndown';
 import SectionEditor from './SectionEditor';
+import BottomToolbar from './BottomToolbar';
+import TopToolbar from './TopToolbar';
 import './Editor.css';
 
 const Editor = () => {
   const location = useLocation();
   const [fileData, setFileData] = useState(null);
+  const [combinedContent, setCombinedContent] = useState('');
   const [fileType, setFileType] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editorInstance, setEditorInstance] = useState(null);
 
   const turndownService = new TurndownService();
   const pathWithRepo = location.pathname.replace('/edit/', '');
@@ -33,8 +37,16 @@ const Editor = () => {
       const localDraft = localStorage.getItem(draftKey);
       if (localDraft) {
         try {
-          setFileData(JSON.parse(localDraft));
-          setLoading(false); return;
+          const draftData = JSON.parse(localDraft);
+          setFileData(draftData);
+          if (type === 'astro') {
+            const content = (draftData.sections || []).map(s => s.content).join('');
+            setCombinedContent(content);
+          } else {
+            setCombinedContent(marked(draftData.body || ''));
+          }
+          setLoading(false);
+          return;
         } catch (e) { console.error("Error parsing draft", e); }
       }
 
@@ -52,7 +64,15 @@ const Editor = () => {
           body = match[2] || '';
         }
 
-        setFileData({ sha: data.sha, frontmatter: fm, body: body, path: data.path, sections: fm.sections || [] });
+        const fullFileData = { sha: data.sha, frontmatter: fm, body: body, path: data.path, sections: fm.sections || [] };
+        setFileData(fullFileData);
+
+        if (type === 'astro') {
+            const content = (fullFileData.sections || []).filter(s => s.type === 'text_block').map(s => s.content).join('<hr />');
+            setCombinedContent(content);
+        } else {
+            setCombinedContent(marked(fullFileData.body || ''));
+        }
 
       } catch (err) { setError(err.message); } finally { setLoading(false); }
     };
@@ -63,49 +83,42 @@ const Editor = () => {
   useEffect(() => {
     if (!loading && fileData) {
       const handler = setTimeout(() => {
-        localStorage.setItem(draftKey, JSON.stringify(fileData));
+        // Create a new file data object with the updated content
+        const newFileData = { ...fileData };
+        if (fileType === 'astro') {
+            // For now, consolidating all content into one text_block section
+            newFileData.sections = [{ type: 'text_block', content: combinedContent }];
+            newFileData.frontmatter.sections = newFileData.sections;
+        } else {
+            newFileData.body = turndownService.turndown(combinedContent);
+        }
+        localStorage.setItem(draftKey, JSON.stringify(newFileData));
       }, 1000);
       return () => clearTimeout(handler);
     }
-  }, [fileData, loading, draftKey]);
+  }, [combinedContent, fileData, loading, draftKey, fileType, turndownService]);
 
-  const handleSectionChange = (index, updatedSection) => {
-    const newSections = [...fileData.sections];
-    newSections[index] = updatedSection;
-    setFileData(prev => ({ ...prev, sections: newSections, frontmatter: { ...prev.frontmatter, sections: newSections } }));
+  const handleContentChange = (newContent) => {
+    setCombinedContent(newContent);
   };
 
-  const handleBodyChange = (newHtmlBody) => {
-    const newMarkdownBody = turndownService.turndown(newHtmlBody);
-    setFileData(prev => ({ ...prev, body: newMarkdownBody }));
-  };
-
-  if (loading || !fileData) return <div className="editor-container">Loading...</div>;
+  if (loading) return <div className="editor-container"><div className="loading-spinner"></div></div>;
   if (error) return <div className="editor-container">Error: {error}</div>;
 
   return (
     <div className="editor-container">
       <div className="editor-header">
-        {/* The TinyMCE top toolbar will be rendered here by SectionEditor */}
+        <TopToolbar editor={editorInstance} />
       </div>
       <div className="sections-list">
-        {fileType === 'astro' ? (
-        (fileData.sections || []).map((section, index) => (
-            <SectionEditor
-            key={index}
-            section={section}
-            onSectionChange={(updatedSection) => handleSectionChange(index, updatedSection)}
-            />
-        ))
-        ) : (
         <SectionEditor
-            section={{ type: 'main_content', content: marked(fileData.body || '') }}
-            onSectionChange={(updatedSection) => handleBodyChange(updatedSection.content)}
+            initialContent={combinedContent}
+            onContentChange={handleContentChange}
+            onInit={(evt, editor) => setEditorInstance(editor)}
         />
-        )}
       </div>
       <div className="editor-footer">
-        {/* The TinyMCE bottom toolbar will be rendered here */}
+        <BottomToolbar editor={editorInstance} />
       </div>
     </div>
   );

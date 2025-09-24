@@ -33,16 +33,13 @@ const HeadEditor = ({ frontmatter, onUpdate, onClose, path, sections, onSectionU
   };
 
   const handleSlugChange = (e) => {
-    const newSlug = e.target.value;
+    const newSlug = e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-');
     setSlug(newSlug);
     onSlugUpdate(newSlug);
   };
 
-  const handleSectionFieldChange = (index, fieldName, value) => {
-    const newSections = [...sections];
-    newSections[index] = { ...newSections[index], [fieldName]: value };
-    onSectionUpdate(newSections);
-  };
+  // This function is no longer needed as section settings are removed.
+  // const handleSectionFieldChange = (index, fieldName, value) => { ... };
 
   if (!frontmatter) return null;
 
@@ -50,38 +47,28 @@ const HeadEditor = ({ frontmatter, onUpdate, onClose, path, sections, onSectionU
     switch (activeTab) {
       case 'metadata':
         return (
-          <>
+          <div className="form-section">
             <div className="form-group">
-              <label htmlFor="title">Title</label>
-              <input id="title" type="text" value={title} onChange={handleTitleChange} placeholder="Enter page title" maxLength={TITLE_MAX_LENGTH + 10} />
+              <label htmlFor="title">SEO Title</label>
+              <input id="title" type="text" value={title} onChange={handleTitleChange} placeholder="The title that appears in search results" maxLength={TITLE_MAX_LENGTH + 10} />
               <span className={`char-counter ${title.length > TITLE_MAX_LENGTH ? 'over-limit' : ''}`}>{title.length}/{TITLE_MAX_LENGTH}</span>
             </div>
             <div className="form-group">
-              <label htmlFor="description">Description</label>
-              <textarea id="description" value={description} onChange={handleDescriptionChange} placeholder="Enter meta description" rows="4" maxLength={DESC_MAX_LENGTH + 20} />
+              <label htmlFor="description">Meta Description</label>
+              <textarea id="description" value={description} onChange={handleDescriptionChange} placeholder="A brief summary for search results" rows="4" maxLength={DESC_MAX_LENGTH + 20} />
               <span className={`char-counter ${description.length > DESC_MAX_LENGTH ? 'over-limit' : ''}`}>{description.length}/{DESC_MAX_LENGTH}</span>
             </div>
-          </>
+          </div>
         );
       case 'settings':
         return (
-          <>
+          <div className="form-section">
             <div className="form-group">
               <label htmlFor="slug">URL Slug</label>
+              <p className="form-group-description">This is the very last part of the URL. It should be short, descriptive, and contain keywords.</p>
               <input id="slug" type="text" value={slug} onChange={handleSlugChange} placeholder="your-page-slug" />
             </div>
-            <div className="section-settings-area">
-              <h4>Section Settings</h4>
-              <div className="section-settings-list">
-                {(sections || []).map((section, index) => (
-                  <div className="section-settings-item" key={index}>
-                    <label>Type: </label>
-                    <input type="text" value={section.type} onChange={(e) => handleSectionFieldChange(index, 'type', e.target.value)} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
+          </div>
         );
       case 'preview':
       default:
