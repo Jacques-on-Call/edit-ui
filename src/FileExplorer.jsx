@@ -287,7 +287,11 @@ function FileExplorer({ repo }) {
           {/* Deliberately empty to push other elements */}
         </div>
         <div className="toolbar-section center">
-          <button className="toolbar-button create-button" onClick={() => setCreateModalOpen(true)}>
+          <button
+            className="toolbar-button create-button"
+            onClick={() => setCreateModalOpen(true)}
+            style={{ backgroundColor: '#003971', color: 'white' }} // Inline style to force override
+          >
             <Icon name="plus" />
           </button>
         </div>

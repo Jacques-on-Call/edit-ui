@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from './icons';
 import FormatMenu from './FormatMenu';
@@ -9,6 +9,24 @@ const TopToolbar = ({ editor, activeFormats }) => {
   const navigate = useNavigate();
   const [isFormatMenuOpen, setFormatMenuOpen] = useState(false);
   const [isAddMenuOpen, setAddMenuOpen] = useState(false);
+  const formatMenuRef = useRef(null);
+  const addMenuRef = useRef(null);
+
+  // Close dropdowns if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (formatMenuRef.current && !formatMenuRef.current.contains(event.target)) {
+        setFormatMenuOpen(false);
+      }
+      if (addMenuRef.current && !addMenuRef.current.contains(event.target)) {
+        setAddMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleCommand = (command, value = null) => {
     if (editor) {
@@ -37,13 +55,13 @@ const TopToolbar = ({ editor, activeFormats }) => {
       </div>
 
       <div className="toolbar-group">
-        <div className="dropdown-container">
+        <div className="dropdown-container" ref={addMenuRef}>
             <button onClick={() => setAddMenuOpen(!isAddMenuOpen)} title="Add...">
                 <Icon name="plus" />
             </button>
             {isAddMenuOpen && <AddMenu editor={editor} />}
         </div>
-        <div className="dropdown-container">
+        <div className="dropdown-container" ref={formatMenuRef}>
             <button onClick={() => setFormatMenuOpen(!isFormatMenuOpen)} title="Format text and paragraph">
                 <Icon name="type" />
             </button>

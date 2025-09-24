@@ -133,7 +133,7 @@ const Editor = () => {
             onNodeChange={handleNodeChange}
         />
       </div>
-      <div className="editor-footer">
+      <div className="editor-footer" style={{ backgroundColor: '#005A9E' }}>
         <BottomToolbar editor={editorInstance} activeFormats={activeFormats} />
       </div>
     </div>

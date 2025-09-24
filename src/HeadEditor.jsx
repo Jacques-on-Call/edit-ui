@@ -4,31 +4,35 @@ import './HeadEditor.css';
 const TITLE_MAX_LENGTH = 60;
 const DESC_MAX_LENGTH = 160;
 
-const HeadEditor = ({ frontmatter, onUpdate, onClose, path, sections, onSectionUpdate, onSlugUpdate }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+// This is now a controlled component. It receives its values as props and calls
+// back to the parent on every change. It no longer holds its own state for title/desc.
+const HeadEditor = ({
+    title = '',
+    description = '',
+    frontmatter,
+    onUpdate,
+    onClose,
+    path,
+    sections,
+    onSlugUpdate
+}) => {
+
   const [slug, setSlug] = useState('');
   const [activeTab, setActiveTab] = useState('preview');
 
   useEffect(() => {
-    if (frontmatter) {
-      setTitle(frontmatter.title || '');
-      setDescription(frontmatter.description || '');
-    }
     if (path) {
       const pathParts = path.split('/');
       const filename = pathParts.pop();
       setSlug(filename.substring(0, filename.lastIndexOf('.')) || filename);
     }
-  }, [frontmatter, path]);
+  }, [path]);
 
   const handleTitleChange = (e) => {
-    setTitle(e.target.value);
     onUpdate({ ...frontmatter, title: e.target.value });
   };
 
   const handleDescriptionChange = (e) => {
-    setDescription(e.target.value);
     onUpdate({ ...frontmatter, description: e.target.value });
   };
 
@@ -37,9 +41,6 @@ const HeadEditor = ({ frontmatter, onUpdate, onClose, path, sections, onSectionU
     setSlug(newSlug);
     onSlugUpdate(newSlug);
   };
-
-  // This function is no longer needed as section settings are removed.
-  // const handleSectionFieldChange = (index, fieldName, value) => { ... };
 
   if (!frontmatter) return null;
 
