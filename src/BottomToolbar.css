@@ -1,0 +1,28 @@
+.bottom-toolbar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  max-width: 600px; /* Max-width for aesthetics on larger screens */
+  height: 100%;
+}
+
+.bottom-toolbar button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.bottom-toolbar button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.bottom-toolbar button.active {
+    background-color: rgba(255, 255, 255, 0.3);
+}
