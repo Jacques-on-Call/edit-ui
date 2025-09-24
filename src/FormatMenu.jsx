@@ -1,18 +1,20 @@
 import React from 'react';
 import './FormatMenu.css';
 
-const FormatMenu = ({ editor, activeFormats = {} }) => {
+const FormatMenu = ({ editor, activeFormats = {}, closeMenu }) => {
   if (!editor) return null;
 
   const handleCommand = (command, value = null) => {
     if (editor) {
         editor.execCommand(command, false, value);
+        if (closeMenu) closeMenu();
     }
   };
 
   const handleFormatBlock = (format) => {
     if (editor) {
         editor.execCommand('FormatBlock', false, format);
+        if (closeMenu) closeMenu();
     }
   };
 

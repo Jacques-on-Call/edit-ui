@@ -10,7 +10,7 @@
 .bottom-toolbar button {
   background: none;
   border: none;
-  color: white;
+  color: #333333; /* Changed from white to a dark grey for visibility on a light background */
   font-size: 1.2rem;
   font-weight: bold;
   cursor: pointer;
@@ -20,9 +20,10 @@
 }
 
 .bottom-toolbar button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: #e0e0e0; /* A light grey for hover */
 }
 
 .bottom-toolbar button.active {
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: #c7c7c7; /* A slightly darker grey for active state */
+    color: #005A9E; /* Use accent color for active icon */
 }

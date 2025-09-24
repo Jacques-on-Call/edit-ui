@@ -11,14 +11,18 @@ const TopToolbar = ({ editor, activeFormats }) => {
   const [isAddMenuOpen, setAddMenuOpen] = useState(false);
   const formatMenuRef = useRef(null);
   const addMenuRef = useRef(null);
+  const formatButtonRef = useRef(null);
+  const addButtonRef = useRef(null);
 
   // Close dropdowns if clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (formatMenuRef.current && !formatMenuRef.current.contains(event.target)) {
+      // Close format menu if click is outside of its container and not on its button
+      if (isFormatMenuOpen && formatMenuRef.current && !formatMenuRef.current.contains(event.target) && !formatButtonRef.current.contains(event.target)) {
         setFormatMenuOpen(false);
       }
-      if (addMenuRef.current && !addMenuRef.current.contains(event.target)) {
+      // Close add menu if click is outside of its container and not on its button
+      if (isAddMenuOpen && addMenuRef.current && !addMenuRef.current.contains(event.target) && !addButtonRef.current.contains(event.target)) {
         setAddMenuOpen(false);
       }
     };
@@ -26,7 +30,7 @@ const TopToolbar = ({ editor, activeFormats }) => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [isFormatMenuOpen, isAddMenuOpen]);
 
   const handleCommand = (command, value = null) => {
     if (editor) {
@@ -35,9 +39,18 @@ const TopToolbar = ({ editor, activeFormats }) => {
   };
 
   const handlePreview = () => {
-    // In a real app, this would navigate. For this environment,
-    // we show an alert to prevent errors.
-    alert("Preview action clicked! This would normally navigate back to the file viewer.");
+    // Navigate back to the previous page (the file viewer)
+    navigate(-1);
+  };
+
+  const toggleFormatMenu = () => {
+    setFormatMenuOpen(prev => !prev);
+    setAddMenuOpen(false); // Close other menu
+  };
+
+  const toggleAddMenu = () => {
+    setAddMenuOpen(prev => !prev);
+    setFormatMenuOpen(false); // Close other menu
   };
 
   return (
@@ -46,26 +59,21 @@ const TopToolbar = ({ editor, activeFormats }) => {
         <button onClick={handlePreview} title="Preview">
           <Icon name="eye" />
         </button>
-        <button onClick={() => handleCommand('undo')} title="Undo">
-          <Icon name="corner-up-left" />
-        </button>
-        <button onClick={() => handleCommand('redo')} title="Redo">
-          <Icon name="corner-up-right" />
-        </button>
+        {/* Undo/redo buttons were moved to the bottom toolbar to follow user feedback */}
       </div>
 
       <div className="toolbar-group">
-        <div className="dropdown-container" ref={addMenuRef}>
-            <button onClick={() => setAddMenuOpen(!isAddMenuOpen)} title="Add...">
+        <div className="dropdown-container">
+            <button onClick={toggleAddMenu} title="Add..." ref={addButtonRef}>
                 <Icon name="plus" />
             </button>
-            {isAddMenuOpen && <AddMenu editor={editor} />}
+            {isAddMenuOpen && <div ref={addMenuRef}><AddMenu editor={editor} closeMenu={() => setAddMenuOpen(false)} /></div>}
         </div>
-        <div className="dropdown-container" ref={formatMenuRef}>
-            <button onClick={() => setFormatMenuOpen(!isFormatMenuOpen)} title="Format text and paragraph">
+        <div className="dropdown-container">
+            <button onClick={toggleFormatMenu} title="Format text and paragraph" ref={formatButtonRef}>
                 <Icon name="type" />
             </button>
-            {isFormatMenuOpen && <FormatMenu editor={editor} activeFormats={activeFormats} />}
+            {isFormatMenuOpen && <div ref={formatMenuRef}><FormatMenu editor={editor} activeFormats={activeFormats} closeMenu={() => setFormatMenuOpen(false)} /></div>}
         </div>
       </div>
     </div>

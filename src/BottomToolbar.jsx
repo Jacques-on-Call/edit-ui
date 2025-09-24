@@ -15,8 +15,11 @@ const BottomToolbar = ({ editor, activeFormats = {} }) => {
 
   return (
     <div className="bottom-toolbar">
-      <button onClick={() => handleCommand('mention')} title="Mention">
-        <Icon name="at" />
+      <button onClick={() => handleCommand('undo')} title="Undo">
+        <Icon name="corner-up-left" />
+      </button>
+      <button onClick={() => handleCommand('redo')} title="Redo">
+        <Icon name="corner-up-right" />
       </button>
       <button onClick={() => handleCommand('bold')} title="Bold" className={activeFormats.bold ? 'active' : ''}>
         <Icon name="bold" />

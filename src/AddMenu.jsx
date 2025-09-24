@@ -1,11 +1,14 @@
 import React from 'react';
-import './AddMenu.css'; // Will create this next
+import './AddMenu.css';
 
-const AddMenu = ({ editor }) => {
+const AddMenu = ({ editor, closeMenu }) => {
   if (!editor) return null;
 
   const handleCommand = (command) => {
-    editor.execCommand(command);
+    if (editor) {
+      editor.execCommand(command);
+      if (closeMenu) closeMenu();
+    }
   };
 
   return (
