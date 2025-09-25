@@ -76,6 +76,6 @@
 
 
 /* Cleanup of old styles that are no longer needed */
-.editor-header h2, .preview-button, .section-type-header, .section-fields, .form-control {
+.editor-header h2, .preview-button, .section-type-header, .section-fields, .form-group, .form-control {
     display: none;
 }

@@ -56,9 +56,7 @@ const Editor = () => {
         if (!res.ok) throw new Error(`Fetch failed: ${res.statusText}`);
         const data = await res.json();
         const decodedContent = atob(data.content);
-        console.log('[Editor] Fetch successful, calling parser.');
         const fm = parseJsFrontmatter(decodedContent);
-        console.log('[Editor] Parsed frontmatter:', fm);
 
         const fullFileData = { sha: data.sha, frontmatter: fm, body: '', path: data.path, sections: fm.sections || [] };
         setFileData(fullFileData);

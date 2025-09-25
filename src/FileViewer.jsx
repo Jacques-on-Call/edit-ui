@@ -57,12 +57,29 @@ function FileViewer({ repo, path }) {
     .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch file content')))
     .then(data => {
       const decodedContent = atob(data.content);
+      const frontmatter = parseJsFrontmatter(decodedContent);
 
-      const fmData = parseJsFrontmatter(decodedContent);
+      // The parser returns the 'meta' object directly. We need to structure it
+      // correctly for the rest of the component.
+      const fileData = {
+        sha: data.sha,
+        frontmatter: frontmatter,
+        sections: frontmatter.sections || [], // Ensure sections array exists
+        rawContent: decodedContent,
+      };
 
+      // Now, pass the correctly structured object to the normalizer.
+      let normalized = normalizeFileContent(fileData, decodedContent);
 
-      const fileData = { sha: data.sha, ...fmData };
-      const normalized = normalizeFileContent(fileData, decodedContent);
+      // Smart Default Logic: If no top-level image is set, try to find one in a hero section.
+      if (!normalized.frontmatter.image && normalized.sections) {
+        const heroSection = normalized.sections.find(s => s.type === 'hero' && s.image);
+        if (heroSection) {
+          // Promote the hero image to the top-level for the preview
+          normalized.frontmatter.image = heroSection.image;
+          normalized.frontmatter.imageAlt = heroSection.imageAlt;
+        }
+      }
 
       if (normalized.sections.length === 0 && decodedContent) {
         setParseWarnings(prev => [...prev, 'No structured sections were found in this file.']);
@@ -80,20 +97,37 @@ function FileViewer({ repo, path }) {
   }, [repo, path]);
 
   useEffect(() => {
-    const localDraft = localStorage.getItem(draftKey);
-    if (localDraft) {
-      try {
-        const draftData = JSON.parse(localDraft);
-        setContent(draftData); // Assume draft is already normalized
-        setIsDraft(true);
-        setLoading(false);
-      } catch (e) {
-        console.error("Failed to parse draft, fetching from server.", e);
+    const loadContent = () => {
+      const localDraft = localStorage.getItem(draftKey);
+      if (localDraft) {
+        try {
+          const draftData = JSON.parse(localDraft);
+          setContent(draftData);
+          setIsDraft(true);
+          setLoading(false);
+        } catch (e) {
+          console.error("Failed to parse draft, fetching from server.", e);
+          fetchFromServer();
+        }
+      } else {
         fetchFromServer();
       }
-    } else {
-      fetchFromServer();
-    }
+    };
+
+    loadContent();
+
+    // Add a storage event listener to reload content if the draft is updated in another tab/window
+    const handleStorageChange = (e) => {
+      if (e.key === draftKey) {
+        loadContent();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [draftKey, fetchFromServer]);
 
   const handlePublish = async () => {

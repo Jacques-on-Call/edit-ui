@@ -4,8 +4,6 @@ import './HeadEditor.css';
 const TITLE_MAX_LENGTH = 60;
 const DESC_MAX_LENGTH = 160;
 
-// This is now a controlled component. It receives its values as props and calls
-// back to the parent on every change. It no longer holds its own state for title/desc.
 const HeadEditor = ({
     title = '',
     description = '',
@@ -13,12 +11,13 @@ const HeadEditor = ({
     onUpdate,
     onClose,
     path,
-    sections,
     onSlugUpdate
 }) => {
-
   const [slug, setSlug] = useState('');
-  const [activeTab, setActiveTab] = useState('meta');
+  const [activeTab, setActiveTab] = 'meta');
+
+  // Destructure image properties from frontmatter for easier use
+  const { image, imageAlt } = frontmatter || {};
 
   useEffect(() => {
     if (path) {
@@ -28,12 +27,8 @@ const HeadEditor = ({
     }
   }, [path]);
 
-  const handleTitleChange = (e) => {
-    onUpdate({ ...frontmatter, title: e.target.value });
-  };
-
-  const handleDescriptionChange = (e) => {
-    onUpdate({ ...frontmatter, description: e.target.value });
+  const handleFieldChange = (e) => {
+    onUpdate({ ...frontmatter, [e.target.name]: e.target.value });
   };
 
   const handleSlugChange = (e) => {
@@ -44,46 +39,60 @@ const HeadEditor = ({
 
   if (!frontmatter) return null;
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'settings':
-        return (
-          <div className="form-section">
-            <div className="form-group">
-              <label htmlFor="slug">URL Slug</label>
-              <p className="form-group-description">This is the very last part of the URL. It should be short, descriptive, and contain keywords.</p>
-              <input id="slug" type="text" value={slug} onChange={handleSlugChange} placeholder="your-page-slug" />
-            </div>
+  const renderMetaTab = () => (
+    <>
+      <div className="preview-section">
+        <h4>Search Result Preview</h4>
+        <div className="search-result-preview">
+          <div className="preview-text-content">
+            <div className="preview-title">{title || 'Your Title Here'}</div>
+            <div className="preview-url">www.strategycontent.agency/{slug || 'your-page-slug'}</div>
+            <div className="preview-description">{description || 'Your meta description will appear here.'}</div>
           </div>
-        );
-      case 'meta':
-      default:
-        return (
-          <>
-            <div className="preview-section">
-              <h4>Search Result Preview</h4>
-              <div className="search-result-preview">
-                <div className="preview-title">{title || 'Your Title Here'}</div>
-                <div className="preview-url">www.strategycontent.agency/{slug || 'your-page-slug'}</div>
-                <div className="preview-description">{description || 'Your meta description will appear here. Keep it concise and compelling.'}</div>
-              </div>
+          {image && (
+            <div className="preview-image-container">
+              <img src={image} alt={imageAlt || 'Preview'} className="preview-image" />
             </div>
-            <div className="form-section">
-              <div className="form-group">
-                <label htmlFor="title">SEO Title</label>
-                <input id="title" type="text" value={title} onChange={handleTitleChange} placeholder="The title that appears in search results" maxLength={TITLE_MAX_LENGTH + 10} />
-                <span className={`char-counter ${title.length > TITLE_MAX_LENGTH ? 'over-limit' : ''}`}>{title.length}/{TITLE_MAX_LENGTH}</span>
-              </div>
-              <div className="form-group">
-                <label htmlFor="description">Meta Description</label>
-                <textarea id="description" value={description} onChange={handleDescriptionChange} placeholder="A brief summary for search results" rows="4" maxLength={DESC_MAX_LENGTH + 20} />
-                <span className={`char-counter ${description.length > DESC_MAX_LENGTH ? 'over-limit' : ''}`}>{description.length}/{DESC_MAX_LENGTH}</span>
-              </div>
-            </div>
-          </>
-        );
-    }
-  };
+          )}
+        </div>
+      </div>
+      <div className="form-section">
+        <div className="form-group">
+          <label htmlFor="title">SEO Title</label>
+          <input id="title" name="title" type="text" value={title} onChange={handleFieldChange} placeholder="Title for search results" maxLength={TITLE_MAX_LENGTH + 10} />
+          <span className={`char-counter ${title.length > TITLE_MAX_LENGTH ? 'over-limit' : ''}`}>{title.length}/{TITLE_MAX_LENGTH}</span>
+        </div>
+        <div className="form-group">
+          <label htmlFor="description">Meta Description</label>
+          <textarea id="description" name="description" value={description} onChange={handleFieldChange} placeholder="Summary for search results" rows="3" maxLength={DESC_MAX_LENGTH + 20} />
+          <span className={`char-counter ${description.length > DESC_MAX_LENGTH ? 'over-limit' : ''}`}>{description.length}/{DESC_MAX_LENGTH}</span>
+        </div>
+        <div className="form-group">
+            <label htmlFor="image">Preview Image URL</label>
+            <input id="image" name="image" type="text" value={image || ''} onChange={handleFieldChange} placeholder="e.g., /images/hero.jpg" />
+        </div>
+        <div className="form-group">
+            <label htmlFor="imageAlt">Preview Image Alt Text</label>
+            <input id="imageAlt" name="imageAlt" type="text" value={imageAlt || ''} onChange={handleFieldChange} placeholder="Describe the image for accessibility" />
+        </div>
+      </div>
+    </>
+  );
+
+  const renderSettingsTab = () => (
+    <div className="form-section">
+      <div className="form-group">
+        <label htmlFor="slug">URL Slug</label>
+        <p className="form-group-description">The last part of the URL. Should be short, descriptive, and contain keywords.</p>
+        <input id="slug" type="text" value={slug} onChange={handleSlugChange} placeholder="your-page-slug" />
+      </div>
+       <div className="form-group">
+        <label>JSON-LD Schema</label>
+         <p className="form-group-description">Advanced: Edit the structured data for this page. This will be implemented in a future task.</p>
+        <textarea rows="10" placeholder="Future schema editor..." disabled></textarea>
+      </div>
+    </div>
+  );
 
   return (
     <div className="head-editor-overlay">
@@ -95,10 +104,10 @@ const HeadEditor = ({
           </div>
         </div>
         <div className="head-editor-content">
-          {renderContent()}
+          {activeTab === 'meta' ? renderMetaTab() : renderSettingsTab()}
         </div>
         <div className="head-editor-footer">
-            <button onClick={onClose} className="done-button">Done</button>
+          <button onClick={onClose} className="done-button">Done</button>
         </div>
       </div>
     </div>
