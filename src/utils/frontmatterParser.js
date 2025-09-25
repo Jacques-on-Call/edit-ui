@@ -6,7 +6,9 @@
  * @returns {object} The parsed 'meta' object, or an empty object if parsing fails or no meta block is found.
  */
 export const parseJsFrontmatter = (fileContent) => {
+  console.log('[Parser] Received content:', fileContent);
   if (!fileContent) {
+    console.log('[Parser] Content is empty, returning empty object.');
     return {};
   }
 
@@ -37,9 +39,10 @@ export const parseJsFrontmatter = (fileContent) => {
     // This is safer than eval() as it doesn't have access to the surrounding scope.
     const parsedMeta = Function(`"use strict"; return ({${metaBody}})`)();
 
+    console.log('[Parser] Successfully parsed meta object:', parsedMeta);
     return parsedMeta;
   } catch (error) {
-    console.error("Error parsing JavaScript frontmatter:", error);
+    console.error("[Parser] Error parsing JavaScript frontmatter:", error);
     // Return an empty object in case of a parsing error to prevent crashes.
     return {};
   }

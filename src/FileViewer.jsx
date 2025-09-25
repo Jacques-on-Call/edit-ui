@@ -36,7 +36,9 @@ function FileViewer({ repo, path }) {
     .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch')))
     .then(data => {
       const decodedContent = atob(data.content);
+      console.log('[FileViewer] Fetch successful, calling parser.');
       const fm = parseJsFrontmatter(decodedContent);
+      console.log('[FileViewer] Parsed frontmatter:', fm);
 
       setContent({
         sections: fm.sections || [],
