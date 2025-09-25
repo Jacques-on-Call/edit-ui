@@ -1,69 +1,69 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { marked } from 'marked';
-import { parseFrontmatter } from './utils/frontmatterParser'; // Use the new robust parser
+import { parseJsFrontmatter } from './utils/frontmatterParser';
 import SectionRenderer from './SectionRenderer';
 import HeadEditor from './HeadEditor';
 import './FileViewer.css';
 
 function FileViewer({ repo, path }) {
   const [isHeadEditorOpen, setIsHeadEditorOpen] = useState(false);
-  const [fileData, setFileData] = useState(null); // Will hold { sha, frontmatter, body, sections, rawContent }
-  const [parseFailed, setParseFailed] = useState(false);
+  const [content, setContent] = useState({
+    sections: null,
+    rawContent: '',
+    sha: null,
+    body: '',
+    frontmatter: {},
+  });
   const [isDraft, setIsDraft] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [newSlug, setNewSlug] = useState(null);
   const navigate = useNavigate();
   const draftKey = `draft-content-${path}`;
 
+  // This effect runs when content changes, saving it to a local draft
+  useEffect(() => {
+    // Only save if it's a draft and not in the initial loading state
+    if (isDraft && !loading) {
+      localStorage.setItem(draftKey, JSON.stringify(content));
+    }
+  }, [content, isDraft, loading, draftKey]);
+
   const fetchFromServer = useCallback(() => {
     setLoading(true);
-    setError(null);
-    setParseFailed(false);
-    console.log(`DEBUG: Fetching /api/file?repo=${repo}&path=${path}`);
-
     fetch(`/api/file?repo=${repo}&path=${path}`, { credentials: 'include' })
-      .then(res => res.ok ? res.json() : Promise.reject(new Error(`API Error: ${res.statusText}`)))
-      .then(data => {
-        console.log(`DEBUG: API response { sha: "${data.sha}", size: ${data.content.length} }`);
-        const decodedContent = atob(data.content);
-        console.log(`DEBUG: Decoded content startsWith: "${decodedContent.substring(0, 40).replace(/\n/g, '\\n')}..."`);
+    .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch')))
+    .then(data => {
+      const decodedContent = atob(data.content);
+      const fm = parseJsFrontmatter(decodedContent);
 
-        const parsed = parseFrontmatter(decodedContent);
-        const frontmatter = parsed.data;
-        const body = parsed.content;
-
-        if (Object.keys(frontmatter).length === 0 && body.length > 0) {
-            console.log("DEBUG: Parsing resulted in no frontmatter. Displaying raw content.");
-            setParseFailed(true);
-        }
-
-        setFileData({
-          sha: data.sha,
-          frontmatter: frontmatter,
-          body: body,
-          sections: frontmatter.sections || [],
-          rawContent: decodedContent,
-        });
-        setIsDraft(false);
-      })
-      .catch(err => {
-        console.error("Fetch or parse error:", err);
-        setError(err.message);
-      })
-      .finally(() => {
-        setLoading(false);
+      setContent({
+        sections: fm.sections || [],
+        rawContent: decodedContent,
+        sha: data.sha,
+        body: '',
+        frontmatter: fm,
       });
+      setLoading(false);
+      setIsDraft(false);
+    })
+    .catch(err => {
+      setError(err.message);
+      setLoading(false);
+    });
   }, [repo, path]);
 
   useEffect(() => {
     const localDraft = localStorage.getItem(draftKey);
     if (localDraft) {
       try {
-        setFileData(JSON.parse(localDraft));
+        const draftData = JSON.parse(localDraft);
+        setContent({ ...draftData, rawContent: 'Draft loaded' });
         setIsDraft(true);
         setLoading(false);
       } catch (e) {
+        console.error("Failed to parse draft, fetching from server.", e);
         fetchFromServer();
       }
     } else {
@@ -71,18 +71,82 @@ function FileViewer({ repo, path }) {
     }
   }, [draftKey, fetchFromServer]);
 
-  // This simple effect handles saving the entire fileData object to the draft.
-  useEffect(() => {
-      if (isDraft && !loading && fileData) {
-          localStorage.setItem(draftKey, JSON.stringify(fileData));
-      }
-  }, [fileData, isDraft, loading, draftKey]);
-
-
   const handlePublish = async () => {
-    // This function will need to be updated to handle both YAML and JS formats,
-    // but for now, we focus on making the viewer robust.
-    alert("Publishing logic needs to be updated for multi-format support.");
+    const draftString = localStorage.getItem(draftKey);
+    if (!draftString) return alert("Error: No draft found.");
+
+    try {
+      const draftData = JSON.parse(draftString);
+      const { frontmatter, rawContent, sha } = draftData;
+
+      // New JS Frontmatter Saving Logic
+      const newMetaString = `const meta = ${JSON.stringify(frontmatter, null, 2)};`;
+      const metaRegex = /const\s+meta\s*=\s*{([\s\S]*?)};/m;
+
+      // Replace the old meta block with the new one in the original raw content
+      const newFileContent = rawContent.replace(metaRegex, newMetaString);
+
+      const fileExtension = path.substring(path.lastIndexOf('.'));
+      const originalSlug = path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'));
+      const parentPath = path.substring(0, path.lastIndexOf('/'));
+
+      // Check if slug has changed
+      if (newSlug && newSlug !== originalSlug) {
+        // --- RENAME LOGIC ---
+        const newPath = `${parentPath}/${newSlug}${fileExtension}`;
+
+        // 1. Create the new file
+        const createRes = await fetch('/api/file', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repo, path: newPath, content: btoa(newFileContent), sha: null }), // No SHA for new file
+        });
+
+        if (!createRes.ok) {
+            const errorData = await createRes.json();
+            throw new Error(`Failed to create new file at '${newPath}': ${errorData.message || createRes.statusText}`);
+        }
+        await createRes.json(); // Consume the response but don't need the data
+
+        // 2. Delete the old file
+        const deleteRes = await fetch(`/api/file?repo=${repo}&path=${path}&sha=${draftData.sha}`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+
+        if (!deleteRes.ok) {
+            // This is a partial failure state. The new file was created, but the old one wasn't deleted.
+            // Inform the user clearly.
+            alert(`Rename partially failed! The new page was created at '${newSlug}', but we could not remove the old page. Please remove it manually.`);
+        } else {
+            alert('Page successfully renamed and published!');
+        }
+
+        // 3. Cleanup and navigate
+        localStorage.removeItem(draftKey);
+        navigate(`/explorer/file?path=${newPath}`); // Navigate to the new page
+
+      } else {
+        // --- UPDATE IN-PLACE LOGIC ---
+        const res = await fetch('/api/file', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repo, path, content: btoa(newFileContent), sha: sha }),
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(`Publish failed: ${errorData.message || res.statusText}`);
+        }
+        alert('Publish successful!');
+        localStorage.removeItem(draftKey);
+        fetchFromServer();
+      }
+    } catch (err) {
+      alert(`An error occurred: ${err.message}`);
+    }
   };
 
   const handleDiscard = () => {
@@ -92,35 +156,70 @@ function FileViewer({ repo, path }) {
     }
   };
 
-  // Generic update handler for any part of the fileData
-  const handleDataUpdate = (newData) => {
-    setFileData(prev => ({...prev, ...newData}));
-    if (!isDraft) setIsDraft(true);
-  }
+  const handleFrontmatterChange = (key, value) => {
+    setContent(prev => {
+        const newFrontmatter = { ...prev.frontmatter, [key]: value };
+        return {
+            ...prev,
+            frontmatter: newFrontmatter,
+            sections: prev.frontmatter.sections ? newFrontmatter.sections : prev.sections,
+        };
+    });
+    if (!isDraft) {
+        setIsDraft(true);
+    }
+  };
+
+  const handleSectionUpdate = (newSections) => {
+    setContent(prev => ({
+        ...prev,
+        sections: newSections,
+        frontmatter: { ...prev.frontmatter, sections: newSections },
+    }));
+    if (!isDraft) {
+        setIsDraft(true);
+    }
+  };
+
+  const handleSlugUpdate = (slug) => {
+    setNewSlug(slug);
+    // Also update the local draft so the slug change is persisted
+    // before publishing.
+    setContent(prev => ({ ...prev }));
+    if (!isDraft) {
+        setIsDraft(true);
+    }
+  };
+
+  const getFriendlyTitle = (filePath) => {
+    if (!filePath) return '';
+    const filename = filePath.split('/').pop();
+    const lastDotIndex = filename.lastIndexOf('.');
+    if (lastDotIndex > 0) {
+      // Capitalize the first letter for a nicer look
+      const name = filename.substring(0, lastDotIndex);
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+    return filename;
+  };
+
+  const title = getFriendlyTitle(path);
 
   const renderContent = () => {
-    if (!fileData) return null;
-
-    if (parseFailed) {
-        return (
-            <div className="no-content-warning">
-                <h4 style={{color: 'orange'}}>Warning: Frontmatter not recognized.</h4>
-                <p>Showing raw file content. Any edits will be saved to the raw file.</p>
-                <pre className="raw-content-viewer">{fileData.rawContent}</pre>
-            </div>
-        );
+    // For .astro files, render sections if they exist and are not empty
+    if (path.endsWith('.astro')) {
+      if (content.sections && content.sections.length > 0) {
+        return <SectionRenderer sections={content.sections} />;
+      }
+      return <p>No viewable content found in sections.</p>;
     }
-
-    if (fileData.sections && fileData.sections.length > 0) {
-      return <SectionRenderer sections={fileData.sections} />;
-    }
-
-    if (fileData.body) {
-      const html = marked(fileData.body);
+    // For .md files, render the body as markdown
+    if (path.endsWith('.md')) {
+      const html = content.body ? marked(content.body) : marked(content.rawContent);
       return <div className="markdown-preview" dangerouslySetInnerHTML={{ __html: html }} />;
     }
-
-    return <p>No viewable content found.</p>;
+    // Fallback for other file types or astro files without sections
+    return <pre className="raw-content-viewer">{content.rawContent}</pre>;
   };
 
   if (loading) return <div className="file-viewer-container">Loading...</div>;
@@ -128,17 +227,21 @@ function FileViewer({ repo, path }) {
 
   return (
     <div className="file-viewer-container">
-       {isHeadEditorOpen && fileData.sha && (
+       {isHeadEditorOpen && content.sha && (
         <HeadEditor
-          frontmatter={fileData.frontmatter}
-          onUpdate={(newFm) => handleDataUpdate({ frontmatter: newFm })}
+          title={content.frontmatter.title}
+          description={content.frontmatter.description}
+          onUpdate={handleFrontmatterChange}
           onClose={() => setIsHeadEditorOpen(false)}
           path={path}
+          sections={content.sections}
+          onSectionUpdate={handleSectionUpdate}
+          onSlugUpdate={handleSlugUpdate}
         />
       )}
       {isDraft && (
         <div className="draft-banner">
-          <p>You are viewing a draft.</p>
+          <p>You are viewing a draft. Your changes are not yet published.</p>
           <div className="draft-actions">
             <button className="viewer-button publish-button" onClick={handlePublish}>Publish</button>
             <button className="viewer-button discard-button" onClick={handleDiscard}>Discard Draft</button>
@@ -146,7 +249,7 @@ function FileViewer({ repo, path }) {
         </div>
       )}
       <div className="file-viewer-header">
-        <h1>{fileData.frontmatter.title || path.split('/').pop()}</h1>
+        <h1>{title}</h1>
         <div className="action-buttons">
           <button className="viewer-button" onClick={() => navigate('/explorer')}>Back</button>
           <button className="viewer-button" onClick={() => setIsHeadEditorOpen(true)}>Search Preview</button>

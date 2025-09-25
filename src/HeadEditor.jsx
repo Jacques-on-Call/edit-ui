@@ -4,20 +4,18 @@ import './HeadEditor.css';
 const TITLE_MAX_LENGTH = 60;
 const DESC_MAX_LENGTH = 160;
 
+// This component is now fully controlled. It receives its data via props
+// and calls the onUpdate callback with a key and value on any change.
 const HeadEditor = ({
     title = '',
     description = '',
-    frontmatter,
     onUpdate,
     onClose,
     path,
     onSlugUpdate
 }) => {
   const [slug, setSlug] = useState('');
-  const [activeTab, setActiveTab] = 'meta');
-
-  // Destructure image properties from frontmatter for easier use
-  const { image, imageAlt } = frontmatter || {};
+  const [activeTab, setActiveTab] = useState('meta');
 
   useEffect(() => {
     if (path) {
@@ -28,32 +26,25 @@ const HeadEditor = ({
   }, [path]);
 
   const handleFieldChange = (e) => {
-    onUpdate({ ...frontmatter, [e.target.name]: e.target.value });
+    onUpdate(e.target.name, e.target.value);
   };
 
   const handleSlugChange = (e) => {
     const newSlug = e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-');
     setSlug(newSlug);
-    onSlugUpdate(newSlug);
+    if (onSlugUpdate) {
+        onSlugUpdate(newSlug);
+    }
   };
-
-  if (!frontmatter) return null;
 
   const renderMetaTab = () => (
     <>
       <div className="preview-section">
         <h4>Search Result Preview</h4>
         <div className="search-result-preview">
-          <div className="preview-text-content">
-            <div className="preview-title">{title || 'Your Title Here'}</div>
-            <div className="preview-url">www.strategycontent.agency/{slug || 'your-page-slug'}</div>
-            <div className="preview-description">{description || 'Your meta description will appear here.'}</div>
-          </div>
-          {image && (
-            <div className="preview-image-container">
-              <img src={image} alt={imageAlt || 'Preview'} className="preview-image" />
-            </div>
-          )}
+          <div className="preview-title">{title || 'Your Title Here'}</div>
+          <div className="preview-url">www.strategycontent.agency/{slug || 'your-page-slug'}</div>
+          <div className="preview-description">{description || 'Your meta description will appear here.'}</div>
         </div>
       </div>
       <div className="form-section">
@@ -67,14 +58,6 @@ const HeadEditor = ({
           <textarea id="description" name="description" value={description} onChange={handleFieldChange} placeholder="Summary for search results" rows="3" maxLength={DESC_MAX_LENGTH + 20} />
           <span className={`char-counter ${description.length > DESC_MAX_LENGTH ? 'over-limit' : ''}`}>{description.length}/{DESC_MAX_LENGTH}</span>
         </div>
-        <div className="form-group">
-            <label htmlFor="image">Preview Image URL</label>
-            <input id="image" name="image" type="text" value={image || ''} onChange={handleFieldChange} placeholder="e.g., /images/hero.jpg" />
-        </div>
-        <div className="form-group">
-            <label htmlFor="imageAlt">Preview Image Alt Text</label>
-            <input id="imageAlt" name="imageAlt" type="text" value={imageAlt || ''} onChange={handleFieldChange} placeholder="Describe the image for accessibility" />
-        </div>
       </div>
     </>
   );
@@ -85,11 +68,6 @@ const HeadEditor = ({
         <label htmlFor="slug">URL Slug</label>
         <p className="form-group-description">The last part of the URL. Should be short, descriptive, and contain keywords.</p>
         <input id="slug" type="text" value={slug} onChange={handleSlugChange} placeholder="your-page-slug" />
-      </div>
-       <div className="form-group">
-        <label>JSON-LD Schema</label>
-         <p className="form-group-description">Advanced: Edit the structured data for this page. This will be implemented in a future task.</p>
-        <textarea rows="10" placeholder="Future schema editor..." disabled></textarea>
       </div>
     </div>
   );
