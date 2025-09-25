@@ -156,15 +156,12 @@ function FileViewer({ repo, path }) {
     }
   };
 
-  const handleFrontmatterChange = (key, value) => {
-    setContent(prev => {
-        const newFrontmatter = { ...prev.frontmatter, [key]: value };
-        return {
-            ...prev,
-            frontmatter: newFrontmatter,
-            sections: prev.frontmatter.sections ? newFrontmatter.sections : prev.sections,
-        };
-    });
+  const handleFrontmatterChange = (updatedFrontmatter) => {
+    // When head is edited, update content and ensure we are in a draft state
+    setContent(prev => ({
+        ...prev,
+        frontmatter: updatedFrontmatter,
+    }));
     if (!isDraft) {
         setIsDraft(true);
     }
@@ -231,6 +228,7 @@ function FileViewer({ repo, path }) {
         <HeadEditor
           title={content.frontmatter.title}
           description={content.frontmatter.description}
+          frontmatter={content.frontmatter}
           onUpdate={handleFrontmatterChange}
           onClose={() => setIsHeadEditorOpen(false)}
           path={path}
