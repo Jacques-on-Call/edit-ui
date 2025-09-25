@@ -79,45 +79,20 @@ const Editor = () => {
   useEffect(() => {
     if (!loading && fileData) {
       const handler = setTimeout(() => {
-        const existingDraft = JSON.parse(localStorage.getItem(draftKey) || '{}');
-
-        // This is the content from the single TinyMCE editor window.
-        // It might contain multiple pieces of content separated by <hr />.
-        const editedContentBlocks = combinedContent.split('<hr />');
-
-        let editedBlockIndex = 0;
-
-        // Reconstruct the sections array, preserving non-text blocks
-        const updatedSections = fileData.sections.map(section => {
-          if (section.type === 'text_block') {
-            // If this is a text block, update its content with the next
-            // available block from the editor.
-            const newContent = editedContentBlocks[editedBlockIndex] || '';
-            editedBlockIndex++;
-            return { ...section, content: newContent };
-          } else {
-            // If it's not a text block (e.g., 'hero', 'feature'),
-            // keep the original section completely unchanged.
-            return section;
-          }
-        });
-
-        const newDraftData = {
-          ...existingDraft,
-          ...fileData,
-          sections: updatedSections,
-          frontmatter: {
-            ...existingDraft.frontmatter,
-            ...fileData.frontmatter,
-            sections: updatedSections,
-          }
-        };
-
-        localStorage.setItem(draftKey, JSON.stringify(newDraftData));
+        // Create a new file data object with the updated content
+        const newFileData = { ...fileData };
+        if (fileType === 'astro') {
+            // For now, consolidating all content into one text_block section
+            newFileData.sections = [{ type: 'text_block', content: combinedContent }];
+            newFileData.frontmatter.sections = newFileData.sections;
+        } else {
+            newFileData.body = turndownService.turndown(combinedContent);
+        }
+        localStorage.setItem(draftKey, JSON.stringify(newFileData));
       }, 1000);
       return () => clearTimeout(handler);
     }
-  }, [combinedContent, fileData, loading, draftKey]);
+  }, [combinedContent, fileData, loading, draftKey, fileType, turndownService]);
 
   const handleContentChange = (newContent) => {
     setCombinedContent(newContent);

@@ -4,7 +4,28 @@ import { marked } from 'marked';
 import { parseJsFrontmatter } from './utils/frontmatterParser';
 import SectionRenderer from './SectionRenderer';
 import HeadEditor from './HeadEditor';
+import ErrorBoundary from './ErrorBoundary'; // Import the new ErrorBoundary
 import './FileViewer.css';
+
+// Per Copilot's suggestion, this function ensures the data conforms to a predictable shape.
+function normalizeFileContent(data, rawFileContent) {
+  const frontmatter = data.frontmatter || {};
+  const sections = Array.isArray(data.sections) ? data.sections : [];
+
+  const normalizedSections = sections.map(s => ({
+    type: s.type || 'unknown',
+    content: s.content ?? s.body ?? s.html ?? '',
+    ...s,
+  }));
+
+  return {
+    ...data,
+    rawContent: rawFileContent, // Ensure rawContent is always present
+    frontmatter,
+    sections: normalizedSections,
+  };
+}
+
 
 function FileViewer({ repo, path }) {
   const [isHeadEditorOpen, setIsHeadEditorOpen] = useState(false);
@@ -15,6 +36,7 @@ function FileViewer({ repo, path }) {
     body: '',
     frontmatter: {},
   });
+  const [parseWarnings, setParseWarnings] = useState([]);
   const [isDraft, setIsDraft] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,9 +44,7 @@ function FileViewer({ repo, path }) {
   const navigate = useNavigate();
   const draftKey = `draft-content-${path}`;
 
-  // This effect runs when content changes, saving it to a local draft
   useEffect(() => {
-    // Only save if it's a draft and not in the initial loading state
     if (isDraft && !loading) {
       localStorage.setItem(draftKey, JSON.stringify(content));
     }
@@ -32,26 +52,29 @@ function FileViewer({ repo, path }) {
 
   const fetchFromServer = useCallback(() => {
     setLoading(true);
+    setParseWarnings([]); // Reset warnings on new fetch
     fetch(`/api/file?repo=${repo}&path=${path}`, { credentials: 'include' })
-    .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch')))
+    .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch file content')))
     .then(data => {
       const decodedContent = atob(data.content);
-      console.log('[FileViewer] Fetch successful, calling parser.');
-      const fm = parseJsFrontmatter(decodedContent);
-      console.log('[FileViewer] Parsed frontmatter:', fm);
 
-      setContent({
-        sections: fm.sections || [],
-        rawContent: decodedContent,
-        sha: data.sha,
-        body: '',
-        frontmatter: fm,
-      });
-      setLoading(false);
+      const fmData = parseJsFrontmatter(decodedContent);
+
+
+      const fileData = { sha: data.sha, ...fmData };
+      const normalized = normalizeFileContent(fileData, decodedContent);
+
+      if (normalized.sections.length === 0 && decodedContent) {
+        setParseWarnings(prev => [...prev, 'No structured sections were found in this file.']);
+      }
+
+      setContent(normalized);
       setIsDraft(false);
     })
     .catch(err => {
       setError(err.message);
+    })
+    .finally(() => {
       setLoading(false);
     });
   }, [repo, path]);
@@ -61,7 +84,7 @@ function FileViewer({ repo, path }) {
     if (localDraft) {
       try {
         const draftData = JSON.parse(localDraft);
-        setContent({ ...draftData, rawContent: 'Draft loaded' });
+        setContent(draftData); // Assume draft is already normalized
         setIsDraft(true);
         setLoading(false);
       } catch (e) {
@@ -75,79 +98,56 @@ function FileViewer({ repo, path }) {
 
   const handlePublish = async () => {
     const draftString = localStorage.getItem(draftKey);
-    if (!draftString) return alert("Error: No draft found.");
+    if (!draftString) return alert("Error: No draft found to publish.");
 
     try {
-      const draftData = JSON.parse(draftString);
-      const { frontmatter, rawContent, sha } = draftData;
+        const draftData = JSON.parse(draftString);
+        // We need the *original* raw content to replace the meta block, not the draft's.
+        // Let's fetch it again to be safe.
+        const res = await fetch(`/api/file?repo=${repo}&path=${path}`, { credentials: 'include' });
+        if (!res.ok) throw new Error('Could not fetch original file to perform update.');
+        const originalFileData = await res.json();
+        const originalDecodedContent = atob(originalFileData.content);
 
-      // New JS Frontmatter Saving Logic
-      const newMetaString = `const meta = ${JSON.stringify(frontmatter, null, 2)};`;
-      const metaRegex = /const\s+meta\s*=\s*{([\s\S]*?)};/m;
+        // Reconstruct the `meta` object string from the draft data
+        const newMetaString = `const meta = ${JSON.stringify(draftData.frontmatter, null, 2)};`;
+        const metaRegex = /const\s+meta\s*=\s*{([\s\S]*?)};/sm;
 
-      // Replace the old meta block with the new one in the original raw content
-      const newFileContent = rawContent.replace(metaRegex, newMetaString);
+        // Replace the meta block in the original content
+        const newFileContent = originalDecodedContent.replace(metaRegex, newMetaString);
 
-      const fileExtension = path.substring(path.lastIndexOf('.'));
-      const originalSlug = path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'));
-      const parentPath = path.substring(0, path.lastIndexOf('/'));
+        const fileExtension = path.substring(path.lastIndexOf('.'));
+        const originalSlug = path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'));
+        const parentPath = path.substring(0, path.lastIndexOf('/'));
 
-      // Check if slug has changed
-      if (newSlug && newSlug !== originalSlug) {
-        // --- RENAME LOGIC ---
-        const newPath = `${parentPath}/${newSlug}${fileExtension}`;
+        if (newSlug && newSlug !== originalSlug) {
+            const newPath = `${parentPath}/${newSlug}${fileExtension}`;
+            const createRes = await fetch('/api/file', {
+                method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ repo, path: newPath, content: btoa(newFileContent), sha: null }),
+            });
+            if (!createRes.ok) throw new Error(`Failed to create new file at '${newPath}'.`);
 
-        // 1. Create the new file
-        const createRes = await fetch('/api/file', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ repo, path: newPath, content: btoa(newFileContent), sha: null }), // No SHA for new file
-        });
-
-        if (!createRes.ok) {
-            const errorData = await createRes.json();
-            throw new Error(`Failed to create new file at '${newPath}': ${errorData.message || createRes.statusText}`);
-        }
-        await createRes.json(); // Consume the response but don't need the data
-
-        // 2. Delete the old file
-        const deleteRes = await fetch(`/api/file?repo=${repo}&path=${path}&sha=${draftData.sha}`, {
-            method: 'DELETE',
-            credentials: 'include',
-        });
-
-        if (!deleteRes.ok) {
-            // This is a partial failure state. The new file was created, but the old one wasn't deleted.
-            // Inform the user clearly.
-            alert(`Rename partially failed! The new page was created at '${newSlug}', but we could not remove the old page. Please remove it manually.`);
+            const deleteRes = await fetch(`/api/file?repo=${repo}&path=${path}&sha=${originalFileData.sha}`, { method: 'DELETE', credentials: 'include' });
+            if (!deleteRes.ok) {
+                alert(`Rename partially failed! The new page was created at '${newSlug}', but the old page could not be removed. Please remove it manually.`);
+            } else {
+                alert('Page successfully renamed and published!');
+            }
+            localStorage.removeItem(draftKey);
+            navigate(`/explorer/file?path=${newPath}`);
         } else {
-            alert('Page successfully renamed and published!');
+            const updateRes = await fetch('/api/file', {
+                method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ repo, path, content: btoa(newFileContent), sha: originalFileData.sha }),
+            });
+            if (!updateRes.ok) throw new Error('Publish failed.');
+            alert('Publish successful!');
+            localStorage.removeItem(draftKey);
+            fetchFromServer();
         }
-
-        // 3. Cleanup and navigate
-        localStorage.removeItem(draftKey);
-        navigate(`/explorer/file?path=${newPath}`); // Navigate to the new page
-
-      } else {
-        // --- UPDATE IN-PLACE LOGIC ---
-        const res = await fetch('/api/file', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ repo, path, content: btoa(newFileContent), sha: sha }),
-        });
-
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(`Publish failed: ${errorData.message || res.statusText}`);
-        }
-        alert('Publish successful!');
-        localStorage.removeItem(draftKey);
-        fetchFromServer();
-      }
     } catch (err) {
-      alert(`An error occurred: ${err.message}`);
+        alert(`An error occurred during publishing: ${err.message}`);
     }
   };
 
@@ -159,35 +159,18 @@ function FileViewer({ repo, path }) {
   };
 
   const handleFrontmatterChange = (updatedFrontmatter) => {
-    // When head is edited, update content and ensure we are in a draft state
-    setContent(prev => ({
-        ...prev,
-        frontmatter: updatedFrontmatter,
-    }));
-    if (!isDraft) {
-        setIsDraft(true);
-    }
+    setContent(prev => normalizeFileContent({ ...prev, frontmatter: updatedFrontmatter }, prev.rawContent));
+    if (!isDraft) setIsDraft(true);
   };
 
   const handleSectionUpdate = (newSections) => {
-    setContent(prev => ({
-        ...prev,
-        sections: newSections,
-        frontmatter: { ...prev.frontmatter, sections: newSections },
-    }));
-    if (!isDraft) {
-        setIsDraft(true);
-    }
+    setContent(prev => normalizeFileContent({ ...prev, sections: newSections, frontmatter: { ...prev.frontmatter, sections: newSections } }, prev.rawContent));
+    if (!isDraft) setIsDraft(true);
   };
 
   const handleSlugUpdate = (slug) => {
     setNewSlug(slug);
-    // Also update the local draft so the slug change is persisted
-    // before publishing.
-    setContent(prev => ({ ...prev }));
-    if (!isDraft) {
-        setIsDraft(true);
-    }
+    if (!isDraft) setIsDraft(true);
   };
 
   const getFriendlyTitle = (filePath) => {
@@ -195,7 +178,6 @@ function FileViewer({ repo, path }) {
     const filename = filePath.split('/').pop();
     const lastDotIndex = filename.lastIndexOf('.');
     if (lastDotIndex > 0) {
-      // Capitalize the first letter for a nicer look
       const name = filename.substring(0, lastDotIndex);
       return name.charAt(0).toUpperCase() + name.slice(1);
     }
@@ -205,19 +187,32 @@ function FileViewer({ repo, path }) {
   const title = getFriendlyTitle(path);
 
   const renderContent = () => {
-    // For .astro files, render sections if they exist and are not empty
+    if (!content) return null;
+
     if (path.endsWith('.astro')) {
-      if (content.sections && content.sections.length > 0) {
+        if (!Array.isArray(content.sections) || content.sections.length === 0) {
+            return (
+                <div className="no-content-warning">
+                    <p>No structured content available for preview.</p>
+                    {parseWarnings.length > 0 && (
+                        <div className="parse-warnings" style={{ border: '1px solid orange', padding: '10px', margin: '10px' }}>
+                            <strong>Parser warnings:</strong>
+                            <ul>{parseWarnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+                        </div>
+                    )}
+                    <h4>Raw File Content:</h4>
+                    <pre className="raw-content-viewer">{content.rawContent}</pre>
+                </div>
+            );
+        }
         return <SectionRenderer sections={content.sections} />;
-      }
-      return <p>No viewable content found in sections.</p>;
     }
-    // For .md files, render the body as markdown
+
     if (path.endsWith('.md')) {
-      const html = content.body ? marked(content.body) : marked(content.rawContent);
-      return <div className="markdown-preview" dangerouslySetInnerHTML={{ __html: html }} />;
+        const html = content.body ? marked(content.body) : marked(content.rawContent);
+        return <div className="markdown-preview" dangerouslySetInnerHTML={{ __html: html }} />;
     }
-    // Fallback for other file types or astro files without sections
+
     return <pre className="raw-content-viewer">{content.rawContent}</pre>;
   };
 
@@ -256,7 +251,9 @@ function FileViewer({ repo, path }) {
           <button className="viewer-button edit-button" onClick={() => navigate(`/edit/${repo}/${path}`)}>Edit</button>
         </div>
       </div>
-      {renderContent()}
+      <ErrorBoundary>
+        {renderContent()}
+      </ErrorBoundary>
     </div>
   );
 }
