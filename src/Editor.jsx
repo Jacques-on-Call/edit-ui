@@ -7,6 +7,7 @@ import SectionEditor from './SectionEditor';
 import BottomToolbar from './BottomToolbar';
 import TopToolbar from './TopToolbar';
 import './Editor.css';
+import DebugPanel from './components/DebugPanel';
 
 const Editor = () => {
   const location = useLocation();
@@ -17,6 +18,8 @@ const Editor = () => {
   const [error, setError] = useState(null);
   const [editorInstance, setEditorInstance] = useState(null);
   const [activeFormats, setActiveFormats] = useState({});
+  const [debug, setDebug] = useState({ notes: ['Editor mounted'] });
+  const [editorReady, setEditorReady] = useState(false);
 
   const turndownService = new TurndownService();
   const pathWithRepo = location.pathname.replace('/edit/', '');
@@ -110,6 +113,12 @@ const Editor = () => {
     setActiveFormats(newFormats);
   };
 
+  const handleEditorInit = (evt, editor) => {
+    setEditorInstance(editor);
+    setEditorReady(true);
+    setDebug(d => ({ ...d, editorReady: true, notes: [...(d.notes||[]), 'TinyMCE ready'] }));
+  };
+
   if (loading) return <div className="editor-container"><div className="loading-spinner"></div></div>;
   if (error) return <div className="editor-container">Error: {error}</div>;
 
@@ -122,13 +131,14 @@ const Editor = () => {
         <SectionEditor
             initialContent={combinedContent}
             onContentChange={handleContentChange}
-            onInit={(evt, editor) => setEditorInstance(editor)}
+            onInit={handleEditorInit}
             onNodeChange={handleNodeChange}
         />
       </div>
       <div className="editor-footer" style={{ backgroundColor: '#005A9E' }}>
         <BottomToolbar editor={editorInstance} activeFormats={activeFormats} />
       </div>
+      <DebugPanel debug={{ ...debug, editorReady }} />
     </div>
   );
 };

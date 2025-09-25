@@ -1,12 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { marked } from 'marked';
 import { parseJsFrontmatter } from './utils/frontmatterParser';
 import SectionRenderer from './SectionRenderer';
 import HeadEditor from './HeadEditor';
 import './FileViewer.css';
+import DebugPanel from './components/DebugPanel';
+import { parseFrontmatter } from './utils/parseFrontmatter';
 
-function FileViewer({ repo, path }) {
+function FileViewer({ repo, path, branch }) {
   const [isHeadEditorOpen, setIsHeadEditorOpen] = useState(false);
   const [content, setContent] = useState({
     sections: null,
@@ -15,6 +17,8 @@ function FileViewer({ repo, path }) {
     body: '',
     frontmatter: {},
   });
+  const [debug, setDebug] = useState({ notes: [] });
+  const [showDebug, setShowDebug] = useState(true);
   const [isDraft, setIsDraft] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,29 +34,67 @@ function FileViewer({ repo, path }) {
     }
   }, [content, isDraft, loading, draftKey]);
 
-  const fetchFromServer = useCallback(() => {
+  const fetchFromServer = useCallback(async () => {
     setLoading(true);
-    fetch(`/api/file?repo=${repo}&path=${path}`, { credentials: 'include' })
-    .then(res => res.ok ? res.json() : Promise.reject(new Error('Failed to fetch')))
-    .then(data => {
-      const decodedContent = atob(data.content);
-      const fm = parseJsFrontmatter(decodedContent);
+    setError(null);
+    const apiPath = `/api/file?repo=${repo}&path=${path}&ref=${branch || ''}`;
+    setDebug(d => ({ ...d, apiPath, notes: ['Requesting file'] }));
+    try {
+      const res = await fetch(apiPath, { credentials: 'include' });
+      const status = res.status;
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed to fetch file (status: ${status}): ${errorText}`);
+      }
+      const json = await res.json();
+      const debugBase = { apiPath, status, apiResponse: json };
 
-      setContent({
-        sections: fm.sections || [],
-        rawContent: decodedContent,
-        sha: data.sha,
-        body: '',
-        frontmatter: fm,
-      });
-      setLoading(false);
+      let decoded = null;
+      if (json && (json.content || json.encoding)) {
+        try {
+          decoded = json.encoding === 'base64' ? atob(json.content) : (json.decoded || json.content);
+        } catch (e) {
+          decoded = json.content; // fallback
+        }
+      } else if (json && typeof json === 'string') {
+        decoded = json;
+      }
+      debugBase.decoded = decoded;
+      debugBase.decodedSnippet = decoded ? decoded.slice(0, 2000) : null;
+      debugBase.sha = json && json.sha;
+
+      const { model, trace } = await parseFrontmatter(decoded || '');
+      debugBase.parse = trace || {};
+
+      if (!model) {
+        debugBase.notes = ['No model parsed; showing raw content'];
+        setContent({
+          sections: [],
+          rawContent: decoded,
+          sha: json.sha,
+          body: '',
+          frontmatter: {},
+        });
+      } else {
+        debugBase.notes = ['Model parsed'];
+        const fm = model.frontmatter || {};
+        setContent({
+            sections: fm.sections || [],
+            rawContent: decoded,
+            sha: json.sha,
+            body: model.body || '',
+            frontmatter: fm,
+        });
+      }
+      setDebug(debugBase);
       setIsDraft(false);
-    })
-    .catch(err => {
+    } catch (err) {
       setError(err.message);
+      setDebug(d => ({ ...d, error: err && err.message, notes: ['Fetch error', String(err)] }));
+    } finally {
       setLoading(false);
-    });
-  }, [repo, path]);
+    }
+  }, [repo, path, branch]);
 
   useEffect(() => {
     const localDraft = localStorage.getItem(draftKey);
@@ -255,6 +297,7 @@ function FileViewer({ repo, path }) {
         </div>
       </div>
       {renderContent()}
+      {showDebug && <DebugPanel debug={{ ...debug, editorReady: false }} onClose={() => setShowDebug(false)} />}
     </div>
   );
 }
