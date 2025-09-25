@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tinymce/tinymce-react": "^6.3.0",
+    "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
