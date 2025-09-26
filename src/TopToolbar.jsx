@@ -56,8 +56,8 @@ const TopToolbar = ({ editor, activeFormats, onDone }) => {
   return (
     <div className="top-toolbar">
       <div className="toolbar-group">
-        <button onClick={onDone} title="Done Editing">
-          <Icon name="check" />
+        <button onClick={onDone} title="Preview">
+          <Icon name="eye" />
         </button>
         {/* Undo/redo buttons were moved to the bottom toolbar to follow user feedback */}
       </div>

@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Buffer } from 'buffer';
 import { marked } from 'marked';
+import TurndownService from 'turndown';
 import { unifiedParser } from './utils/unifiedParser';
 import SectionEditor from './SectionEditor';
-import VisualSectionPreview from './VisualSectionPreview';
 import BottomToolbar from './BottomToolbar';
 import TopToolbar from './TopToolbar';
 import './Editor.css';
@@ -27,14 +27,23 @@ const Editor = () => {
   const draftKey = `draft-content-${path}`;
   const isAstroFile = path.endsWith('.astro');
   const isMarkdownFile = path.endsWith('.md');
+  const turndownService = new TurndownService({ hr: '---' });
 
-  const getCombinedHtmlContent = (sections) => {
-    if (!sections) return '';
-    const markdown = sections
-      .filter(section => section.type === 'text_block' && section.content)
-      .map(section => section.content)
-      .join('\\n\\n<hr style="border:none;border-top:1px solid #ccc;" />\\n\\n');
-    return marked(markdown);
+  // Combines all relevant text content into a single Markdown string for the editor.
+  const getCombinedMarkdown = (frontmatter, body) => {
+    if (isMarkdownFile) return body || '';
+    if (isAstroFile && frontmatter?.sections) {
+      const heroSection = frontmatter.sections.find(s => s.type === 'hero');
+      const textBlocks = frontmatter.sections.filter(s => s.type === 'text_block');
+      let contentParts = [];
+      if (heroSection?.title) contentParts.push(`# ${heroSection.title}`);
+      if (heroSection?.subtitle) contentParts.push(`## ${heroSection.subtitle}`);
+      textBlocks.forEach(block => {
+        if (block.content) contentParts.push(block.content);
+      });
+      return contentParts.join('\\n\\n---\\n\\n');
+    }
+    return '';
   };
 
   useEffect(() => {
@@ -65,40 +74,9 @@ const Editor = () => {
     loadFile();
   }, [path, repo, draftKey]);
 
-  // This debounced effect is now just for background saving, not for the final save.
-  useEffect(() => {
-    if (!loading && fileData) {
-      const handler = setTimeout(() => localStorage.setItem(draftKey, JSON.stringify(fileData)), 500);
-      return () => clearTimeout(handler);
-    }
-  }, [fileData, loading, draftKey]);
-
-  // Centralized helper to update file data based on editor content
-  const updateFileDataWithContent = (prevData, newContent) => {
-    if (isMarkdownFile) {
-      // For Markdown, we will need to convert HTML back to Markdown before saving to the server.
-      // For now, we store the raw HTML in the body for the draft.
-      return { ...prevData, body: newContent };
-    }
-    if (isAstroFile) {
-      const sections = prevData.frontmatter.sections || [];
-      const firstTextBlockIndex = sections.findIndex(s => s.type === 'text_block');
-      let newSections = [...sections];
-
-      if (firstTextBlockIndex !== -1) {
-        newSections[firstTextBlockIndex] = { ...newSections[firstTextBlockIndex], content: newContent };
-        newSections = newSections.map((s, i) => (s.type === 'text_block' && i !== firstTextBlockIndex) ? { ...s, content: '' } : s);
-      } else {
-        newSections.push({ type: 'text_block', content: newContent });
-      }
-      return { ...prevData, frontmatter: { ...prevData.frontmatter, sections: newSections } };
-    }
-    return { ...prevData, body: newContent };
-  };
-
-  const handleContentChange = (newContent) => {
-    setFileData(prevData => updateFileDataWithContent(prevData, newContent));
-  };
+  // This function is now a stub, as the debounced auto-save was the source of the bug.
+  // The save is now handled synchronously in `handleDone`.
+  const handleContentChange = (newContent) => {};
 
   const handleNodeChange = (editor) => {
     const newFormats = {
@@ -116,12 +94,32 @@ const Editor = () => {
 
   const handleEditorInit = (evt, editor) => setEditorInstance(editor);
 
-  // This is the fix for the content-loss bug.
+  // This is the permanent fix for the content-loss bug.
   const handleDone = () => {
     if (editorInstance && fileData) {
-      const latestContent = editorInstance.getContent();
-      const updatedFileData = updateFileDataWithContent(fileData, latestContent);
-      // Synchronously save the absolute latest content to the draft before navigating.
+      const latestHtml = editorInstance.getContent();
+      const latestMarkdown = turndownService.turndown(latestHtml);
+
+      const updatedFileData = JSON.parse(JSON.stringify(fileData)); // Deep copy
+
+      if (isMarkdownFile) {
+        updatedFileData.body = latestMarkdown;
+      } else if (isAstroFile) {
+        const sections = updatedFileData.frontmatter.sections || [];
+        const firstTextBlockIndex = sections.findIndex(s => s.type === 'text_block');
+        if (firstTextBlockIndex !== -1) {
+          sections[firstTextBlockIndex].content = latestMarkdown;
+          sections.forEach((s, i) => {
+            if (s.type === 'text_block' && i !== firstTextBlockIndex) s.content = '';
+          });
+        } else {
+          sections.push({ type: 'text_block', content: latestMarkdown });
+        }
+        updatedFileData.frontmatter.sections = sections;
+      } else {
+          updatedFileData.body = latestMarkdown;
+      }
+
       localStorage.setItem(draftKey, JSON.stringify(updatedFileData));
     }
     navigate(`/explorer/file?path=${path}`);
@@ -130,9 +128,8 @@ const Editor = () => {
   if (loading) return <div className="editor-container"><div className="loading-spinner"></div></div>;
   if (error) return <div className="editor-container">Error: {error}</div>;
 
-  const initialContent = isAstroFile
-    ? getCombinedHtmlContent(fileData?.frontmatter?.sections)
-    : marked(fileData?.body || '');
+  const initialMarkdown = getCombinedMarkdown(fileData?.frontmatter, fileData?.body);
+  const initialContent = marked(initialMarkdown);
 
   return (
     <div className="editor-container">

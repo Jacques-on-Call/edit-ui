@@ -13,6 +13,13 @@ const BottomToolbar = ({ editor, activeFormats = {} }) => {
     }
   };
 
+  const handleInsertHr = () => {
+    if (editor) {
+      // Inserts a horizontal rule, which will be our section separator.
+      editor.execCommand('mceInsertContent', false, '<hr />');
+    }
+  };
+
   return (
     <div className="bottom-toolbar">
       <button onClick={() => handleCommand('undo')} title="Undo">
@@ -34,6 +41,9 @@ const BottomToolbar = ({ editor, activeFormats = {} }) => {
       <button title="Highlight Color">H</button>
       <button onClick={() => handleCommand('InsertUnorderedList')} title="Bullet List" className={activeFormats.unorderedList ? 'active' : ''}>
         <Icon name="list" />
+      </button>
+      <button onClick={handleInsertHr} title="Insert Section Separator">
+        <Icon name="minus" />
       </button>
     </div>
   );

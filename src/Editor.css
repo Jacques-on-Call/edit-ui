@@ -1,10 +1,10 @@
+/* A simplified, full-width layout for the editor */
 .editor-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #f0f2f5;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  /* align-items and padding-top removed for a full-width, frameless design */
+  width: 100%;
+  background-color: #ffffff; /* Use a single background color for a frameless look */
 }
 
 .editor-header {
@@ -13,12 +13,13 @@
   align-items: center;
   padding: 0.75rem 1rem;
   flex-shrink: 0;
-  background-color: #005A9E; /* A more modern, vibrant blue */
+  background-color: #005A9E;
   color: white;
   z-index: 10;
   width: 100%;
   position: fixed;
   top: 0;
+  flex-wrap: wrap; /* Allow toolbar items to wrap on smaller screens */
 }
 
 .editor-footer {
@@ -29,18 +30,24 @@
     flex-shrink: 0;
     background-color: #005A9E !important;
     color: white;
-    z-index: 10;
     width: 100%;
+    /* The footer will now scroll with the content */
 }
 
+/* This is the main content area that holds the editor */
 .sections-list {
-  flex-grow: 1;
-  overflow-y: auto;
-  background-color: #ffffff;
-  width: 100%;
-  margin-top: 60px; /* Height of the fixed header */
-  /* max-width, box-shadow, and border-radius removed for a frameless design */
-  margin-bottom: 0;
+  flex-grow: 1; /* Allows the content area to fill available space */
+  overflow-y: auto; /* Makes the content scrollable */
+  padding-top: 60px; /* Height of the fixed header */
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Ensure it takes up the full container height */
+}
+
+/* This ensures the TinyMCE instance fills its container */
+.tox-tinymce {
+  flex-grow: 1 !important;
+  border: none !important; /* Remove TinyMCE's default border */
 }
 
 .loading-spinner {
@@ -50,27 +57,10 @@
   width: 40px;
   height: 40px;
   animation: spin 1s linear infinite;
-  margin: auto; /* Center the spinner */
+  margin: auto;
 }
 
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}
-
-.section-editor-container {
-  flex-grow: 1; /* This is key to making the editor fill the space */
-  display: flex;
-  flex-direction: column;
-}
-
-/* This targets the TinyMCE container itself to ensure it fills the space */
-.section-editor-container .tox {
-    height: 100% !important;
-}
-
-
-/* Cleanup of old styles that are no longer needed */
-.editor-header h2, .preview-button, .section-type-header, .section-fields, .form-group, .form-control {
-    display: none;
 }
