@@ -75,7 +75,7 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
       onLongPress(file, e);
     }, 500);
   };
-  
+
   const handlePointerUp = () => {
     clearTimeout(pressTimer.current);
   };
@@ -88,14 +88,14 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
     const size = Math.max(rect.width, rect.height);
     const x = e.clientX - rect.left - size / 2;
     const y = e.clientY - rect.top - size / 2;
-    
+
     const newRipple = { x, y, size, key: Date.now() };
     setRipples(prev => [...prev, newRipple]);
     // --- End Ripple ---
 
     onClick(file);
   };
-  
+
   useEffect(() => {
     // Clean up ripples after animation
     if (ripples.length > 0) {
@@ -111,7 +111,7 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
     clearTimeout(pressTimer.current);
     onLongPress(file, e);
   };
-  
+
   return (
     <div
       className={tileClassName}

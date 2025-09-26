@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { marked } from 'marked';
-import { parseJsFrontmatter } from './utils/frontmatterParser';
 import SectionRenderer from './SectionRenderer';
 import HeadEditor from './HeadEditor';
 import './FileViewer.css';
-import DebugPanel from './components/DebugPanel';
-import { parseFrontmatter } from './utils/parseFrontmatter';
+import { parseAstroFile, stringifyAstroFile } from './utils/astroFileParser';
+
+// Note: DebugPanel is not ported yet, so it's commented out.
+// import DebugPanel from './components/DebugPanel';
 
 function FileViewer({ repo, path, branch }) {
   const [isHeadEditorOpen, setIsHeadEditorOpen] = useState(false);
@@ -63,7 +64,8 @@ function FileViewer({ repo, path, branch }) {
       debugBase.decodedSnippet = decoded ? decoded.slice(0, 2000) : null;
       debugBase.sha = json && json.sha;
 
-      const { model, trace } = await parseFrontmatter(decoded || '');
+      // Use the new Astro parser for .astro files, with a fallback for others.
+      const { model, trace } = await parseAstroFile(decoded || '');
       debugBase.parse = trace || {};
 
       if (!model) {
@@ -119,14 +121,11 @@ function FileViewer({ repo, path, branch }) {
 
     try {
       const draftData = JSON.parse(draftString);
-      const { frontmatter, rawContent, sha } = draftData;
+      // The body of the content is now the source of truth, not the original rawContent.
+      const { frontmatter, body, sha } = draftData;
 
-      // New JS Frontmatter Saving Logic
-      const newMetaString = `const meta = ${JSON.stringify(frontmatter, null, 2)};`;
-      const metaRegex = /const\s+meta\s*=\s*{([\s\S]*?)};/m;
-
-      // Replace the old meta block with the new one in the original raw content
-      const newFileContent = rawContent.replace(metaRegex, newMetaString);
+      // Use the new robust stringify function
+      const newFileContent = stringifyAstroFile(frontmatter, body || '');
 
       const fileExtension = path.substring(path.lastIndexOf('.'));
       const originalSlug = path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'));
@@ -297,7 +296,7 @@ function FileViewer({ repo, path, branch }) {
         </div>
       </div>
       {renderContent()}
-      {showDebug && <DebugPanel debug={{ ...debug, editorReady: false }} onClose={() => setShowDebug(false)} />}
+      {/* {showDebug && <DebugPanel debug={{ ...debug, editorReady: false }} onClose={() => setShowDebug(false)} />} */}
     </div>
   );
 }

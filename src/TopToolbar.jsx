@@ -5,7 +5,7 @@ import FormatMenu from './FormatMenu';
 import AddMenu from './AddMenu';
 import './TopToolbar.css';
 
-const TopToolbar = ({ editor, activeFormats }) => {
+const TopToolbar = ({ editor, activeFormats, onDone }) => {
   const navigate = useNavigate();
   const [isFormatMenuOpen, setFormatMenuOpen] = useState(false);
   const [isAddMenuOpen, setAddMenuOpen] = useState(false);
@@ -56,8 +56,8 @@ const TopToolbar = ({ editor, activeFormats }) => {
   return (
     <div className="top-toolbar">
       <div className="toolbar-group">
-        <button onClick={handlePreview} title="Preview">
-          <Icon name="eye" />
+        <button onClick={onDone} title="Done Editing">
+          <Icon name="check" />
         </button>
         {/* Undo/redo buttons were moved to the bottom toolbar to follow user feedback */}
       </div>

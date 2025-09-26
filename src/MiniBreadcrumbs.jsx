@@ -10,7 +10,7 @@ const MiniBreadcrumb = ({ path, onNavigate }) => {
 
   // Remove the base 'src/pages' and split the remaining path
   const parts = path.replace('src/pages', '').split('/').filter(p => p);
-  
+
   const handleNavigate = (index) => {
     const newPath = 'src/pages' + (index >= 0 ? '/' + parts.slice(0, index + 1).join('/') : '');
     onNavigate(newPath);

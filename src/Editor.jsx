@@ -1,25 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
-import { marked } from 'marked';
+import { useLocation, useNavigate } from 'react-router-dom';
 import TurndownService from 'turndown';
-import { parseJsFrontmatter } from './utils/frontmatterParser';
+import { parseAstroFile } from './utils/astroFileParser';
 import SectionEditor from './SectionEditor';
 import BottomToolbar from './BottomToolbar';
 import TopToolbar from './TopToolbar';
 import './Editor.css';
-import DebugPanel from './components/DebugPanel';
 
 const Editor = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [fileData, setFileData] = useState(null);
-  const [combinedContent, setCombinedContent] = useState('');
-  const [fileType, setFileType] = useState(null);
+  const [bodyContent, setBodyContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editorInstance, setEditorInstance] = useState(null);
   const [activeFormats, setActiveFormats] = useState({});
-  const [debug, setDebug] = useState({ notes: ['Editor mounted'] });
-  const [editorReady, setEditorReady] = useState(false);
 
   const turndownService = new TurndownService();
   const pathWithRepo = location.pathname.replace('/edit/', '');
@@ -30,28 +26,23 @@ const Editor = () => {
   const path = pathParts.join('/');
   const draftKey = `draft-content-${path}`;
 
-  // Load content
+  // Load content from draft or server
   useEffect(() => {
     const loadFile = async () => {
       setLoading(true);
       setError(null);
-      const type = path.endsWith('.md') ? 'md' : 'astro';
-      setFileType(type);
 
       const localDraft = localStorage.getItem(draftKey);
       if (localDraft) {
         try {
           const draftData = JSON.parse(localDraft);
           setFileData(draftData);
-          if (type === 'astro') {
-            const content = (draftData.sections || []).map(s => s.content).join('');
-            setCombinedContent(content);
-          } else {
-            setCombinedContent(marked(draftData.body || ''));
-          }
+          setBodyContent(draftData.body || '');
           setLoading(false);
           return;
-        } catch (e) { console.error("Error parsing draft", e); }
+        } catch (e) {
+          console.error("Error parsing draft, fetching from server.", e);
+        }
       }
 
       try {
@@ -59,44 +50,43 @@ const Editor = () => {
         if (!res.ok) throw new Error(`Fetch failed: ${res.statusText}`);
         const data = await res.json();
         const decodedContent = atob(data.content);
-        const fm = parseJsFrontmatter(decodedContent);
 
-        const fullFileData = { sha: data.sha, frontmatter: fm, body: '', path: data.path, sections: fm.sections || [] };
+        // Use the new, correct parser
+        const { model } = await parseAstroFile(decodedContent);
+
+        const fullFileData = {
+          sha: data.sha,
+          frontmatter: model.frontmatter,
+          body: model.body, // Use the body from the parser
+          path: data.path
+        };
         setFileData(fullFileData);
+        setBodyContent(model.body || '');
 
-        if (type === 'astro') {
-            const content = (fullFileData.sections || []).filter(s => s.type === 'text_block').map(s => s.content).join('<hr />');
-            setCombinedContent(content);
-        } else {
-            setCombinedContent(marked(fullFileData.body || ''));
-        }
-
-      } catch (err) { setError(err.message); } finally { setLoading(false); }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     };
     loadFile();
   }, [path, repo, draftKey]);
 
-  // Debounced auto-save effect
+  // Debounced auto-save to local draft
   useEffect(() => {
     if (!loading && fileData) {
       const handler = setTimeout(() => {
-        // Create a new file data object with the updated content
-        const newFileData = { ...fileData };
-        if (fileType === 'astro') {
-            // For now, consolidating all content into one text_block section
-            newFileData.sections = [{ type: 'text_block', content: combinedContent }];
-            newFileData.frontmatter.sections = newFileData.sections;
-        } else {
-            newFileData.body = turndownService.turndown(combinedContent);
-        }
+        const newFileData = { ...fileData, body: bodyContent };
         localStorage.setItem(draftKey, JSON.stringify(newFileData));
-      }, 1000);
+      }, 500); // Save after 500ms of inactivity
       return () => clearTimeout(handler);
     }
-  }, [combinedContent, fileData, loading, draftKey, fileType, turndownService]);
+  }, [bodyContent, fileData, loading, draftKey]);
 
   const handleContentChange = (newContent) => {
-    setCombinedContent(newContent);
+    // The editor gives us HTML, so we store it as is for now.
+    // We'll convert it back to markdown on save if needed.
+    setBodyContent(newContent);
   };
 
   const handleNodeChange = (editor) => {
@@ -115,8 +105,16 @@ const Editor = () => {
 
   const handleEditorInit = (evt, editor) => {
     setEditorInstance(editor);
-    setEditorReady(true);
-    setDebug(d => ({ ...d, editorReady: true, notes: [...(d.notes||[]), 'TinyMCE ready'] }));
+  };
+
+  const handleDone = () => {
+    // Final save to local storage before navigating
+    if (fileData) {
+      const newFileData = { ...fileData, body: bodyContent };
+      localStorage.setItem(draftKey, JSON.stringify(newFileData));
+    }
+    // Navigate back to the viewer page
+    navigate(`/explorer/file?path=${path}`);
   };
 
   if (loading) return <div className="editor-container"><div className="loading-spinner"></div></div>;
@@ -125,11 +123,12 @@ const Editor = () => {
   return (
     <div className="editor-container">
       <div className="editor-header">
-        <TopToolbar editor={editorInstance} activeFormats={activeFormats} />
+        <TopToolbar editor={editorInstance} activeFormats={activeFormats} onDone={handleDone} />
       </div>
       <div className="sections-list">
         <SectionEditor
-            initialContent={combinedContent}
+            // The editor now works directly with the body content
+            initialContent={bodyContent}
             onContentChange={handleContentChange}
             onInit={handleEditorInit}
             onNodeChange={handleNodeChange}
@@ -138,7 +137,8 @@ const Editor = () => {
       <div className="editor-footer" style={{ backgroundColor: '#005A9E' }}>
         <BottomToolbar editor={editorInstance} activeFormats={activeFormats} />
       </div>
-      <DebugPanel debug={{ ...debug, editorReady }} />
+      {/* Debug panel is commented out as it's not ported yet */}
+      {/* <DebugPanel debug={{ ...debug, editorReady }} /> */}
     </div>
   );
 };
