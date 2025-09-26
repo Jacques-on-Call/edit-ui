@@ -28,12 +28,11 @@
     align-items: center;
     padding: 0.5rem 1rem;
     flex-shrink: 0;
-    background-color: #005A9E !important; /* A more modern, vibrant blue */
+    background-color: #005A9E !important;
     color: white;
     z-index: 10;
     width: 100%;
-    position: fixed;
-    bottom: 0;
+    /* position: fixed; and bottom: 0; are removed to make the footer scroll with content */
 }
 
 .sections-list {
@@ -43,7 +42,7 @@
   width: 100%;
   max-width: 900px; /* Max width for readability on desktop */
   margin-top: 60px; /* Height of the fixed header */
-  margin-bottom: 50px; /* Height of the fixed footer */
+  margin-bottom: 0; /* Removed margin, footer is no longer fixed */
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
   border-radius: 4px 4px 0 0; /* Slightly rounded top corners */
 }

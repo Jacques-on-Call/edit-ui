@@ -1,0 +1,29 @@
+.bottom-toolbar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  max-width: 600px; /* Max-width for aesthetics on larger screens */
+  height: 100%;
+}
+
+.bottom-toolbar button {
+  background: none;
+  border: none;
+  color: #333333; /* Changed from white to a dark grey for visibility on a light background */
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.bottom-toolbar button:hover {
+  background-color: #e0e0e0; /* A light grey for hover */
+}
+
+.bottom-toolbar button.active {
+    background-color: #c7c7c7; /* A slightly darker grey for active state */
+    color: #005A9E; /* Use accent color for active icon */
+}

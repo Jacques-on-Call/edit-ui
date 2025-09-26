@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { marked } from 'marked';
+import { Buffer } from 'buffer';
 import SectionRenderer from './SectionRenderer';
 import HeadEditor from './HeadEditor';
 import './FileViewer.css';
@@ -54,7 +55,10 @@ function FileViewer({ repo, path, branch }) {
       let decoded = null;
       if (json && (json.content || json.encoding)) {
         try {
-          decoded = json.encoding === 'base64' ? atob(json.content) : (json.decoded || json.content);
+          // Use Buffer to correctly decode UTF-8 characters from Base64
+          decoded = json.encoding === 'base64'
+            ? Buffer.from(json.content, 'base64').toString('utf8')
+            : (json.decoded || json.content);
         } catch (e) {
           decoded = json.content; // fallback
         }

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import matter from 'gray-matter';
+import { Buffer } from 'buffer';
 import { unifiedParser } from './utils/unifiedParser';
-import { stringifyAstroFile } from './utils/astroFileParser';
 import SectionEditor from './SectionEditor';
+import VisualSectionPreview from './VisualSectionPreview';
+import BottomToolbar from './BottomToolbar';
 import TopToolbar from './TopToolbar';
 import './Editor.css';
 
@@ -15,7 +16,6 @@ const Editor = () => {
   const [error, setError] = useState(null);
   const [editorInstance, setEditorInstance] = useState(null);
   const [activeFormats, setActiveFormats] = useState({});
-  const [isSaving, setIsSaving] = useState(false);
 
   const pathWithRepo = location.pathname.replace('/edit/', '');
   const pathParts = pathWithRepo.split('/');
@@ -27,13 +27,13 @@ const Editor = () => {
   const isAstroFile = path.endsWith('.astro');
   const isMarkdownFile = path.endsWith('.md');
 
-  // Function to combine content from text_block sections into a single string for Astro files
+  // Combines content from all text_block sections into a single string for the editor.
   const getCombinedContent = (sections) => {
     if (!sections) return '';
     return sections
       .filter(section => section.type === 'text_block' && section.content)
       .map(section => section.content)
-      .join('<br />');
+      .join('<hr style="border: 0; border-top: 1px solid #ccc; margin: 1em 0;" />');
   };
 
   // Load content from draft or server
@@ -45,8 +45,7 @@ const Editor = () => {
       const localDraft = localStorage.getItem(draftKey);
       if (localDraft) {
         try {
-          const draftData = JSON.parse(localDraft);
-          setFileData(draftData);
+          setFileData(JSON.parse(localDraft));
           setLoading(false);
           return;
         } catch (e) {
@@ -58,17 +57,15 @@ const Editor = () => {
         const res = await fetch(`/api/file?repo=${repo}&path=${path}`, { credentials: 'include' });
         if (!res.ok) throw new Error(`Fetch failed: ${res.statusText}`);
         const data = await res.json();
-        const decodedContent = atob(data.content);
-
+        const decodedContent = Buffer.from(data.content, 'base64').toString('utf8');
         const { model } = await unifiedParser(decodedContent, path);
 
-        const fullFileData = {
+        setFileData({
           sha: data.sha,
           frontmatter: model.frontmatter,
           body: model.body,
           path: data.path
-        };
-        setFileData(fullFileData);
+        });
 
       } catch (err) {
         setError(err.message);
@@ -89,7 +86,7 @@ const Editor = () => {
     }
   }, [fileData, loading, draftKey]);
 
-  // Differentiated content change handler
+  // Unified content change handler
   const handleContentChange = (newContent) => {
     setFileData(prevData => {
       if (isMarkdownFile) {
@@ -99,28 +96,18 @@ const Editor = () => {
       if (isAstroFile) {
         const sections = prevData.frontmatter.sections || [];
         const firstTextBlockIndex = sections.findIndex(s => s.type === 'text_block');
-
         let newSections = [...sections];
 
         if (firstTextBlockIndex !== -1) {
           newSections[firstTextBlockIndex] = { ...newSections[firstTextBlockIndex], content: newContent };
-          newSections = newSections.map((s, i) => {
-              if (s.type === 'text_block' && i !== firstTextBlockIndex) {
-                  return { ...s, content: '' };
-              }
-              return s;
-          });
+          newSections = newSections.map((s, i) =>
+            (s.type === 'text_block' && i !== firstTextBlockIndex) ? { ...s, content: '' } : s
+          );
         } else {
           newSections.push({ type: 'text_block', content: newContent });
         }
 
-        return {
-          ...prevData,
-          frontmatter: {
-            ...prevData.frontmatter,
-            sections: newSections
-          }
-        };
+        return { ...prevData, frontmatter: { ...prevData.frontmatter, sections: newSections } };
       }
 
       return { ...prevData, body: newContent };
@@ -132,46 +119,22 @@ const Editor = () => {
       bold: editor.queryCommandState('bold'),
       italic: editor.queryCommandState('italic'),
       underline: editor.queryCommandState('underline'),
+      justifyLeft: editor.queryCommandState('JustifyLeft'),
+      justifyCenter: editor.queryCommandState('JustifyCenter'),
+      justifyRight: editor.queryCommandState('JustifyRight'),
+      justifyFull: editor.queryCommandState('JustifyFull'),
+      unorderedList: editor.queryCommandState('InsertUnorderedList'),
     };
     setActiveFormats(newFormats);
   };
 
-  const handleEditorInit = (evt, editor) => {
-    setEditorInstance(editor);
-  };
+  const handleEditorInit = (evt, editor) => setEditorInstance(editor);
 
   const handleDone = () => {
-    navigate(`/explorer/file?path=${path}`);
-  };
-
-  const handlePublish = async () => {
-    setIsSaving(true);
-    try {
-        const { frontmatter, body, sha } = fileData;
-
-        let newFileContent;
-        if (isMarkdownFile) {
-            newFileContent = matter.stringify(body || '', frontmatter);
-        } else {
-            newFileContent = stringifyAstroFile(frontmatter, body);
-        }
-
-        await fetch('/api/file', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ repo, path, content: btoa(newFileContent), sha }),
-        });
-
-        localStorage.removeItem(draftKey);
-        alert('Publish successful!');
-        navigate(`/explorer/file?path=${path}`);
-    } catch(err) {
-        alert(`An error occurred: ${err.message}`);
-        setError(err.message);
-    } finally {
-        setIsSaving(false);
+    if (fileData) {
+      localStorage.setItem(draftKey, JSON.stringify(fileData));
     }
+    navigate(`/explorer/file?path=${path}`);
   };
 
   if (loading) return <div className="editor-container"><div className="loading-spinner"></div></div>;
@@ -181,30 +144,28 @@ const Editor = () => {
     ? getCombinedContent(fileData?.frontmatter?.sections)
     : (fileData?.body || '');
 
-  const placeholderText = isAstroFile
-    ? 'The content of any text blocks in this file will appear here. Editing this text will consolidate all text blocks into one.'
-    : 'You can write your Markdown content directly in this editor.';
-
   return (
     <div className="editor-container">
       <div className="editor-header">
-        <TopToolbar onDone={handleDone} onPublish={handlePublish} isSaving={isSaving} />
+        <TopToolbar editor={editorInstance} activeFormats={activeFormats} onDone={handleDone} />
       </div>
-      <div className="editor-main-area">
+      <div className="sections-list">
         {isAstroFile || isMarkdownFile ? (
             <SectionEditor
-                initialContent={initialContent}
-                onContentChange={handleContentChange}
-                onInit={handleEditorInit}
-                onNodeChange={handleNodeChange}
-                placeholder={placeholderText}
+              initialContent={initialContent}
+              onContentChange={handleContentChange}
+              onInit={handleEditorInit}
+              onNodeChange={handleNodeChange}
             />
         ) : (
-            <div className="unsupported-file-message">
-                <p>This file type cannot be edited with the rich-text editor.</p>
-                <pre>{fileData?.body}</pre>
-            </div>
+          <div className="unsupported-file-message">
+            <p>This file type is not supported by the editor.</p>
+            <pre>{fileData?.body || ''}</pre>
+          </div>
         )}
+      </div>
+      <div className="editor-footer">
+        <BottomToolbar editor={editorInstance} activeFormats={activeFormats} />
       </div>
     </div>
   );
