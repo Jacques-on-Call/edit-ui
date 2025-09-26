@@ -1,53 +1,54 @@
-/* A simplified, full-width layout for the editor */
+/* A robust, full-page flexbox layout for the editor */
 .editor-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100vh; /* Use 100% of the viewport height */
   width: 100%;
-  background-color: #ffffff; /* Use a single background color for a frameless look */
+  background-color: #f0f2f5;
+  box-sizing: border-box;
 }
 
 .editor-header {
+  /* This is a flex item. Its height will be determined by its content. */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
   flex-shrink: 0;
   background-color: #005A9E;
   color: white;
   z-index: 10;
   width: 100%;
-  position: fixed;
-  top: 0;
-  flex-wrap: wrap; /* Allow toolbar items to wrap on smaller screens */
-}
-
-.editor-footer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    flex-shrink: 0;
-    background-color: #005A9E !important;
-    color: white;
-    width: 100%;
-    /* The footer will now scroll with the content */
+  box-sizing: border-box; /* Include padding in width */
 }
 
 /* This is the main content area that holds the editor */
 .sections-list {
-  flex-grow: 1; /* Allows the content area to fill available space */
-  overflow-y: auto; /* Makes the content scrollable */
-  padding-top: 60px; /* Height of the fixed header */
-  display: flex;
+  flex-grow: 1; /* Allows the content area to fill all available vertical space */
+  overflow-y: auto; /* Makes ONLY this area scrollable */
+  background-color: #ffffff;
+  display: flex; /* This will allow the editor inside to grow */
   flex-direction: column;
-  height: 100%; /* Ensure it takes up the full container height */
 }
 
 /* This ensures the TinyMCE instance fills its container */
 .tox-tinymce {
   flex-grow: 1 !important;
   border: none !important; /* Remove TinyMCE's default border */
+  height: 100% !important; /* Make sure it fills the container */
+}
+
+.editor-footer {
+  /* This is also a flex item, part of the main page flow. */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  flex-shrink: 0;
+  background-color: #005A9E !important;
+  color: white;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .loading-spinner {

@@ -37,8 +37,6 @@ const BottomToolbar = ({ editor, activeFormats = {} }) => {
       <button onClick={() => handleCommand('underline')} title="Underline" className={activeFormats.underline ? 'active' : ''}>
         <Icon name="underline" />
       </button>
-      <button title="Text Color">A</button>
-      <button title="Highlight Color">H</button>
       <button onClick={() => handleCommand('InsertUnorderedList')} title="Bullet List" className={activeFormats.unorderedList ? 'active' : ''}>
         <Icon name="list" />
       </button>

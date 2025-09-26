@@ -6,10 +6,7 @@ import SectionRenderer from './SectionRenderer';
 import HeadEditor from './HeadEditor';
 import './FileViewer.css';
 import { unifiedParser } from './utils/unifiedParser';
-import { stringifyAstroFile } from './utils/astroFileParser'; // Keep for saving
-
-// Note: DebugPanel is not ported yet, so it's commented out.
-// import DebugPanel from './components/DebugPanel';
+import { stringifyAstroFile } from './utils/astroFileParser';
 
 function FileViewer({ repo, path, branch }) {
   const [isHeadEditorOpen, setIsHeadEditorOpen] = useState(false);
@@ -21,7 +18,6 @@ function FileViewer({ repo, path, branch }) {
     frontmatter: {},
   });
   const [debug, setDebug] = useState({ notes: [] });
-  const [showDebug, setShowDebug] = useState(true);
   const [isDraft, setIsDraft] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,75 +25,32 @@ function FileViewer({ repo, path, branch }) {
   const navigate = useNavigate();
   const draftKey = `draft-content-${path}`;
 
-  // This effect runs when content changes, saving it to a local draft
-  useEffect(() => {
-    // Only save if it's a draft and not in the initial loading state
-    if (isDraft && !loading) {
-      localStorage.setItem(draftKey, JSON.stringify(content));
-    }
-  }, [content, isDraft, loading, draftKey]);
-
   const fetchFromServer = useCallback(async () => {
     setLoading(true);
     setError(null);
     const apiPath = `/api/file?repo=${repo}&path=${path}&ref=${branch || ''}`;
-    setDebug(d => ({ ...d, apiPath, notes: ['Requesting file'] }));
+    setDebug(d => ({ ...d, apiPath, notes: ['Requesting file from server'] }));
     try {
       const res = await fetch(apiPath, { credentials: 'include' });
-      const status = res.status;
       if (!res.ok) {
         const errorText = await res.text();
-        throw new Error(`Failed to fetch file (status: ${status}): ${errorText}`);
+        throw new Error(`Failed to fetch file (status: ${res.status}): ${errorText}`);
       }
       const json = await res.json();
-      const debugBase = { apiPath, status, apiResponse: json };
+      const decoded = Buffer.from(json.content, 'base64').toString('utf8');
+      const { model } = await unifiedParser(decoded, path);
 
-      let decoded = null;
-      if (json && (json.content || json.encoding)) {
-        try {
-          // Use Buffer to correctly decode UTF-8 characters from Base64
-          decoded = json.encoding === 'base64'
-            ? Buffer.from(json.content, 'base64').toString('utf8')
-            : (json.decoded || json.content);
-        } catch (e) {
-          decoded = json.content; // fallback
-        }
-      } else if (json && typeof json === 'string') {
-        decoded = json;
-      }
-      debugBase.decoded = decoded;
-      debugBase.decodedSnippet = decoded ? decoded.slice(0, 2000) : null;
-      debugBase.sha = json && json.sha;
-
-      // Use the new unified parser for all file types.
-      const { model, trace } = await unifiedParser(decoded || '', path);
-      debugBase.parse = trace || {};
-
-      if (!model) {
-        debugBase.notes = ['No model parsed; showing raw content'];
-        setContent({
-          sections: [],
-          rawContent: decoded,
-          sha: json.sha,
-          body: '',
-          frontmatter: {},
-        });
-      } else {
-        debugBase.notes = ['Model parsed'];
-        const fm = model.frontmatter || {};
-        setContent({
-            sections: fm.sections || [],
-            rawContent: decoded,
-            sha: json.sha,
-            body: model.body || '',
-            frontmatter: fm,
-        });
-      }
-      setDebug(debugBase);
+      setContent({
+        sections: model.frontmatter.sections || [],
+        rawContent: decoded,
+        sha: json.sha,
+        body: model.body || '',
+        frontmatter: model.frontmatter || {},
+      });
       setIsDraft(false);
     } catch (err) {
       setError(err.message);
-      setDebug(d => ({ ...d, error: err && err.message, notes: ['Fetch error', String(err)] }));
+      setDebug(d => ({ ...d, error: err.message, notes: ['Fetch error', String(err)] }));
     } finally {
       setLoading(false);
     }
@@ -108,9 +61,10 @@ function FileViewer({ repo, path, branch }) {
     if (localDraft) {
       try {
         const draftData = JSON.parse(localDraft);
-        setContent({ ...draftData, rawContent: 'Draft loaded' });
+        setContent(draftData); // Load the entire draft state
         setIsDraft(true);
         setLoading(false);
+        setDebug(d => ({ ...d, notes: ['Loaded content from local draft.'] }));
       } catch (e) {
         console.error("Failed to parse draft, fetching from server.", e);
         fetchFromServer();
@@ -126,66 +80,36 @@ function FileViewer({ repo, path, branch }) {
 
     try {
       const draftData = JSON.parse(draftString);
-      // The body of the content is now the source of truth, not the original rawContent.
       const { frontmatter, body, sha } = draftData;
-
-      // Use the new robust stringify function
       const newFileContent = stringifyAstroFile(frontmatter, body || '');
-
       const fileExtension = path.substring(path.lastIndexOf('.'));
       const originalSlug = path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'));
       const parentPath = path.substring(0, path.lastIndexOf('/'));
 
-      // Check if slug has changed
       if (newSlug && newSlug !== originalSlug) {
-        // --- RENAME LOGIC ---
         const newPath = `${parentPath}/${newSlug}${fileExtension}`;
-
-        // 1. Create the new file
         const createRes = await fetch('/api/file', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ repo, path: newPath, content: btoa(newFileContent), sha: null }), // No SHA for new file
+            body: JSON.stringify({ repo, path: newPath, content: btoa(newFileContent), sha: null }),
         });
+        if (!createRes.ok) throw new Error(`Failed to create new file: ${await createRes.text()}`);
 
-        if (!createRes.ok) {
-            const errorData = await createRes.json();
-            throw new Error(`Failed to create new file at '${newPath}': ${errorData.message || createRes.statusText}`);
-        }
-        await createRes.json(); // Consume the response but don't need the data
+        await fetch(`/api/file?repo=${repo}&path=${path}&sha=${draftData.sha}`, { method: 'DELETE', credentials: 'include' });
 
-        // 2. Delete the old file
-        const deleteRes = await fetch(`/api/file?repo=${repo}&path=${path}&sha=${draftData.sha}`, {
-            method: 'DELETE',
-            credentials: 'include',
-        });
-
-        if (!deleteRes.ok) {
-            // This is a partial failure state. The new file was created, but the old one wasn't deleted.
-            // Inform the user clearly.
-            alert(`Rename partially failed! The new page was created at '${newSlug}', but we could not remove the old page. Please remove it manually.`);
-        } else {
-            alert('Page successfully renamed and published!');
-        }
-
-        // 3. Cleanup and navigate
+        alert('Page successfully renamed and published!');
         localStorage.removeItem(draftKey);
-        navigate(`/explorer/file?path=${newPath}`); // Navigate to the new page
+        navigate(`/explorer/file?path=${newPath}`);
 
       } else {
-        // --- UPDATE IN-PLACE LOGIC ---
         const res = await fetch('/api/file', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ repo, path, content: btoa(newFileContent), sha: sha }),
         });
-
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(`Publish failed: ${errorData.message || res.statusText}`);
-        }
+        if (!res.ok) throw new Error(`Publish failed: ${await res.text()}`);
         alert('Publish successful!');
         localStorage.removeItem(draftKey);
         fetchFromServer();
@@ -203,35 +127,13 @@ function FileViewer({ repo, path, branch }) {
   };
 
   const handleFrontmatterChange = (updatedFrontmatter) => {
-    // When head is edited, update content and ensure we are in a draft state
-    setContent(prev => ({
-        ...prev,
-        frontmatter: updatedFrontmatter,
-    }));
-    if (!isDraft) {
-        setIsDraft(true);
-    }
+    setContent(prev => ({ ...prev, frontmatter: updatedFrontmatter }));
+    if (!isDraft) setIsDraft(true);
   };
 
   const handleSectionUpdate = (newSections) => {
-    setContent(prev => ({
-        ...prev,
-        sections: newSections,
-        frontmatter: { ...prev.frontmatter, sections: newSections },
-    }));
-    if (!isDraft) {
-        setIsDraft(true);
-    }
-  };
-
-  const handleSlugUpdate = (slug) => {
-    setNewSlug(slug);
-    // Also update the local draft so the slug change is persisted
-    // before publishing.
-    setContent(prev => ({ ...prev }));
-    if (!isDraft) {
-        setIsDraft(true);
-    }
+    setContent(prev => ({ ...prev, frontmatter: { ...prev.frontmatter, sections: newSections } }));
+    if (!isDraft) setIsDraft(true);
   };
 
   const getFriendlyTitle = (filePath) => {
@@ -239,29 +141,23 @@ function FileViewer({ repo, path, branch }) {
     const filename = filePath.split('/').pop();
     const lastDotIndex = filename.lastIndexOf('.');
     if (lastDotIndex > 0) {
-      // Capitalize the first letter for a nicer look
       const name = filename.substring(0, lastDotIndex);
       return name.charAt(0).toUpperCase() + name.slice(1);
     }
     return filename;
   };
 
-  const title = getFriendlyTitle(path);
-
   const renderContent = () => {
-    // For .astro files, render sections if they exist and are not empty
     if (path.endsWith('.astro')) {
       if (content.sections && content.sections.length > 0) {
         return <SectionRenderer sections={content.sections} />;
       }
       return <p>No viewable content found in sections.</p>;
     }
-    // For .md files, render the body as markdown
     if (path.endsWith('.md')) {
-      const html = content.body ? marked(content.body) : marked(content.rawContent);
+      const html = marked(content.body || '');
       return <div className="markdown-preview" dangerouslySetInnerHTML={{ __html: html }} />;
     }
-    // Fallback for other file types or astro files without sections
     return <pre className="raw-content-viewer">{content.rawContent}</pre>;
   };
 
@@ -280,7 +176,6 @@ function FileViewer({ repo, path, branch }) {
           path={path}
           sections={content.sections}
           onSectionUpdate={handleSectionUpdate}
-          onSlugUpdate={handleSlugUpdate}
         />
       )}
       {isDraft && (
@@ -293,7 +188,7 @@ function FileViewer({ repo, path, branch }) {
         </div>
       )}
       <div className="file-viewer-header">
-        <h1>{title}</h1>
+        <h1>{getFriendlyTitle(path)}</h1>
         <div className="action-buttons">
           <button className="viewer-button" onClick={() => navigate('/explorer')}>Back</button>
           <button className="viewer-button" onClick={() => setIsHeadEditorOpen(true)}>Search Preview</button>
@@ -301,7 +196,6 @@ function FileViewer({ repo, path, branch }) {
         </div>
       </div>
       {renderContent()}
-      {/* {showDebug && <DebugPanel debug={{ ...debug, editorReady: false }} onClose={() => setShowDebug(false)} />} */}
     </div>
   );
 }

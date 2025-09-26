@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Buffer } from 'buffer';
-import { marked } from 'marked';
 import TurndownService from 'turndown';
 import { unifiedParser } from './utils/unifiedParser';
+import { stringifyAstroFile } from './utils/astroFileParser';
 import SectionEditor from './SectionEditor';
 import BottomToolbar from './BottomToolbar';
 import TopToolbar from './TopToolbar';
@@ -29,19 +29,24 @@ const Editor = () => {
   const isMarkdownFile = path.endsWith('.md');
   const turndownService = new TurndownService({ hr: '---' });
 
-  // Combines all relevant text content into a single Markdown string for the editor.
-  const getCombinedMarkdown = (frontmatter, body) => {
-    if (isMarkdownFile) return body || '';
+  // Converts the structured section data into a single HTML string for the editor.
+  const getCombinedHtmlContent = (frontmatter, body) => {
+    if (isMarkdownFile) return new DOMParser().parseFromString(marked(body || ''), 'text/html').body.innerHTML;
     if (isAstroFile && frontmatter?.sections) {
+      let htmlParts = [];
       const heroSection = frontmatter.sections.find(s => s.type === 'hero');
+      if (heroSection) {
+        if (heroSection.title) htmlParts.push(`<h1>${heroSection.title}</h1>`);
+        if (heroSection.subtitle) htmlParts.push(`<h2>${heroSection.subtitle}</h2>`);
+      }
       const textBlocks = frontmatter.sections.filter(s => s.type === 'text_block');
-      let contentParts = [];
-      if (heroSection?.title) contentParts.push(`# ${heroSection.title}`);
-      if (heroSection?.subtitle) contentParts.push(`## ${heroSection.subtitle}`);
       textBlocks.forEach(block => {
-        if (block.content) contentParts.push(block.content);
+        if (block.content) {
+            // Use marked to convert markdown content from each section into HTML
+            htmlParts.push(new DOMParser().parseFromString(marked(block.content), 'text/html').body.innerHTML);
+        }
       });
-      return contentParts.join('\\n\\n---\\n\\n');
+      return htmlParts.join('<hr />');
     }
     return '';
   };
@@ -74,50 +79,48 @@ const Editor = () => {
     loadFile();
   }, [path, repo, draftKey]);
 
-  // This function is now a stub, as the debounced auto-save was the source of the bug.
-  // The save is now handled synchronously in `handleDone`.
-  const handleContentChange = (newContent) => {};
+  // This function is now a stub, as saving is handled synchronously in handleDone.
+  const handleContentChange = () => {};
 
   const handleNodeChange = (editor) => {
     const newFormats = {
       bold: editor.queryCommandState('bold'),
       italic: editor.queryCommandState('italic'),
       underline: editor.queryCommandState('underline'),
-      justifyLeft: editor.queryCommandState('JustifyLeft'),
-      justifyCenter: editor.queryCommandState('JustifyCenter'),
-      justifyRight: editor.queryCommandState('JustifyRight'),
-      justifyFull: editor.queryCommandState('JustifyFull'),
-      unorderedList: editor.queryCommandState('InsertUnorderedList'),
     };
     setActiveFormats(newFormats);
   };
 
   const handleEditorInit = (evt, editor) => setEditorInstance(editor);
 
-  // This is the permanent fix for the content-loss bug.
   const handleDone = () => {
     if (editorInstance && fileData) {
       const latestHtml = editorInstance.getContent();
-      const latestMarkdown = turndownService.turndown(latestHtml);
-
       const updatedFileData = JSON.parse(JSON.stringify(fileData)); // Deep copy
 
       if (isMarkdownFile) {
-        updatedFileData.body = latestMarkdown;
+        updatedFileData.body = turndownService.turndown(latestHtml);
       } else if (isAstroFile) {
-        const sections = updatedFileData.frontmatter.sections || [];
-        const firstTextBlockIndex = sections.findIndex(s => s.type === 'text_block');
-        if (firstTextBlockIndex !== -1) {
-          sections[firstTextBlockIndex].content = latestMarkdown;
-          sections.forEach((s, i) => {
-            if (s.type === 'text_block' && i !== firstTextBlockIndex) s.content = '';
-          });
-        } else {
-          sections.push({ type: 'text_block', content: latestMarkdown });
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = latestHtml;
+        const h1 = tempDiv.querySelector('h1');
+        const h2 = tempDiv.querySelector('h2');
+
+        const heroSection = updatedFileData.frontmatter.sections.find(s => s.type === 'hero');
+        if(heroSection) {
+            if(h1) heroSection.title = h1.textContent;
+            if(h2) heroSection.subtitle = h2.textContent;
         }
-        updatedFileData.frontmatter.sections = sections;
-      } else {
-          updatedFileData.body = latestMarkdown;
+
+        const contentParts = latestHtml.split('<hr />');
+        let textBlockIndex = 0;
+        updatedFileData.frontmatter.sections.forEach(section => {
+            if(section.type === 'text_block') {
+                const contentHtml = contentParts[textBlockIndex + (heroSection ? 1 : 0)] || '';
+                section.content = turndownService.turndown(contentHtml);
+                textBlockIndex++;
+            }
+        });
       }
 
       localStorage.setItem(draftKey, JSON.stringify(updatedFileData));
@@ -128,8 +131,7 @@ const Editor = () => {
   if (loading) return <div className="editor-container"><div className="loading-spinner"></div></div>;
   if (error) return <div className="editor-container">Error: {error}</div>;
 
-  const initialMarkdown = getCombinedMarkdown(fileData?.frontmatter, fileData?.body);
-  const initialContent = marked(initialMarkdown);
+  const initialContent = getCombinedHtmlContent(fileData?.frontmatter, fileData?.body);
 
   return (
     <div className="editor-container">
