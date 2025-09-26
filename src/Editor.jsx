@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import TurndownService from 'turndown';
 import { parseAstroFile } from './utils/astroFileParser';
 import SectionEditor from './SectionEditor';
+import VisualSectionPreview from './VisualSectionPreview';
 import BottomToolbar from './BottomToolbar';
 import TopToolbar from './TopToolbar';
 import './Editor.css';
@@ -11,13 +11,11 @@ const Editor = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [fileData, setFileData] = useState(null);
-  const [bodyContent, setBodyContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editorInstance, setEditorInstance] = useState(null);
   const [activeFormats, setActiveFormats] = useState({});
 
-  const turndownService = new TurndownService();
   const pathWithRepo = location.pathname.replace('/edit/', '');
   const pathParts = pathWithRepo.split('/');
   const repoOwner = pathParts.shift();
@@ -37,7 +35,6 @@ const Editor = () => {
         try {
           const draftData = JSON.parse(localDraft);
           setFileData(draftData);
-          setBodyContent(draftData.body || '');
           setLoading(false);
           return;
         } catch (e) {
@@ -51,17 +48,15 @@ const Editor = () => {
         const data = await res.json();
         const decodedContent = atob(data.content);
 
-        // Use the new, correct parser
         const { model } = await parseAstroFile(decodedContent);
 
         const fullFileData = {
           sha: data.sha,
           frontmatter: model.frontmatter,
-          body: model.body, // Use the body from the parser
+          body: model.body,
           path: data.path
         };
         setFileData(fullFileData);
-        setBodyContent(model.body || '');
 
       } catch (err) {
         setError(err.message);
@@ -76,17 +71,26 @@ const Editor = () => {
   useEffect(() => {
     if (!loading && fileData) {
       const handler = setTimeout(() => {
-        const newFileData = { ...fileData, body: bodyContent };
-        localStorage.setItem(draftKey, JSON.stringify(newFileData));
-      }, 500); // Save after 500ms of inactivity
+        localStorage.setItem(draftKey, JSON.stringify(fileData));
+      }, 500);
       return () => clearTimeout(handler);
     }
-  }, [bodyContent, fileData, loading, draftKey]);
+  }, [fileData, loading, draftKey]);
 
-  const handleContentChange = (newContent) => {
-    // The editor gives us HTML, so we store it as is for now.
-    // We'll convert it back to markdown on save if needed.
-    setBodyContent(newContent);
+  // This function now needs to know which section to update
+  const handleSectionContentChange = (newContent, index) => {
+    setFileData(prevData => {
+      const newSections = [...prevData.frontmatter.sections];
+      newSections[index] = { ...newSections[index], content: newContent };
+
+      return {
+        ...prevData,
+        frontmatter: {
+          ...prevData.frontmatter,
+          sections: newSections
+        }
+      };
+    });
   };
 
   const handleNodeChange = (editor) => {
@@ -108,12 +112,7 @@ const Editor = () => {
   };
 
   const handleDone = () => {
-    // Final save to local storage before navigating
-    if (fileData) {
-      const newFileData = { ...fileData, body: bodyContent };
-      localStorage.setItem(draftKey, JSON.stringify(newFileData));
-    }
-    // Navigate back to the viewer page
+    // The debounced save will have already run, so we can just navigate.
     navigate(`/explorer/file?path=${path}`);
   };
 
@@ -126,19 +125,26 @@ const Editor = () => {
         <TopToolbar editor={editorInstance} activeFormats={activeFormats} onDone={handleDone} />
       </div>
       <div className="sections-list">
-        <SectionEditor
-            // The editor now works directly with the body content
-            initialContent={bodyContent}
-            onContentChange={handleContentChange}
-            onInit={handleEditorInit}
-            onNodeChange={handleNodeChange}
-        />
+        {(fileData?.frontmatter?.sections || []).map((section, index) => {
+          if (section.type === 'text_block') {
+            return (
+              <div key={index} className="section-wrapper">
+                <SectionEditor
+                  initialContent={section.content}
+                  onContentChange={(newContent) => handleSectionContentChange(newContent, index)}
+                  onInit={handleEditorInit}
+                  onNodeChange={handleNodeChange}
+                />
+              </div>
+            );
+          }
+          // Render a placeholder for non-editable sections
+          return <VisualSectionPreview key={index} section={section} />;
+        })}
       </div>
       <div className="editor-footer" style={{ backgroundColor: '#005A9E' }}>
         <BottomToolbar editor={editorInstance} activeFormats={activeFormats} />
       </div>
-      {/* Debug panel is commented out as it's not ported yet */}
-      {/* <DebugPanel debug={{ ...debug, editorReady }} /> */}
     </div>
   );
 };

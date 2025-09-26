@@ -75,11 +75,10 @@ export async function parseAstroFile(fileContent) {
  * @returns {string} The complete, formatted .astro file content.
  */
 export function stringifyAstroFile(frontmatter, body) {
-  // Ensure sections are not duplicated in the top-level of frontmatter if they exist
-  const { sections, ...restOfFrontmatter } = frontmatter;
-
+  // Stringify the entire frontmatter object, including the sections array.
+  // This is the fix for the critical save bug.
   const frontmatterString = `export const frontmatter = ${JSON.stringify(
-    restOfFrontmatter,
+    frontmatter,
     null,
     2
   )};`;
@@ -87,5 +86,5 @@ export function stringifyAstroFile(frontmatter, body) {
   return `---
 ${frontmatterString}
 ---
-${body}`;
+${body || ''}`;
 }
