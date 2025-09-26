@@ -1,73 +1,73 @@
+/* VisualSectionPreview.css */
+
 .visual-section-preview {
-  background-color: #f0f2f5;
-  border: 1px dashed #ced4da;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  color: #495057;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  padding: 20px;
+  background-color: #fff;
 }
 
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #dee2e6;
+.visual-section-preview h1,
+.visual-section-preview h2,
+.visual-section-preview h3,
+.visual-section-preview h4 {
+  margin-top: 1.2em;
+  margin-bottom: 0.6em;
+  font-weight: 600;
+  line-height: 1.25;
 }
 
-.preview-header strong {
-  text-transform: capitalize;
-  font-size: 14px;
-  color: #343a40;
+.visual-section-preview h1 {
+  font-size: 2em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 0.3em;
 }
 
-.preview-tag {
-  background-color: #e9ecef;
-  color: #6c757d;
-  font-size: 11px;
-  font-weight: 500;
-  padding: 3px 8px;
-  border-radius: 12px;
+.visual-section-preview h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 0.3em;
 }
 
-.preview-content h2 {
-  font-size: 24px;
-  margin: 0 0 8px 0;
-  color: #212529;
+.visual-section-preview h3 {
+  font-size: 1.25em;
 }
 
-.preview-content h3 {
-  font-size: 20px;
-  margin: 0 0 8px 0;
-  color: #212529;
+.visual-section-preview h4 {
+  font-size: 1em;
 }
 
-.preview-content p {
-  font-size: 16px;
-  margin: 0;
-  color: #6c757d;
+.visual-section-preview p {
+  margin-top: 0;
+  margin-bottom: 1em;
 }
 
-.preview-content .item-count {
-  font-size: 14px;
-  font-style: italic;
-  color: #adb5bd;
+.visual-section-preview img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1em 0;
+  border-radius: 4px;
 }
 
-.cta-preview {
-  text-align: center;
-  padding: 16px 0;
+.visual-section-preview a {
+  color: #0366d6;
+  text-decoration: none;
 }
 
-.cta-button-preview {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  font-size: 16px;
-  cursor: not-allowed;
-  opacity: 0.65;
+.visual-section-preview a:hover {
+  text-decoration: underline;
+}
+
+.visual-section-preview blockquote {
+  margin-left: 0;
+  padding-left: 1em;
+  border-left: 0.25em solid #dfe2e5;
+  color: #6a737d;
+}
+
+.visual-section-preview ul,
+.visual-section-preview ol {
+    padding-left: 2em;
 }

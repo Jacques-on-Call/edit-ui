@@ -4,7 +4,8 @@ import { marked } from 'marked';
 import SectionRenderer from './SectionRenderer';
 import HeadEditor from './HeadEditor';
 import './FileViewer.css';
-import { parseAstroFile, stringifyAstroFile } from './utils/astroFileParser';
+import { unifiedParser } from './utils/unifiedParser';
+import { stringifyAstroFile } from './utils/astroFileParser'; // Keep for saving
 
 // Note: DebugPanel is not ported yet, so it's commented out.
 // import DebugPanel from './components/DebugPanel';
@@ -64,8 +65,8 @@ function FileViewer({ repo, path, branch }) {
       debugBase.decodedSnippet = decoded ? decoded.slice(0, 2000) : null;
       debugBase.sha = json && json.sha;
 
-      // Use the new Astro parser for .astro files, with a fallback for others.
-      const { model, trace } = await parseAstroFile(decoded || '');
+      // Use the new unified parser for all file types.
+      const { model, trace } = await unifiedParser(decoded || '', path);
       debugBase.parse = trace || {};
 
       if (!model) {

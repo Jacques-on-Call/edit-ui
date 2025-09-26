@@ -1,38 +1,18 @@
 import React from 'react';
+import { marked } from 'marked';
+import './VisualSectionPreview.css';
 
-// --- Presentational Components for Each Section Type ---
-
-const Hero = ({ heading, text, image, imageAlt }) => (
-  <div style={{ padding: '40px 20px', margin: '10px 0', borderRadius: '8px', backgroundColor: '#005A9E', color: 'white', textAlign: 'center' }}>
-    {image && <img src={image} alt={imageAlt || ''} style={{ maxWidth: '100%', height: 'auto', marginBottom: '20px' }} />}
-    <h1 style={{ fontSize: '2.5rem', margin: '0 0 10px 0' }}>{heading}</h1>
-    <p style={{ fontSize: '1.2rem', margin: 0 }}>{text}</p>
-  </div>
-);
-
-const Feature = ({ heading, text }) => (
-  <div style={{ padding: '20px', margin: '10px 0', borderRadius: '8px', border: '1px solid #e0e0e0', backgroundColor: '#ffffff', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-    <h2 style={{ fontSize: '1.5rem', margin: '0 0 10px 0', color: '#333' }}>{heading}</h2>
-    <p style={{ fontSize: '1rem', margin: 0, color: '#555' }}>{text}</p>
-  </div>
-);
-
-const TextBlock = ({ content }) => (
-  <div
-    style={{ padding: '20px', margin: '10px 0' }}
-    dangerouslySetInnerHTML={{ __html: content }}
-  />
-);
-
-// --- Component Map ---
-
-const components = {
-  hero: Hero,
-  feature: Feature,
-  text_block: TextBlock,
+// A simple, recursive component to render content elements
+const renderContent = (content) => {
+  if (!content) return null;
+  if (typeof content === 'string') {
+    // Ensure that content is treated as markdown for consistent rendering
+    return <div dangerouslySetInnerHTML={{ __html: marked(content) }} />;
+  }
+  return null;
 };
 
-// --- Main Renderer ---
+// --- Main Renderer for a clean, document-like preview ---
 
 function SectionRenderer({ sections }) {
   if (!sections || !Array.isArray(sections) || sections.length === 0) {
@@ -40,19 +20,41 @@ function SectionRenderer({ sections }) {
   }
 
   return (
-    <div className="section-renderer" style={{ fontFamily: 'sans-serif', padding: '10px' }}>
+    <div className="visual-section-preview">
       {sections.map((section, index) => {
-        const Component = components[section.type];
-        if (!Component) {
-          // Fallback for unknown section types
-          return (
-            <div key={index} style={{ border: '1px dashed red', padding: '10px', margin: '10px 0' }}>
-              <p><strong>Unknown Section Type:</strong> {section.type}</p>
-              <pre>{JSON.stringify(section, null, 2)}</pre>
-            </div>
-          );
-        }
-        return <Component key={`${section.type}-${index}`} {...section} />;
+        // Render each section as a simple series of elements, providing a clean document flow.
+        return (
+          <div key={index} className="section-block">
+            {section.title && <h1>{section.title}</h1>}
+            {section.subtitle && <h2>{section.subtitle}</h2>}
+            {section.heading && <h2>{section.heading}</h2>}
+
+            {renderContent(section.content)}
+            {renderContent(section.text)}
+
+            {section.image && <img src={section.image} alt={section.imageAlt || section.title || ''} />}
+
+            {/* For 'grid' type, render items linearly without borders or boxes */}
+            {section.type === 'grid' && section.items && section.items.map((item, itemIndex) => (
+              <div key={itemIndex} className="grid-item-block">
+                {item.title && <h3>{item.title}</h3>}
+                {item.image && <img src={item.image} alt={item.title || ''} />}
+                {renderContent(item.text)}
+              </div>
+            ))}
+
+            {/* For 'cta' type, render buttons as simple styled links */}
+            {section.type === 'cta' && section.buttons && (
+              <div className="cta-block" style={{ marginTop: '1em' }}>
+                {section.buttons.map((button, buttonIndex) => (
+                  <p key={buttonIndex}>
+                    <a href={button.url}>{button.text}</a>
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        );
       })}
     </div>
   );
