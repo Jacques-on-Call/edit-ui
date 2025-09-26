@@ -2,10 +2,9 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #f0f2f5; /* Light grey background for contrast */
+  background-color: #f0f2f5;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  align-items: center; /* Center the content area horizontally */
-  padding-top: 1rem;
+  /* align-items and padding-top removed for a full-width, frameless design */
 }
 
 .editor-header {
@@ -32,19 +31,16 @@
     color: white;
     z-index: 10;
     width: 100%;
-    /* position: fixed; and bottom: 0; are removed to make the footer scroll with content */
 }
 
 .sections-list {
   flex-grow: 1;
-  overflow-y: auto; /* This makes the content area scrollable */
+  overflow-y: auto;
   background-color: #ffffff;
   width: 100%;
-  max-width: 900px; /* Max width for readability on desktop */
   margin-top: 60px; /* Height of the fixed header */
-  margin-bottom: 0; /* Removed margin, footer is no longer fixed */
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  border-radius: 4px 4px 0 0; /* Slightly rounded top corners */
+  /* max-width, box-shadow, and border-radius removed for a frameless design */
+  margin-bottom: 0;
 }
 
 .loading-spinner {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Buffer } from 'buffer';
+import { marked } from 'marked';
 import { unifiedParser } from './utils/unifiedParser';
 import SectionEditor from './SectionEditor';
 import VisualSectionPreview from './VisualSectionPreview';
@@ -27,46 +28,34 @@ const Editor = () => {
   const isAstroFile = path.endsWith('.astro');
   const isMarkdownFile = path.endsWith('.md');
 
-  // Combines content from all text_block sections into a single string for the editor.
-  const getCombinedContent = (sections) => {
+  const getCombinedHtmlContent = (sections) => {
     if (!sections) return '';
-    return sections
+    const markdown = sections
       .filter(section => section.type === 'text_block' && section.content)
       .map(section => section.content)
-      .join('<hr style="border: 0; border-top: 1px solid #ccc; margin: 1em 0;" />');
+      .join('\\n\\n<hr style="border:none;border-top:1px solid #ccc;" />\\n\\n');
+    return marked(markdown);
   };
 
-  // Load content from draft or server
   useEffect(() => {
     const loadFile = async () => {
       setLoading(true);
       setError(null);
-
       const localDraft = localStorage.getItem(draftKey);
       if (localDraft) {
         try {
           setFileData(JSON.parse(localDraft));
           setLoading(false);
           return;
-        } catch (e) {
-          console.error("Error parsing draft, fetching from server.", e);
-        }
+        } catch (e) { console.error("Error parsing draft, fetching from server.", e); }
       }
-
       try {
         const res = await fetch(`/api/file?repo=${repo}&path=${path}`, { credentials: 'include' });
         if (!res.ok) throw new Error(`Fetch failed: ${res.statusText}`);
         const data = await res.json();
         const decodedContent = Buffer.from(data.content, 'base64').toString('utf8');
         const { model } = await unifiedParser(decodedContent, path);
-
-        setFileData({
-          sha: data.sha,
-          frontmatter: model.frontmatter,
-          body: model.body,
-          path: data.path
-        });
-
+        setFileData({ sha: data.sha, frontmatter: model.frontmatter, body: model.body, path: data.path });
       } catch (err) {
         setError(err.message);
       } finally {
@@ -76,42 +65,39 @@ const Editor = () => {
     loadFile();
   }, [path, repo, draftKey]);
 
-  // Debounced auto-save to local draft
+  // This debounced effect is now just for background saving, not for the final save.
   useEffect(() => {
     if (!loading && fileData) {
-      const handler = setTimeout(() => {
-        localStorage.setItem(draftKey, JSON.stringify(fileData));
-      }, 500);
+      const handler = setTimeout(() => localStorage.setItem(draftKey, JSON.stringify(fileData)), 500);
       return () => clearTimeout(handler);
     }
   }, [fileData, loading, draftKey]);
 
-  // Unified content change handler
-  const handleContentChange = (newContent) => {
-    setFileData(prevData => {
-      if (isMarkdownFile) {
-        return { ...prevData, body: newContent };
-      }
-
-      if (isAstroFile) {
-        const sections = prevData.frontmatter.sections || [];
-        const firstTextBlockIndex = sections.findIndex(s => s.type === 'text_block');
-        let newSections = [...sections];
-
-        if (firstTextBlockIndex !== -1) {
-          newSections[firstTextBlockIndex] = { ...newSections[firstTextBlockIndex], content: newContent };
-          newSections = newSections.map((s, i) =>
-            (s.type === 'text_block' && i !== firstTextBlockIndex) ? { ...s, content: '' } : s
-          );
-        } else {
-          newSections.push({ type: 'text_block', content: newContent });
-        }
-
-        return { ...prevData, frontmatter: { ...prevData.frontmatter, sections: newSections } };
-      }
-
+  // Centralized helper to update file data based on editor content
+  const updateFileDataWithContent = (prevData, newContent) => {
+    if (isMarkdownFile) {
+      // For Markdown, we will need to convert HTML back to Markdown before saving to the server.
+      // For now, we store the raw HTML in the body for the draft.
       return { ...prevData, body: newContent };
-    });
+    }
+    if (isAstroFile) {
+      const sections = prevData.frontmatter.sections || [];
+      const firstTextBlockIndex = sections.findIndex(s => s.type === 'text_block');
+      let newSections = [...sections];
+
+      if (firstTextBlockIndex !== -1) {
+        newSections[firstTextBlockIndex] = { ...newSections[firstTextBlockIndex], content: newContent };
+        newSections = newSections.map((s, i) => (s.type === 'text_block' && i !== firstTextBlockIndex) ? { ...s, content: '' } : s);
+      } else {
+        newSections.push({ type: 'text_block', content: newContent });
+      }
+      return { ...prevData, frontmatter: { ...prevData.frontmatter, sections: newSections } };
+    }
+    return { ...prevData, body: newContent };
+  };
+
+  const handleContentChange = (newContent) => {
+    setFileData(prevData => updateFileDataWithContent(prevData, newContent));
   };
 
   const handleNodeChange = (editor) => {
@@ -130,9 +116,13 @@ const Editor = () => {
 
   const handleEditorInit = (evt, editor) => setEditorInstance(editor);
 
+  // This is the fix for the content-loss bug.
   const handleDone = () => {
-    if (fileData) {
-      localStorage.setItem(draftKey, JSON.stringify(fileData));
+    if (editorInstance && fileData) {
+      const latestContent = editorInstance.getContent();
+      const updatedFileData = updateFileDataWithContent(fileData, latestContent);
+      // Synchronously save the absolute latest content to the draft before navigating.
+      localStorage.setItem(draftKey, JSON.stringify(updatedFileData));
     }
     navigate(`/explorer/file?path=${path}`);
   };
@@ -141,8 +131,8 @@ const Editor = () => {
   if (error) return <div className="editor-container">Error: {error}</div>;
 
   const initialContent = isAstroFile
-    ? getCombinedContent(fileData?.frontmatter?.sections)
-    : (fileData?.body || '');
+    ? getCombinedHtmlContent(fileData?.frontmatter?.sections)
+    : marked(fileData?.body || '');
 
   return (
     <div className="editor-container">
@@ -150,19 +140,12 @@ const Editor = () => {
         <TopToolbar editor={editorInstance} activeFormats={activeFormats} onDone={handleDone} />
       </div>
       <div className="sections-list">
-        {isAstroFile || isMarkdownFile ? (
-            <SectionEditor
-              initialContent={initialContent}
-              onContentChange={handleContentChange}
-              onInit={handleEditorInit}
-              onNodeChange={handleNodeChange}
-            />
-        ) : (
-          <div className="unsupported-file-message">
-            <p>This file type is not supported by the editor.</p>
-            <pre>{fileData?.body || ''}</pre>
-          </div>
-        )}
+        <SectionEditor
+          initialContent={initialContent}
+          onContentChange={handleContentChange}
+          onInit={handleEditorInit}
+          onNodeChange={handleNodeChange}
+        />
       </div>
       <div className="editor-footer">
         <BottomToolbar editor={editorInstance} activeFormats={activeFormats} />
