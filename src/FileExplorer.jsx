@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './FileExplorer.module.css';
+import Header from './components/Header/Header';
+import Footer from './components/Footer/Footer';
 import SearchBar from './search-bar.jsx';
 import Icon from './icons.jsx';
 import Button from './components/Button/Button'; // Import the new reusable button
@@ -245,57 +247,40 @@ function FileExplorer({ repo }) {
   if (loading) return <div>Loading files...</div>;
   if (error) return <div>Error: {error}</div>;
 
-  const isAtRoot = path === 'src/pages';
-
-  const getCurrentFolderName = () => {
-    if (isAtRoot) return 'Home';
-    const segments = path.split('/');
-    return segments[segments.length - 1];
-  };
-
   return (
     <div className={styles.fileExplorer}>
-      <div className={styles.searchWrapper}>
+      <Header>
         <SearchBar repo={repo} />
-      </div>
-      <div className={styles.fileGrid}>
-        {Array.isArray(files) && files.filter(file => !file.name.startsWith('_')).map(file => (
-          <FileTile
-            key={file.sha}
-            file={file}
-            isSelected={selectedFile && selectedFile.sha === file.sha}
-            metadata={metadataCache[file.sha]}
-            onClick={handleFileClick}
-            onLongPress={(e) => handleLongPress(file, e)}
-            onRename={() => handleRenameRequest(file)}
-            onDelete={() => handleDeleteRequest(file)}
+      </Header>
+      <main className={styles.contentArea}>
+        <div className={styles.fileGrid}>
+          {Array.isArray(files) && files.filter(file => !file.name.startsWith('_')).map(file => (
+            <FileTile
+              key={file.sha}
+              file={file}
+              isSelected={selectedFile && selectedFile.sha === file.sha}
+              metadata={metadataCache[file.sha]}
+              onClick={handleFileClick}
+              onLongPress={(e) => handleLongPress(file, e)}
+              onRename={() => handleRenameRequest(file)}
+              onDelete={() => handleDeleteRequest(file)}
+            />
+          ))}
+        </div>
+        {isReadmeLoading && <div className={styles.readmeLoading}>Loading README...</div>}
+        {readmeContent && !isReadmeLoading && (
+          <ReadmeDisplay
+            content={readmeContent}
+            isVisible={isReadmeVisible}
+            onToggle={handleToggleReadme}
           />
-        ))}
-      </div>
-      {isReadmeLoading && <div className={styles.readmeLoading}>Loading README...</div>}
-      {readmeContent && !isReadmeLoading && (
-        <ReadmeDisplay
-          content={readmeContent}
-          isVisible={isReadmeVisible}
-          onToggle={handleToggleReadme}
-        />
-      )}
-      <div className={styles.bottomToolbar}>
-        <div className={`${styles.toolbarSection} ${styles.left}`}>
-          {/* Deliberately empty to push other elements */}
-        </div>
-        <div className={`${styles.toolbarSection} ${styles.center}`}>
-          <Button
-            variant="fab"
-            onClick={() => setCreateModalOpen(true)}
-          >
-            <Icon name="plus" />
-          </Button>
-        </div>
-        <div className={`${styles.toolbarSection} ${styles.right}`}>
-          {/* Deliberately empty to push other elements */}
-        </div>
-      </div>
+        )}
+      </main>
+      <Footer
+        currentPath={path}
+        onGoHome={handleGoHome}
+        onCreate={() => setCreateModalOpen(true)}
+      />
       {isCreateModalOpen && (
         <CreateModal
           path={path}

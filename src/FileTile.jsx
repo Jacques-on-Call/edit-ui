@@ -1,6 +1,6 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import styles from './FileTile.module.css';
-import Icon from './icons.jsx'; // Using the new SVG Icon component
+import Icon from './icons.jsx';
 
 function formatRelativeDate(dateString) {
   if (!dateString) return '';
@@ -21,53 +21,26 @@ function formatRelativeDate(dateString) {
 
 function formatDisplayName(name) {
   if (!name) return '';
-  // Remove .astro extension
   if (name.endsWith('.astro')) {
     name = name.slice(0, -6);
   }
-  // Capitalize the first letter
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-// Updated logic to be more specific with icons
 const getIconNameForFile = (file) => {
-  if (file.type === 'dir') {
-    return 'folder';
-  }
-  const extension = file.name.split('.').pop().toLowerCase();
-  switch (extension) {
-    case 'jpg':
-    case 'jpeg':
-    case 'png':
-    case 'gif':
-    case 'webp':
-    case 'svg':
-      return 'image';
-    case 'js':
-    case 'jsx':
-    case 'ts':
-    case 'tsx':
-      return 'code';
-    case 'css':
-    case 'scss':
-      return 'code';
-    case 'html':
-    case 'json':
-      return 'code';
-    case 'md':
-    case 'astro':
-      return 'file-text';
-    default:
-      return 'file-text'; // Use 'file-text' as the default, which exists in icons.jsx
-  }
+  return file.type === 'dir' ? 'folder' : 'file';
 };
 
 function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
   const iconName = getIconNameForFile(file);
-  const tileClassName = `${styles.fileTile} ${isSelected ? styles.selected : ''} ${file.type === 'dir' ? styles.isFolder : styles.isFile}`;
-
-  const [ripples, setRipples] = useState([]);
+  const [isAnimating, setIsAnimating] = useState(false);
   const pressTimer = useRef(null);
+
+  const tileClassName = `
+    ${styles.fileTile}
+    ${isSelected ? styles.selected : ''}
+    ${isAnimating ? (file.type === 'dir' ? styles.pulseFolder : styles.pulseFile) : ''}
+  `;
 
   const handlePointerDown = (e) => {
     if (e.button === 2) return;
@@ -80,31 +53,13 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
     clearTimeout(pressTimer.current);
   };
 
-  const handleOnClick = (e) => {
-    // --- Ripple Effect Logic (React Way) ---
-    const tile = e.currentTarget.querySelector(`.${styles.tileContent}`);
-    if (!tile) return;
-    const rect = tile.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
-    const x = e.clientX - rect.left - size / 2;
-    const y = e.clientY - rect.top - size / 2;
-
-    const newRipple = { x, y, size, key: Date.now() };
-    setRipples(prev => [...prev, newRipple]);
-    // --- End Ripple ---
-
+  const handleOnClick = () => {
     onClick(file);
+    setIsAnimating(true);
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 300); // This duration must match the animation duration in CSS
   };
-
-  useEffect(() => {
-    // Clean up ripples after animation
-    if (ripples.length > 0) {
-      const timer = setTimeout(() => {
-        setRipples(prev => prev.slice(1));
-      }, 600); // Match animation duration in CSS
-      return () => clearTimeout(timer);
-    }
-  }, [ripples]);
 
   const handleContextMenu = (e) => {
     e.preventDefault();
@@ -114,7 +69,7 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
 
   return (
     <div
-      className={tileClassName}
+      className={tileClassName.trim()}
       onClick={handleOnClick}
       onMouseDown={handlePointerDown}
       onMouseUp={handlePointerUp}
@@ -124,18 +79,6 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
       onContextMenu={handleContextMenu}
     >
       <div className={styles.tileContent}>
-        {ripples.map(r => (
-          <span
-            key={r.key}
-            className={styles.ripple}
-            style={{
-              left: r.x,
-              top: r.y,
-              width: r.size,
-              height: r.size,
-            }}
-          />
-        ))}
         <div className={styles.icon}>
           <Icon name={iconName} />
         </div>
@@ -147,7 +90,7 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
               <span className={styles.metadataDate}>{formatRelativeDate(metadata.date)}</span>
             </>
           ) : (
-            <span className={styles.metadataPlaceholder}>--</span>
+            <span className={styles.metadataPlaceholder}>&nbsp;</span>
           )}
         </div>
       </div>

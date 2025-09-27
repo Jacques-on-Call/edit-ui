@@ -1,78 +1,35 @@
-/* General container for the entire file explorer */
-.file-explorer {
-  background-color: #ffffff; /* White middle content area */
-  padding-bottom: 7rem; /* Add padding to the bottom to avoid content being hidden by the sticky toolbar */
-  height: 100vh;
+/* Styles for the main File Explorer layout */
+.fileExplorer {
   display: flex;
   flex-direction: column;
+  height: 100vh; /* Ensure the explorer fills the full viewport height */
+  background-color: #fff;
 }
 
-/* Wrapper for the search bar to control its position */
-.search-wrapper {
+.contentArea {
+  flex-grow: 1; /* Allows this area to grow and fill the space between header and footer */
+  overflow-y: auto; /* Makes the content scrollable if it overflows */
   padding: 1rem;
-  background-color: var(--blue); /* Blue header */
-  border-bottom: 1px solid var(--blue);
+  /* Add padding to the bottom to ensure content is not hidden behind the fixed footer */
+  padding-bottom: 80px; /* This value should be roughly the height of the footer */
 }
 
-/* The main area for files and folders */
-.file-grid {
-  padding: 1rem;
+.fileGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 1rem;
-  overflow-y: auto; /* Allow content to scroll */
-  flex-grow: 1; /* Make grid take up available space */
+  /* Padding is now handled by the .contentArea wrapper */
 }
 
-/* Bottom toolbar for main actions */
-.bottom-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  background-color: var(--blue); /* Blue footer */
-  color: white;
-  border-top: 1px solid var(--blue);
-  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
-  position: sticky; /* Sticky instead of fixed */
-  bottom: 0;
-  z-index: 100; /* Keep it above other content */
-}
-
-.toolbar-section {
-  display: flex;
-  align-items: center;
-  flex: 1;
-}
-
-.toolbar-section.left {
-  justify-content: flex-start;
-}
-
-.toolbar-section.center {
-  justify-content: center;
-}
-
-.toolbar-section.right {
-  justify-content: flex-end;
-}
-
-/* NOTE: The .toolbar-button and .create-button styles have been removed
-   and replaced by the new reusable <Button> component. */
-
-/* The name of the current folder in the toolbar */
-.folder-name {
-  font-size: 0.9rem;
-  color: var(--white); /* White text for contrast */
+.readmeLoading {
+  text-align: center;
+  padding: 1rem;
+  color: #888;
 }
 
 /* Responsive adjustments for mobile */
 @media (max-width: 600px) {
-  .file-grid {
+  .fileGrid {
     grid-template-columns: repeat(2, 1fr); /* Two columns on mobile */
-  }
-
-  .folder-name {
-    display: none; /* Hide folder name on small screens to save space */
   }
 }
