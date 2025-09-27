@@ -9,13 +9,13 @@
   padding: 16px;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out;
-  background-color: #f0f0f0; /* Light grey background */
+  background-color: var(--grey-light);
   border: 1px solid transparent;
-  user-select: none; /* Prevents text selection on long press */
+  user-select: none;
 }
 
 .file-tile.is-folder {
-  background-color: #e0eafc; /* Light blue for folders */
+  background-color: var(--folder-blue);
 }
 
 .file-tile.selected {
@@ -31,7 +31,7 @@
   text-align: center;
   width: 100%;
   position: relative;
-  overflow: hidden; /* For ripple effect */
+  overflow: hidden;
 }
 
 .file-tile .icon {
@@ -43,7 +43,7 @@
   width: 48px;
   height: 48px;
   stroke-width: 1.5;
-  color: #555;
+  color: var(--grey-medium);
 }
 
 .file-tile.is-folder .icon svg {
@@ -53,7 +53,7 @@
 .file-tile .name {
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--grey-dark);
   word-break: break-word;
   line-height: 1.2;
   max-height: 2.4em; /* Limit to 2 lines */
@@ -63,8 +63,8 @@
 
 .file-tile .metadata {
   font-size: 12px;
-  color: #777;
-  margin-top: 4px;
+  color: var(--grey-medium);
+  margin-top: 8px;
 }
 
 .file-tile .metadata-author {

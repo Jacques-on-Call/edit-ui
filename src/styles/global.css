@@ -11,6 +11,10 @@
   --blue: #003971;
   --green: #006300;
   --light-green: #C7EA46;
+  --grey-dark: #333333;
+  --grey-medium: #777777;
+  --grey-light: #f0f0f0;
+  --folder-blue: #e0eafc;
   --accent-color: var(--green);
   --font-family-sans: system-ui, Avenir, Helvetica, Arial, sans-serif;
   --font-family-roboto: 'Roboto', sans-serif;

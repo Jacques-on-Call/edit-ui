@@ -1,20 +1,24 @@
 import React from 'react';
-import Search from './Search'; // Import the new Search component
+import Search from './search-bar';
+import Icon from './icons';
 import styles from './Header.module.css';
 
-const Header = ({ path, onNavigate, repo }) => { // Add repo to props
+const Header = ({ path, onNavigate, repo }) => {
+  const handleHomeClick = (e) => {
+    e.preventDefault();
+    onNavigate('src/pages');
+  };
+
   const formatPath = (currentPath) => {
     if (!currentPath.startsWith('src/pages')) {
       return [];
     }
-    // Remove the base path and split into segments
     const cleanedPath = currentPath.replace('src/pages', '').trim();
     if (!cleanedPath) {
       return [{ name: 'Home', path: 'src/pages' }];
     }
     const segments = cleanedPath.split('/').filter(Boolean);
 
-    // Create the breadcrumb objects
     const breadcrumbs = [{ name: 'Home', path: 'src/pages' }];
     let builtPath = 'src/pages';
     for (const segment of segments) {
@@ -28,23 +32,33 @@ const Header = ({ path, onNavigate, repo }) => { // Add repo to props
 
   return (
     <header className={styles.fileExplorerHeader}>
-      <nav aria-label="breadcrumb">
-        <ol className={styles.breadcrumbs}>
-          {breadcrumbs.map((crumb, index) => (
-            <li key={index} className={styles.breadcrumbItem}>
-              {index < breadcrumbs.length - 1 ? (
-                <a href="#" onClick={(e) => { e.preventDefault(); onNavigate(crumb.path); }}>
-                  {crumb.name}
-                </a>
-              ) : (
-                <span>{crumb.name}</span>
-              )}
-            </li>
-          ))}
-        </ol>
-      </nav>
+      <div className={styles.headerLeftSection}>
+        <button
+          onClick={handleHomeClick}
+          className={styles.homeButton}
+          aria-label="Go to root folder"
+          title="Go to root"
+        >
+          <Icon name="home" />
+        </button>
+        <nav aria-label="breadcrumb">
+          <ol className={styles.breadcrumbs}>
+            {breadcrumbs.map((crumb, index) => (
+              <li key={index} className={styles.breadcrumbItem}>
+                {index < breadcrumbs.length - 1 ? (
+                  <a href="#" onClick={(e) => { e.preventDefault(); onNavigate(crumb.path); }}>
+                    {crumb.name}
+                  </a>
+                ) : (
+                  <span>{crumb.name}</span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </nav>
+      </div>
       <div className={styles.headerActions}>
-        <Search repo={repo} />
+        <Search repo={repo} onNavigate={onNavigate} />
       </div>
     </header>
   );

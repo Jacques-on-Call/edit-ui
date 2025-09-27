@@ -1,11 +1,41 @@
 .file-explorer-header {
-  background-color: #003971; /* --blue from legacy styles */
-  color: #FFFFFF; /* --white */
+  background-color: var(--blue);
+  color: var(--white);
   padding: 10px 16px;
   border-bottom: 1px solid #002a52;
   position: sticky;
   top: 0;
-  z-index: 20; /* Higher than file explorer content */
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-left-section {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  min-width: 0; /* Prevents long breadcrumbs from pushing actions off-screen */
+}
+
+.home-button {
+  background: none;
+  border: none;
+  color: var(--white);
+  cursor: pointer;
+  padding: 4px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.home-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .breadcrumbs {
@@ -15,6 +45,9 @@
   display: flex;
   align-items: center;
   font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .breadcrumb-item {
@@ -23,7 +56,7 @@
 }
 
 .breadcrumb-item a {
-  color: #C7EA46; /* --light-green / --link-on-blue */
+  color: var(--light-green);
   text-decoration: none;
   font-weight: 500;
   padding: 4px 8px;
@@ -39,7 +72,7 @@
 .breadcrumb-item span {
   font-weight: 700;
   padding: 4px 8px;
-  color: #FFFFFF; /* --white */
+  color: var(--white);
 }
 
 .breadcrumb-item::after {
@@ -50,4 +83,10 @@
 
 .breadcrumb-item:last-child::after {
   content: ''; /* No separator after the last item */
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0; /* Prevent actions from shrinking */
 }

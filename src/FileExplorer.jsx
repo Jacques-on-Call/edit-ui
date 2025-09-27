@@ -293,10 +293,7 @@ function FileExplorer({ repo }) {
           </Button>
         </div>
         <div className={`${styles.toolbarSection} ${styles.right}`}>
-          <Button variant="icon" onClick={handleGoHome} disabled={isAtRoot}>
-            <Icon name="home" />
-            <span className={styles.folderName}>{getCurrentFolderName()}</span>
-          </Button>
+          {/* Deliberately empty to push other elements */}
         </div>
       </div>
       {isCreateModalOpen && (
