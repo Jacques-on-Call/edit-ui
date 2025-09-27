@@ -50,7 +50,9 @@ const SectionEditor = ({ initialContent, onContentChange, onInit, onNodeChange, 
             ],
             toolbar: false, // The custom toolbar is in `TopToolbar.jsx`
 
-            content_style: 'body { font-size:16px; }',
+            // Remove default body margin for an edge-to-edge feel on mobile.
+            // Add a little padding so text isn't flush with the screen edge.
+            content_style: 'body { font-size:16px; margin: 0; padding: 0 1rem; }',
             placeholder: placeholder || 'Start writing your content here...',
             license_key: 'gpl',
             skin: false,

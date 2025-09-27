@@ -39,7 +39,12 @@
 }
 
 .editor-footer {
-  /* This is also a flex item, part of the main page flow. */
+  /* Use sticky positioning to keep the toolbar at the bottom of the flex container.
+     This is more robust than simple flex-end and behaves well with on-screen keyboards. */
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+
   display: flex;
   justify-content: center;
   align-items: center;
