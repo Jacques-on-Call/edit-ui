@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './App.css';
+import styles from './App.module.css'; // Import the new scoped CSS module
 import RepoSelector from './RepoSelector';
+import Button from './components/Button/Button';
 
 // The Client ID and Redirect URI are now read from Vite environment variables
 // See https://vitejs.dev/guide/env-and-mode.html
@@ -90,15 +91,15 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src="/logo.webp" className="App-logo" alt="logo" />
+    <div className={styles.App}>
+      <header className={styles['App-header']}>
+        <img src="/logo.webp" className={styles['App-logo']} alt="logo" />
         {!user ? (
           <div>
             <p>Please login to continue.</p>
-            <button className="login-button" onClick={handleLogin}>
+            <Button variant="primary" onClick={handleLogin}>
               Login with GitHub
-            </button>
+            </Button>
           </div>
         ) : (
           <RepoSelector onRepoSelect={handleRepoSelect} />

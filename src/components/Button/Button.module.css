@@ -1,0 +1,76 @@
+/* ==========================================================================
+   Button Component Styles (Scoped)
+   ========================================================================== */
+
+/* 1. Base Button Style
+   -------------------------------------------------------------------------- */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  border: 1px solid transparent; /* Default to no border */
+  border-radius: 8px; /* A sensible default radius */
+  padding: 0.6em 1.2em;
+
+  font-family: var(--font-family-sans);
+  font-size: 1em;
+  font-weight: 600;
+  line-height: 1.4;
+
+  cursor: pointer;
+  transition: all 0.25s ease-in-out;
+  text-decoration: none;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* 2. Variants
+   -------------------------------------------------------------------------- */
+
+/* Primary action button (e.g., Login) */
+.primary {
+  background-color: var(--green);
+  color: var(--white);
+  border-color: var(--light-green);
+  min-width: 120px;
+}
+
+.primary:hover:not(:disabled) {
+  background-color: transparent;
+  color: var(--white);
+}
+
+/* Floating Action Button (FAB) (e.g., Create) */
+.fab {
+  background: var(--green);
+  color: white;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  padding: 0; /* Override default padding */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform: translateY(-20px);
+}
+
+.fab svg {
+  width: 24px;
+  height: 24px;
+  stroke: white;
+}
+
+/* Icon-only button (e.g., Home button in toolbar) */
+.icon {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  color: #333;
+}
+
+.icon:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.05);
+}

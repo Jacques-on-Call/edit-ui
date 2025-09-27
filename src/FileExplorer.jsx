@@ -6,6 +6,7 @@ import './ContextMenu.css';
 import './ConfirmDialog.css';
 import SearchBar from './search-bar.jsx';
 import Icon from './icons.jsx';
+import Button from './components/Button/Button'; // Import the new reusable button
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
 import ContextMenu from './ContextMenu';
@@ -287,18 +288,18 @@ function FileExplorer({ repo }) {
           {/* Deliberately empty to push other elements */}
         </div>
         <div className="toolbar-section center">
-          <button
-            className="toolbar-button create-button"
+          <Button
+            variant="fab"
             onClick={() => setCreateModalOpen(true)}
           >
             <Icon name="plus" />
-          </button>
+          </Button>
         </div>
         <div className="toolbar-section right">
-          <button className="toolbar-button" onClick={handleGoHome} disabled={isAtRoot}>
+          <Button variant="icon" onClick={handleGoHome} disabled={isAtRoot}>
             <Icon name="home" />
             <span className="folder-name">{getCurrentFolderName()}</span>
-          </button>
+          </Button>
         </div>
       </div>
       {isCreateModalOpen && (

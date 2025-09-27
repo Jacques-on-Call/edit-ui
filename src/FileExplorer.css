@@ -52,45 +52,8 @@
   justify-content: flex-end;
 }
 
-/* General styling for all toolbar buttons */
-.toolbar-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  color: #333;
-}
-
-.toolbar-button:disabled {
-  color: #999;
-  cursor: not-allowed;
-}
-
-/* Special styling for the central 'Create' button */
-.create-button {
-  background: var(--green); /* Use background shorthand to override 'background: none' */
-  border: none; /* Explicitly remove border from global styles */
-  color: white;
-  border-radius: 50%;
-  width: 56px;
-  height: 56px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Use a more neutral shadow */
-  transform: translateY(-20px); /* Makes it "float" above the bar */
-}
-
-/* Styling for the icon inside the create button */
-.create-button svg {
-  width: 24px;
-  height: 24px;
-  stroke: white;
-}
+/* NOTE: The .toolbar-button and .create-button styles have been removed
+   and replaced by the new reusable <Button> component. */
 
 /* The name of the current folder in the toolbar */
 .folder-name {
