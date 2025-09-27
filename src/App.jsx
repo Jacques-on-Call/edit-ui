@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './App.module.css'; // Import the new scoped CSS module
 import RepoSelector from './RepoSelector';
 import Button from './components/Button/Button';
@@ -12,6 +12,7 @@ const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
 function App() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Check for an existing session on component mount
   useEffect(() => {
@@ -89,6 +90,13 @@ function App() {
     localStorage.setItem('selectedRepo', repo);
     navigate('/explorer');
   };
+
+  // If the user is logged in and we are not on the login page,
+  // this component should not render anything. This is the fix
+  // that prevents it from covering other pages.
+  if (user && location.pathname !== '/') {
+    return null;
+  }
 
   return (
     <div className={styles.App}>
