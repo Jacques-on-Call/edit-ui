@@ -158,4 +158,5 @@ Jules map CSS modules directly to JSX without ambiguity. I’ll describe the arc
 • `editorArea` is a scrollable white container for text editing.
 
 
-
+## Jules task
+look at the ideal file explorer image  https://imgur.com/a/tpbF9H8 it clearly shows svg files and folders with blue header and footer with a green circle + create button and a house (return to root ) button. file name (grey) and details (light grey) with space between them.
