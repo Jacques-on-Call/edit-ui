@@ -290,7 +290,6 @@ function FileExplorer({ repo }) {
           <button
             className="toolbar-button create-button"
             onClick={() => setCreateModalOpen(true)}
-            style={{ backgroundColor: '#003971', color: 'white' }} // Inline style to force override
           >
             <Icon name="plus" />
           </button>

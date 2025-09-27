@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Buffer } from 'buffer';
+import { marked } from 'marked';
 import TurndownService from 'turndown';
 import { unifiedParser } from './utils/unifiedParser';
 import { stringifyAstroFile } from './utils/astroFileParser';

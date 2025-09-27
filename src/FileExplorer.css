@@ -69,7 +69,7 @@
 
 /* Special styling for the central 'Create' button */
 .create-button {
-  background-color: #003971; /* Brand's primary blue */
+  background-color: var(--green); /* Use the brand's green color */
   color: white;
   border-radius: 50%;
   width: 56px;

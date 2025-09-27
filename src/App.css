@@ -12,7 +12,7 @@ body {
   font-family: 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--white); /* Set a neutral default background */
+  background-color: var(--blue);
 }
 
 #root {
