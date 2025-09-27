@@ -52,3 +52,17 @@ body {
 #root {
   border: none;
 }
+
+
+/* 4. Third-Party Overrides
+   -------------------------------------------------------------------------- */
+
+/*
+  Force vConsole to have the highest z-index to ensure it is always visible
+  on top of all other application content, including fixed toolbars.
+  The default vConsole z-index is around 10002. We set it much higher
+  to be safe.
+*/
+#__vconsole {
+  z-index: 99999 !important;
+}
