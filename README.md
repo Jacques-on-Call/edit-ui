@@ -160,3 +160,23 @@ Jules map CSS modules directly to JSX without ambiguity. I’ll describe the arc
 
 ## Jules task
 look at the ideal file explorer image  https://imgur.com/a/tpbF9H8 it clearly shows svg files and folders with blue header and footer with a green circle + create button and a house (return to root ) button. file name (grey) and details (light grey) with space between them.
+
+---
+### Hey Jacques, it's Jules. Questions for you!
+
+I'm sorry the system was being buggy and didn't show you my questions. As you requested, I'm putting them here. I've read your latest instructions in this README and they're very helpful! They've cleared up a lot, especially about the blue header/footer and the buttons.
+
+To make sure I build *exactly* what you're picturing, I just have a few more small questions:
+
+1.  **Header Search Bar:** You mentioned a "naked search input field" in our first chat. The new design describes a blue header. Should I place this "naked" (borderless, transparent background) search bar inside the new blue header?
+
+2.  **SVG Icon Style:** I'll create blue SVG icons for folders and green SVG icons for files. Is there a particular style you like? (e.g., flat and simple, outlined, more detailed like Material Design icons). If not, I'll use my design judgment to pick something clean and modern.
+
+3.  **Click Animation:** You asked for a "subtle animation" on click, with a color matching the icon. I was thinking of a quick "pulse" where the tile background flashes the icon's color (blue or green) and scales up slightly (e.g., to 102%) and then back down. Does this sound like what you have in mind, or were you picturing something different, like a ripple effect?
+
+4.  **Footer Buttons:** The design calls for a "house" button (return to root) and a "green circle + create" button. How should these be arranged in the blue footer? For example, house on the left and create button on the right? Or both centered?
+
+I'll hold off on making any code changes until I get your answers. This will ensure we get it right the first time.
+
+Thanks,
+Jules
