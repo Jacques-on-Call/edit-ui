@@ -78,3 +78,69 @@ To create a production-ready build of the application, run:
 npm run build --prefix ./easy-seo
 ```
 The optimized and bundled assets will be placed in the `easy-seo/dist` directory.
+
+Jules Instructions:
+Jules map CSS modules directly to JSX without ambiguity. I’ll describe the architecture in precise component terms, not loose words.
+
+---
+
+🔑 Architectural Principles
+
+• Component-based styling: Each React component imports its own `*.module.css` file.
+• Design tokens: Shared variables for color, spacing, typography live in a single `tokens.css`.
+• Layout primitives: `Header`, `Footer`, `Container` components provide consistent structure.
+• Feature components: `LoginScreen`, `FileExplorer`, `PreviewPage`, `EditorPage` each own their scoped styles.
+• Interaction states: Selection, hover, and active states are defined in the component’s CSS module, not globally.
+
+
+---
+
+📂 Folder & File Structure
+
+/src
+  /components
+    /Layout
+      
+    /Login
+     
+    /Explorer
+      
+    /Preview
+      
+    /Editor
+      
+  /styles
+    tokens.css
+    globals.css
+
+
+---
+
+🎨 Visual Flow in Correct Terms
+
+1. LoginScreen component• Full-viewport container (`100vh`) with `background-color: var(--color-blue)`.
+• Centered form elements styled via `LoginScreen.module.css`.
+
+2. Layout components (Header, Footer)• `Header` and `Footer` components styled with `Header.module.css` and `Footer.module.css`.
+• Both use `background-color: var(--color-blue)` and `color: var(--color-white)`.
+• `Footer` is `position: fixed; bottom: 0; width: 100%`.
+
+3. FileExplorer component• `FileExplorer.module.css` defines a white background container.
+• `FolderItem` and `FileItem` components each import their own CSS modules.
+• `FolderItem` uses `background-color: var(--color-folder)`.
+• `FileItem` uses `background-color: var(--color-file)`.
+• Both have `.selected` class with `outline: 2px solid var(--color-blue)` and `transition: background 0.2s ease`.
+• Double-click event in JSX triggers navigation to either `PreviewPage` or nested `FileExplorer`.
+
+4. PreviewPage component• Styled with `PreviewPage.module.css`.
+• Contains `.document` class for plain-text rendering with `line-height: 1.6`.
+• Includes navigation buttons (`Back`, `Edit`, `Search`) styled as reusable `Button` components.
+
+5. EditorPage component• Uses `EditorPage.module.css`.
+• Layout: `display: flex; flex-direction: column; height: 100vh`.
+• `Header` and `Footer` reused from Layout.
+• `Footer` has `.keyboardVisible` modifier class that applies `transform: translateY(-200px)` to rise with the keyboard.
+• `editorArea` is a scrollable white container for text editing.
+
+
+
