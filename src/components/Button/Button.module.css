@@ -11,17 +11,19 @@
   gap: 0.5rem;
 
   border: 1px solid transparent; /* Default to no border */
-  border-radius: 8px; /* A sensible default radius */
-  padding: 0.6em 1.2em;
+  border-radius: 5px; /* Matched from react-login */
+  padding: 12px 24px; /* Matched from react-login */
 
   font-family: var(--font-family-sans);
-  font-size: 1em;
+  font-size: 1.2rem; /* Matched from react-login */
   font-weight: 600;
   line-height: 1.4;
 
   cursor: pointer;
-  transition: all 0.25s ease-in-out;
+  transition: all 0.3s ease; /* Matched from react-login */
   text-decoration: none;
+  text-align: center; /* Matched from react-login */
+  position: relative; /* Matched from react-login */
 }
 
 .button:disabled {
@@ -35,9 +37,10 @@
 /* Primary action button (e.g., Login) */
 .primary {
   background-color: var(--green);
-  color: var(--white);
+  color: var(--white) !important; /* Matched from react-login */
   border-color: var(--light-green);
   min-width: 120px;
+  margin: 20px auto; /* Matched from react-login */
 }
 
 .primary:hover:not(:disabled) {

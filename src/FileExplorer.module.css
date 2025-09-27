@@ -1,13 +1,17 @@
 /* General container for the entire file explorer */
 .file-explorer {
-  background-color: #f0f2f5; /* A light grey, clean background */
+  background-color: #ffffff; /* White middle content area */
   padding-bottom: 7rem; /* Add padding to the bottom to avoid content being hidden by the sticky toolbar */
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Wrapper for the search bar to control its position */
 .search-wrapper {
   padding: 1rem;
-  border-bottom: 1px solid #d9d9d9;
+  background-color: var(--blue); /* Blue header */
+  border-bottom: 1px solid var(--blue);
 }
 
 /* The main area for files and folders */
@@ -16,6 +20,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 1rem;
+  overflow-y: auto; /* Allow content to scroll */
+  flex-grow: 1; /* Make grid take up available space */
 }
 
 /* Bottom toolbar for main actions */
@@ -24,13 +30,12 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 1rem;
-  background-color: #ffffff;
-  border-top: 1px solid #d9d9d9;
+  background-color: var(--blue); /* Blue footer */
+  color: white;
+  border-top: 1px solid var(--blue);
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
-  position: fixed; /* Use fixed positioning to anchor to the viewport */
+  position: sticky; /* Sticky instead of fixed */
   bottom: 0;
-  left: 0; /* Ensure it spans the full width */
-  right: 0; /* Ensure it spans the full width */
   z-index: 100; /* Keep it above other content */
 }
 
@@ -58,7 +63,7 @@
 /* The name of the current folder in the toolbar */
 .folder-name {
   font-size: 0.9rem;
-  color: #555;
+  color: var(--white); /* White text for contrast */
 }
 
 /* Responsive adjustments for mobile */

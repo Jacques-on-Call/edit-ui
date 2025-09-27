@@ -8,12 +8,13 @@
   font-size: 16px;
   border: none;
   border-radius: 10px;
-  background-color: #f0f2f5;
+  background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white for a modern look */
+  color: white; /* White text for input */
   outline: none;
 }
 
 .search-input::placeholder {
-  color: #8e8e93;
+  color: rgba(255, 255, 255, 0.7); /* Lighter white for placeholder */
 }
 
 .search-results {
