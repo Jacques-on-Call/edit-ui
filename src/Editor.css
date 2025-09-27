@@ -2,7 +2,7 @@
 .editor-container {
   display: flex;
   flex-direction: column;
-  height: 100%; /* Use 100% to work better with mobile keyboards */
+  height: 100vh; /* Use 100vh to ensure it fills the full screen height */
   width: 100%;
   background-color: #ffffff;
   box-sizing: border-box;
