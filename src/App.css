@@ -15,25 +15,25 @@ body {
   background-color: var(--white); /* Set a neutral default background */
 }
 
-/* Apply blue background only on the login page */
-body.login-page-background {
-  background-color: var(--blue);
-}
-
 #root {
   border: none;
 }
 
+/* Apply the blue background directly to the login page's container.
+   This is safer than manipulating the global body tag. */
 .App {
   text-align: center;
-}
-
-.App-header {
+  background-color: var(--blue);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+.App-header {
+  /* The App container now handles the background and layout,
+     so the header can just be a simple content container. */
   font-size: calc(10px + 2vmin);
   color: white;
 }

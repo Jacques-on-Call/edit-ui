@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './App.css';
 import RepoSelector from './RepoSelector';
 
@@ -11,21 +11,6 @@ const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
 function App() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    // This effect correctly applies the background class only when the user is on the
-    // login page (the root route) and removes it on all other routes.
-    if (location.pathname === '/') {
-      document.body.classList.add('login-page-background');
-    } else {
-      document.body.classList.remove('login-page-background');
-    }
-    // The cleanup function ensures the class is removed if the component unmounts.
-    return () => {
-      document.body.classList.remove('login-page-background');
-    };
-  }, [location.pathname]);
 
   // Check for an existing session on component mount
   useEffect(() => {
