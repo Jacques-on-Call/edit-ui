@@ -4,7 +4,7 @@ import { marked } from 'marked';
 import { Buffer } from 'buffer';
 import SectionRenderer from './SectionRenderer';
 import HeadEditor from './HeadEditor';
-import './FileViewer.css';
+import styles from './FileViewer.module.css';
 import { unifiedParser } from './utils/unifiedParser';
 import { stringifyAstroFile } from './utils/astroFileParser';
 
@@ -156,16 +156,16 @@ function FileViewer({ repo, path, branch }) {
     }
     if (path.endsWith('.md')) {
       const html = marked(content.body || '');
-      return <div className="markdown-preview" dangerouslySetInnerHTML={{ __html: html }} />;
+      return <div className={styles.markdownPreview} dangerouslySetInnerHTML={{ __html: html }} />;
     }
-    return <pre className="raw-content-viewer">{content.rawContent}</pre>;
+    return <pre className={styles.rawContentViewer}>{content.rawContent}</pre>;
   };
 
-  if (loading) return <div className="file-viewer-container">Loading...</div>;
-  if (error) return <div className="file-viewer-container">Error: {error}</div>;
+  if (loading) return <div className={styles.fileViewerContainer}>Loading...</div>;
+  if (error) return <div className={styles.fileViewerContainer}>Error: {error}</div>;
 
   return (
-    <div className="file-viewer-container">
+    <div className={styles.fileViewerContainer}>
        {isHeadEditorOpen && content.sha && (
         <HeadEditor
           title={content.frontmatter.title}
@@ -179,20 +179,20 @@ function FileViewer({ repo, path, branch }) {
         />
       )}
       {isDraft && (
-        <div className="draft-banner">
+        <div className={styles.draftBanner}>
           <p>You are viewing a draft. Your changes are not yet published.</p>
-          <div className="draft-actions">
-            <button className="viewer-button publish-button" onClick={handlePublish}>Publish</button>
-            <button className="viewer-button discard-button" onClick={handleDiscard}>Discard Draft</button>
+          <div className={styles.draftActions}>
+            <button className={`${styles.viewerButton} ${styles.publishButton}`} onClick={handlePublish}>Publish</button>
+            <button className={`${styles.viewerButton} ${styles.discardButton}`} onClick={handleDiscard}>Discard Draft</button>
           </div>
         </div>
       )}
-      <div className="file-viewer-header">
+      <div className={styles.fileViewerHeader}>
         <h1>{getFriendlyTitle(path)}</h1>
-        <div className="action-buttons">
-          <button className="viewer-button" onClick={() => navigate('/explorer')}>Back</button>
-          <button className="viewer-button" onClick={() => setIsHeadEditorOpen(true)}>Search Preview</button>
-          <button className="viewer-button edit-button" onClick={() => navigate(`/edit/${repo}/${path}`)}>Edit</button>
+        <div className={styles.actionButtons}>
+          <button className={styles.viewerButton} onClick={() => navigate('/explorer')}>Back</button>
+          <button className={styles.viewerButton} onClick={() => setIsHeadEditorOpen(true)}>Search Preview</button>
+          <button className={`${styles.viewerButton} ${styles.editButton}`} onClick={() => navigate(`/edit/${repo}/${path}`)}>Edit</button>
         </div>
       </div>
       {renderContent()}

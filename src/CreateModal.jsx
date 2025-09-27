@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './CreateModal.css';
+import styles from './CreateModal.module.css';
 
 function CreateModal({ path, repo, onClose, onCreate }) {
   const navigate = useNavigate();
@@ -74,11 +74,11 @@ function CreateModal({ path, repo, onClose, onCreate }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <h2>Create New</h2>
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
+          <div className={styles.formGroup}>
             <label htmlFor="name">Name</label>
             <input
               type="text"
@@ -89,9 +89,9 @@ function CreateModal({ path, repo, onClose, onCreate }) {
               autoFocus
             />
           </div>
-          <div className="form-group">
+          <div className={styles.formGroup}>
             <label>Type</label>
-            <div className="radio-group">
+            <div className={styles.radioGroup}>
               <label>
                 <input
                   type="radio"
@@ -114,12 +114,12 @@ function CreateModal({ path, repo, onClose, onCreate }) {
               </label>
             </div>
           </div>
-          {error && <p className="error-message">{error}</p>}
-          <div className="modal-actions">
-            <button type="button" className="btn-cancel" onClick={onClose} disabled={isCreating}>
+          {error && <p className={styles.errorMessage}>{error}</p>}
+          <div className={styles.modalActions}>
+            <button type="button" className={styles.btnCancel} onClick={onClose} disabled={isCreating}>
               Cancel
             </button>
-            <button type="submit" className="btn-create" disabled={isCreating}>
+            <button type="submit" className={styles.btnCreate} disabled={isCreating}>
               {isCreating ? 'Creating...' : 'Create'}
             </button>
           </div>

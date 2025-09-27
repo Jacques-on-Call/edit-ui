@@ -1,5 +1,5 @@
 import React from 'react';
-import './FormatMenu.css';
+import styles from './FormatMenu.module.css';
 
 const FormatMenu = ({ editor, activeFormats = {}, closeMenu }) => {
   if (!editor) return null;
@@ -19,34 +19,34 @@ const FormatMenu = ({ editor, activeFormats = {}, closeMenu }) => {
   };
 
   return (
-    <div className="format-menu">
-      <div className="menu-section">
-        <div className="menu-header">Text</div>
-        <button onClick={() => handleCommand('bold')} className={activeFormats.bold ? 'active' : ''}>Bold</button>
-        <button onClick={() => handleCommand('italic')} className={activeFormats.italic ? 'active' : ''}>Italic</button>
-        <button onClick={() => handleCommand('underline')} className={activeFormats.underline ? 'active' : ''}>Underline</button>
+    <div className={styles.formatMenu}>
+      <div className={styles.menuSection}>
+        <div className={styles.menuHeader}>Text</div>
+        <button onClick={() => handleCommand('bold')} className={activeFormats.bold ? styles.active : ''}>Bold</button>
+        <button onClick={() => handleCommand('italic')} className={activeFormats.italic ? styles.active : ''}>Italic</button>
+        <button onClick={() => handleCommand('underline')} className={activeFormats.underline ? styles.active : ''}>Underline</button>
         <button onClick={() => handleCommand('strikethrough')}>Strikethrough</button>
         <button onClick={() => handleCommand('superscript')}>Superscript</button>
         <button onClick={() => handleCommand('subscript')}>Subscript</button>
         <button onClick={() => handleCommand('removeformat')}>Clear Formatting</button>
       </div>
-      <div className="menu-section">
-        <div className="menu-header">Block Style</div>
+      <div className={styles.menuSection}>
+        <div className={styles.menuHeader}>Block Style</div>
         <button onClick={() => handleFormatBlock('p')}>Paragraph</button>
         <button onClick={() => handleFormatBlock('h1')}>Heading 1</button>
         <button onClick={() => handleFormatBlock('h2')}>Heading 2</button>
         <button onClick={() => handleFormatBlock('h3')}>Heading 3</button>
       </div>
-      <div className="menu-section">
-        <div className="menu-header">Alignment</div>
-        <button onClick={() => handleCommand('JustifyLeft')} className={activeFormats.justifyLeft ? 'active' : ''}>Left</button>
-        <button onClick={() => handleCommand('JustifyCenter')} className={activeFormats.justifyCenter ? 'active' : ''}>Center</button>
-        <button onClick={() => handleCommand('JustifyRight')} className={activeFormats.justifyRight ? 'active' : ''}>Right</button>
-        <button onClick={() => handleCommand('JustifyFull')} className={activeFormats.justifyFull ? 'active' : ''}>Justify</button>
+      <div className={styles.menuSection}>
+        <div className={styles.menuHeader}>Alignment</div>
+        <button onClick={() => handleCommand('JustifyLeft')} className={activeFormats.justifyLeft ? styles.active : ''}>Left</button>
+        <button onClick={() => handleCommand('JustifyCenter')} className={activeFormats.justifyCenter ? styles.active : ''}>Center</button>
+        <button onClick={() => handleCommand('JustifyRight')} className={activeFormats.justifyRight ? styles.active : ''}>Right</button>
+        <button onClick={() => handleCommand('JustifyFull')} className={activeFormats.justifyFull ? styles.active : ''}>Justify</button>
       </div>
-       <div className="menu-section">
-        <div className="menu-header">Lists</div>
-        <button onClick={() => handleCommand('InsertUnorderedList')} className={activeFormats.unorderedList ? 'active' : ''}>Bullet List</button>
+       <div className={styles.menuSection}>
+        <div className={styles.menuHeader}>Lists</div>
+        <button onClick={() => handleCommand('InsertUnorderedList')} className={activeFormats.unorderedList ? styles.active : ''}>Bullet List</button>
         <button onClick={() => handleCommand('InsertOrderedList')}>Numbered List</button>
       </div>
     </div>

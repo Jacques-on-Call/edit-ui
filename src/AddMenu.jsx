@@ -1,5 +1,5 @@
 import React from 'react';
-import './AddMenu.css';
+import styles from './AddMenu.module.css';
 
 const AddMenu = ({ editor, closeMenu }) => {
   if (!editor) return null;
@@ -12,7 +12,7 @@ const AddMenu = ({ editor, closeMenu }) => {
   };
 
   return (
-    <div className="add-menu">
+    <div className={styles.addMenu}>
       <button onClick={() => handleCommand('mceLink')}>Insert/Edit Link</button>
       <button onClick={() => handleCommand('mceImage')}>Insert/Edit Image</button>
       <button onClick={() => handleCommand('mceInsertTable')}>Insert Table</button>

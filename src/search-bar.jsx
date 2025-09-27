@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { debounce } from 'lodash';
-import './search-bar.css';
+import styles from './search-bar.module.css';
 
 const SearchBar = ({ repo }) => {
   const [query, setQuery] = useState('');
@@ -53,29 +53,29 @@ const SearchBar = ({ repo }) => {
   };
 
   return (
-    <div className="search-container">
+    <div className={styles.searchContainer}>
       <input
         type="text"
         value={query}
         onChange={handleChange}
         placeholder="Search for files..."
-        className="search-input"
+        className={styles.searchInput}
       />
       {query && (
-        <div className="search-results">
-          {loading && <div className="search-result-item">Loading...</div>}
-          {error && <div className="search-result-item error">{error}</div>}
+        <div className={styles.searchResults}>
+          {loading && <div className={styles.searchResultItem}>Loading...</div>}
+          {error && <div className={`${styles.searchResultItem} ${styles.error}`}>{error}</div>}
           {!loading && !error && results.length === 0 && query && (
-            <div className="search-result-item">No results found.</div>
+            <div className={styles.searchResultItem}>No results found.</div>
           )}
           {results.map((result) => (
             <div
               key={result.sha}
-              className="search-result-item"
+              className={styles.searchResultItem}
               onClick={() => handleResultClick(result)}
             >
-              <span className="result-name">{result.name}</span>
-              <span className="result-path">{result.path}</span>
+              <span className={styles.resultName}>{result.name}</span>
+              <span className={styles.resultPath}>{result.path}</span>
             </div>
           ))}
         </div>

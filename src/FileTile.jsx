@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import './FileTile.css';
+import styles from './FileTile.module.css';
 import Icon from './icons.jsx'; // Using the new SVG Icon component
 
 function formatRelativeDate(dateString) {
@@ -64,7 +64,7 @@ const getIconNameForFile = (file) => {
 
 function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
   const iconName = getIconNameForFile(file);
-  const tileClassName = `file-tile ${isSelected ? 'selected' : ''} ${file.type === 'dir' ? 'is-folder' : 'is-file'}`;
+  const tileClassName = `${styles.fileTile} ${isSelected ? styles.selected : ''} ${file.type === 'dir' ? styles.isFolder : styles.isFile}`;
 
   const [ripples, setRipples] = useState([]);
   const pressTimer = useRef(null);
@@ -82,7 +82,7 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
 
   const handleOnClick = (e) => {
     // --- Ripple Effect Logic (React Way) ---
-    const tile = e.currentTarget.querySelector('.tile-content');
+    const tile = e.currentTarget.querySelector(`.${styles.tileContent}`);
     if (!tile) return;
     const rect = tile.getBoundingClientRect();
     const size = Math.max(rect.width, rect.height);
@@ -123,11 +123,11 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
       onTouchEnd={handlePointerUp}
       onContextMenu={handleContextMenu}
     >
-      <div className="tile-content">
+      <div className={styles.tileContent}>
         {ripples.map(r => (
           <span
             key={r.key}
-            className="ripple"
+            className={styles.ripple}
             style={{
               left: r.x,
               top: r.y,
@@ -136,18 +136,18 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
             }}
           />
         ))}
-        <div className="icon">
+        <div className={styles.icon}>
           <Icon name={iconName} />
         </div>
-        <div className="name">{formatDisplayName(file.name)}</div>
-        <div className="metadata">
+        <div className={styles.name}>{formatDisplayName(file.name)}</div>
+        <div className={styles.metadata}>
           {metadata ? (
             <>
-              <span className="metadata-author">{metadata.author.split(' ')[0]}</span>
-              <span className="metadata-date">{formatRelativeDate(metadata.date)}</span>
+              <span className={styles.metadataAuthor}>{metadata.author.split(' ')[0]}</span>
+              <span className={styles.metadataDate}>{formatRelativeDate(metadata.date)}</span>
             </>
           ) : (
-            <span className="metadata-placeholder">--</span>
+            <span className={styles.metadataPlaceholder}>--</span>
           )}
         </div>
       </div>

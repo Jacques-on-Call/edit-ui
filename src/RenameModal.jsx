@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './CreateModal.css'; // Reuse styles from CreateModal
+import styles from './CreateModal.module.css'; // Reuse styles from CreateModal
 
 function RenameModal({ file, onClose, onRename }) {
   const [newName, setNewName] = useState(file.name);
@@ -32,11 +32,11 @@ function RenameModal({ file, onClose, onRename }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <h2>Rename "{file.name}"</h2>
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
+          <div className={styles.formGroup}>
             <label htmlFor="newName">New Name</label>
             <input
               type="text"
@@ -47,12 +47,12 @@ function RenameModal({ file, onClose, onRename }) {
               onFocus={(e) => e.target.select()} // Select text on focus
             />
           </div>
-          {error && <p className="error-message">{error}</p>}
-          <div className="modal-actions">
-            <button type="button" className="btn-cancel" onClick={onClose} disabled={isRenaming}>
+          {error && <p className={styles.errorMessage}>{error}</p>}
+          <div className={styles.modalActions}>
+            <button type="button" className={styles.btnCancel} onClick={onClose} disabled={isRenaming}>
               Cancel
             </button>
-            <button type="submit" className="btn-create" disabled={isRenaming}>
+            <button type="submit" className={styles.btnCreate} disabled={isRenaming}>
               {isRenaming ? 'Renaming...' : 'Rename'}
             </button>
           </div>

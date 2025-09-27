@@ -1,9 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './FileExplorer.css';
-import './CreateModal.css';
-import './ContextMenu.css';
-import './ConfirmDialog.css';
+import styles from './FileExplorer.module.css';
 import SearchBar from './search-bar.jsx';
 import Icon from './icons.jsx';
 import Button from './components/Button/Button'; // Import the new reusable button
@@ -257,11 +254,11 @@ function FileExplorer({ repo }) {
   };
 
   return (
-    <div className="file-explorer">
-      <div className="search-wrapper">
+    <div className={styles.fileExplorer}>
+      <div className={styles.searchWrapper}>
         <SearchBar repo={repo} />
       </div>
-      <div className="file-grid">
+      <div className={styles.fileGrid}>
         {Array.isArray(files) && files.filter(file => !file.name.startsWith('_')).map(file => (
           <FileTile
             key={file.sha}
@@ -275,7 +272,7 @@ function FileExplorer({ repo }) {
           />
         ))}
       </div>
-      {isReadmeLoading && <div className="readme-loading">Loading README...</div>}
+      {isReadmeLoading && <div className={styles.readmeLoading}>Loading README...</div>}
       {readmeContent && !isReadmeLoading && (
         <ReadmeDisplay
           content={readmeContent}
@@ -283,11 +280,11 @@ function FileExplorer({ repo }) {
           onToggle={handleToggleReadme}
         />
       )}
-      <div className="bottom-toolbar">
-        <div className="toolbar-section left">
+      <div className={styles.bottomToolbar}>
+        <div className={`${styles.toolbarSection} ${styles.left}`}>
           {/* Deliberately empty to push other elements */}
         </div>
-        <div className="toolbar-section center">
+        <div className={`${styles.toolbarSection} ${styles.center}`}>
           <Button
             variant="fab"
             onClick={() => setCreateModalOpen(true)}
@@ -295,10 +292,10 @@ function FileExplorer({ repo }) {
             <Icon name="plus" />
           </Button>
         </div>
-        <div className="toolbar-section right">
+        <div className={`${styles.toolbarSection} ${styles.right}`}>
           <Button variant="icon" onClick={handleGoHome} disabled={isAtRoot}>
             <Icon name="home" />
-            <span className="folder-name">{getCurrentFolderName()}</span>
+            <span className={styles.folderName}>{getCurrentFolderName()}</span>
           </Button>
         </div>
       </div>

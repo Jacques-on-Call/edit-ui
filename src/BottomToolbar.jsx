@@ -1,6 +1,6 @@
 import React from 'react';
 import Icon from './icons';
-import './BottomToolbar.css';
+import styles from './BottomToolbar.module.css';
 
 const BottomToolbar = ({ editor, activeFormats = {} }) => {
   if (!editor) {
@@ -21,23 +21,23 @@ const BottomToolbar = ({ editor, activeFormats = {} }) => {
   };
 
   return (
-    <div className="bottom-toolbar">
+    <div className={styles.bottomToolbar}>
       <button onClick={() => handleCommand('undo')} title="Undo">
         <Icon name="corner-up-left" />
       </button>
       <button onClick={() => handleCommand('redo')} title="Redo">
         <Icon name="corner-up-right" />
       </button>
-      <button onClick={() => handleCommand('bold')} title="Bold" className={activeFormats.bold ? 'active' : ''}>
+      <button onClick={() => handleCommand('bold')} title="Bold" className={activeFormats.bold ? styles.active : ''}>
         <Icon name="bold" />
       </button>
-      <button onClick={() => handleCommand('italic')} title="Italic" className={activeFormats.italic ? 'active' : ''}>
+      <button onClick={() => handleCommand('italic')} title="Italic" className={activeFormats.italic ? styles.active : ''}>
         <Icon name="italic" />
       </button>
-      <button onClick={() => handleCommand('underline')} title="Underline" className={activeFormats.underline ? 'active' : ''}>
+      <button onClick={() => handleCommand('underline')} title="Underline" className={activeFormats.underline ? styles.active : ''}>
         <Icon name="underline" />
       </button>
-      <button onClick={() => handleCommand('InsertUnorderedList')} title="Bullet List" className={activeFormats.unorderedList ? 'active' : ''}>
+      <button onClick={() => handleCommand('InsertUnorderedList')} title="Bullet List" className={activeFormats.unorderedList ? styles.active : ''}>
         <Icon name="list" />
       </button>
       <button onClick={handleInsertHr} title="Insert Section Separator">

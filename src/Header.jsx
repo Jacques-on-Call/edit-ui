@@ -1,6 +1,6 @@
 import React from 'react';
 import Search from './Search'; // Import the new Search component
-import './Header.css';
+import styles from './Header.module.css';
 
 const Header = ({ path, onNavigate, repo }) => { // Add repo to props
   const formatPath = (currentPath) => {
@@ -27,11 +27,11 @@ const Header = ({ path, onNavigate, repo }) => { // Add repo to props
   const breadcrumbs = formatPath(path);
 
   return (
-    <header className="file-explorer-header">
+    <header className={styles.fileExplorerHeader}>
       <nav aria-label="breadcrumb">
-        <ol className="breadcrumbs">
+        <ol className={styles.breadcrumbs}>
           {breadcrumbs.map((crumb, index) => (
-            <li key={index} className="breadcrumb-item">
+            <li key={index} className={styles.breadcrumbItem}>
               {index < breadcrumbs.length - 1 ? (
                 <a href="#" onClick={(e) => { e.preventDefault(); onNavigate(crumb.path); }}>
                   {crumb.name}
@@ -43,7 +43,7 @@ const Header = ({ path, onNavigate, repo }) => { // Add repo to props
           ))}
         </ol>
       </nav>
-      <div className="header-actions">
+      <div className={styles.headerActions}>
         <Search repo={repo} />
       </div>
     </header>

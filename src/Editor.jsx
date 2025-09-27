@@ -8,7 +8,7 @@ import { stringifyAstroFile } from './utils/astroFileParser';
 import SectionEditor from './SectionEditor';
 import BottomToolbar from './BottomToolbar';
 import TopToolbar from './TopToolbar';
-import './Editor.css';
+import styles from './Editor.module.css';
 
 const Editor = () => {
   const location = useLocation();
@@ -129,17 +129,17 @@ const Editor = () => {
     navigate(`/explorer/file?path=${path}`);
   };
 
-  if (loading) return <div className="editor-container"><div className="loading-spinner"></div></div>;
-  if (error) return <div className="editor-container">Error: {error}</div>;
+  if (loading) return <div className={styles.editorContainer}><div className={styles.loadingSpinner}></div></div>;
+  if (error) return <div className={styles.editorContainer}>Error: {error}</div>;
 
   const initialContent = getCombinedHtmlContent(fileData?.frontmatter, fileData?.body);
 
   return (
-    <div className="editor-container">
-      <div className="editor-header">
+    <div className={styles.editorContainer}>
+      <div className={styles.editorHeader}>
         <TopToolbar editor={editorInstance} activeFormats={activeFormats} onDone={handleDone} />
       </div>
-      <div className="sections-list">
+      <div className={styles.sectionsList}>
         <SectionEditor
           initialContent={initialContent}
           onContentChange={handleContentChange}
@@ -147,7 +147,7 @@ const Editor = () => {
           onNodeChange={handleNodeChange}
         />
       </div>
-      <div className="editor-footer">
+      <div className={styles.editorFooter}>
         <BottomToolbar editor={editorInstance} activeFormats={activeFormats} />
       </div>
     </div>

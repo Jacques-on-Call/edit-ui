@@ -1,27 +1,27 @@
 import React from 'react';
-import './VisualSectionPreview.css';
+import styles from './VisualSectionPreview.module.css';
 
 const VisualSectionPreview = ({ section }) => {
   const renderPreview = () => {
     switch (section.type) {
       case 'hero':
         return (
-          <div className="preview-content">
+          <div className={styles.previewContent}>
             <h2>{section.title || 'Hero Title'}</h2>
             <p>{section.subtitle || 'Hero subtitle...'}</p>
           </div>
         );
       case 'grid':
         return (
-          <div className="preview-content">
+          <div className={styles.previewContent}>
             <h3>{section.title || 'Grid Section'}</h3>
-            <p className="item-count">({(section.items || []).length} items)</p>
+            <p className={styles.itemCount}>({(section.items || []).length} items)</p>
           </div>
         );
       case 'cta':
         return (
-          <div className="preview-content cta-preview">
-            <button className="cta-button-preview" disabled>
+          <div className={`${styles.previewContent} ${styles.ctaPreview}`}>
+            <button className={styles.ctaButtonPreview} disabled>
               {(section.buttons && section.buttons[0]?.text) || 'Call to Action'}
             </button>
           </div>
@@ -32,10 +32,10 @@ const VisualSectionPreview = ({ section }) => {
   };
 
   return (
-    <div className="visual-section-preview">
-      <div className="preview-header">
+    <div className={styles.visualSectionPreview}>
+      <div className={styles.previewHeader}>
         <strong>{section.type.replace('_', ' ')}</strong>
-        <span className="preview-tag">(Preview - Not Editable)</span>
+        <span className={styles.previewTag}>(Preview - Not Editable)</span>
       </div>
       {renderPreview()}
     </div>

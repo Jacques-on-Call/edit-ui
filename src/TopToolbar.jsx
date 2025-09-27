@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Icon from './icons';
 import FormatMenu from './FormatMenu';
 import AddMenu from './AddMenu';
-import './TopToolbar.css';
+import styles from './TopToolbar.module.css';
 
 const TopToolbar = ({ editor, activeFormats, onDone }) => {
   const navigate = useNavigate();
@@ -54,22 +54,22 @@ const TopToolbar = ({ editor, activeFormats, onDone }) => {
   };
 
   return (
-    <div className="top-toolbar">
-      <div className="toolbar-group">
+    <div className={styles.topToolbar}>
+      <div className={styles.toolbarGroup}>
         <button onClick={onDone} title="Preview">
           <Icon name="eye" />
         </button>
         {/* Undo/redo buttons were moved to the bottom toolbar to follow user feedback */}
       </div>
 
-      <div className="toolbar-group">
-        <div className="dropdown-container">
+      <div className={styles.toolbarGroup}>
+        <div className={styles.dropdownContainer}>
             <button onClick={toggleAddMenu} title="Add..." ref={addButtonRef}>
                 <Icon name="plus" />
             </button>
             {isAddMenuOpen && <div ref={addMenuRef}><AddMenu editor={editor} closeMenu={() => setAddMenuOpen(false)} /></div>}
         </div>
-        <div className="dropdown-container">
+        <div className={styles.dropdownContainer}>
             <button onClick={toggleFormatMenu} title="Format text and paragraph" ref={formatButtonRef}>
                 <Icon name="type" />
             </button>

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import './ContextMenu.css';
+import styles from './ContextMenu.module.css';
 
 function ContextMenu({ x, y, file, onClose, onRename, onDelete, onDuplicate, onShare }) {
   const menuRef = useRef(null);
@@ -23,10 +23,10 @@ function ContextMenu({ x, y, file, onClose, onRename, onDelete, onDuplicate, onS
   };
 
   return (
-    <div className="context-menu-overlay" onClick={onClose}>
+    <div className={styles.contextMenuOverlay} onClick={onClose}>
       <div
         ref={menuRef}
-        className="context-menu"
+        className={styles.contextMenu}
         style={{ top: `${y}px`, left: `${x}px` }}
       >
         <ul>

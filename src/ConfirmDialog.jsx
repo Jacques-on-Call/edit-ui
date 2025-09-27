@@ -1,13 +1,13 @@
-import './ConfirmDialog.css';
+import styles from './ConfirmDialog.module.css';
 
 function ConfirmDialog({ message, onConfirm, onCancel }) {
   return (
-    <div className="modal-overlay">
-      <div className="confirm-dialog-content">
+    <div className={styles.modalOverlay}>
+      <div className={styles.confirmDialogContent}>
         <p>{message}</p>
-        <div className="modal-actions">
-          <button className="btn-cancel" onClick={onCancel}>Cancel</button>
-          <button className="btn-confirm" onClick={onConfirm}>Confirm</button>
+        <div className={styles.modalActions}>
+          <button className={styles.btnCancel} onClick={onCancel}>Cancel</button>
+          <button className={styles.btnConfirm} onClick={onConfirm}>Confirm</button>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './HeadEditor.css';
+import styles from './HeadEditor.module.css';
 
 const TITLE_MAX_LENGTH = 60;
 const DESC_MAX_LENGTH = 160;
@@ -48,10 +48,10 @@ const HeadEditor = ({
     switch (activeTab) {
       case 'settings':
         return (
-          <div className="form-section">
-            <div className="form-group">
+          <div className={styles.formSection}>
+            <div className={styles.formGroup}>
               <label htmlFor="slug">URL Slug</label>
-              <p className="form-group-description">This is the very last part of the URL. It should be short, descriptive, and contain keywords.</p>
+              <p className={styles.formGroupDescription}>This is the very last part of the URL. It should be short, descriptive, and contain keywords.</p>
               <input id="slug" type="text" value={slug} onChange={handleSlugChange} placeholder="your-page-slug" />
             </div>
           </div>
@@ -60,24 +60,24 @@ const HeadEditor = ({
       default:
         return (
           <>
-            <div className="preview-section">
+            <div className={styles.previewSection}>
               <h4>Search Result Preview</h4>
-              <div className="search-result-preview">
-                <div className="preview-title">{title || 'Your Title Here'}</div>
-                <div className="preview-url">www.strategycontent.agency/{slug || 'your-page-slug'}</div>
-                <div className="preview-description">{description || 'Your meta description will appear here. Keep it concise and compelling.'}</div>
+              <div className={styles.searchResultPreview}>
+                <div className={styles.previewTitle}>{title || 'Your Title Here'}</div>
+                <div className={styles.previewUrl}>www.strategycontent.agency/{slug || 'your-page-slug'}</div>
+                <div className={styles.previewDescription}>{description || 'Your meta description will appear here. Keep it concise and compelling.'}</div>
               </div>
             </div>
-            <div className="form-section">
-              <div className="form-group">
+            <div className={styles.formSection}>
+              <div className={styles.formGroup}>
                 <label htmlFor="title">SEO Title</label>
                 <input id="title" type="text" value={title} onChange={handleTitleChange} placeholder="The title that appears in search results" maxLength={TITLE_MAX_LENGTH + 10} />
-                <span className={`char-counter ${title.length > TITLE_MAX_LENGTH ? 'over-limit' : ''}`}>{title.length}/{TITLE_MAX_LENGTH}</span>
+                <span className={`${styles.charCounter} ${title.length > TITLE_MAX_LENGTH ? styles.overLimit : ''}`}>{title.length}/{TITLE_MAX_LENGTH}</span>
               </div>
-              <div className="form-group">
+              <div className={styles.formGroup}>
                 <label htmlFor="description">Meta Description</label>
                 <textarea id="description" value={description} onChange={handleDescriptionChange} placeholder="A brief summary for search results" rows="4" maxLength={DESC_MAX_LENGTH + 20} />
-                <span className={`char-counter ${description.length > DESC_MAX_LENGTH ? 'over-limit' : ''}`}>{description.length}/{DESC_MAX_LENGTH}</span>
+                <span className={`${styles.charCounter} ${description.length > DESC_MAX_LENGTH ? styles.overLimit : ''}`}>{description.length}/{DESC_MAX_LENGTH}</span>
               </div>
             </div>
           </>
@@ -86,19 +86,19 @@ const HeadEditor = ({
   };
 
   return (
-    <div className="head-editor-overlay">
-      <div className="head-editor-modal">
-        <div className="head-editor-header">
-          <div className="tabs">
-            <button className={`tab-button ${activeTab === 'meta' ? 'active' : ''}`} onClick={() => setActiveTab('meta')}>Meta & Preview</button>
-            <button className={`tab-button ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>Settings</button>
+    <div className={styles.headEditorOverlay}>
+      <div className={styles.headEditorModal}>
+        <div className={styles.headEditorHeader}>
+          <div className={styles.tabs}>
+            <button className={`${styles.tabButton} ${activeTab === 'meta' ? styles.active : ''}`} onClick={() => setActiveTab('meta')}>Meta & Preview</button>
+            <button className={`${styles.tabButton} ${activeTab === 'settings' ? styles.active : ''}`} onClick={() => setActiveTab('settings')}>Settings</button>
           </div>
         </div>
-        <div className="head-editor-content">
+        <div className={styles.headEditorContent}>
           {renderContent()}
         </div>
-        <div className="head-editor-footer">
-            <button onClick={onClose} className="done-button">Done</button>
+        <div className={styles.headEditorFooter}>
+            <button onClick={onClose} className={styles.doneButton}>Done</button>
         </div>
       </div>
     </div>

@@ -14,7 +14,7 @@ The project consists of two main parts: the frontend editor and a serverless bac
 
 *   **Framework:** React v19, bundled with Vite.
 *   **Location:** All frontend code is located in the `/easy-seo` directory.
-*   **Styling:** Standard CSS files, co-located with their respective components.
+*   **Styling:** CSS Modules (`*.module.css`), with each component importing its own styles.
 *   **Key Features:**
     *   **File Explorer:** Browse the contents of the `src/pages` directory in the main repository.
     *   **Section-Aware Editor:** Built with TinyMCE, the editor can parse `.astro` files that use a `sections` array in their frontmatter. It renders editable rich text areas for `text_block` sections and user-friendly visual previews for other section types (e.g., 'hero', 'grid').
@@ -78,6 +78,21 @@ To create a production-ready build of the application, run:
 npm run build --prefix ./easy-seo
 ```
 The optimized and bundled assets will be placed in the `easy-seo/dist` directory.
+
+## 4. Development Notes
+
+### CSS Modules Refactoring (Sept 2025)
+
+The application's styling has been refactored to align with the "Component-based styling" principle outlined in this README. All components within `easy-seo/src/` now use CSS Modules (`*.module.css`) instead of global CSS imports.
+
+**Key Learnings:**
+
+*   **Build Process:** The Vite build process is strict about resolving imports. During the refactoring, it was discovered that some parent components were importing CSS for their children (e.g., `FileExplorer.jsx` importing `ContextMenu.css`). This is an anti-pattern that was resolved by ensuring each component exclusively imports its own styles.
+*   **Dependency Trail:** A large-scale refactor like this can create a "trail" of broken imports that only become apparent during the production build. It's crucial to run a build after making significant changes to catch these issues early.
+
+**Suggestions for Future Improvements:**
+
+*   **Shared Styles:** Some components, like `CreateModal.jsx` and `RenameModal.jsx`, use the same stylesheet. While this works, a better approach would be to create a generic `Modal` component that encapsulates the shared styling, which other modals can then use. This would improve reusability and make the styling more robust.
 
 Jules Instructions:
 Jules map CSS modules directly to JSX without ambiguity. I’ll describe the architecture in precise component terms, not loose words.
