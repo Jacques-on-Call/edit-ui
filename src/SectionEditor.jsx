@@ -50,7 +50,7 @@ const SectionEditor = ({ initialContent, onContentChange, onInit, onNodeChange, 
             ],
             toolbar: false, // The custom toolbar is in `TopToolbar.jsx`
 
-            content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size:16px; padding: 2rem; }',
+            content_style: 'body { font-size:16px; }',
             placeholder: placeholder || 'Start writing your content here...',
             license_key: 'gpl',
             skin: false,

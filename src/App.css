@@ -15,6 +15,10 @@ body {
   background-color: var(--white); /* Set a neutral default background */
 }
 
+#root {
+  border: none;
+}
+
 .App {
   text-align: center;
 }
