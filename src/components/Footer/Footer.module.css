@@ -4,8 +4,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 1rem;
-  background-color: #007bff; /* The requested blue color */
-  color: white;
+  background-color: var(--blue); /* Use the consistent primary blue */
+  color: var(--white);
+  border-top: 1px solid #002a52; /* A darker shade for the border, matching the header */
   position: fixed;
   bottom: 0;
   left: 0;

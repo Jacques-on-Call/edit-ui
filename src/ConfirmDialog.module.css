@@ -1,6 +1,23 @@
-.confirm-dialog-content {
+/*
+  Styles for the confirmation dialog.
+  It reuses the modal overlay and content structure from other modals.
+*/
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirmDialogContent {
   background: white;
-  padding: 24px;
+  padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   width: 90%;
@@ -8,29 +25,15 @@
   text-align: center;
 }
 
-.confirm-dialog-content p {
-  margin: 0 0 24px;
-  font-size: 16px;
-  color: var(--text-color-primary);
+.confirmDialogContent p {
+  margin: 0 0 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--grey-dark);
 }
 
-/* We can reuse the modal-actions styles from CreateModal.css */
-.confirm-dialog-content .modal-actions {
+.modalActions {
   display: flex;
-  justify-content: center;
-  gap: 12px;
-}
-
-.btn-confirm {
-  background-color: #d32f2f; /* Red for destructive action */
-  color: white;
-  padding: 10px 20px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-confirm:hover {
-  opacity: 0.9;
+  justify-content: center; /* Center the buttons */
+  gap: 1rem;
 }

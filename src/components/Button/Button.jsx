@@ -10,7 +10,7 @@ import styles from './Button.module.css';
  * @param {boolean} [props.disabled=false] - Whether the button is disabled.
  * @param {string} [props.className=''] - Optional additional class names.
  */
-const Button = ({ children, onClick, variant = 'primary', disabled = false, className = '' }) => {
+const Button = ({ children, onClick, variant = 'primary', type = 'button', disabled = false, className = '' }) => {
   // Combine the base button class, the variant class, and any additional classes.
   const buttonClasses = [
     styles.button,
@@ -18,10 +18,18 @@ const Button = ({ children, onClick, variant = 'primary', disabled = false, clas
     className
   ].join(' ').trim();
 
+  const handleClick = (e) => {
+    console.log(`[Button.jsx] Clicked! Variant: ${variant}, Type: ${type}`);
+    if (onClick) {
+      onClick(e);
+    }
+  };
+
   return (
     <button
+      type={type}
       className={buttonClasses}
-      onClick={onClick}
+      onClick={handleClick}
       disabled={disabled}
     >
       {children}

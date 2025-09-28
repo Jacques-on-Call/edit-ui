@@ -140,6 +140,7 @@ function FileExplorer({ repo }) {
   };
 
   const handleDuplicate = async (fileToDuplicate) => {
+    console.log('[FileExplorer.jsx] handleDuplicate started for:', fileToDuplicate.name);
     const file = fileToDuplicate || selectedFile;
     if (!file || file.type === 'dir') return;
 
@@ -173,9 +174,12 @@ function FileExplorer({ repo }) {
         throw new Error(errorData.message);
       }
 
-      // 4. Refresh the file list to show the new file
+      console.log('[FileExplorer.jsx] Duplication successful. Clearing selection and fetching files.');
+      // 4. Clear selection and refresh the file list to prevent UI bugs.
+      setSelectedFile(null);
       fetchFiles();
     } catch (err) {
+      console.error('[FileExplorer.jsx] Error in handleDuplicate:', err);
       setError(err.message);
     }
   };
@@ -189,10 +193,17 @@ function FileExplorer({ repo }) {
   };
 
   const handleDeleteRequest = (file) => {
+    console.log('[FileExplorer.jsx] handleDeleteRequest for:', file.name);
+    if (file.type === 'dir') {
+      alert('Deleting folders is not supported at this time.');
+      return;
+    }
     setFileToDelete(file);
+    console.log('[FileExplorer.jsx] fileToDelete state set.');
   };
 
   const handleDeleteConfirm = async () => {
+    console.log('[FileExplorer.jsx] handleDeleteConfirm started for:', fileToDelete?.name);
     if (!fileToDelete) return;
     try {
       const res = await fetch(`/api/file?repo=${repo}&path=${fileToDelete.path}&sha=${fileToDelete.sha}`, {
@@ -200,10 +211,13 @@ function FileExplorer({ repo }) {
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to delete file.');
+
+      console.log('[FileExplorer.jsx] Delete successful. Clearing state and fetching files.');
       cache.remove(fileToDelete.sha); // Invalidate cache
       setFileToDelete(null);
       fetchFiles();
     } catch (err) {
+      console.error('[FileExplorer.jsx] Error in handleDeleteConfirm:', err);
       setError(err.message);
       setFileToDelete(null);
     }

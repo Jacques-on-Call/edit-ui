@@ -17,7 +17,8 @@ function ContextMenu({ x, y, file, onClose, onRename, onDelete, onDuplicate, onM
     };
   }, [onClose]);
 
-  const handleAction = (action) => {
+  const handleAction = (action, actionName) => {
+    console.log(`[ContextMenu.jsx] Action triggered: ${actionName} for file:`, file.name);
     // It's important to close the menu first, then trigger the action that
     // will open a modal (e.g., Delete, Rename). This prevents a race condition
     // where the new modal might not appear if the state updates happen too
@@ -34,12 +35,12 @@ function ContextMenu({ x, y, file, onClose, onRename, onDelete, onDuplicate, onM
         style={{ top: `${y}px`, left: `${x}px` }}
       >
         <ul>
-          <li onClick={() => handleAction(onRename)}>Rename</li>
-          <li onClick={() => handleAction(onDelete)}>Delete</li>
+          <li onClick={() => handleAction(onRename, 'onRename')}>Rename</li>
+          <li onClick={() => handleAction(onDelete, 'onDelete')}>Delete</li>
           {file.type !== 'dir' && (
-            <li onClick={() => handleAction(onDuplicate)}>Duplicate</li>
+            <li onClick={() => handleAction(onDuplicate, 'onDuplicate')}>Duplicate</li>
           )}
-          <li onClick={() => handleAction(onMove)}>Move</li>
+          <li onClick={() => handleAction(onMove, 'onMove')}>Move</li>
         </ul>
       </div>
     </div>
