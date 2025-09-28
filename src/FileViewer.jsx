@@ -7,8 +7,27 @@ import SearchPreviewModal from './SearchPreviewModal';
 import styles from './FileViewer.module.css';
 import { unifiedParser } from './utils/unifiedParser';
 import { stringifyAstroFile } from './utils/astroFileParser';
+import { BackIcon, SearchIcon, EditIcon } from './icons';
+import siteStyles from '../../src/styles/style.css?raw';
 
 function FileViewer({ repo, path, branch }) {
+  useEffect(() => {
+    const styleElement = document.createElement('style');
+    styleElement.id = 'site-styles';
+    styleElement.innerHTML = siteStyles;
+    document.head.appendChild(styleElement);
+
+    document.body.classList.add('light-theme');
+
+    return () => {
+      const style = document.getElementById('site-styles');
+      if (style) {
+        document.head.removeChild(style);
+      }
+      document.body.classList.remove('light-theme');
+    };
+  }, []);
+
   const [isHeadEditorOpen, setIsHeadEditorOpen] = useState(false);
   const [content, setContent] = useState({
     sections: null,
@@ -182,9 +201,15 @@ function FileViewer({ repo, path, branch }) {
           <span className={styles.statusIndicator}>
             {isDraft ? 'Draft' : 'Published'}
           </span>
-          <button className={styles.headerButton} onClick={() => navigate('/explorer')}>Back</button>
-          <button className={styles.headerButton} onClick={() => setIsHeadEditorOpen(true)}>Search Preview</button>
-          <button className={styles.headerButton} onClick={() => navigate(`/edit/${repo}/${path}`)}>Edit</button>
+          <button className={styles.headerButton} onClick={() => navigate('/explorer')} aria-label="Back to explorer">
+            <BackIcon className="w-5 h-5" />
+          </button>
+          <button className={styles.headerButton} onClick={() => setIsHeadEditorOpen(true)} aria-label="Open search preview">
+            <SearchIcon className="w-5 h-5" />
+          </button>
+          <button className={styles.headerButton} onClick={() => navigate(`/edit/${repo}/${path}`)} aria-label="Edit file">
+            <EditIcon className="w-5 h-5" />
+          </button>
           <button className={`${styles.headerButton} ${styles.publishButton}`} onClick={handlePublish} disabled={!isDraft}>Publish</button>
         </div>
       </header>
