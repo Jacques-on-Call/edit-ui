@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import styles from './CreateModal.module.css'; // Reuse styles from CreateModal
+import Button from './components/Button/Button'; // Import the reusable Button component
 
 function RenameModal({ file, onClose, onRename }) {
   const [newName, setNewName] = useState(file.name);
@@ -13,7 +14,7 @@ function RenameModal({ file, onClose, onRename }) {
       return;
     }
     if (newName === file.name) {
-      onClose(); // No change, just close
+      onClose(); // No change, just close the modal
       return;
     }
 
@@ -21,9 +22,9 @@ function RenameModal({ file, onClose, onRename }) {
     setError(null);
 
     try {
-      // The onRename prop will contain the complex logic
+      // The onRename function from the parent handles the API logic
       await onRename(file, newName);
-      onClose();
+      onClose(); // Close modal on success
     } catch (err) {
       setError(err.message);
     } finally {
@@ -44,17 +45,17 @@ function RenameModal({ file, onClose, onRename }) {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               autoFocus
-              onFocus={(e) => e.target.select()} // Select text on focus
+              onFocus={(e) => e.target.select()} // Automatically select text on focus
             />
           </div>
           {error && <p className={styles.errorMessage}>{error}</p>}
           <div className={styles.modalActions}>
-            <button type="button" className={styles.btnCancel} onClick={onClose} disabled={isRenaming}>
+            <Button variant="secondary" onClick={onClose} disabled={isRenaming}>
               Cancel
-            </button>
-            <button type="submit" className={styles.btnCreate} disabled={isRenaming}>
+            </Button>
+            <Button variant="primary" type="submit" disabled={isRenaming}>
               {isRenaming ? 'Renaming...' : 'Rename'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

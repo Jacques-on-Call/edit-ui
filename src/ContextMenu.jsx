@@ -18,8 +18,12 @@ function ContextMenu({ x, y, file, onClose, onRename, onDelete, onDuplicate, onM
   }, [onClose]);
 
   const handleAction = (action) => {
-    action(file);
+    // It's important to close the menu first, then trigger the action that
+    // will open a modal (e.g., Delete, Rename). This prevents a race condition
+    // where the new modal might not appear if the state updates happen too
+    // close together.
     onClose();
+    action(file);
   };
 
   return (

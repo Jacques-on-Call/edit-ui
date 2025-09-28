@@ -398,6 +398,7 @@ function FileExplorer({ repo }) {
       {fileToMove && (
         <MoveModal
           file={fileToMove}
+          repo={repo}
           onClose={() => setFileToMove(null)}
           onMove={handleMoveConfirm}
         />

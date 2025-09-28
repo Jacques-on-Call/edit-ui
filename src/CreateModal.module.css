@@ -91,13 +91,13 @@
 }
 
 /*
- * Override default button component styles for consistent sizing within the modal.
- * - flex: 1 makes both buttons expand to fill the container equally.
- * - margin: 0 !important overrides any specific margins from button variants (e.g., .primary).
+ * The modal actions container aligns buttons to the end.
 */
 .modalActions > :global(button) {
-  flex: 1;
-  margin: 0 !important;
+  /*
+  * No longer forcing flex: 1 to allow buttons to have their natural width.
+  * The reusable Button component's own styling will now apply correctly.
+  */
 }
 
 .errorMessage {
