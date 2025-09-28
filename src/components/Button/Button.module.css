@@ -36,14 +36,14 @@
 
 /* Primary action button (e.g., Create, Move) */
 .primary {
-  background-color: var(--green);
+  background-color: var(--blue);
   color: var(--white);
-  border: 1px solid var(--light-green);
+  border: 1px solid #a0cfff; /* A lighter blue for the border, as requested */
 }
 
 .primary:hover:not(:disabled) {
-  background-color: #004f00; /* A darker shade of green for hover */
-  border-color: var(--light-green);
+  background-color: #002a52; /* A darker shade of blue for hover */
+  border-color: #a0cfff;
 }
 
 /* Floating Action Button (FAB) (e.g., Create) */

@@ -86,13 +86,16 @@ function FileExplorer({ repo }) {
               if (!res.ok) throw new Error('Could not fetch README content.');
               return res.json();
             })
-            .then(data => {
-              const decodedContent = atob(data.content);
+            .then(fileData => {
+              // The content from GitHub is base64 encoded. We need to decode it.
+              const decodedContent = atob(fileData.content);
+              console.log('[FileExplorer.jsx] README content decoded successfully.'); // Diagnostic log
               setReadmeContent(decodedContent);
               setReadmeLoading(false);
             })
             .catch(err => {
-              console.error(err); // Log README fetch error but don't block UI
+              console.error('Failed to fetch or decode README content:', err); // Log README fetch error
+              setReadmeContent('# Error: Could not load README.\n\nThis is a fallback message. Please check the console for more details.');
               setReadmeLoading(false);
             });
         }
@@ -134,8 +137,8 @@ function FileExplorer({ repo }) {
       setPath(file.path);
       setSelectedFilePath(null); // Deselect when navigating into a folder
     } else {
-      // Navigate to the editor page for files
-      navigate(`/edit/${repo}/${file.path}`);
+      // Navigate to the file viewer for files
+      navigate(`/explorer/file?path=${file.path}`);
     }
   };
 
@@ -348,17 +351,19 @@ function FileExplorer({ repo }) {
       </Header>
       <main className={styles.contentArea}>
         <div className={styles.fileGrid}>
-          {Array.isArray(files) && files.filter(file => !file.name.startsWith('_')).map(file => (
-            <FileTile
-              key={file.path}
-              file={file}
-              isSelected={selectedFilePath === file.path}
-              metadata={metadataCache[file.sha]}
-              onClick={handleFileClick}
-              onLongPress={(e) => handleLongPress(file, e)}
-              onRename={() => handleRenameRequest(file)}
-              onDelete={() => handleDeleteRequest(file)}
-            />
+          {Array.isArray(files) && files
+            .filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md')
+            .map(file => (
+              <FileTile
+                key={file.path}
+                file={file}
+                isSelected={selectedFilePath === file.path}
+                metadata={metadataCache[file.sha]}
+                onClick={handleFileClick}
+                onLongPress={(e) => handleLongPress(file, e)}
+                onRename={() => handleRenameRequest(file)}
+                onDelete={() => handleDeleteRequest(file)}
+              />
           ))}
         </div>
         {isReadmeLoading && <div className={styles.readmeLoading}>Loading README...</div>}

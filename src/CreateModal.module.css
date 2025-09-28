@@ -105,6 +105,21 @@
   margin-top: 1rem;
 }
 
+/*
+ * A high-specificity override to ensure the Create button has the correct style.
+ * This is necessary to combat potential caching or specificity issues in the environment.
+*/
+.createButton {
+  background-color: var(--green) !important;
+  border-color: var(--light-green) !important;
+  color: var(--white) !important;
+}
+
+.createButton:hover:not(:disabled) {
+  background-color: #004f00 !important; /* A darker shade of green for hover */
+  border-color: var(--light-green) !important;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from {

@@ -112,7 +112,12 @@ function CreateModal({ path, repo, onClose, onCreate }) {
             <Button variant="secondary" onClick={onClose} disabled={isCreating}>
               Cancel
             </Button>
-            <Button variant="primary" type="submit" disabled={isCreating}>
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={isCreating}
+              className={styles.createButton} // Add a specific class for styling
+            >
               {isCreating ? 'Creating...' : 'Create'}
             </Button>
           </div>

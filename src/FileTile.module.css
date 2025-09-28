@@ -20,8 +20,8 @@
 }
 
 .selected {
-  background-color: #e6f2ff; /* A light blue for selection state */
-  border-color: #007bff;
+  background-color: var(--folder-blue); /* Use the official folder color for selection */
+  border-color: var(--blue); /* Use the official blue for the border */
 }
 
 .tileContent {
@@ -86,10 +86,10 @@
 
 .pulseFolder {
   animation: pulse 0.3s ease-in-out;
-  background-color: #e6f2ff; /* Blue flash */
+  background-color: var(--folder-blue); /* Use the official folder color for the pulse */
 }
 
 .pulseFile {
   animation: pulse 0.3s ease-in-out;
-  background-color: #e9f7ec; /* Green flash */
+  background-color: rgba(0, 99, 0, 0.1); /* Use a transparent version of the official green for the pulse */
 }

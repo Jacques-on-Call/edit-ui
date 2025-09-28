@@ -32,8 +32,8 @@
 
 /* Using a dedicated class for the create button to ensure styles are applied correctly */
 .createButton {
-  background-color: #28a745 !important; /* Green circle. !important may be needed to override base button styles */
-  color: white !important;
+  background-color: var(--green) !important; /* Use the official green design token */
+  color: var(--white) !important;
   width: 56px;
   height: 56px;
   border-radius: 50%;

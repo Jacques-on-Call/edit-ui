@@ -1,4 +1,4 @@
-.readme-display {
+.readmeDisplay {
   border: 1px solid #e1e4e8;
   border-radius: 6px;
   margin-bottom: 16px;
@@ -6,21 +6,21 @@
   transition: all 0.3s ease-in-out;
 }
 
-.readme-display.hidden .readme-content {
+.hidden .readmeContent {
   display: none;
 }
 
-.readme-header {
+.readmeHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 16px;
-  background-color: #003971; /* Brand Blue */
+  background-color: var(--blue); /* Use the official blue design token */
   color: white;
   cursor: pointer;
 }
 
-.readme-header h3 {
+.readmeHeader h3 {
   margin: 0;
   font-size: 16px;
   display: flex;
@@ -28,7 +28,7 @@
   gap: 8px;
 }
 
-.toggle-button {
+.toggleButton {
   background: none;
   border: none;
   color: white;
@@ -36,7 +36,7 @@
   padding: 4px;
 }
 
-.readme-content {
+.readmeContent {
   padding: 24px;
   background-color: white;
   font-family: inherit; /* Explicitly inherit font to avoid code-like styling */
@@ -44,29 +44,29 @@
 }
 
 /* Styles for rendered markdown */
-.readme-content h1,
-.readme-content h2 {
+.readmeContent h1,
+.readmeContent h2 {
   border-bottom: 1px solid #eaecef;
   padding-bottom: 0.3em;
   margin-top: 24px;
   margin-bottom: 16px;
 }
 
-.readme-content p {
+.readmeContent p {
   margin-bottom: 20px;
   line-height: 1.6;
 }
 
-.readme-content a {
-  color: #006300; /* Brand Green */
+.readmeContent a {
+  color: var(--green); /* Use the official green design token */
   text-decoration: none;
 }
 
-.readme-content a:hover {
+.readmeContent a:hover {
   text-decoration: underline;
 }
 
-.readme-content pre {
+.readmeContent pre {
   background-color: #f6f8fa;
   border-radius: 3px;
   font-size: 85%;
@@ -75,7 +75,7 @@
   padding: 16px;
 }
 
-.readme-content code {
+.readmeContent code {
   background-color: rgba(27,31,35,0.05);
   border-radius: 3px;
   padding: 0.2em 0.4em;
@@ -83,7 +83,7 @@
   font-size: 85%;
 }
 
-.readme-content pre > code {
+.readmeContent pre > code {
   padding: 0;
   margin: 0;
   font-size: 100%;
@@ -93,15 +93,15 @@
   border: 0;
 }
 
-.readme-content blockquote {
+.readmeContent blockquote {
   margin: 0 0 16px 0;
   padding: 0 1em;
   color: #6a737d;
   border-left: 0.25em solid #dfe2e5;
 }
 
-.readme-content ul,
-.readme-content ol {
+.readmeContent ul,
+.readmeContent ol {
   padding-left: 2em;
   margin-top: 0;
   margin-bottom: 16px;
