@@ -1,4 +1,6 @@
-.modal-overlay {
+/* Styles for the CreateModal component */
+
+.modalOverlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -9,96 +11,92 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
 }
 
-.modal-content {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  width: 90%;
-  max-width: 400px;
-}
-
-.modal-content h2 {
-  margin-top: 0;
-  margin-bottom: 24px;
-  font-size: 20px;
-  color: var(--text-color-primary);
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: var(--text-color-secondary);
-}
-
-.form-group input[type="text"] {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  border: 1px solid var(--border-color);
+.modalContent {
+  background-color: white;
+  padding: 2rem;
   border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 400px;
+  animation: scaleUp 0.2s ease-out;
 }
 
-.radio-group {
+.modalContent h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.formGroup input[type="text"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.formGroup input[type="text"]:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.radioGroup {
   display: flex;
-  gap: 16px;
+  gap: 1.5rem;
 }
 
-.radio-group label {
+.radioGroup label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   font-weight: normal;
 }
 
-.error-message {
-  color: #d32f2f;
-  font-size: 14px;
-  margin-bottom: 16px;
-}
-
-.modal-actions {
+.modalActions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
+  gap: 1rem;
+  margin-top: 2rem;
 }
 
-.modal-actions button {
-  padding: 10px 20px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+.errorMessage {
+  color: #dc3545;
+  margin-top: 1rem;
 }
 
-.btn-cancel {
-  background-color: #f0f0f0;
-  color: var(--text-color-primary);
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-.btn-cancel:hover {
-  background-color: #e0e0e0;
-}
-
-.btn-create {
-  background-color: #006300; /* Use direct hex code to avoid variable issues */
-  color: white;
-}
-
-.btn-create:hover {
-  opacity: 0.9;
-}
-
-.btn-create:disabled {
-  background-color: #bdbdbd;
-  cursor: not-allowed;
+@keyframes scaleUp {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }

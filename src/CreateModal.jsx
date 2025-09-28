@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styles from './CreateModal.module.css';
+import styles from './CreateModal.module.css'; // Import the new stylesheet
+import Button from './components/Button/Button'; // Import the reusable Button component
 
 function CreateModal({ path, repo, onClose, onCreate }) {
   const navigate = useNavigate();
@@ -24,27 +25,19 @@ function CreateModal({ path, repo, onClose, onCreate }) {
 
       if (type === 'folder') {
         fullPath = `${path}/${name}/.gitkeep`;
-        content = '';
+        content = ''; // No content needed for a .gitkeep file
       } else {
-        console.log('Fetching template...');
+        // Fetch a template to create a new file with some default content
         const templateRes = await fetch(`/api/file?repo=${repo}&path=src/pages/_template.astro`, { credentials: 'include' });
-
         if (!templateRes.ok) {
-          console.error('Failed to load template file:', templateRes.status, templateRes.statusText);
           throw new Error('Could not load template file.');
         }
-
         const templateData = await templateRes.json();
-        console.log('Template data received:', templateData);
-
         content = atob(templateData.content);
-        console.log('Decoded template content:', content);
-
         const fileName = name.endsWith('.astro') ? name : `${name}.astro`;
         fullPath = path === '/' ? fileName : `${path}/${fileName}`;
       }
 
-      console.log('Creating file with path:', fullPath);
       const response = await fetch('/api/file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -54,19 +47,16 @@ function CreateModal({ path, repo, onClose, onCreate }) {
 
       if (!response.ok) {
         const errData = await response.json();
-        console.error('Failed to create item:', errData);
         throw new Error(errData.error || 'Failed to create item.');
       }
 
-      console.log('File created successfully.');
-      onCreate();
-      onClose();
+      onCreate(); // Refresh the file list
+      onClose();  // Close the modal
       if (type === 'file') {
-        console.log('Navigating to editor for new file:', `/edit/${repo}/${fullPath}`);
+        // Navigate to the editor for the new file
         navigate(`/edit/${repo}/${fullPath}`);
       }
     } catch (err) {
-      console.error('Error in handleSubmit:', err);
       setError(err.message);
     } finally {
       setIsCreating(false);
@@ -116,12 +106,12 @@ function CreateModal({ path, repo, onClose, onCreate }) {
           </div>
           {error && <p className={styles.errorMessage}>{error}</p>}
           <div className={styles.modalActions}>
-            <button type="button" className={styles.btnCancel} onClick={onClose} disabled={isCreating}>
+            <Button variant="secondary" onClick={onClose} disabled={isCreating}>
               Cancel
-            </button>
-            <button type="submit" className={styles.btnCreate} disabled={isCreating}>
+            </Button>
+            <Button variant="primary" type="submit" disabled={isCreating}>
               {isCreating ? 'Creating...' : 'Create'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
