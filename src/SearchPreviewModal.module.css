@@ -1,0 +1,170 @@
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  max-height: 90vh;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  cursor: pointer;
+  color: #888;
+}
+
+.tabContainer {
+  display: flex;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 0 1.5rem;
+}
+
+.tabButton {
+  background: none;
+  border: none;
+  padding: 1rem 0.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-right: 1.5rem;
+  color: #555;
+  border-bottom: 3px solid transparent;
+  transform: translateY(1px);
+}
+
+.tabButton.active {
+  color: #003971; /* --blue */
+  border-bottom-color: #003971; /* --blue */
+}
+
+.tabContent {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.modalFooter {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e5e5;
+  text-align: right;
+}
+
+.saveButton {
+  background-color: #006300; /* --green */
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.saveButton:hover {
+  background-color: #C7EA46; /* --light-green */
+  color: #003971;
+}
+
+/* Styles for SERP View Tab */
+.inputGroup {
+  margin-bottom: 1.25rem;
+}
+
+.inputGroup label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.inputField,
+.textareaField {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box; /* Important for width calculation */
+}
+
+.textareaField {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #e5e5e5;
+  margin: 1.5rem 0;
+}
+
+/* Styles for the SERP Preview component */
+.serpPreview {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1rem;
+  font-family: Arial, sans-serif;
+}
+
+.serpUrl {
+  color: #202124;
+  font-size: 0.875rem; /* 14px */
+}
+
+.serpTitle {
+  color: #1a0dab;
+  font-size: 1.25rem; /* 20px */
+  font-weight: normal;
+  margin: 0.25rem 0;
+  text-decoration: none;
+}
+
+.serpDescription {
+  color: #4d5156;
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.57;
+  margin: 0;
+}
+
+/* Styles for JSON Schema Tab */
+.jsonEditor {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
+  font-size: 0.9rem;
+  padding: 1rem;
+  box-sizing: border-box;
+  background-color: #f9f9f9;
+  color: #333;
+  resize: vertical;
+}

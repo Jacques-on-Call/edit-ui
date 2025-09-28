@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import FileViewer from './FileViewer';
-import styles from './FileViewer.module.css'; // Import the new CSS
+import styles from './PreviewPage.module.css'; // Import the new CSS
 
-function FileViewerPage() {
+function PreviewPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const repo = localStorage.getItem('selectedRepo');
@@ -20,10 +20,10 @@ function FileViewerPage() {
   }
 
   return (
-    <div className={styles.fileViewerPage}>
+    <div className={styles.previewPage}>
       <FileViewer repo={repo} path={path} />
     </div>
   );
 }
 
-export default FileViewerPage;
+export default PreviewPage;

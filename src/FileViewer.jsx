@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { marked } from 'marked';
 import { Buffer } from 'buffer';
 import SectionRenderer from './SectionRenderer';
-import HeadEditor from './HeadEditor';
+import SearchPreviewModal from './SearchPreviewModal';
 import styles from './FileViewer.module.css';
 import { unifiedParser } from './utils/unifiedParser';
 import { stringifyAstroFile } from './utils/astroFileParser';
@@ -126,14 +126,24 @@ function FileViewer({ repo, path, branch }) {
     }
   };
 
-  const handleFrontmatterChange = (updatedFrontmatter) => {
-    setContent(prev => ({ ...prev, frontmatter: updatedFrontmatter }));
-    if (!isDraft) setIsDraft(true);
-  };
+  const handleModalSave = (data) => {
+    // data is { title, description, slug, jsonSchema }
+    const newState = { ...content }; // copy existing state
+    newState.frontmatter.title = data.title;
+    newState.frontmatter.description = data.description;
+    newState.frontmatter.jsonSchema = data.jsonSchema;
 
-  const handleSectionUpdate = (newSections) => {
-    setContent(prev => ({ ...prev, frontmatter: { ...prev.frontmatter, sections: newSections } }));
+    setContent(newState);
+
+    // Handle slug change for publishing
+    const originalSlug = path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'));
+    if (data.slug && data.slug !== originalSlug) {
+        setNewSlug(data.slug);
+    }
+
     if (!isDraft) setIsDraft(true);
+    localStorage.setItem(draftKey, JSON.stringify(newState)); // Save changes to the draft
+    setIsHeadEditorOpen(false); // Close modal on save
   };
 
   const getFriendlyTitle = (filePath) => {
@@ -181,15 +191,13 @@ function FileViewer({ repo, path, branch }) {
 
       <div className={styles.fileViewerContainer}>
         {isHeadEditorOpen && content.sha && (
-          <HeadEditor
-            title={content.frontmatter.title}
-            description={content.frontmatter.description}
-            frontmatter={content.frontmatter}
-            onUpdate={handleFrontmatterChange}
+          <SearchPreviewModal
+            initialTitle={content.frontmatter.title}
+            initialDescription={content.frontmatter.description}
+            initialSlug={path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'))}
+            initialJsonSchema={content.frontmatter.jsonSchema}
             onClose={() => setIsHeadEditorOpen(false)}
-            path={path}
-            sections={content.sections}
-            onSectionUpdate={handleSectionUpdate}
+            onSave={handleModalSave}
           />
         )}
         {isDraft && (

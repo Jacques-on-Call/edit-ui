@@ -24,7 +24,7 @@ function SectionRenderer({ sections }) {
       {sections.map((section, index) => {
         // Render each section as a simple series of elements, providing a clean document flow.
         return (
-          <div key={index} className={styles.sectionBlock}>
+          <div key={index}>
             {section.title && <h1>{section.title}</h1>}
             {section.subtitle && <h2>{section.subtitle}</h2>}
             {section.heading && <h2>{section.heading}</h2>}
@@ -36,7 +36,7 @@ function SectionRenderer({ sections }) {
 
             {/* For 'grid' type, render items linearly without borders or boxes */}
             {section.type === 'grid' && section.items && section.items.map((item, itemIndex) => (
-              <div key={itemIndex} className={styles.gridItemBlock}>
+              <div key={itemIndex}>
                 {item.title && <h3>{item.title}</h3>}
                 {item.image && <img src={item.image} alt={item.title || ''} />}
                 {renderContent(item.text)}
@@ -45,7 +45,7 @@ function SectionRenderer({ sections }) {
 
             {/* For 'cta' type, render buttons as simple styled links */}
             {section.type === 'cta' && section.buttons && (
-              <div className={styles.ctaBlock} style={{ marginTop: '1em' }}>
+              <div style={{ marginTop: '1em' }}>
                 {section.buttons.map((button, buttonIndex) => (
                   <p key={buttonIndex}>
                     <a href={button.url}>{button.text}</a>

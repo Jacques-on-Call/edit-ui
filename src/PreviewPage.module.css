@@ -6,6 +6,7 @@
   /* The container now allows the content to flow, rather than being constrained */
   margin: 0 auto;
   padding: 1.5rem; /* Add some padding around the content area */
+  padding-top: 5rem; /* Add padding to offset the fixed header */
 }
 
 .viewerHeaderBlue {
@@ -15,9 +16,11 @@
   padding: 0.75rem 1rem;
   background-color: #003971; /* --blue */
   color: white;
-  position: sticky;
+  position: fixed; /* Changed to fixed for a permanent header */
   top: 0;
-  z-index: 100;
+  left: 0;
+  right: 0;
+  z-index: 1001; /* Increased z-index to ensure it's on top */
   border-bottom: 1px solid #002a52;
 }
 
