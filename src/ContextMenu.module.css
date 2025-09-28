@@ -1,4 +1,4 @@
-.context-menu-overlay {
+.contextMenuOverlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -8,7 +8,7 @@
   /* No background for the overlay itself, it's just for capturing clicks */
 }
 
-.context-menu {
+.contextMenu {
   position: fixed;
   background-color: white;
   border-radius: 8px;
@@ -18,13 +18,13 @@
   z-index: 2001;
 }
 
-.context-menu ul {
+.contextMenu ul {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.context-menu li {
+.contextMenu li {
   padding: 12px 20px;
   cursor: pointer;
   font-size: 16px;
@@ -32,10 +32,10 @@
   transition: background-color 0.2s ease;
 }
 
-.context-menu li:hover {
+.contextMenu li:hover {
   background-color: #f0f0f0;
 }
 
-.context-menu li:not(:last-child) {
+.contextMenu li:not(:last-child) {
   border-bottom: 1px solid var(--border-color);
 }
