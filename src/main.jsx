@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App.jsx';
 import Callback from './Callback.jsx';
 import ExplorerPage from './ExplorerPage.jsx';
-import FileViewerPage from './FileViewerPage.jsx';
+import PreviewPage from './PreviewPage.jsx';
 import Editor from './Editor.jsx'; // import the Editor component
 import './styles/global.css'; // Import the new single source of truth for global styles.
 
@@ -25,7 +25,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/" element={<App />} />
         <Route path="/callback" element={<Callback />} />
         <Route path="/explorer" element={<ExplorerPage />} />
-        <Route path="/explorer/file" element={<FileViewerPage />} />
+        <Route path="/explorer/file" element={<PreviewPage />} />
         <Route path="/edit/*" element={<Editor />} /> {/* add the editor route */}
       </Routes>
     </BrowserRouter>
