@@ -90,9 +90,14 @@
   margin-top: 2rem;
 }
 
-/* Ensure both buttons in the modal have the same width */
+/*
+ * Override default button component styles for consistent sizing within the modal.
+ * - flex: 1 makes both buttons expand to fill the container equally.
+ * - margin: 0 !important overrides any specific margins from button variants (e.g., .primary).
+*/
 .modalActions > :global(button) {
-  min-width: 120px;
+  flex: 1;
+  margin: 0 !important;
 }
 
 .errorMessage {
