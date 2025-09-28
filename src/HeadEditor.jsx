@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import RichResultsEditor from './RichResultsEditor';
 import styles from './HeadEditor.module.css';
 
 const TITLE_MAX_LENGTH = 60;
@@ -14,11 +15,12 @@ const HeadEditor = ({
     onClose,
     path,
     sections,
-    onSlugUpdate
+    onSlugUpdate,
+    onSectionUpdate,
 }) => {
 
   const [slug, setSlug] = useState('');
-  const [activeTab, setActiveTab] = useState('meta');
+  const [activeTab, setActiveTab] = useState('serp'); // Default to SERP tab
 
   useEffect(() => {
     if (path) {
@@ -46,17 +48,14 @@ const HeadEditor = ({
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'settings':
+      case 'richResults':
         return (
-          <div className={styles.formSection}>
-            <div className={styles.formGroup}>
-              <label htmlFor="slug">URL Slug</label>
-              <p className={styles.formGroupDescription}>This is the very last part of the URL. It should be short, descriptive, and contain keywords.</p>
-              <input id="slug" type="text" value={slug} onChange={handleSlugChange} placeholder="your-page-slug" />
-            </div>
-          </div>
+          <RichResultsEditor
+            sections={sections}
+            onUpdate={onSectionUpdate}
+          />
         );
-      case 'meta':
+      case 'serp':
       default:
         return (
           <>
@@ -69,6 +68,10 @@ const HeadEditor = ({
               </div>
             </div>
             <div className={styles.formSection}>
+               <div className={styles.formGroup}>
+                <label htmlFor="slug">URL Slug</label>
+                <input id="slug" type="text" value={slug} onChange={handleSlugChange} placeholder="your-page-slug" />
+              </div>
               <div className={styles.formGroup}>
                 <label htmlFor="title">SEO Title</label>
                 <input id="title" type="text" value={title} onChange={handleTitleChange} placeholder="The title that appears in search results" maxLength={TITLE_MAX_LENGTH + 10} />
@@ -90,8 +93,8 @@ const HeadEditor = ({
       <div className={styles.headEditorModal}>
         <div className={styles.headEditorHeader}>
           <div className={styles.tabs}>
-            <button className={`${styles.tabButton} ${activeTab === 'meta' ? styles.active : ''}`} onClick={() => setActiveTab('meta')}>Meta & Preview</button>
-            <button className={`${styles.tabButton} ${activeTab === 'settings' ? styles.active : ''}`} onClick={() => setActiveTab('settings')}>Settings</button>
+            <button className={`${styles.tabButton} ${activeTab === 'serp' ? styles.active : ''}`} onClick={() => setActiveTab('serp')}>SERP & Meta</button>
+            <button className={`${styles.tabButton} ${activeTab === 'richResults' ? styles.active : ''}`} onClick={() => setActiveTab('richResults')}>Rich Results</button>
           </div>
         </div>
         <div className={styles.headEditorContent}>

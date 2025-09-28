@@ -165,37 +165,44 @@ function FileViewer({ repo, path, branch }) {
   if (error) return <div className={styles.fileViewerContainer}>Error: {error}</div>;
 
   return (
-    <div className={styles.fileViewerContainer}>
-       {isHeadEditorOpen && content.sha && (
-        <HeadEditor
-          title={content.frontmatter.title}
-          description={content.frontmatter.description}
-          frontmatter={content.frontmatter}
-          onUpdate={handleFrontmatterChange}
-          onClose={() => setIsHeadEditorOpen(false)}
-          path={path}
-          sections={content.sections}
-          onSectionUpdate={handleSectionUpdate}
-        />
-      )}
-      {isDraft && (
-        <div className={styles.draftBanner}>
-          <p>You are viewing a draft. Your changes are not yet published.</p>
-          <div className={styles.draftActions}>
-            <button className={`${styles.viewerButton} ${styles.publishButton}`} onClick={handlePublish}>Publish</button>
-            <button className={`${styles.viewerButton} ${styles.discardButton}`} onClick={handleDiscard}>Discard Draft</button>
+    <div className={styles.fileViewerPage}>
+      <header className={styles.viewerHeaderBlue}>
+        <h1 className={styles.headerTitle}>{getFriendlyTitle(path)}</h1>
+        <div className={styles.headerActions}>
+          <span className={styles.statusIndicator}>
+            {isDraft ? 'Draft' : 'Published'}
+          </span>
+          <button className={styles.headerButton} onClick={() => navigate('/explorer')}>Back</button>
+          <button className={styles.headerButton} onClick={() => setIsHeadEditorOpen(true)}>Search Preview</button>
+          <button className={styles.headerButton} onClick={() => navigate(`/edit/${repo}/${path}`)}>Edit</button>
+          <button className={`${styles.headerButton} ${styles.publishButton}`} onClick={handlePublish} disabled={!isDraft}>Publish</button>
+        </div>
+      </header>
+
+      <div className={styles.fileViewerContainer}>
+        {isHeadEditorOpen && content.sha && (
+          <HeadEditor
+            title={content.frontmatter.title}
+            description={content.frontmatter.description}
+            frontmatter={content.frontmatter}
+            onUpdate={handleFrontmatterChange}
+            onClose={() => setIsHeadEditorOpen(false)}
+            path={path}
+            sections={content.sections}
+            onSectionUpdate={handleSectionUpdate}
+          />
+        )}
+        {isDraft && (
+          <div className={styles.draftBanner}>
+            <p>You are viewing a draft. Your changes are not yet published.</p>
+            <div className={styles.draftActions}>
+              <button className={`${styles.viewerButton} ${styles.publishButton}`} onClick={handlePublish}>Publish</button>
+              <button className={`${styles.viewerButton} ${styles.discardButton}`} onClick={handleDiscard}>Discard Draft</button>
+            </div>
           </div>
-        </div>
-      )}
-      <div className={styles.fileViewerHeader}>
-        <h1>{getFriendlyTitle(path)}</h1>
-        <div className={styles.actionButtons}>
-          <button className={styles.viewerButton} onClick={() => navigate('/explorer')}>Back</button>
-          <button className={styles.viewerButton} onClick={() => setIsHeadEditorOpen(true)}>Search Preview</button>
-          <button className={`${styles.viewerButton} ${styles.editButton}`} onClick={() => navigate(`/edit/${repo}/${path}`)}>Edit</button>
-        </div>
+        )}
+        {renderContent()}
       </div>
-      {renderContent()}
     </div>
   );
 }

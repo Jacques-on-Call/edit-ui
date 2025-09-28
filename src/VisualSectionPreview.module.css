@@ -8,11 +8,6 @@
   background-color: #fff;
 }
 
-/* This rule ensures all children inherit the correct dark text color, overriding the global style. */
-.visual-section-preview * {
-  color: inherit;
-}
-
 .visual-section-preview h1,
 .visual-section-preview h2,
 .visual-section-preview h3,

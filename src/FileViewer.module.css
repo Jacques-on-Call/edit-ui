@@ -1,28 +1,73 @@
 .file-viewer-page {
-  padding: 1rem;
+  background-color: #f0f0f0; /* Use a light grey background for the page itself */
 }
 
 .file-viewer-container {
-  max-width: 900px;
+  /* The container now allows the content to flow, rather than being constrained */
   margin: 0 auto;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  padding: 1.5rem; /* Add some padding around the content area */
 }
 
-.file-viewer-header {
+.viewerHeaderBlue {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e0e0e0;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding: 0.75rem 1rem;
+  background-color: #003971; /* --blue */
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid #002a52;
 }
 
-.file-viewer-header h1 {
-  font-size: 1.8rem;
-  color: #333;
+.headerTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
   margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.statusIndicator {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.headerButton {
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.headerButton:hover {
+  background-color: white;
+  color: #003971; /* --blue */
+}
+
+.publishButton {
+  background-color: #006300; /* --green */
+  border-color: #006300;
+}
+
+.publishButton:hover {
+  background-color: #C7EA46; /* --light-green */
+  color: #003971;
+  border-color: #C7EA46;
 }
 
 .action-buttons {
