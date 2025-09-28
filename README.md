@@ -159,30 +159,7 @@ Jules map CSS modules directly to JSX without ambiguity. I’ll describe the arc
 
 
 
-### 5. Outstanding Issues & Next Steps (as of Sept 28)
-
-The following UI/UX issues and features need to be addressed:
-
--   **Button Styling Consistency:**
-    -   The "Create" button in the modal should be styled with a dark green background and a light green border.
-    -   The main "Login" button should also be styled with the same green color scheme.
-    -   Other primary buttons in the application should use the standard blue color scheme.
-
--   **Content Disappearing Bug:**
-    -   There is a critical bug where content is correctly loaded in the editor but disappears after navigating back to the preview. This points to an issue in the data flow between the `Editor` and `FileViewer` components and needs to be fixed to prevent data loss.
-
--   **README Display:**
-    -   The `README.md` files are not being displayed below the file explorer as intended.
-    -   There is a character encoding issue causing emojis (`📖`) to appear as corrupted characters (`ð`).
-
--   **Original Task List:**
-    -   **`CreateModal` Refinements:**
-        1.  **Cancel Button size:** Same size as create button.
-        2.  **Radio button:** Selected option should have a green inner circle.
-        3.  **Text input:** Inputted text color should be black for better visibility.
-    -   **`ContextMenu` Feature:**
-        1.  **Menu Options:** Implement a context menu with "Rename", "Delete", and "Duplicate".
-        2.  **Menu Appearance:** A simple, clean vertical list on a white card with a subtle shadow.
+### 5. Outstanding Issues & Next Steps 
      
 jules task: Oh my goodness, we went from black background white text no css to white background white text with css, now back to black background white text no css. From the parts I saw I’m worried as it’s not quite as I described. 
 
