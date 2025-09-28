@@ -21,7 +21,7 @@ function FileExplorer({ repo }) {
   const [path, setPath] = useState('src/pages');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedFilePath, setSelectedFilePath] = useState(null); // Use path for selection
+  const [selectedFile, setSelectedFile] = useState(null); // Use the full file object for selection
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [fileToDelete, setFileToDelete] = useState(null);
@@ -58,7 +58,7 @@ function FileExplorer({ repo }) {
 
   const fetchFiles = useCallback(() => {
     setLoading(true);
-    setSelectedFilePath(null); // Use path for selection
+    setSelectedFile(null);
     setMetadataCache({});
     setReadmeContent(null); // Reset README content on new folder load
     setReadmeLoading(false); // Reset loading state
@@ -121,23 +121,21 @@ function FileExplorer({ repo }) {
   }, [fetchFiles]);
 
   const handleFileClick = (file) => {
-    if (selectedFilePath === file.path) {
+    if (selectedFile && selectedFile.sha === file.sha) {
       handleOpen(file);
     } else {
-      setSelectedFilePath(file.path);
+      setSelectedFile(file);
     }
   };
 
   const handleOpen = (fileToOpen) => {
-    // If no file is passed, find it from the state using the path
-    const file = fileToOpen || files.find(f => f.path === selectedFilePath);
+    const file = fileToOpen || selectedFile;
     if (!file) return;
 
     if (file.type === 'dir') {
       setPath(file.path);
-      setSelectedFilePath(null); // Deselect when navigating into a folder
+      setSelectedFile(null); // Deselect when navigating into a folder
     } else {
-      // Navigate to the file viewer for files
       navigate(`/explorer/file?path=${file.path}`);
     }
   };
@@ -147,29 +145,24 @@ function FileExplorer({ repo }) {
   };
 
   const handleDuplicate = async (fileToDuplicate) => {
-    console.log('[FileExplorer.jsx] handleDuplicate started for:', fileToDuplicate.name);
-    // If no file is passed, find it from the state using the path
-    const file = fileToDuplicate || files.find(f => f.path === selectedFilePath);
+    const file = fileToDuplicate || selectedFile;
     if (!file || file.type === 'dir') return;
 
     try {
-      // 1. Read the original file's content correctly
       const readRes = await fetch(`/api/file?repo=${repo}&path=${file.path}`, { credentials: 'include' });
       if (!readRes.ok) {
         const errorData = await readRes.json().catch(() => ({ message: 'Could not fetch file content.' }));
         throw new Error(errorData.message);
       }
       const fileData = await readRes.json();
-      const content = atob(fileData.content); // Decode base64 content
+      const content = atob(fileData.content);
 
-      // 2. Determine the new name and path
       const parts = file.name.split('.');
       const ext = parts.length > 1 ? `.${parts.pop()}` : '';
       const baseName = parts.join('.');
       const newName = `${baseName}-copy${ext}`;
       const newPath = `${path}/${newName}`;
 
-      // 3. Create the new duplicated file
       const createRes = await fetch('/api/file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -182,9 +175,8 @@ function FileExplorer({ repo }) {
         throw new Error(errorData.message);
       }
 
-      console.log('[FileExplorer.jsx] Duplication successful. Clearing selection and fetching files.');
-      // 4. Clear selection and refresh the file list to prevent UI bugs.
-      setSelectedFilePath(null); // Use path for selection
+      // Deselect and refresh to show the new file correctly
+      setSelectedFile(null);
       fetchFiles();
     } catch (err) {
       console.error('[FileExplorer.jsx] Error in handleDuplicate:', err);
@@ -355,9 +347,9 @@ function FileExplorer({ repo }) {
             .filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md')
             .map(file => (
               <FileTile
-                key={file.path}
+                key={file.sha}
                 file={file}
-                isSelected={selectedFilePath === file.path}
+                isSelected={selectedFile && selectedFile.sha === file.sha}
                 metadata={metadataCache[file.sha]}
                 onClick={handleFileClick}
                 onLongPress={(e) => handleLongPress(file, e)}

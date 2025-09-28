@@ -1,73 +1,180 @@
-.file-viewer-page {
+/* Using variables from legacy-site/css/style.css */
+:root {
+  --blue: #003971;
+  --green: #006300;
+  --light-green: #C7EA46;
+  --scarlet: #FF2400;
+  --light-grey: #F5F5F5;
+  --dark-grey: #333333;
+  --white: #FFFFFF;
+}
+
+.fileViewerPage {
+  background-color: var(--light-grey);
   padding: 1rem;
+  min-height: 100vh;
 }
 
-.file-viewer-container {
-  max-width: 900px;
+.fileViewerContainer {
+  max-width: 1200px;
   margin: 0 auto;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-.file-viewer-header {
+.viewerHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e0e0e0;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding: 0 1rem;
 }
 
-.file-viewer-header h1 {
-  font-size: 1.8rem;
-  color: #333;
+.viewerHeader h1 {
+  font-size: 2rem;
+  color: var(--dark-grey);
   margin: 0;
 }
 
-.action-buttons {
+.actionButtons {
   display: flex;
   gap: 1rem;
 }
 
-.viewer-button {
-  background-color: #f0f0f0;
-  color: #333;
+.viewerButton {
+  background-color: var(--white);
+  color: var(--dark-grey);
   border: 1px solid #ccc;
   padding: 0.6rem 1.2rem;
   border-radius: 8px;
   font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s, box-shadow 0.2s;
+  transition: all 0.2s;
 }
 
-.viewer-button:hover {
-  background-color: #e0e0e0;
+.viewerButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.edit-button {
-  background-color: #007aff;
-  color: white;
-  border-color: #007aff;
+.editButton {
+  background-color: var(--blue);
+  color: var(--white);
+  border-color: var(--blue);
 }
 
-.edit-button:hover {
-  background-color: #005ecb;
+.mainContent {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
 }
 
-.raw-content-viewer {
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+@media (min-width: 900px) {
+  .mainContent {
+    grid-template-columns: 1fr 400px;
+  }
+}
+
+.previewColumn {
+  background-color: var(--white);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.editorColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.editorCard {
+  background-color: var(--white);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.editorCard h3 {
+  font-size: 1.2rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+  color: var(--blue);
+}
+
+/* SERP Preview Styles */
+.serpPreview {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
   padding: 1rem;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
-  font-size: 0.9rem;
+  font-family: Arial, sans-serif;
 }
 
-/* Draft Banner Styles */
-.draft-banner {
+.serpPreviewTitle {
+  color: #1a0dab;
+  font-size: 1.25rem;
+  text-decoration: underline;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.serpPreviewUrl {
+  color: #006621;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.serpPreviewDescription {
+  color: #545454;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* Form Group Styles */
+.formGroup {
+  margin-bottom: 1rem;
+}
+
+.formGroup label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--dark-grey);
+}
+
+.formGroup input,
+.formGroup textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.charCounter {
+  display: block;
+  text-align: right;
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+.charCounter.overLimit {
+  color: var(--scarlet);
+  font-weight: bold;
+}
+
+/* Rich Results Section */
+.richResultsSection {
+  /* Placeholder styles for now */
+}
+
+/* Draft Banner */
+.draftBanner {
   background-color: #fffbe6;
   border: 1px solid #ffe58f;
   border-radius: 8px;
@@ -78,92 +185,55 @@
   align-items: center;
 }
 
-.draft-banner p {
+.draftBanner p {
   margin: 0;
   font-weight: 500;
   color: #8a6d3b;
 }
 
-.draft-actions {
+.draftActions {
   display: flex;
   gap: 1rem;
 }
 
-.publish-button {
-  background-color: #28a745;
+.publishButton {
+  background-color: var(--green);
   color: white;
-  border-color: #28a745;
+  border-color: var(--green);
 }
 
-.publish-button:hover {
-  background-color: #218838;
-}
-
-.discard-button {
-  background-color: #dc3545;
+.discardButton {
+  background-color: var(--scarlet);
   color: white;
-  border-color: #dc3545;
+  border-color: var(--scarlet);
 }
 
-.discard-button:hover {
-  background-color: #c82333;
-}
-
-@media (max-width: 600px) {
-  .file-viewer-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .action-buttons {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .viewer-button {
-    width: 100%;
-    text-align: center;
-  }
-
-  .draft-banner {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-
-  .viewer-button {
-    padding: 0.8rem; /* Larger padding for easier tapping */
-    font-size: 1rem;
-  }
-}
-
-.markdown-preview {
+/* Raw Content Viewer */
+.rawContentViewer {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
   padding: 1rem;
-  line-height: 1.6;
-  color: #333;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
+  font-size: 0.9rem;
 }
 
-.markdown-preview h1,
-.markdown-preview h2,
-.markdown-preview h3 {
+/* Markdown Preview */
+.markdownPreview h1,
+.markdownPreview h2,
+.markdownPreview h3 {
   border-bottom: 1px solid #eaecef;
   padding-bottom: 0.3em;
 }
-
-.markdown-preview p {
-  margin-top: 0;
-  margin-bottom: 1rem;
-}
-
-.markdown-preview code {
+.markdownPreview p { margin-bottom: 1rem; }
+.markdownPreview code {
   background-color: #f6f8fa;
   border-radius: 3px;
   padding: 0.2em 0.4em;
-  font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
 }
-
-.markdown-preview pre {
+.markdownPreview pre {
   background-color: #f6f8fa;
   border-radius: 3px;
   padding: 1rem;
