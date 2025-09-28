@@ -159,22 +159,3 @@ Jules map CSS modules directly to JSX without ambiguity. I’ll describe the arc
 
 
 
-### Hey Jules. tasks for you! (Sept 28)
-
-
-
-**On the `CreateModal` Refinements:**
-
-1.  **Cancel Button size:** Same size as create button
-2.  **Radio button** : can thevselected on be green inside.
-3.  **text input:** the inputed text color is currently white and the field is light grey. it would be easier to see if the inputed text was black
-
-**On the new `ContextMenu` Feature:**
-
-4.  **Menu Options:**  "Duplicate", "Delete", or "Move". The app already has the logic for "Duplicate", "Delete", and "Rename". "Move" is a more complex feature. start by implementing the context menu with **Rename, Delete, and Duplicate**, and we can treat "Move" as a separate, future enhancement.
-5.  **Menu Appearance:** For the menu's design, im picturing a simple, clean vertical list of options that appears on a white card with a subtle shadow, similar to a standard right-click menu on a desktop.
-
-
-
-Thanks,
-Jacques

@@ -21,7 +21,7 @@ function FileExplorer({ repo }) {
   const [path, setPath] = useState('src/pages');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFilePath, setSelectedFilePath] = useState(null); // Use path for selection
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [fileToDelete, setFileToDelete] = useState(null);
@@ -58,7 +58,7 @@ function FileExplorer({ repo }) {
 
   const fetchFiles = useCallback(() => {
     setLoading(true);
-    setSelectedFile(null);
+    setSelectedFilePath(null); // Use path for selection
     setMetadataCache({});
     setReadmeContent(null); // Reset README content on new folder load
     setReadmeLoading(false); // Reset loading state
@@ -118,20 +118,24 @@ function FileExplorer({ repo }) {
   }, [fetchFiles]);
 
   const handleFileClick = (file) => {
-    if (selectedFile && selectedFile.sha === file.sha) {
+    if (selectedFilePath === file.path) {
       handleOpen(file);
     } else {
-      setSelectedFile(file);
+      setSelectedFilePath(file.path);
     }
   };
 
   const handleOpen = (fileToOpen) => {
-    const file = fileToOpen || selectedFile;
+    // If no file is passed, find it from the state using the path
+    const file = fileToOpen || files.find(f => f.path === selectedFilePath);
     if (!file) return;
+
     if (file.type === 'dir') {
       setPath(file.path);
+      setSelectedFilePath(null); // Deselect when navigating into a folder
     } else {
-      navigate(`/explorer/file?path=${file.path}`);
+      // Navigate to the editor page for files
+      navigate(`/edit/${repo}/${file.path}`);
     }
   };
 
@@ -141,7 +145,8 @@ function FileExplorer({ repo }) {
 
   const handleDuplicate = async (fileToDuplicate) => {
     console.log('[FileExplorer.jsx] handleDuplicate started for:', fileToDuplicate.name);
-    const file = fileToDuplicate || selectedFile;
+    // If no file is passed, find it from the state using the path
+    const file = fileToDuplicate || files.find(f => f.path === selectedFilePath);
     if (!file || file.type === 'dir') return;
 
     try {
@@ -176,7 +181,7 @@ function FileExplorer({ repo }) {
 
       console.log('[FileExplorer.jsx] Duplication successful. Clearing selection and fetching files.');
       // 4. Clear selection and refresh the file list to prevent UI bugs.
-      setSelectedFile(null);
+      setSelectedFilePath(null); // Use path for selection
       fetchFiles();
     } catch (err) {
       console.error('[FileExplorer.jsx] Error in handleDuplicate:', err);
@@ -345,9 +350,9 @@ function FileExplorer({ repo }) {
         <div className={styles.fileGrid}>
           {Array.isArray(files) && files.filter(file => !file.name.startsWith('_')).map(file => (
             <FileTile
-              key={file.sha}
+              key={file.path}
               file={file}
-              isSelected={selectedFile && selectedFile.sha === file.sha}
+              isSelected={selectedFilePath === file.path}
               metadata={metadataCache[file.sha]}
               onClick={handleFileClick}
               onLongPress={(e) => handleLongPress(file, e)}
