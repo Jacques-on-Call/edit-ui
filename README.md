@@ -160,3 +160,24 @@ Jules map CSS modules directly to JSX without ambiguity. I’ll describe the arc
 
 ## Jules task
 look at the ideal file explorer image  https://imgur.com/a/tpbF9H8 it clearly shows svg files and folders with blue header and footer with a green circle + create button and a house (return to root ) button. file name (grey) and details (light grey) with space between them.
+
+---
+### Hey Jacques, it's Jules. Questions for you! (Sept 28)
+
+I'm sorry the system is glitching again. As requested, here are my clarifying questions for the next set of tasks. I've received your feedback on the `CreateModal` and the request for a new `ContextMenu`. Before I create a plan, I just want to make sure I understand the details perfectly.
+
+**On the `CreateModal` Refinements:**
+
+1.  **Cancel Button Color:** You mentioned making the "Cancel" button red. Should I use a standard, noticeable red (like a `#dc3545` hex code), or do you have a specific shade in mind?
+2.  **Path Preview:** The idea to show the creation path (e.g., `Home/.../new-file-name`) under the input field is a great one. Should this path preview update in real-time as the user types a name into the input field?
+3.  **Light Grey Fields:** You'd like the input field and radio buttons to be light grey. To be precise, do you mean the background color of the input field itself and the area around the radio buttons should be light grey?
+
+**On the new `ContextMenu` Feature:**
+
+4.  **Menu Options:** You suggested "Duplicate", "Delete", or "Move". The app already has the logic for "Duplicate", "Delete", and "Rename". "Move" is a more complex feature. Would it be acceptable to start by implementing the context menu with **Rename, Delete, and Duplicate**, and we can treat "Move" as a separate, future enhancement?
+5.  **Menu Appearance:** For the menu's design, are you picturing a simple, clean vertical list of options that appears on a white card with a subtle shadow, similar to a standard right-click menu on a desktop?
+
+I'll wait for your answers before creating the plan. This will ensure we get it right.
+
+Thanks,
+Jules

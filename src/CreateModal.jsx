@@ -78,6 +78,9 @@ function CreateModal({ path, repo, onClose, onCreate }) {
               placeholder="Enter name..."
               autoFocus
             />
+            <div className={styles.pathPreview}>
+              Will be created at: {path.replace('src/pages', 'Home')}/{name}
+            </div>
           </div>
           <div className={styles.formGroup}>
             <label>Type</label>

@@ -66,6 +66,18 @@
   stroke: white;
 }
 
+/* Secondary action button (e.g., Cancel) */
+.secondary {
+  background-color: #dc3545; /* The requested red color from legacy styles */
+  color: white !important; /* Ensure text is readable */
+  border-color: #dc3545;
+}
+
+.secondary:hover:not(:disabled) {
+  background-color: #c82333; /* A slightly darker red on hover */
+  border-color: #bd2130;
+}
+
 /* Icon-only button (e.g., Home button in toolbar) */
 .icon {
   background: none;

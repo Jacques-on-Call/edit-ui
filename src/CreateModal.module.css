@@ -48,12 +48,21 @@
   border-radius: 4px;
   font-size: 1rem;
   box-sizing: border-box;
+  background-color: #f5f5f5; /* Light grey background for the input field */
 }
 
 .formGroup input[type="text"]:focus {
   outline: none;
   border-color: #007bff;
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.pathPreview {
+  font-size: 0.8rem;
+  color: #6c757d; /* A muted, secondary grey color */
+  margin-top: 0.5rem;
+  height: 1em; /* Reserve space to prevent layout shifting as user types */
+  word-break: break-all;
 }
 
 .radioGroup {
@@ -66,6 +75,11 @@
   align-items: center;
   gap: 0.5rem;
   font-weight: normal;
+}
+
+/* Style the radio button's inner dot */
+.radioGroup input[type="radio"] {
+  accent-color: #ccc; /* A lighter grey for the dot */
 }
 
 .modalActions {
