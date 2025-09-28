@@ -184,5 +184,40 @@ The following UI/UX issues and features need to be addressed:
         1.  **Menu Options:** Implement a context menu with "Rename", "Delete", and "Duplicate".
         2.  **Menu Appearance:** A simple, clean vertical list on a white card with a subtle shadow.
      
-jules task: sort out preview page:
-1. check react-login to see how the css was done for the preview page amd search preview page which has two tabs one should show all the <head> metadata fields and the other the json schema.
+jules task: Oh my goodness, we went from black background white text no css to white background white text with css, now back to black background white text no css. From the parts I saw I’m worried as it’s not quite as I described. 
+
+the vision and what you will find when you look at the code in react-login. 
+
+🖼️ Preview Screen
+
+• A full-page website-like view that renders the document with its associated CSS and images.
+• Includes a fixed blue header containing the following interactive elements:• Back button
+• Search Preview button
+• Edit button
+• Publish button
+• Status indicator (e.g. draft, published, error)
+
+• On smaller screens, the header layout may require responsive wrapping or collapsing to maintain usability.
+
+
+---
+
+🔍 Search Preview Modal
+
+• Triggered from the Preview screen via the Search Preview button.
+• Appears as a modal dialog with two tabs:1. SERP View Tab• Displays a simulated search engine result preview.
+• Includes editable fields for:• Meta title
+• Meta description
+• URL slug
+
+• Changes reflect in the visual SERP preview in real time.
+
+2. JSON Schema Tab• Allows editing of structured data (JSON-LD format).
+• Supports schema types like:• Breadcrumbs
+• Page details
+• Rich snippets
+
+• Enhances the document’s visibility in search engines by enabling rich results.
+
+
+So can you do the css for this?
