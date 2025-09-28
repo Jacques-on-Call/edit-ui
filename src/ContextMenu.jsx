@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import styles from './ContextMenu.module.css';
 
-function ContextMenu({ x, y, file, onClose, onRename, onDelete, onDuplicate }) {
+function ContextMenu({ x, y, file, onClose, onRename, onDelete, onDuplicate, onMove }) {
   const menuRef = useRef(null);
 
   // Close menu if clicking outside
@@ -35,6 +35,7 @@ function ContextMenu({ x, y, file, onClose, onRename, onDelete, onDuplicate }) {
           {file.type !== 'dir' && (
             <li onClick={() => handleAction(onDuplicate)}>Duplicate</li>
           )}
+          <li onClick={() => handleAction(onMove)}>Move</li>
         </ul>
       </div>
     </div>

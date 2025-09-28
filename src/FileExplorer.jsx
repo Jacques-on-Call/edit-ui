@@ -11,6 +11,7 @@ import CreateModal from './CreateModal';
 import ContextMenu from './ContextMenu';
 import ConfirmDialog from './ConfirmDialog';
 import RenameModal from './RenameModal';
+import MoveModal from './MoveModal'; // Import the new MoveModal
 import ReadmeDisplay from './ReadmeDisplay';
 import * as cache from './cache';
 
@@ -25,6 +26,7 @@ function FileExplorer({ repo }) {
   const [contextMenu, setContextMenu] = useState(null);
   const [fileToDelete, setFileToDelete] = useState(null);
   const [fileToRename, setFileToRename] = useState(null);
+  const [fileToMove, setFileToMove] = useState(null); // State for the move modal
   const [metadataCache, setMetadataCache] = useState({});
   const [readmeContent, setReadmeContent] = useState(null);
   const [isReadmeLoading, setReadmeLoading] = useState(false);
@@ -142,24 +144,36 @@ function FileExplorer({ repo }) {
     if (!file || file.type === 'dir') return;
 
     try {
-      const res = await fetch(`/api/file?repo=${repo}&path=${file.path}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Could not fetch file content.');
-      const content = await res.text();
+      // 1. Read the original file's content correctly
+      const readRes = await fetch(`/api/file?repo=${repo}&path=${file.path}`, { credentials: 'include' });
+      if (!readRes.ok) {
+        const errorData = await readRes.json().catch(() => ({ message: 'Could not fetch file content.' }));
+        throw new Error(errorData.message);
+      }
+      const fileData = await readRes.json();
+      const content = atob(fileData.content); // Decode base64 content
 
+      // 2. Determine the new name and path
       const parts = file.name.split('.');
       const ext = parts.length > 1 ? `.${parts.pop()}` : '';
       const baseName = parts.join('.');
       const newName = `${baseName}-copy${ext}`;
       const newPath = `${path}/${newName}`;
 
+      // 3. Create the new duplicated file
       const createRes = await fetch('/api/file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ repo, path: newPath, content }),
       });
-      if (!createRes.ok) throw new Error('Could not create duplicate file.');
 
+      if (!createRes.ok) {
+        const errorData = await createRes.json().catch(() => ({ message: 'Could not create duplicate file.' }));
+        throw new Error(errorData.message);
+      }
+
+      // 4. Refresh the file list to show the new file
       fetchFiles();
     } catch (err) {
       setError(err.message);
@@ -210,6 +224,10 @@ function FileExplorer({ repo }) {
     setFileToRename(file);
   };
 
+  const handleMoveRequest = (file) => {
+    setFileToMove(file);
+  };
+
   const handleToggleReadme = () => {
     setReadmeVisible(prev => !prev);
   };
@@ -218,30 +236,87 @@ function FileExplorer({ repo }) {
     const oldPath = file.path;
     const newPath = oldPath.substring(0, oldPath.lastIndexOf('/') + 1) + newName;
 
-    const readRes = await fetch(`/api/file?repo=${repo}&path=${oldPath}`, { credentials: 'include' });
-    if (!readRes.ok) throw new Error('Failed to read original file.');
-    const content = await readRes.text();
+    try {
+      // 1. Read the original file's content correctly
+      const readRes = await fetch(`/api/file?repo=${repo}&path=${oldPath}`, { credentials: 'include' });
+      if (!readRes.ok) {
+        const errorData = await readRes.json().catch(() => ({ message: 'Failed to read original file.' }));
+        throw new Error(errorData.message);
+      }
+      const fileData = await readRes.json();
+      const content = atob(fileData.content); // Decode base64 content
 
-    const createRes = await fetch('/api/file', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ repo, path: newPath, content, sha: file.sha }),
-    });
-    if (!createRes.ok) throw new Error('Failed to create renamed file.');
+      // 2. Create the new file with the same content
+      const createRes = await fetch('/api/file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ repo, path: newPath, content }), // Send plain text content
+      });
 
-    const deleteRes = await fetch(`/api/file?repo=${repo}&path=${oldPath}&sha=${file.sha}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-    if (!deleteRes.ok) {
-      alert('Failed to delete the old file. You may now have a duplicate.');
-    } else {
-      cache.remove(file.sha); // Invalidate on successful move
+      if (!createRes.ok) {
+        const errorData = await createRes.json().catch(() => ({ message: 'Failed to create renamed file.' }));
+        throw new Error(errorData.message);
+      }
+
+      // 3. Delete the old file
+      const deleteRes = await fetch(`/api/file?repo=${repo}&path=${oldPath}&sha=${file.sha}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!deleteRes.ok) {
+        alert('Failed to delete the old file. You may now have a duplicate.');
+      } else {
+        cache.remove(file.sha); // Invalidate cache on successful move
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      // 4. Always close the modal and refresh the file list
+      setFileToRename(null);
+      fetchFiles();
     }
+  };
 
-    setFileToRename(null);
-    fetchFiles();
+  const handleMoveConfirm = async (file, newPath) => {
+    const oldPath = file.path;
+    const finalNewPath = newPath.endsWith('/') ? `${newPath}${file.name}` : `${newPath}/${file.name}`;
+
+    try {
+      // 1. Read the original file's content
+      const readRes = await fetch(`/api/file?repo=${repo}&path=${oldPath}`, { credentials: 'include' });
+      if (!readRes.ok) throw new Error('Failed to read original file.');
+      const fileData = await readRes.json();
+      const content = atob(fileData.content);
+
+      // 2. Create the new file at the destination
+      const createRes = await fetch('/api/file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ repo, path: finalNewPath, content }),
+      });
+      if (!createRes.ok) throw new Error('Failed to create file at new location.');
+
+      // 3. Delete the old file
+      const deleteRes = await fetch(`/api/file?repo=${repo}&path=${oldPath}&sha=${file.sha}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!deleteRes.ok) {
+        // This is a partial failure state, alert the user.
+        alert('Failed to delete the old file. You may now have a duplicate.');
+      } else {
+        cache.remove(file.sha); // Invalidate cache on successful move
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      // 4. Always close the modal and refresh the file list
+      setFileToMove(null);
+      fetchFiles();
+    }
   };
 
   if (loading) return <div>Loading files...</div>;
@@ -303,6 +378,7 @@ function FileExplorer({ repo }) {
             onDelete={handleDeleteRequest}
           onDuplicate={handleDuplicate}
           onShare={handleShare}
+          onMove={handleMoveRequest}
         />
       )}
       {fileToDelete && (
@@ -317,6 +393,13 @@ function FileExplorer({ repo }) {
           file={fileToRename}
           onClose={() => setFileToRename(null)}
           onRename={handleRenameConfirm}
+        />
+      )}
+      {fileToMove && (
+        <MoveModal
+          file={fileToMove}
+          onClose={() => setFileToMove(null)}
+          onMove={handleMoveConfirm}
         />
       )}
     </div>
