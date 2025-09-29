@@ -8,22 +8,30 @@ import styles from './FileViewer.module.css';
 import { unifiedParser } from './utils/unifiedParser';
 import { stringifyAstroFile } from './utils/astroFileParser';
 import { BackIcon, SearchIcon, EditIcon } from './icons';
-import siteStyles from '../../src/styles/style.css?raw';
+
+// Dynamically import all CSS files from the styles directory
+const siteStyles = import.meta.glob('/src/styles/*.css', { as: 'raw' });
 
 function FileViewer({ repo, path, branch }) {
   useEffect(() => {
-    const styleElement = document.createElement('style');
-    styleElement.id = 'site-styles';
-    styleElement.innerHTML = siteStyles;
-    document.head.appendChild(styleElement);
+    const styleElements = [];
+
+    // Inject all fetched styles into the head
+    Promise.all(Object.values(siteStyles).map(load => load())).then(styles => {
+      styles.forEach((styleContent, i) => {
+        const styleElement = document.createElement('style');
+        styleElement.id = `site-style-${i}`;
+        styleElement.innerHTML = styleContent;
+        document.head.appendChild(styleElement);
+        styleElements.push(styleElement);
+      });
+    });
 
     document.body.classList.add('light-theme');
 
     return () => {
-      const style = document.getElementById('site-styles');
-      if (style) {
-        document.head.removeChild(style);
-      }
+      // Cleanup: remove all added style elements
+      styleElements.forEach(el => document.head.removeChild(el));
       document.body.classList.remove('light-theme');
     };
   }, []);
@@ -202,15 +210,20 @@ function FileViewer({ repo, path, branch }) {
             {isDraft ? 'Draft' : 'Published'}
           </span>
           <button className={styles.headerButton} onClick={() => navigate('/explorer')} aria-label="Back to explorer">
-            <BackIcon className="w-5 h-5" />
+            <BackIcon />
+            <span>Back</span>
           </button>
           <button className={styles.headerButton} onClick={() => setIsHeadEditorOpen(true)} aria-label="Open search preview">
-            <SearchIcon className="w-5 h-5" />
+            <SearchIcon />
+            <span>Search Preview</span>
           </button>
           <button className={styles.headerButton} onClick={() => navigate(`/edit/${repo}/${path}`)} aria-label="Edit file">
-            <EditIcon className="w-5 h-5" />
+            <EditIcon />
+            <span>Edit</span>
           </button>
-          <button className={`${styles.headerButton} ${styles.publishButton}`} onClick={handlePublish} disabled={!isDraft}>Publish</button>
+          <button className={`${styles.headerButton} ${styles.publishButton}`} onClick={handlePublish} disabled={!isDraft}>
+            Publish
+          </button>
         </div>
       </header>
 

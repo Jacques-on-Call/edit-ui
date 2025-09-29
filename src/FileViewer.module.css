@@ -1,99 +1,148 @@
+/*
+ * Apple-inspired UI Refresh
+ * File: /easy-seo/src/FileViewer.module.css
+ * Desc: Modern, clean, and responsive styles for the FileViewer component.
+ */
+
+:root {
+  --app-bg: #f6f6f7;
+  --header-bg: #ffffff;
+  --content-bg: #ffffff;
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --blue-accent: #007aff;
+  --green-accent: #34c759;
+  --red-accent: #ff3b30;
+  --border-color: #d2d2d7;
+  --hover-bg: #f5f5f7;
+  --button-radius: 8px;
+  --content-radius: 12px;
+  --shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.03);
+}
+
 .fileViewerPage {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #f8f9fa;
+  background-color: var(--app-bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .viewerHeaderBlue {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  background-color: #007aff;
-  color: white;
+  padding: 12px 24px;
+  background-color: var(--header-bg);
+  color: var(--text-primary);
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--border-color);
+  height: 60px;
+  box-sizing: border-box;
 }
 
 .headerTitle {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem; /* 12px */
 }
 
 .statusIndicator {
-  font-size: 0.9rem;
-  padding: 4px 10px;
+  font-size: 0.8125rem; /* 13px */
+  padding: 5px 12px;
   border-radius: 12px;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--hover-bg);
+  color: var(--text-secondary);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
 }
 
 .headerButton {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   background-color: transparent;
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-size: 0.9rem;
+  color: var(--blue-accent);
+  border: none;
+  padding: 8px 12px;
+  border-radius: var(--button-radius);
+  font-size: 0.9rem; /* 14px */
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .headerButton:hover {
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: var(--hover-bg);
+}
+
+.headerButton svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.5;
 }
 
 .publishButton {
-  background-color: #34c759;
-  border-color: #34c759;
+  background-color: var(--blue-accent);
+  color: white;
+}
+
+.publishButton:hover {
+  background-color: #0071e3;
 }
 
 .publishButton:disabled {
-  opacity: 0.5;
+  background-color: #a0c3e8;
+  color: #e8f0f8;
   cursor: not-allowed;
 }
 
 .fileViewerContainer {
   flex-grow: 1;
-  padding: 2rem;
+  padding: 2rem 3rem;
   overflow-y: auto;
-  background-color: #ffffff;
-  max-width: 900px;
+  background-color: var(--content-bg);
+  max-width: 960px;
   margin: 2rem auto;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-radius: var(--content-radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
 }
 
 .markdownPreview, .rawContentViewer {
-  line-height: 1.6;
+  line-height: 1.7;
+  color: var(--text-primary);
 }
 
 .rawContentViewer {
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 1rem;
+  background-color: #f9f9f9;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
   white-space: pre-wrap;
   word-wrap: break-word;
-  font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
+  font-family: "SF Mono", "Menlo", "Courier New", monospace;
   font-size: 0.9rem;
 }
 
 .draftBanner {
-  background-color: #fffbe6;
-  border: 1px solid #ffe58f;
-  border-radius: 8px;
+  background-color: #fff9e6;
+  border: 1px solid #ffd666;
+  border-radius: var(--content-radius);
   padding: 1rem 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -102,7 +151,7 @@
 .draftBanner p {
   margin: 0;
   font-weight: 500;
-  color: #8a6d3b;
+  color: #594500;
 }
 
 .draftActions {
@@ -111,47 +160,70 @@
 }
 
 .viewerButton {
-  background-color: #f0f0f0;
-  color: #333;
-  border: 1px solid #ccc;
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   padding: 0.6rem 1.2rem;
-  border-radius: 8px;
+  border-radius: var(--button-radius);
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.2s, box-shadow 0.2s;
 }
 
+.viewerButton:hover {
+  border-color: #b3b3b3;
+}
+
 .discardButton {
-  background-color: #dc3545;
+  background-color: var(--red-accent);
   color: white;
-  border-color: #dc3545;
+  border-color: var(--red-accent);
 }
 
 .discardButton:hover {
-  background-color: #c82333;
+  background-color: #e02c22;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 800px) {
   .viewerHeaderBlue {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 1rem;
+    padding: 12px 16px;
+  }
+
+  .headerTitle {
+    display: none; /* Hide title on small screens */
   }
 
   .headerActions {
     width: 100%;
-    flex-wrap: wrap;
-    justify-content: flex-start;
+    justify-content: space-evenly;
   }
 
   .headerButton {
-    padding: 0.5rem 0.8rem;
-    font-size: 0.85rem;
+    padding: 8px;
+  }
+
+  .headerButton span {
+    display: none; /* Hide text label, show only icon */
   }
 
   .fileViewerContainer {
-    padding: 1rem;
+    padding: 1.5rem;
     margin: 1rem;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .headerActions {
+    gap: 0.5rem;
+  }
+  .headerButton {
+    flex-grow: 1; /* Make buttons fill space */
+    justify-content: center;
+  }
+  .statusIndicator {
+    display: none;
   }
 }

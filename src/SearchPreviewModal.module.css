@@ -1,170 +1,225 @@
+/*
+ * Apple-inspired UI Refresh
+ * File: /easy-seo/src/SearchPreviewModal.module.css
+ * Desc: Modern, clean, and responsive styles for the Search Preview Modal.
+ */
+
+:root {
+  --app-bg: #f6f6f7;
+  --header-bg: #ffffff;
+  --content-bg: #ffffff;
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --blue-accent: #007aff;
+  --border-color: #d2d2d7;
+  --hover-bg: #f5f5f7;
+  --button-radius: 8px;
+  --content-radius: 12px;
+  --shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
 .modalBackdrop {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
 }
 
 .modalContent {
-  background-color: white;
-  border-radius: 8px;
+  background-color: var(--header-bg);
+  border-radius: var(--content-radius);
   width: 90%;
-  max-width: 700px;
+  max-width: 720px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow);
   max-height: 90vh;
+  border: 1px solid var(--border-color);
 }
 
 .modalHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e5e5;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .modalHeader h2 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .closeButton {
   background: none;
   border: none;
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   cursor: pointer;
-  color: #888;
+  color: var(--text-secondary);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.closeButton:hover {
+  background-color: var(--hover-bg);
 }
 
 .tabContainer {
   display: flex;
-  border-bottom: 1px solid #e5e5e5;
-  padding: 0 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 24px;
+  background-color: #fbfbfb; /* Slightly off-white */
 }
 
 .tabButton {
   background: none;
   border: none;
-  padding: 1rem 0.5rem;
+  padding: 12px 0;
+  margin-right: 24px;
   cursor: pointer;
-  font-size: 1rem;
-  margin-right: 1.5rem;
-  color: #555;
-  border-bottom: 3px solid transparent;
-  transform: translateY(1px);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  transform: translateY(1px); /* Aligns with border */
 }
 
 .tabButton.active {
-  color: #003971; /* --blue */
-  border-bottom-color: #003971; /* --blue */
+  color: var(--text-primary);
+  border-bottom-color: var(--blue-accent);
 }
 
 .tabContent {
-  padding: 1.5rem;
+  padding: 24px;
   overflow-y: auto;
   flex-grow: 1;
 }
 
 .modalFooter {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #e5e5e5;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
   text-align: right;
+  background-color: #fbfbfb;
 }
 
 .saveButton {
-  background-color: #006300; /* --green */
+  background-color: var(--blue-accent);
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  font-size: 1rem;
+  padding: 10px 20px;
+  border-radius: var(--button-radius);
+  font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .saveButton:hover {
-  background-color: #C7EA46; /* --light-green */
-  color: #003971;
+  background-color: #0071e3;
 }
 
-/* Styles for SERP View Tab */
 .inputGroup {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .inputGroup label {
   display: block;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: var(--text-primary);
+  font-size: 0.9rem;
 }
 
 .inputField,
 .textareaField {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--button-radius);
   font-size: 1rem;
-  box-sizing: border-box; /* Important for width calculation */
+  box-sizing: border-box;
+  background-color: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.inputField:focus,
+.textareaField:focus {
+  outline: none;
+  border-color: var(--blue-accent);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
 }
 
 .textareaField {
   resize: vertical;
-  min-height: 80px;
+  min-height: 100px;
+  font-family: inherit;
 }
 
 .divider {
   border: none;
-  border-top: 1px solid #e5e5e5;
-  margin: 1.5rem 0;
+  border-top: 1px solid var(--border-color);
+  margin: 2rem 0;
 }
 
-/* Styles for the SERP Preview component */
 .serpPreview {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 1rem;
+  background-color: var(--app-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--content-radius);
+  padding: 1rem 1.5rem;
   font-family: Arial, sans-serif;
 }
 
 .serpUrl {
   color: #202124;
-  font-size: 0.875rem; /* 14px */
+  font-size: 0.875rem;
 }
 
 .serpTitle {
   color: #1a0dab;
-  font-size: 1.25rem; /* 20px */
-  font-weight: normal;
+  font-size: 1.25rem;
+  font-weight: 400;
   margin: 0.25rem 0;
   text-decoration: none;
 }
 
 .serpDescription {
   color: #4d5156;
-  font-size: 0.875rem; /* 14px */
+  font-size: 0.875rem;
   line-height: 1.57;
   margin: 0;
 }
 
-/* Styles for JSON Schema Tab */
 .jsonEditor {
   width: 100%;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
+  border: 1px solid var(--border-color);
+  border-radius: var(--button-radius);
+  font-family: "SF Mono", "Menlo", "Courier New", monospace;
   font-size: 0.9rem;
   padding: 1rem;
   box-sizing: border-box;
-  background-color: #f9f9f9;
+  background-color: #fafafa;
   color: #333;
   resize: vertical;
+  min-height: 200px;
+}
+
+.jsonEditor:focus {
+  outline: none;
+  border-color: var(--blue-accent);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
 }
