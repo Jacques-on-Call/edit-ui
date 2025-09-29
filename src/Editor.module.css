@@ -1,69 +1,60 @@
-/* A robust, full-page flexbox layout for the editor */
-.editor-container {
+/*
+ * Styles for the main Editor component.
+ * Uses a flexbox layout to create a full-page structure with a fixed header and footer.
+ */
+.editorContainer {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Use 100vh to ensure it fills the full screen height */
+  height: 100vh;
   width: 100%;
-  background-color: #ffffff;
-  box-sizing: border-box;
+  background-color: #f8f9fa; /* A light, neutral background */
 }
 
-.editor-header {
-  /* This is a flex item. Its height will be determined by its content. */
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  flex-shrink: 0;
-  background-color: #005A9E;
-  color: white;
+.editorHeader {
+  flex-shrink: 0; /* Prevents the header from shrinking */
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
   z-index: 10;
-  width: 100%;
-  box-sizing: border-box; /* Include padding in width */
+  padding: 4px 0;
 }
 
-/* This is the main content area that holds the editor */
-.sections-list {
-  flex-grow: 1; /* Allows the content area to fill all available vertical space */
-  overflow-y: auto; /* Makes ONLY this area scrollable */
-  background-color: #ffffff;
-  display: flex; /* This will allow the editor inside to grow */
+.sectionsList {
+  flex-grow: 1; /* Allows the content area to fill all available space */
+  overflow-y: auto; /* Makes only this area scrollable */
+  padding: 2rem 0; /* Add some vertical padding */
+  display: flex;
   flex-direction: column;
 }
 
-/* This ensures the TinyMCE instance fills its container */
-.tox-tinymce {
+/* This targets the TinyMCE editor instance itself */
+:global(.tox-tinymce) {
   flex-grow: 1 !important;
-  border: none !important; /* Remove TinyMCE's default border */
-  height: 100% !important; /* Make sure it fills the container */
+  border: none !important;
+  height: 100% !important;
 }
 
-.editor-footer {
-  /* Use sticky positioning to keep the toolbar at the bottom of the flex container.
-     This is more robust than simple flex-end and behaves well with on-screen keyboards. */
+.editorFooter {
+  flex-shrink: 0; /* Prevents the footer from shrinking */
   position: sticky;
   bottom: 0;
   z-index: 10;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0.5rem 0;
-  flex-shrink: 0;
-  background-color: #005A9E !important;
-  color: white;
-  width: 100%;
-  box-sizing: border-box;
+  background-color: #ffffff;
+  border-top: 1px solid #e0e0e0;
+  padding: 4px 0;
 }
 
-.loading-spinner {
+.loadingSpinner {
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #005A9E;
+  border-top: 4px solid #007aff;
   border-radius: 50%;
   width: 40px;
   height: 40px;
   animation: spin 1s linear infinite;
   margin: auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 @keyframes spin {

@@ -50,9 +50,25 @@ const SectionEditor = ({ initialContent, onContentChange, onInit, onNodeChange, 
             ],
             toolbar: false, // The custom toolbar is in `TopToolbar.jsx`
 
-            // Remove default body margin for an edge-to-edge feel on mobile.
-            // Add a little padding so text isn't flush with the screen edge.
-            content_style: 'body { font-size:16px; margin: 0; padding: 0 1rem; }',
+            /*
+             * This content_style is crucial for the "Google Docs" or "frameless page" look.
+             * It styles the body *inside* the editor's iframe.
+             * The surrounding gray area is provided by the parent component's CSS.
+             */
+            content_style: `
+                body {
+                    background-color: #ffffff;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+                    font-size: 16px;
+                    line-height: 1.6;
+                    color: #1d1d1f;
+                    max-width: 820px;
+                    margin: 0 auto;
+                    padding: 2.5rem;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
+                    border-radius: 3px;
+                }
+            `,
             placeholder: placeholder || 'Start writing your content here...',
             license_key: 'gpl',
             skin: false,
