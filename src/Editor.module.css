@@ -21,9 +21,11 @@
  */
 .editorFooter {
   position: fixed;
-  bottom: env(keyboard-inset-height, 0px);
+  bottom: 0;
   left: 0;
   right: 0;
   z-index: 10;
-  transition: bottom 0.2s ease-out; /* Animate the change in position */
+  /* Use padding to create space for the keyboard, which is more robust */
+  padding-bottom: env(keyboard-inset-height, 0px);
+  transition: padding-bottom 0.2s ease-out; /* Animate the change */
 }

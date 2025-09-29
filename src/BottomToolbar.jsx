@@ -17,7 +17,7 @@ const BottomToolbar = ({ editor, activeFormats = {} }) => {
   };
 
   // Define Tailwind classes for buttons
-  const baseButtonClasses = "p-2 rounded-lg transition-colors duration-200 hover:bg-white/20 disabled:text-white/40 disabled:cursor-not-allowed disabled:hover:bg-transparent";
+  const baseButtonClasses = "text-white p-2 rounded-lg transition-colors duration-200 hover:bg-white/20 disabled:text-white/40 disabled:cursor-not-allowed disabled:hover:bg-transparent";
   const activeButtonClasses = "bg-white/30";
 
   return (
