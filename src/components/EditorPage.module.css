@@ -1,0 +1,7 @@
+.editorLayout {
+  @apply flex flex-col h-screen bg-gray-100;
+}
+
+.mainContent {
+  @apply flex-grow overflow-y-auto p-4;
+}
