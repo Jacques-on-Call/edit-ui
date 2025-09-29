@@ -98,6 +98,27 @@ export const MinusIcon = ({ className = 'w-6 h-6', ...props }) => (
   </svg>
 );
 
+export const BookOpenIcon = ({ className = 'w-6 h-6', ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.25278C12 6.25278 12 2.75 12 2.75C12 2.75 17.5 2.75 17.5 2.75C17.5 2.75 17.5 13.25 17.5 13.25C17.5 13.25 12 13.25 12 13.25" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.25278C12 6.25278 12 2.75 12 2.75C12 2.75 6.5 2.75 6.5 2.75C6.5 2.75 6.5 13.25 6.5 13.25C6.5 13.25 12 13.25 12 13.25" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 17.75C16 17.75 12 15.75 8 17.75" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.25278V13.25" />
+  </svg>
+);
+
+export const ChevronUpIcon = ({ className = 'w-6 h-6', ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+  </svg>
+);
+
+export const ChevronDownIcon = ({ className = 'w-6 h-6', ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+  </svg>
+);
+
 // Generic Icon Component (default export)
 const Icon = ({ name, ...props }) => {
   switch (name) {
@@ -133,6 +154,12 @@ const Icon = ({ name, ...props }) => {
       return <ListIcon {...props} />;
     case 'minus':
       return <MinusIcon {...props} />;
+    case 'book-open':
+      return <BookOpenIcon {...props} />;
+    case 'chevron-up':
+      return <ChevronUpIcon {...props} />;
+    case 'chevron-down':
+      return <ChevronDownIcon {...props} />;
     default:
       return null; // Or a default icon
   }

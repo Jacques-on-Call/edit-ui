@@ -35,12 +35,12 @@
 
 .icon {
   margin-bottom: 12px;
+  color: #8e8e93; /* A neutral gray for icons */
 }
 
 .icon svg {
   width: 48px;
   height: 48px;
-  /* The color is now controlled by the SVG itself, no CSS color rule needed */
 }
 
 .name {
