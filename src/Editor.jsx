@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Buffer } from 'buffer';
 import { marked } from 'marked';
@@ -18,6 +18,24 @@ const Editor = () => {
   const [error, setError] = useState(null);
   const [editorInstance, setEditorInstance] = useState(null);
   const [activeFormats, setActiveFormats] = useState({});
+  const [contentStyle, setContentStyle] = useState({});
+  const headerRef = useRef(null);
+  const footerRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const updatePadding = () => {
+      const headerHeight = headerRef.current ? headerRef.current.offsetHeight : 0;
+      const footerHeight = footerRef.current ? footerRef.current.offsetHeight : 0;
+      setContentStyle({
+        paddingTop: `${headerHeight}px`,
+        paddingBottom: `${footerHeight}px`,
+      });
+    };
+
+    updatePadding();
+    window.addEventListener('resize', updatePadding);
+    return () => window.removeEventListener('resize', updatePadding);
+  }, []);
 
   const pathWithRepo = location.pathname.replace('/edit/', '');
   const pathParts = pathWithRepo.split('/');
@@ -136,10 +154,10 @@ const Editor = () => {
 
   return (
     <div className={styles.editorContainer}>
-      <div className={styles.editorHeader}>
+      <div className={styles.editorHeader} ref={headerRef}>
         <TopToolbar editor={editorInstance} activeFormats={activeFormats} onDone={handleDone} />
       </div>
-      <div className={styles.sectionsList}>
+      <div className={styles.sectionsList} style={contentStyle}>
         <SectionEditor
           initialContent={initialContent}
           onContentChange={handleContentChange}
@@ -147,7 +165,7 @@ const Editor = () => {
           onNodeChange={handleNodeChange}
         />
       </div>
-      <div className={styles.editorFooter}>
+      <div className={styles.editorFooter} ref={footerRef}>
         <BottomToolbar editor={editorInstance} activeFormats={activeFormats} />
       </div>
     </div>

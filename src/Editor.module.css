@@ -11,6 +11,10 @@
 }
 
 .editorHeader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   flex-shrink: 0; /* Prevents the header from shrinking */
   background-color: #ffffff;
   border-bottom: 1px solid #e0e0e0;
@@ -34,9 +38,11 @@
 }
 
 .editorFooter {
-  flex-shrink: 0; /* Prevents the footer from shrinking */
-  position: sticky;
+  position: fixed;
   bottom: 0;
+  left: 0;
+  right: 0;
+  flex-shrink: 0; /* Prevents the footer from shrinking */
   z-index: 10;
   background-color: #ffffff;
   border-top: 1px solid #e0e0e0;
