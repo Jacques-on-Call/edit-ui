@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import styles from './MoveModal.module.css';
 import Button from './components/Button/Button';
-import Icon from './icons.jsx';
+import { FolderIcon } from './icons.jsx';
 
 function MoveModal({ file, repo, onClose, onMove }) {
   const [directories, setDirectories] = useState([]);
@@ -88,7 +88,7 @@ function MoveModal({ file, repo, onClose, onMove }) {
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <h2>Move "{file.name}"</h2>
         <div className={styles.currentLocation}>
-          <Icon name="folder" />
+          <FolderIcon />
           <span>Current: {file.path.substring(0, file.path.lastIndexOf('/'))}</span>
         </div>
 
@@ -103,7 +103,7 @@ function MoveModal({ file, repo, onClose, onMove }) {
                   className={`${styles.folderItem} ${selectedPath === dir.path ? styles.selected : ''}`}
                   onClick={() => handleSelectPath(dir.path)}
                 >
-                  <Icon name="folder" />
+                  <FolderIcon />
                   {/* Make the path more readable */}
                   {dir.path.replace('src/pages', 'Home')}
                 </li>

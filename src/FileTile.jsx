@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import styles from './FileTile.module.css';
-import Icon from './icons.jsx';
+import { FolderIcon, FileIcon } from './icons.jsx';
 
 function formatRelativeDate(dateString) {
   if (!dateString) return '';
@@ -27,12 +27,7 @@ function formatDisplayName(name) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-const getIconNameForFile = (file) => {
-  return file.type === 'dir' ? 'folder' : 'file';
-};
-
 function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
-  const iconName = getIconNameForFile(file);
   const [isAnimating, setIsAnimating] = useState(false);
   const pressTimer = useRef(null);
 
@@ -80,7 +75,7 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
     >
       <div className={styles.tileContent}>
         <div className={styles.icon}>
-          <Icon name={iconName} />
+          {file.type === 'dir' ? <FolderIcon /> : <FileIcon />}
         </div>
         <div className={styles.name}>{formatDisplayName(file.name)}</div>
         <div className={styles.metadata}>

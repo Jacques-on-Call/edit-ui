@@ -1,6 +1,6 @@
 import React from 'react';
 import Search from './search-bar';
-import Icon from './icons';
+import { HomeIcon } from './icons';
 import styles from './Header.module.css';
 
 const Header = ({ path, onNavigate, repo }) => {
@@ -39,7 +39,7 @@ const Header = ({ path, onNavigate, repo }) => {
           aria-label="Go to root folder"
           title="Go to root"
         >
-          <Icon name="home" />
+          <HomeIcon />
         </button>
         <nav aria-label="breadcrumb">
           <ol className={styles.breadcrumbs}>

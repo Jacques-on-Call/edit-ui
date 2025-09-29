@@ -1,5 +1,5 @@
 import React from 'react';
-import Icon from './icons';
+import { UndoIcon, RedoIcon, BoldIcon, ItalicIcon, UnderlineIcon, ListIcon, MinusIcon } from './icons';
 import styles from './BottomToolbar.module.css';
 
 const BottomToolbar = ({ editor, activeFormats = {} }) => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Icon from './icons';
+import { EyeIcon, PlusIcon, TypeIcon } from './icons';
 import FormatMenu from './FormatMenu';
 import AddMenu from './AddMenu';
 import styles from './TopToolbar.module.css';
@@ -57,7 +57,7 @@ const TopToolbar = ({ editor, activeFormats, onDone }) => {
     <div className={styles.topToolbar}>
       <div className={styles.toolbarGroup}>
         <button onClick={onDone} title="Preview">
-          <Icon name="eye" />
+          <EyeIcon />
         </button>
         {/* Undo/redo buttons were moved to the bottom toolbar to follow user feedback */}
       </div>
@@ -65,13 +65,13 @@ const TopToolbar = ({ editor, activeFormats, onDone }) => {
       <div className={styles.toolbarGroup}>
         <div className={styles.dropdownContainer}>
             <button onClick={toggleAddMenu} title="Add..." ref={addButtonRef}>
-                <Icon name="plus" />
+                <PlusIcon />
             </button>
             {isAddMenuOpen && <div ref={addMenuRef}><AddMenu editor={editor} closeMenu={() => setAddMenuOpen(false)} /></div>}
         </div>
         <div className={styles.dropdownContainer}>
             <button onClick={toggleFormatMenu} title="Format text and paragraph" ref={formatButtonRef}>
-                <Icon name="type" />
+                <TypeIcon />
             </button>
             {isFormatMenuOpen && <div ref={formatMenuRef}><FormatMenu editor={editor} activeFormats={activeFormats} closeMenu={() => setFormatMenuOpen(false)} /></div>}
         </div>
