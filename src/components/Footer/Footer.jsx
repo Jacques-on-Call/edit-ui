@@ -1,5 +1,5 @@
 import styles from './Footer.module.css';
-import Icon from '../../icons';
+import { HomeIcon, PlusIcon } from '../../icons';
 import Button from '../Button/Button';
 
 function Footer({ currentPath, onGoHome, onCreate }) {
@@ -26,7 +26,7 @@ function Footer({ currentPath, onGoHome, onCreate }) {
           className={styles.createButton}
           aria-label="Create new file or folder"
         >
-          <Icon name="plus" />
+          <PlusIcon />
         </Button>
       </div>
 
@@ -38,7 +38,7 @@ function Footer({ currentPath, onGoHome, onCreate }) {
           disabled={isAtRoot}
           aria-label="Go to home directory"
         >
-          <Icon name="home" />
+          <HomeIcon />
           {/* Only show the folder name if we are not at the root */}
           {!isAtRoot && (
             <span className={styles.folderName}>{getFolderName()}</span>

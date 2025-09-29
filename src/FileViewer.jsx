@@ -10,7 +10,7 @@ import { stringifyAstroFile } from './utils/astroFileParser';
 import { BackIcon, SearchIcon, EditIcon } from './icons';
 
 // Dynamically import all CSS files from the styles directory
-const siteStyles = import.meta.glob('/src/styles/*.css', { as: 'raw' });
+const siteStyles = import.meta.glob('/src/styles/*.css', { query: '?raw', import: 'default' });
 
 function FileViewer({ repo, path, branch }) {
   useEffect(() => {
