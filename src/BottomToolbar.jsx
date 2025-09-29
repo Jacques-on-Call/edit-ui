@@ -3,35 +3,34 @@ import Icon from './icons';
 import styles from './BottomToolbar.module.css';
 
 const BottomToolbar = ({ editor, activeFormats = {} }) => {
-  // This check is removed: if (!editor) return null;
-  // Instead, we will disable the buttons if the editor is not ready.
+  // The component now always renders, but buttons are disabled if the editor is not ready.
+  const isEditorReady = !!editor;
 
   const handleCommand = (command, value = null) => {
-    if (editor) {
+    if (isEditorReady) {
       editor.execCommand(command, false, value);
     }
   };
 
   const handleInsertHr = () => {
-    if (editor) {
-      // Inserts a horizontal rule, which will be our section separator.
+    if (isEditorReady) {
       editor.execCommand('mceInsertContent', false, '<hr />');
     }
   };
 
   return (
     <div className={styles.bottomToolbar}>
-      <button onClick={() => handleCommand('undo')} title="Undo" disabled={!editor}>
+      <button onClick={() => handleCommand('undo')} title="Undo" disabled={!isEditorReady}>
         <Icon name="corner-up-left" />
       </button>
-      <button onClick={() => handleCommand('redo')} title="Redo" disabled={!editor}>
+      <button onClick={() => handleCommand('redo')} title="Redo" disabled={!isEditorReady}>
         <Icon name="corner-up-right" />
       </button>
       <button
         onClick={() => handleCommand('bold')}
         title="Bold"
         className={activeFormats.bold ? styles.active : ''}
-        disabled={!editor}
+        disabled={!isEditorReady}
       >
         <Icon name="bold" />
       </button>
@@ -39,7 +38,7 @@ const BottomToolbar = ({ editor, activeFormats = {} }) => {
         onClick={() => handleCommand('italic')}
         title="Italic"
         className={activeFormats.italic ? styles.active : ''}
-        disabled={!editor}
+        disabled={!isEditorReady}
       >
         <Icon name="italic" />
       </button>
@@ -47,7 +46,7 @@ const BottomToolbar = ({ editor, activeFormats = {} }) => {
         onClick={() => handleCommand('underline')}
         title="Underline"
         className={activeFormats.underline ? styles.active : ''}
-        disabled={!editor}
+        disabled={!isEditorReady}
       >
         <Icon name="underline" />
       </button>
@@ -55,11 +54,11 @@ const BottomToolbar = ({ editor, activeFormats = {} }) => {
         onClick={() => handleCommand('InsertUnorderedList')}
         title="Bullet List"
         className={activeFormats.unorderedList ? styles.active : ''}
-        disabled={!editor}
+        disabled={!isEditorReady}
       >
         <Icon name="list" />
       </button>
-      <button onClick={handleInsertHr} title="Insert Section Separator" disabled={!editor}>
+      <button onClick={handleInsertHr} title="Insert Section Separator" disabled={!isEditorReady}>
         <Icon name="minus" />
       </button>
     </div>
