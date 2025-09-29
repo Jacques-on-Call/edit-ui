@@ -4,8 +4,6 @@ import styles from './FileExplorer.module.css';
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
 import SearchBar from './search-bar.jsx';
-import Icon from './icons.jsx';
-import Button from './components/Button/Button'; // Import the new reusable button
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
 import ContextMenu from './ContextMenu';
@@ -346,9 +344,7 @@ function FileExplorer({ repo }) {
 
   return (
     <div className={styles.fileExplorer}>
-      <Header>
-        <SearchBar repo={repo} />
-      </Header>
+      <Header path={path} onNavigate={setPath} repo={repo} />
       <main className={styles.contentArea}>
         <div className={styles.fileGrid}>
           {Array.isArray(files) && files
