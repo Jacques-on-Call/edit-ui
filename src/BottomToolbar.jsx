@@ -1,9 +1,7 @@
 import React from 'react';
 import Icon from './icons';
-import styles from './BottomToolbar.module.css';
 
 const BottomToolbar = ({ editor, activeFormats = {} }) => {
-  // The component now always renders, but buttons are disabled if the editor is not ready.
   const isEditorReady = !!editor;
 
   const handleCommand = (command, value = null) => {
@@ -18,48 +16,67 @@ const BottomToolbar = ({ editor, activeFormats = {} }) => {
     }
   };
 
+  // Define Tailwind classes for buttons
+  const baseButtonClasses = "p-2 rounded-lg transition-colors duration-200 hover:bg-white/20 disabled:text-white/40 disabled:cursor-not-allowed disabled:hover:bg-transparent";
+  const activeButtonClasses = "bg-white/30";
+
   return (
-    <div className={styles.bottomToolbar}>
-      <button onClick={() => handleCommand('undo')} title="Undo" disabled={!isEditorReady}>
-        <Icon name="corner-up-left" />
+    <div className="flex justify-around items-center w-full py-2 px-4 bg-[#007aff]">
+      <button
+        onClick={() => handleCommand('undo')}
+        title="Undo"
+        disabled={!isEditorReady}
+        className={baseButtonClasses}
+      >
+        <Icon name="corner-up-left" className="w-6 h-6" />
       </button>
-      <button onClick={() => handleCommand('redo')} title="Redo" disabled={!isEditorReady}>
-        <Icon name="corner-up-right" />
+      <button
+        onClick={() => handleCommand('redo')}
+        title="Redo"
+        disabled={!isEditorReady}
+        className={baseButtonClasses}
+      >
+        <Icon name="corner-up-right" className="w-6 h-6" />
       </button>
       <button
         onClick={() => handleCommand('bold')}
         title="Bold"
-        className={activeFormats.bold ? styles.active : ''}
+        className={`${baseButtonClasses} ${activeFormats.bold ? activeButtonClasses : ''}`}
         disabled={!isEditorReady}
       >
-        <Icon name="bold" />
+        <Icon name="bold" className="w-6 h-6" />
       </button>
       <button
         onClick={() => handleCommand('italic')}
         title="Italic"
-        className={activeFormats.italic ? styles.active : ''}
+        className={`${baseButtonClasses} ${activeFormats.italic ? activeButtonClasses : ''}`}
         disabled={!isEditorReady}
       >
-        <Icon name="italic" />
+        <Icon name="italic" className="w-6 h-6" />
       </button>
       <button
         onClick={() => handleCommand('underline')}
         title="Underline"
-        className={activeFormats.underline ? styles.active : ''}
+        className={`${baseButtonClasses} ${activeFormats.underline ? activeButtonClasses : ''}`}
         disabled={!isEditorReady}
       >
-        <Icon name="underline" />
+        <Icon name="underline" className="w-6 h-6" />
       </button>
       <button
         onClick={() => handleCommand('InsertUnorderedList')}
         title="Bullet List"
-        className={activeFormats.unorderedList ? styles.active : ''}
+        className={`${baseButtonClasses} ${activeFormats.unorderedList ? activeButtonClasses : ''}`}
         disabled={!isEditorReady}
       >
-        <Icon name="list" />
+        <Icon name="list" className="w-6 h-6" />
       </button>
-      <button onClick={handleInsertHr} title="Insert Section Separator" disabled={!isEditorReady}>
-        <Icon name="minus" />
+      <button
+        onClick={handleInsertHr}
+        title="Insert Section Separator"
+        disabled={!isEditorReady}
+        className={baseButtonClasses}
+      >
+        <Icon name="minus" className="w-6 h-6" />
       </button>
     </div>
   );

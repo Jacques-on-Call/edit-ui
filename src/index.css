@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ==========================================================================
+     Global Styles - The single source of truth for base styles and tokens.
+     ========================================================================== */
+
+  /* 1. Design Tokens & Color Scheme
+     -------------------------------------------------------------------------- */
+  :root {
+    /* Design Tokens */
+    --white: #FFFFFF;
+    --black: #000000;
+    --blue: #003971;
+    --green: #006300;
+    --light-green: #C7EA46;
+    --grey-dark: #333333;
+    --grey-medium: #777777;
+    --grey-light: #f0f0f0;
+    --folder-blue: #e0eafc;
+    --accent-color: var(--green);
+    --font-family-sans: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    --font-family-roboto: 'Roboto', sans-serif;
+    --line-height-base: 1.5;
+    --font-weight-base: 400;
+
+    /* Color Scheme Defaults */
+    color-scheme: light dark;
+    color: rgba(255, 255, 255, 0.87); /* Default dark mode text */
+    background-color: #242424; /* Default dark mode background */
+
+    /* Font Rendering */
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Use light mode colors when preferred by the user's system */
+  @media (prefers-color-scheme: light) {
+    :root {
+      color: #213547;
+      background-color: #ffffff;
+    }
+  }
+
+
+  /* 2. Base Element Styling
+     -------------------------------------------------------------------------- */
+  body {
+    margin: 0;
+    font-family: var(--font-family-roboto);
+    line-height: var(--line-height-base);
+    font-weight: var(--font-weight-base);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* The background color is now handled by the :root color scheme styles. */
+  }
+
+  /* A top-level container for the React app. */
+  #root {
+    border: none;
+  }
+}
+
+/*
+  Force vConsole to have the highest z-index to ensure it is always visible
+  on top of all other application content, including fixed toolbars.
+  The default vConsole z-index is around 10002. We set it much higher
+  to be safe.
+*/
+#__vconsole {
+  z-index: 99999 !important;
+}

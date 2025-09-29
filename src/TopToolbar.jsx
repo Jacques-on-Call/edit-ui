@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Icon from './icons';
 import FormatMenu from './FormatMenu';
 import AddMenu from './AddMenu';
-import styles from './TopToolbar.module.css';
 
 const TopToolbar = ({ editor, activeFormats, onDone }) => {
   const navigate = useNavigate();
@@ -39,18 +38,20 @@ const TopToolbar = ({ editor, activeFormats, onDone }) => {
     setFormatMenuOpen(false); // Close other menu
   };
 
+  const buttonClasses = "bg-transparent text-white p-2 rounded-lg transition-colors duration-200 hover:bg-white/20 flex items-center justify-center";
+
   return (
-    <div className={styles.topToolbar}>
-      <div className={styles.toolbarGroup}>
-        <button onClick={onDone} title="Preview">
-          <Icon name="eye" />
+    <div className="flex justify-between items-center w-full py-2 px-4 bg-[#007aff]">
+      <div className="flex items-center gap-3">
+        <button onClick={onDone} title="Preview" className={buttonClasses}>
+          <Icon name="eye" className="w-6 h-6" />
         </button>
       </div>
 
-      <div className={styles.toolbarGroup}>
-        <div className={styles.dropdownContainer}>
-            <button onClick={toggleAddMenu} title="Add..." ref={addButtonRef}>
-                <Icon name="plus" />
+      <div className="flex items-center gap-3">
+        <div className="relative">
+            <button onClick={toggleAddMenu} title="Add..." ref={addButtonRef} className={buttonClasses}>
+                <Icon name="plus" className="w-6 h-6" />
             </button>
             {isAddMenuOpen && (
               <div ref={addMenuRef}>
@@ -58,9 +59,9 @@ const TopToolbar = ({ editor, activeFormats, onDone }) => {
               </div>
             )}
         </div>
-        <div className={styles.dropdownContainer}>
-            <button onClick={toggleFormatMenu} title="Format text and paragraph" ref={formatButtonRef}>
-                <Icon name="type" />
+        <div className="relative">
+            <button onClick={toggleFormatMenu} title="Format text and paragraph" ref={formatButtonRef} className={buttonClasses}>
+                <Icon name="type" className="w-6 h-6" />
             </button>
             {isFormatMenuOpen && (
               <div ref={formatMenuRef}>

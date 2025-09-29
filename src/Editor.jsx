@@ -8,7 +8,7 @@ import { stringifyAstroFile } from './utils/astroFileParser';
 import SectionEditor from './SectionEditor';
 import BottomToolbar from './BottomToolbar';
 import TopToolbar from './TopToolbar';
-import styles from './Editor.module.css';
+import styles from './Editor.module.css'; // Keep for special footer and global styles
 
 const Editor = () => {
   const location = useLocation();
@@ -22,6 +22,8 @@ const Editor = () => {
   const headerRef = useRef(null);
   const footerRef = useRef(null);
 
+  // This effect is crucial for dynamically setting the content padding
+  // to prevent it from being hidden by the fixed toolbars.
   useLayoutEffect(() => {
     const updatePadding = () => {
       const headerHeight = headerRef.current ? headerRef.current.offsetHeight : 0;
@@ -33,8 +35,11 @@ const Editor = () => {
     };
 
     updatePadding();
-    window.addEventListener('resize', updatePadding);
-    return () => window.removeEventListener('resize', updatePadding);
+    const resizeObserver = new ResizeObserver(updatePadding);
+    if (headerRef.current) resizeObserver.observe(headerRef.current);
+    if (footerRef.current) resizeObserver.observe(footerRef.current);
+
+    return () => resizeObserver.disconnect();
   }, []);
 
   const pathWithRepo = location.pathname.replace('/edit/', '');
@@ -48,7 +53,6 @@ const Editor = () => {
   const isMarkdownFile = path.endsWith('.md');
   const turndownService = new TurndownService({ hr: '---' });
 
-  // Converts the structured section data into a single HTML string for the editor.
   const getCombinedHtmlContent = (frontmatter, body) => {
     if (isMarkdownFile) return new DOMParser().parseFromString(marked(body || ''), 'text/html').body.innerHTML;
     if (isAstroFile && frontmatter?.sections) {
@@ -61,7 +65,6 @@ const Editor = () => {
       const textBlocks = frontmatter.sections.filter(s => s.type === 'text_block');
       textBlocks.forEach(block => {
         if (block.content) {
-            // Use marked to convert markdown content from each section into HTML
             htmlParts.push(new DOMParser().parseFromString(marked(block.content), 'text/html').body.innerHTML);
         }
       });
@@ -98,7 +101,6 @@ const Editor = () => {
     loadFile();
   }, [path, repo, draftKey]);
 
-  // This function is now a stub, as saving is handled synchronously in handleDone.
   const handleContentChange = () => {};
 
   const handleNodeChange = (editor) => {
@@ -115,7 +117,7 @@ const Editor = () => {
   const handleDone = () => {
     if (editorInstance && fileData) {
       const latestHtml = editorInstance.getContent();
-      const updatedFileData = JSON.parse(JSON.stringify(fileData)); // Deep copy
+      const updatedFileData = JSON.parse(JSON.stringify(fileData));
 
       if (isMarkdownFile) {
         updatedFileData.body = turndownService.turndown(latestHtml);
@@ -147,17 +149,21 @@ const Editor = () => {
     navigate(`/explorer/file?path=${path}`);
   };
 
-  if (loading) return <div className={styles.editorContainer}><div className={styles.loadingSpinner}></div></div>;
-  if (error) return <div className={styles.editorContainer}>Error: {error}</div>;
+  if (loading) return (
+    <div className="flex flex-col h-dvh w-full bg-gray-50 justify-center items-center">
+      <div className="w-10 h-10 border-4 border-gray-200 border-t-[#007aff] rounded-full animate-spin"></div>
+    </div>
+  );
+  if (error) return <div className="flex flex-col h-dvh w-full bg-gray-50 justify-center items-center">Error: {error}</div>;
 
   const initialContent = getCombinedHtmlContent(fileData?.frontmatter, fileData?.body);
 
   return (
-    <div className={styles.editorContainer}>
-      <div className={styles.editorHeader} ref={headerRef}>
+    <div className="flex flex-col h-dvh w-full bg-gray-50">
+      <div className="fixed top-0 left-0 right-0 z-10" ref={headerRef}>
         <TopToolbar editor={editorInstance} activeFormats={activeFormats} onDone={handleDone} />
       </div>
-      <div className={styles.sectionsList} style={contentStyle}>
+      <div className="flex-grow overflow-y-auto flex flex-col" style={contentStyle}>
         <SectionEditor
           initialContent={initialContent}
           onContentChange={handleContentChange}
