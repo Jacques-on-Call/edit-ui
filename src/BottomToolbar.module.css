@@ -1,30 +1,31 @@
-.bottom-toolbar {
+.bottomToolbar {
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   align-items: center;
   width: 100%;
-  max-width: 600px; /* Max-width for aesthetics on larger screens */
-  height: 100%;
-  background-color: var(--blue);
+  padding: 0 1rem;
+  gap: 0.5rem;
+  box-sizing: border-box;
 }
 
-.bottom-toolbar button {
+.bottomToolbar button {
   background: none;
   border: none;
-  color: var(--white);
-  font-size: 1.2rem;
-  font-weight: bold;
+  color: #333;
   cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 4px;
+  padding: 0.75rem;
+  border-radius: 6px;
   transition: background-color 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.bottom-toolbar button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+.bottomToolbar button:hover {
+  background-color: #f0f0f0;
 }
 
-.bottom-toolbar button.active {
-    background-color: rgba(255, 255, 255, 0.3);
-    color: var(--white);
+.bottomToolbar button.active {
+  background-color: #e0e0e0;
+  color: #007aff;
 }
