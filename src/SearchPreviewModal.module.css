@@ -137,12 +137,23 @@
   margin-bottom: 1.5rem;
 }
 
-.inputGroup label {
-  display: block;
-  font-weight: 600;
+.labelContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 0.5rem;
+}
+
+.inputGroup label {
+  font-weight: 600;
   color: var(--text-primary);
   font-size: 0.9rem;
+}
+
+.charCounter {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 400;
 }
 
 .inputField,

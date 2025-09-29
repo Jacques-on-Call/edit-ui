@@ -60,24 +60,36 @@ function SearchPreviewModal({
         <div className={styles.tabContent}>
           {activeTab === 'serp' && (
             <div className={styles.serpTab}>
+              <h4>Live Preview</h4>
+              <SerpPreview title={title} description={description} slug={slug} />
+              <hr className={styles.divider} />
+
               <div className={styles.inputGroup}>
-                <label htmlFor="meta-title">Meta Title</label>
+                <div className={styles.labelContainer}>
+                  <label htmlFor="meta-title">Meta Title</label>
+                  <span className={styles.charCounter}>{title.length} / 60</span>
+                </div>
                 <input
                   id="meta-title"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className={styles.inputField}
+                  maxLength="60"
                 />
               </div>
               <div className={styles.inputGroup}>
-                <label htmlFor="meta-description">Meta Description</label>
+                <div className={styles.labelContainer}>
+                  <label htmlFor="meta-description">Meta Description</label>
+                  <span className={styles.charCounter}>{description.length} / 160</span>
+                </div>
                 <textarea
                   id="meta-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className={styles.textareaField}
                   rows="4"
+                  maxLength="160"
                 />
               </div>
               <div className={styles.inputGroup}>
@@ -90,9 +102,6 @@ function SearchPreviewModal({
                   className={styles.inputField}
                 />
               </div>
-              <hr className={styles.divider} />
-              <h4>Live Preview</h4>
-              <SerpPreview title={title} description={description} slug={slug} />
             </div>
           )}
           {activeTab === 'json' && (

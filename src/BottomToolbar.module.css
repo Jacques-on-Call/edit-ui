@@ -29,3 +29,8 @@
   background-color: #e0e0e0;
   color: #007aff;
 }
+
+.bottomToolbar button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}

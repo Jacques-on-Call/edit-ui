@@ -5,7 +5,7 @@
 .editorContainer {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh; /* Use dynamic viewport height to account for mobile keyboards */
   width: 100%;
   background-color: #f8f9fa; /* A light, neutral background */
 }
