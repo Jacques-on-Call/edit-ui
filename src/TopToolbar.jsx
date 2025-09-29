@@ -52,13 +52,21 @@ const TopToolbar = ({ editor, activeFormats, onDone }) => {
             <button onClick={toggleAddMenu} title="Add..." ref={addButtonRef}>
                 <Icon name="plus" />
             </button>
-            {isAddMenuOpen && <div ref={addMenuRef}><AddMenu editor={editor} closeMenu={() => setAddMenuOpen(false)} />}
+            {isAddMenuOpen && (
+              <div ref={addMenuRef}>
+                <AddMenu editor={editor} closeMenu={() => setAddMenuOpen(false)} />
+              </div>
+            )}
         </div>
         <div className={styles.dropdownContainer}>
             <button onClick={toggleFormatMenu} title="Format text and paragraph" ref={formatButtonRef}>
                 <Icon name="type" />
             </button>
-            {isFormatMenuOpen && <div ref={formatMenuRef}><FormatMenu editor={editor} activeFormats={activeFormats} closeMenu={() => setFormatMenuOpen(false)} />}
+            {isFormatMenuOpen && (
+              <div ref={formatMenuRef}>
+                <FormatMenu editor={editor} activeFormats={activeFormats} closeMenu={() => setFormatMenuOpen(false)} />
+              </div>
+            )}
         </div>
       </div>
     </div>
