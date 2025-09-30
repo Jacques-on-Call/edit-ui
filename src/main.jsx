@@ -6,7 +6,7 @@ import Callback from './Callback.jsx';
 import ExplorerPage from './ExplorerPage.jsx';
 import PreviewPage from './PreviewPage.jsx';
 import Editor from './Editor.jsx'; // import the Editor component
-import './index.css'; // Import Tailwind CSS
+import './styles/global.css'; // Import the new single source of truth for global styles.
 
 // Conditionally import and initialize vConsole for on-screen debugging
 // Trigger with ?debug=true in the URL

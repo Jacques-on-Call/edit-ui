@@ -1,47 +1,53 @@
 import React from 'react';
+import styles from './FormatMenu.module.css';
 
 const FormatMenu = ({ editor, activeFormats = {}, closeMenu }) => {
   if (!editor) return null;
 
   const handleCommand = (command, value = null) => {
     if (editor) {
-      editor.execCommand(command, false, value);
-      if (closeMenu) closeMenu();
+        editor.execCommand(command, false, value);
+        if (closeMenu) closeMenu();
     }
   };
 
   const handleFormatBlock = (format) => {
     if (editor) {
-      editor.execCommand('FormatBlock', false, format);
-      if (closeMenu) closeMenu();
+        editor.execCommand('FormatBlock', false, format);
+        if (closeMenu) closeMenu();
     }
   };
 
-  const buttonClasses = "w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 rounded-md";
-  const sectionHeaderClasses = "px-4 pt-2 pb-1 text-xs font-bold text-gray-500 uppercase";
-
   return (
-    <div
-      className="absolute right-0 mt-2 w-64 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20"
-      role="menu"
-      aria-orientation="vertical"
-    >
-      <div className="py-1" role="none">
-        <div className={sectionHeaderClasses}>Text</div>
-        <button onClick={() => handleCommand('bold')} className={`${buttonClasses} ${activeFormats.bold ? 'bg-gray-100' : ''}`} role="menuitem">Bold</button>
-        <button onClick={() => handleCommand('italic')} className={`${buttonClasses} ${activeFormats.italic ? 'bg-gray-100' : ''}`} role="menuitem">Italic</button>
-        <button onClick={() => handleCommand('underline')} className={`${buttonClasses} ${activeFormats.underline ? 'bg-gray-100' : ''}`} role="menuitem">Underline</button>
+    <div className={styles.formatMenu}>
+      <div className={styles.menuSection}>
+        <div className={styles.menuHeader}>Text</div>
+        <button onClick={() => handleCommand('bold')} className={activeFormats.bold ? styles.active : ''}>Bold</button>
+        <button onClick={() => handleCommand('italic')} className={activeFormats.italic ? styles.active : ''}>Italic</button>
+        <button onClick={() => handleCommand('underline')} className={activeFormats.underline ? styles.active : ''}>Underline</button>
+        <button onClick={() => handleCommand('strikethrough')}>Strikethrough</button>
+        <button onClick={() => handleCommand('superscript')}>Superscript</button>
+        <button onClick={() => handleCommand('subscript')}>Subscript</button>
+        <button onClick={() => handleCommand('removeformat')}>Clear Formatting</button>
       </div>
-      <div className="py-1 border-t border-gray-100" role="none">
-        <div className={sectionHeaderClasses}>Block Style</div>
-        <button onClick={() => handleFormatBlock('p')} className={buttonClasses} role="menuitem">Paragraph</button>
-        <button onClick={() => handleFormatBlock('h1')} className={buttonClasses} role="menuitem">Heading 1</button>
-        <button onClick={() => handleFormatBlock('h2')} className={buttonClasses} role="menuitem">Heading 2</button>
+      <div className={styles.menuSection}>
+        <div className={styles.menuHeader}>Block Style</div>
+        <button onClick={() => handleFormatBlock('p')}>Paragraph</button>
+        <button onClick={() => handleFormatBlock('h1')}>Heading 1</button>
+        <button onClick={() => handleFormatBlock('h2')}>Heading 2</button>
+        <button onClick={() => handleFormatBlock('h3')}>Heading 3</button>
       </div>
-      <div className="py-1 border-t border-gray-100" role="none">
-        <div className={sectionHeaderClasses}>Lists</div>
-        <button onClick={() => handleCommand('InsertUnorderedList')} className={buttonClasses} role="menuitem">Bullet List</button>
-        <button onClick={() => handleCommand('InsertOrderedList')} className={buttonClasses} role="menuitem">Numbered List</button>
+      <div className={styles.menuSection}>
+        <div className={styles.menuHeader}>Alignment</div>
+        <button onClick={() => handleCommand('JustifyLeft')} className={activeFormats.justifyLeft ? styles.active : ''}>Left</button>
+        <button onClick={() => handleCommand('JustifyCenter')} className={activeFormats.justifyCenter ? styles.active : ''}>Center</button>
+        <button onClick={() => handleCommand('JustifyRight')} className={activeFormats.justifyRight ? styles.active : ''}>Right</button>
+        <button onClick={() => handleCommand('JustifyFull')} className={activeFormats.justifyFull ? styles.active : ''}>Justify</button>
+      </div>
+       <div className={styles.menuSection}>
+        <div className={styles.menuHeader}>Lists</div>
+        <button onClick={() => handleCommand('InsertUnorderedList')} className={activeFormats.unorderedList ? styles.active : ''}>Bullet List</button>
+        <button onClick={() => handleCommand('InsertOrderedList')}>Numbered List</button>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Buffer } from 'buffer';
 import { marked } from 'marked';
@@ -8,7 +8,7 @@ import { stringifyAstroFile } from './utils/astroFileParser';
 import SectionEditor from './SectionEditor';
 import BottomToolbar from './BottomToolbar';
 import TopToolbar from './TopToolbar';
-import styles from './Editor.module.css'; // Keep for special footer and global styles
+import styles from './Editor.module.css';
 
 const Editor = () => {
   const location = useLocation();
@@ -18,29 +18,6 @@ const Editor = () => {
   const [error, setError] = useState(null);
   const [editorInstance, setEditorInstance] = useState(null);
   const [activeFormats, setActiveFormats] = useState({});
-  const [contentStyle, setContentStyle] = useState({});
-  const headerRef = useRef(null);
-  const footerRef = useRef(null);
-
-  // This effect is crucial for dynamically setting the content padding
-  // to prevent it from being hidden by the fixed toolbars.
-  useLayoutEffect(() => {
-    const updatePadding = () => {
-      const headerHeight = headerRef.current ? headerRef.current.offsetHeight : 0;
-      const footerHeight = footerRef.current ? footerRef.current.offsetHeight : 0;
-      setContentStyle({
-        paddingTop: `${headerHeight}px`,
-        paddingBottom: `${footerHeight}px`,
-      });
-    };
-
-    updatePadding();
-    const resizeObserver = new ResizeObserver(updatePadding);
-    if (headerRef.current) resizeObserver.observe(headerRef.current);
-    if (footerRef.current) resizeObserver.observe(footerRef.current);
-
-    return () => resizeObserver.disconnect();
-  }, []);
 
   const pathWithRepo = location.pathname.replace('/edit/', '');
   const pathParts = pathWithRepo.split('/');
@@ -53,6 +30,7 @@ const Editor = () => {
   const isMarkdownFile = path.endsWith('.md');
   const turndownService = new TurndownService({ hr: '---' });
 
+  // Converts the structured section data into a single HTML string for the editor.
   const getCombinedHtmlContent = (frontmatter, body) => {
     if (isMarkdownFile) return new DOMParser().parseFromString(marked(body || ''), 'text/html').body.innerHTML;
     if (isAstroFile && frontmatter?.sections) {
@@ -65,6 +43,7 @@ const Editor = () => {
       const textBlocks = frontmatter.sections.filter(s => s.type === 'text_block');
       textBlocks.forEach(block => {
         if (block.content) {
+            // Use marked to convert markdown content from each section into HTML
             htmlParts.push(new DOMParser().parseFromString(marked(block.content), 'text/html').body.innerHTML);
         }
       });
@@ -101,6 +80,7 @@ const Editor = () => {
     loadFile();
   }, [path, repo, draftKey]);
 
+  // This function is now a stub, as saving is handled synchronously in handleDone.
   const handleContentChange = () => {};
 
   const handleNodeChange = (editor) => {
@@ -117,7 +97,7 @@ const Editor = () => {
   const handleDone = () => {
     if (editorInstance && fileData) {
       const latestHtml = editorInstance.getContent();
-      const updatedFileData = JSON.parse(JSON.stringify(fileData));
+      const updatedFileData = JSON.parse(JSON.stringify(fileData)); // Deep copy
 
       if (isMarkdownFile) {
         updatedFileData.body = turndownService.turndown(latestHtml);
@@ -149,21 +129,17 @@ const Editor = () => {
     navigate(`/explorer/file?path=${path}`);
   };
 
-  if (loading) return (
-    <div className="flex flex-col h-dvh w-full bg-gray-50 justify-center items-center">
-      <div className="w-10 h-10 border-4 border-gray-200 border-t-[#007aff] rounded-full animate-spin"></div>
-    </div>
-  );
-  if (error) return <div className="flex flex-col h-dvh w-full bg-gray-50 justify-center items-center">Error: {error}</div>;
+  if (loading) return <div className={styles.editorContainer}><div className={styles.loadingSpinner}></div></div>;
+  if (error) return <div className={styles.editorContainer}>Error: {error}</div>;
 
   const initialContent = getCombinedHtmlContent(fileData?.frontmatter, fileData?.body);
 
   return (
-    <div className="flex flex-col h-dvh w-full bg-gray-50">
-      <div className="fixed top-0 left-0 right-0 z-10" ref={headerRef}>
+    <div className={styles.editorContainer}>
+      <div className={styles.editorHeader}>
         <TopToolbar editor={editorInstance} activeFormats={activeFormats} onDone={handleDone} />
       </div>
-      <div className="flex-grow overflow-y-auto flex flex-col" style={contentStyle}>
+      <div className={styles.sectionsList}>
         <SectionEditor
           initialContent={initialContent}
           onContentChange={handleContentChange}
@@ -171,7 +147,7 @@ const Editor = () => {
           onNodeChange={handleNodeChange}
         />
       </div>
-      <div className={styles.editorFooter} ref={footerRef}>
+      <div className={styles.editorFooter}>
         <BottomToolbar editor={editorInstance} activeFormats={activeFormats} />
       </div>
     </div>
