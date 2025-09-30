@@ -4,7 +4,11 @@
 
 /* 1. Design Tokens & Color Scheme
    -------------------------------------------------------------------------- */
-:root {
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+   :root {
   /* Design Tokens */
   --white: #FFFFFF;
   --black: #000000;
