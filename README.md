@@ -198,3 +198,21 @@ the vision and what you will find when you look at the code in react-login.
 
 
 So can you do the css for this?
+
+---
+
+### Jules Task #55: AI-Powered Schema Editor (Oct 2025)
+
+**Vision:** An intuitive interface for managing page schemas. One tab for manual editing of head metadata, and a second, AI-assisted tab for automated schema generation based on a list of 24 preferred schema types. The goal is to make search visibility tangible and powerful.
+
+**My Clarifying Questions:**
+
+To ensure I build exactly what you envision, I have a few questions:
+
+1.  **Integration Point:** The app is a content editor for `.astro` files. Will this new schema editing feature be part of the existing `EditorPage`, or should it be a new interface accessible from the `PreviewPage` (which already has "Back", "Edit", "Search" buttons)?
+2.  **UI Structure:** You described a two-tab interface (manual metadata and automated schemas). Does the current editor already handle basic metadata (like page title)? Should I build this two-tab view from scratch, or extend an existing UI?
+3.  **Automation Source:** For the "automated" schema tab, what content should the AI analyze? Should it process the text inside the rich text editor (`text_block` sections) to suggest and pre-fill schemas? For example, if it sees a list of steps, should it automatically generate a `HowTo` schema?
+4.  **AI's Role:** You mentioned "hidden mechanics" and "AI assistance." Could you give an example? Are you thinking the AI should intelligently layer multiple schemas? For instance, if a blog post (`Article`) also describes an upcoming webinar (`Event`), should the AI automatically create and combine both schemas?
+5.  **Manual vs. Automated:** The list of 24 schemas is comprehensive. Besides the AI's suggestions, should the interface also allow users to manually add, edit, and layer any of these schemas themselves?
+
+Your answers will help me create a precise plan to bring this powerful feature to life.

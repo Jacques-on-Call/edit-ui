@@ -234,6 +234,8 @@ function FileViewer({ repo, path, branch }) {
             initialDescription={content.frontmatter.description}
             initialSlug={path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'))}
             initialJsonSchema={content.frontmatter.jsonSchema}
+            sections={content.sections} // Pass the full sections array
+            pageContent={content.sections?.filter(s => s.type === 'text_block').map(s => s.content).join('\n\n') || ''}
             onClose={() => setIsHeadEditorOpen(false)}
             onSave={handleModalSave}
           />
