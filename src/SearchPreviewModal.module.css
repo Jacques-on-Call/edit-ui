@@ -1,0 +1,511 @@
+/*
+ * Apple-inspired UI Refresh
+ * File: /easy-seo/src/SearchPreviewModal.module.css
+ * Desc: Modern, clean, and responsive styles for the Search Preview Modal.
+ */
+
+:root {
+  --app-bg: #f6f6f7;
+  --header-bg: #ffffff;
+  --content-bg: #ffffff;
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --blue-accent: #007aff;
+  --border-color: #d2d2d7;
+  --hover-bg: #f5f5f7;
+  --button-radius: 8px;
+  --content-radius: 12px;
+  --shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.modalContent {
+  background-color: var(--header-bg);
+  border-radius: var(--content-radius);
+  width: 90%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow);
+  max-height: 90vh;
+  border: 1px solid var(--border-color);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.closeButton:hover {
+  background-color: var(--hover-bg);
+}
+
+.tabContainer {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 24px;
+  background-color: #fbfbfb; /* Slightly off-white */
+}
+
+.tabButton {
+  background: none;
+  border: none;
+  padding: 12px 0;
+  margin-right: 24px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  transform: translateY(1px); /* Aligns with border */
+}
+
+.tabButton.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--blue-accent);
+}
+
+.tabContent {
+  padding: 24px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.modalFooter {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+  text-align: right;
+  background-color: #fbfbfb;
+}
+
+.saveButton {
+  background-color: var(--blue-accent);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--button-radius);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.saveButton:hover {
+  background-color: #0071e3;
+}
+
+.inputGroup {
+  margin-bottom: 1.5rem;
+}
+
+.labelContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.inputGroup label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.charCounter {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.inputField,
+.textareaField {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--button-radius);
+  font-size: 1rem;
+  box-sizing: border-box;
+  background-color: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.inputField:focus,
+.textareaField:focus {
+  outline: none;
+  border-color: var(--blue-accent);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+}
+
+.textareaField {
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 2rem 0;
+}
+
+.serpPreview {
+  background-color: var(--app-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--content-radius);
+  padding: 1rem 1.5rem;
+  font-family: Arial, sans-serif;
+}
+
+.serpUrl {
+  color: #202124;
+  font-size: 0.875rem;
+}
+
+.serpTitle {
+  color: #1a0dab;
+  font-size: 1.25rem;
+  font-weight: 400;
+  margin: 0.25rem 0;
+  text-decoration: none;
+}
+
+.serpDescription {
+  color: #4d5156;
+  font-size: 0.875rem;
+  line-height: 1.57;
+  margin: 0;
+}
+
+.jsonEditor {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: var(--button-radius);
+  font-family: "SF Mono", "Menlo", "Courier New", monospace;
+  font-size: 0.9rem;
+  padding: 1rem;
+  box-sizing: border-box;
+  background-color: #fafafa;
+  color: #333;
+  resize: vertical;
+  min-height: 200px;
+}
+
+.jsonEditor:focus {
+  outline: none;
+  border-color: var(--blue-accent);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+}
+
+/* --- Rich Results Tab Styles --- */
+
+.loadingState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  font-size: 1.1em;
+  color: var(--text-secondary);
+}
+
+.richResultsContainer {
+  display: flex;
+  gap: 24px;
+}
+
+.suggestionsPanel {
+  flex: 2; /* Takes more space */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.previewPanel {
+  flex: 3; /* Takes more space */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: var(--app-bg);
+  padding: 16px;
+  border-radius: var(--content-radius);
+}
+
+.jsonPreview pre {
+  background-color: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--button-radius);
+  padding: 12px;
+  font-size: 0.8rem;
+  font-family: "SF Mono", "Menlo", "Courier New", monospace;
+  max-height: 220px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.serpSimulator {
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+}
+
+.serpSimulator h5, .jsonPreview h5 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* --- Suggestion Card Styles --- */
+
+.suggestionCard {
+  border: 1px solid var(--border-color);
+  border-radius: var(--content-radius);
+  padding: 16px;
+  background-color: var(--content-bg);
+  transition: all 0.2s ease-in-out;
+  border-left: 4px solid #ccc; /* Default state */
+}
+
+.suggestionCard.enabled {
+  border-left-color: var(--blue-accent);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.schemaType {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.reason {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.confidence {
+  font-style: italic;
+  margin-right: 5px;
+  color: #888;
+}
+
+/* --- Toggle Switch Styles --- */
+
+.toggleSwitch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 26px;
+}
+
+.toggleSwitch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleSwitch label {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e9e9eb;
+  border-radius: 26px;
+  transition: .4s;
+}
+
+.toggleSwitch label:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  border-radius: 50%;
+  transition: .4s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.toggleSwitch input:checked + label {
+  background-color: #34c759; /* Apple green */
+}
+
+.toggleSwitch input:checked + label:before {
+  transform: translateX(18px);
+}
+
+/* --- SERP Simulator Specifics --- */
+.faqSerp, .eventSerp, .productSerp {
+  background: var(--content-bg);
+  border-radius: var(--button-radius);
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 10px;
+}
+
+.faqItem {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.faqItem:last-child {
+  border-bottom: none;
+}
+.faqItem strong {
+  color: #1a0dab;
+  font-weight: normal;
+  font-size: 1.1rem;
+}
+.eventSerp p, .productSerp p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.simulatorPlaceholder {
+  color: var(--text-secondary);
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+/* --- Advanced Controls --- */
+
+.advancedControlsToggle {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.advancedControlsToggle button {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: var(--button-radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.advancedControlsToggle button:hover {
+  background-color: var(--hover-bg);
+  border-color: #b0b0b0;
+}
+
+.advancedControlsContainer {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: var(--app-bg);
+  border-radius: var(--content-radius);
+  border: 1px solid var(--border-color);
+}
+
+.advancedControlsContainer h4 {
+  margin-top: 0;
+  font-weight: 600;
+}
+
+/* --- Block Analyzer Styles --- */
+
+.blockAnalyzer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.blockAnalyzer h5 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--app-bg);
+  padding: 12px;
+  border-radius: var(--button-radius);
+  margin-bottom: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.blockContent {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  flex-grow: 1;
+  margin-right: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.block button {
+  background-color: var(--blue-accent);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: var(--button-radius);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.block button:hover {
+  background-color: #0071e3;
+}
