@@ -6,9 +6,12 @@ import TurndownService from 'turndown';
 import { unifiedParser } from './utils/unifiedParser';
 import { stringifyAstroFile } from './utils/astroFileParser';
 import SectionEditor from './SectionEditor';
-import BottomToolbar from './BottomToolbar';
-import TopToolbar from './TopToolbar';
-import styles from './Editor.module.css';
+
+import EditorHeader from './components/editor/EditorHeader';
+import EditorFooter from './components/editor/EditorFooter';
+import EditorWrapper from './components/editor/EditorWrapper';
+
+import styles from './pages/EditorPage.module.css'; // reuse the pageContainer + mainContent
 
 const Editor = () => {
   const location = useLocation();
@@ -30,9 +33,11 @@ const Editor = () => {
   const isMarkdownFile = path.endsWith('.md');
   const turndownService = new TurndownService({ hr: '---' });
 
-  // Converts the structured section data into a single HTML string for the editor.
+  // Combine frontmatter + body into HTML for editor
   const getCombinedHtmlContent = (frontmatter, body) => {
-    if (isMarkdownFile) return new DOMParser().parseFromString(marked(body || ''), 'text/html').body.innerHTML;
+    if (isMarkdownFile) {
+      return new DOMParser().parseFromString(marked(body || ''), 'text/html').body.innerHTML;
+    }
     if (isAstroFile && frontmatter?.sections) {
       let htmlParts = [];
       const heroSection = frontmatter.sections.find(s => s.type === 'hero');
@@ -43,8 +48,7 @@ const Editor = () => {
       const textBlocks = frontmatter.sections.filter(s => s.type === 'text_block');
       textBlocks.forEach(block => {
         if (block.content) {
-            // Use marked to convert markdown content from each section into HTML
-            htmlParts.push(new DOMParser().parseFromString(marked(block.content), 'text/html').body.innerHTML);
+          htmlParts.push(new DOMParser().parseFromString(marked(block.content), 'text/html').body.innerHTML);
         }
       });
       return htmlParts.join('<hr />');
@@ -62,7 +66,9 @@ const Editor = () => {
           setFileData(JSON.parse(localDraft));
           setLoading(false);
           return;
-        } catch (e) { console.error("Error parsing draft, fetching from server.", e); }
+        } catch (e) {
+          console.error("Error parsing draft, fetching from server.", e);
+        }
       }
       try {
         const res = await fetch(`/api/file?repo=${repo}&path=${path}`, { credentials: 'include' });
@@ -80,7 +86,6 @@ const Editor = () => {
     loadFile();
   }, [path, repo, draftKey]);
 
-  // This function is now a stub, as saving is handled synchronously in handleDone.
   const handleContentChange = () => {};
 
   const handleNodeChange = (editor) => {
@@ -97,7 +102,7 @@ const Editor = () => {
   const handleDone = () => {
     if (editorInstance && fileData) {
       const latestHtml = editorInstance.getContent();
-      const updatedFileData = JSON.parse(JSON.stringify(fileData)); // Deep copy
+      const updatedFileData = JSON.parse(JSON.stringify(fileData));
 
       if (isMarkdownFile) {
         updatedFileData.body = turndownService.turndown(latestHtml);
@@ -108,19 +113,19 @@ const Editor = () => {
         const h2 = tempDiv.querySelector('h2');
 
         const heroSection = updatedFileData.frontmatter.sections.find(s => s.type === 'hero');
-        if(heroSection) {
-            if(h1) heroSection.title = h1.textContent;
-            if(h2) heroSection.subtitle = h2.textContent;
+        if (heroSection) {
+          if (h1) heroSection.title = h1.textContent;
+          if (h2) heroSection.subtitle = h2.textContent;
         }
 
         const contentParts = latestHtml.split('<hr />');
         let textBlockIndex = 0;
         updatedFileData.frontmatter.sections.forEach(section => {
-            if(section.type === 'text_block') {
-                const contentHtml = contentParts[textBlockIndex + (heroSection ? 1 : 0)] || '';
-                section.content = turndownService.turndown(contentHtml);
-                textBlockIndex++;
-            }
+          if (section.type === 'text_block') {
+            const contentHtml = contentParts[textBlockIndex + (heroSection ? 1 : 0)] || '';
+            section.content = turndownService.turndown(contentHtml);
+            textBlockIndex++;
+          }
         });
       }
 
@@ -129,27 +134,25 @@ const Editor = () => {
     navigate(`/explorer/file?path=${path}`);
   };
 
-  if (loading) return <div className={styles.editorContainer}><div className={styles.loadingSpinner}></div></div>;
-  if (error) return <div className={styles.editorContainer}>Error: {error}</div>;
+  if (loading) return <div className="flex items-center justify-center h-screen">Loading…</div>;
+  if (error) return <div className="flex items-center justify-center h-screen text-red-500">Error: {error}</div>;
 
   const initialContent = getCombinedHtmlContent(fileData?.frontmatter, fileData?.body);
 
   return (
-    <div className={styles.editorContainer}>
-      <div className={styles.editorHeader}>
-        <TopToolbar editor={editorInstance} activeFormats={activeFormats} onDone={handleDone} />
-      </div>
-      <div className={styles.sectionsList}>
-        <SectionEditor
-          initialContent={initialContent}
-          onContentChange={handleContentChange}
-          onInit={handleEditorInit}
-          onNodeChange={handleNodeChange}
-        />
-      </div>
-      <div className={styles.editorFooter}>
-        <BottomToolbar editor={editorInstance} activeFormats={activeFormats} />
-      </div>
+    <div className={styles.pageContainer}>
+      <EditorHeader />
+      <main className={styles.mainContent}>
+        <EditorWrapper>
+          <SectionEditor
+            initialContent={initialContent}
+            onContentChange={handleContentChange}
+            onInit={handleEditorInit}
+            onNodeChange={handleNodeChange}
+          />
+        </EditorWrapper>
+      </main>
+      <EditorFooter />
     </div>
   );
 };
