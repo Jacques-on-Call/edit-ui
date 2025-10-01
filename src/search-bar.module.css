@@ -1,3 +1,5 @@
+@reference "./styles/global.css";
+
 /* Styles for the SearchBar component, adapted for a light header - Refactored with Tailwind @apply */
 .searchContainer {
   @apply relative w-full;

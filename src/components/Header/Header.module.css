@@ -1,3 +1,5 @@
+@reference "../../styles/global.css";
+
 /* Styles for the new Header component - Refactored with Tailwind @apply */
 .header {
   @apply flex items-center py-3 px-4 bg-light-grey border-b border-gray-300 w-full box-border;

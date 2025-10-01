@@ -1,3 +1,5 @@
+@reference "./styles/global.css";
+
 .mini-breadcrumb {
   @apply flex items-center overflow-x-auto whitespace-nowrap flex-grow ml-2 pb-1.5;
 }

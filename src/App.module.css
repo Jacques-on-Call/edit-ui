@@ -1,3 +1,5 @@
+@reference "./styles/global.css";
+
 /*
   NOTE: The global :root, body, and #root styles have been removed from this file.
   All global styles are now consolidated in /src/styles/global.css.

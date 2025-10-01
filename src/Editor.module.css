@@ -1,3 +1,5 @@
+@reference "./styles/global.css";
+
 /*
  * Styles for the main Editor component.
  * Uses a flexbox layout to create a full-page structure with a fixed header and footer.
