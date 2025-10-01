@@ -56,12 +56,12 @@ function FileExplorer({ repo }) {
   }, [repo]);
 
 
-  const fetchFiles = useCallback(() => {
+  const fetchFiles = useCallback((onSuccess) => {
     setLoading(true);
-    setSelectedFilePath(null); // Use path for selection
+    setSelectedFilePath(null); // Deselect everything by default
     setMetadataCache({});
-    setReadmeContent(null); // Reset README content on new folder load
-    setReadmeLoading(false); // Reset loading state
+    setReadmeContent(null);
+    setReadmeLoading(false);
 
     fetch(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' })
       .then(res => {
@@ -77,7 +77,10 @@ function FileExplorer({ repo }) {
         setFiles(sortedData);
         setLoading(false);
 
-        // After fetching files, check for a README
+        if (onSuccess) {
+          onSuccess(sortedData); // Execute callback with the new data
+        }
+
         const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');
         if (readmeFile) {
           setReadmeLoading(true);
@@ -87,20 +90,17 @@ function FileExplorer({ repo }) {
               return res.json();
             })
             .then(fileData => {
-              // The content from GitHub is base64 encoded. We need to decode it.
               const decodedContent = atob(fileData.content);
-              console.log('[FileExplorer.jsx] README content decoded successfully.'); // Diagnostic log
               setReadmeContent(decodedContent);
               setReadmeLoading(false);
             })
             .catch(err => {
-              console.error('Failed to fetch or decode README content:', err); // Log README fetch error
-              setReadmeContent('# Error: Could not load README.\n\nThis is a fallback message. Please check the console for more details.');
+              console.error('Failed to fetch or decode README content:', err);
+              setReadmeContent('# Error: Could not load README.');
               setReadmeLoading(false);
             });
         }
 
-        // Fetch metadata for all files
         data.forEach(file => {
           const cachedData = cache.get(file.sha);
           if (cachedData) {
@@ -129,15 +129,13 @@ function FileExplorer({ repo }) {
   };
 
   const handleOpen = (fileToOpen) => {
-    // If no file is passed, find it from the state using the path
     const file = fileToOpen || files.find(f => f.path === selectedFilePath);
     if (!file) return;
 
     if (file.type === 'dir') {
       setPath(file.path);
-      setSelectedFilePath(null); // Deselect when navigating into a folder
+      setSelectedFilePath(null);
     } else {
-      // Navigate to the file viewer for files
       navigate(`/explorer/file?path=${file.path}`);
     }
   };
@@ -147,29 +145,24 @@ function FileExplorer({ repo }) {
   };
 
   const handleDuplicate = async (fileToDuplicate) => {
-    console.log('[FileExplorer.jsx] handleDuplicate started for:', fileToDuplicate.name);
-    // If no file is passed, find it from the state using the path
     const file = fileToDuplicate || files.find(f => f.path === selectedFilePath);
     if (!file || file.type === 'dir') return;
 
     try {
-      // 1. Read the original file's content correctly
       const readRes = await fetch(`/api/file?repo=${repo}&path=${file.path}`, { credentials: 'include' });
       if (!readRes.ok) {
         const errorData = await readRes.json().catch(() => ({ message: 'Could not fetch file content.' }));
         throw new Error(errorData.message);
       }
       const fileData = await readRes.json();
-      const content = atob(fileData.content); // Decode base64 content
+      const content = atob(fileData.content);
 
-      // 2. Determine the new name and path
       const parts = file.name.split('.');
       const ext = parts.length > 1 ? `.${parts.pop()}` : '';
       const baseName = parts.join('.');
       const newName = `${baseName}-copy${ext}`;
       const newPath = `${path}/${newName}`;
 
-      // 3. Create the new duplicated file
       const createRes = await fetch('/api/file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -182,10 +175,11 @@ function FileExplorer({ repo }) {
         throw new Error(errorData.message);
       }
 
-      console.log('[FileExplorer.jsx] Duplication successful. Clearing selection and fetching files.');
-      // 4. Clear selection and refresh the file list to prevent UI bugs.
-      setSelectedFilePath(null); // Use path for selection
-      fetchFiles();
+      // Fetch the updated file list and then select the new file in a callback
+      fetchFiles(() => {
+        setSelectedFilePath(newPath);
+      });
+
     } catch (err) {
       console.error('[FileExplorer.jsx] Error in handleDuplicate:', err);
       setError(err.message);

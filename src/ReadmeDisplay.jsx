@@ -1,27 +1,31 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import styles from './ReadmeDisplay.module.css';
 import Icon from './icons.jsx';
 
 function ReadmeDisplay({ content, onToggle, isVisible }) {
-  // The visibility of the content is handled by the conditional rendering below.
-  // The main container div should always have the same base class.
   return (
-    <div className={styles.readmeDisplay}>
-      <div className={styles.readmeHeader} onClick={onToggle}>
-        <h3>
+    <div className="border border-gray-200 rounded-md mb-4 overflow-hidden transition-all duration-300 ease-in-out">
+      <div
+        className="flex justify-between items-center p-2 px-4 bg-blue text-white cursor-pointer"
+        onClick={onToggle}
+      >
+        <h3 className="m-0 text-base flex items-center gap-2">
           <Icon name="book-open" />
           README
         </h3>
-        <button className={styles.toggleButton}>
+        <button className="bg-transparent border-none text-white cursor-pointer p-1">
           <Icon name={isVisible ? 'chevron-up' : 'chevron-down'} />
         </button>
       </div>
-      {/* Conditionally render the content based on the isVisible prop */}
       {isVisible && (
-        <div className={styles.readmeContent}>
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        <div className="p-6 bg-white text-gray-800">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            className="prose prose-sm max-w-none prose-a:text-green prose-a:no-underline hover:prose-a:underline"
+          >
+            {content}
+          </ReactMarkdown>
         </div>
       )}
     </div>

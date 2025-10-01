@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import styles from './CreateModal.module.css'; // Reuse styles from CreateModal
-import Button from './components/Button/Button'; // Import the reusable Button component
+import Button from './components/Button/Button';
+import Modal from './components/Modal/Modal';
 
 function RenameModal({ file, onClose, onRename }) {
   const [newName, setNewName] = useState(file.name);
@@ -14,7 +14,7 @@ function RenameModal({ file, onClose, onRename }) {
       return;
     }
     if (newName === file.name) {
-      onClose(); // No change, just close the modal
+      onClose();
       return;
     }
 
@@ -22,9 +22,8 @@ function RenameModal({ file, onClose, onRename }) {
     setError(null);
 
     try {
-      // The onRename function from the parent handles the API logic
       await onRename(file, newName);
-      onClose(); // Close modal on success
+      onClose();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -32,34 +31,41 @@ function RenameModal({ file, onClose, onRename }) {
     }
   };
 
+  const formGroupClasses = "mb-6";
+  const labelClasses = "block mb-2 font-medium text-gray-600";
+  const inputClasses = "w-full p-3 border border-gray-300 rounded-md text-base bg-gray-50 text-black focus:outline-none focus:ring-2 focus:ring-blue-500";
+
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        <h2>Rename "{file.name}"</h2>
-        <form onSubmit={handleSubmit}>
-          <div className={styles.formGroup}>
-            <label htmlFor="newName">New Name</label>
-            <input
-              type="text"
-              id="newName"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              autoFocus
-              onFocus={(e) => e.target.select()} // Automatically select text on focus
-            />
-          </div>
-          {error && <p className={styles.errorMessage}>{error}</p>}
-          <div className={styles.modalActions}>
-            <Button variant="secondary" onClick={onClose} disabled={isRenaming}>
-              Cancel
-            </Button>
-            <Button variant="primary" type="submit" disabled={isRenaming}>
-              {isRenaming ? 'Renaming...' : 'Rename'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Modal
+      title={`Rename "${file.name}"`}
+      onClose={onClose}
+      actions={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={isRenaming}>
+            Cancel
+          </Button>
+          <Button variant="primary" type="submit" onClick={handleSubmit} disabled={isRenaming}>
+            {isRenaming ? 'Renaming...' : 'Rename'}
+          </Button>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit}>
+        <div className={formGroupClasses}>
+          <label htmlFor="newName" className={labelClasses}>New Name</label>
+          <input
+            type="text"
+            id="newName"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            className={inputClasses}
+            autoFocus
+            onFocus={(e) => e.target.select()}
+          />
+        </div>
+        {error && <p className="text-red-600 mt-4">{error}</p>}
+      </form>
+    </Modal>
   );
 }
 

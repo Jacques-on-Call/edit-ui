@@ -1,12 +1,11 @@
 import React from 'react';
 import { marked } from 'marked';
-import styles from './VisualSectionPreview.module.css';
 
 // A simple, recursive component to render content elements
 const renderContent = (content) => {
   if (!content) return null;
   if (typeof content === 'string') {
-    // Ensure that content is treated as markdown for consistent rendering
+    // The parent 'prose' class will style this HTML
     return <div dangerouslySetInnerHTML={{ __html: marked(content) }} />;
   }
   return null;
@@ -20,7 +19,7 @@ function SectionRenderer({ sections }) {
   }
 
   return (
-    <div className={styles.visualSectionPreview}>
+    <div className="prose prose-lg max-w-none">
       {sections.map((section, index) => {
         // Render each section as a simple series of elements, providing a clean document flow.
         return (
@@ -34,7 +33,7 @@ function SectionRenderer({ sections }) {
 
             {section.image && <img src={section.image} alt={section.imageAlt || section.title || ''} />}
 
-            {/* For 'grid' type, render items linearly without borders or boxes */}
+            {/* For 'grid' type, render items linearly */}
             {section.type === 'grid' && section.items && section.items.map((item, itemIndex) => (
               <div key={itemIndex}>
                 {item.title && <h3>{item.title}</h3>}
@@ -45,10 +44,10 @@ function SectionRenderer({ sections }) {
 
             {/* For 'cta' type, render buttons as simple styled links */}
             {section.type === 'cta' && section.buttons && (
-              <div style={{ marginTop: '1em' }}>
+              <div className="mt-4">
                 {section.buttons.map((button, buttonIndex) => (
                   <p key={buttonIndex}>
-                    <a href={button.url}>{button.text}</a>
+                    <a href={button.url} className="no-underline">{button.text}</a>
                   </p>
                 ))}
               </div>

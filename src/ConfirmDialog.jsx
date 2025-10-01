@@ -1,21 +1,27 @@
-import styles from './ConfirmDialog.module.css';
+import React from 'react';
 import Button from './components/Button/Button';
+import Modal from './components/Modal/Modal';
 
 function ConfirmDialog({ message, onConfirm, onCancel }) {
   return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.confirmDialogContent} onClick={(e) => e.stopPropagation()}>
-        <p>{message}</p>
-        <div className={styles.modalActions}>
+    <Modal
+      title="Confirm Action"
+      onClose={onCancel}
+      actions={
+        <>
           <Button variant="secondary" onClick={onCancel}>
             Cancel
           </Button>
           <Button variant="primary" onClick={onConfirm}>
             Confirm
           </Button>
-        </div>
+        </>
+      }
+    >
+      <div className="text-center text-base text-gray-700 leading-relaxed">
+        {message}
       </div>
-    </div>
+    </Modal>
   );
 }
 

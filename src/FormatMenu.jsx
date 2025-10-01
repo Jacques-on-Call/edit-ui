@@ -1,5 +1,4 @@
 import React from 'react';
-import styles from './FormatMenu.module.css';
 
 const FormatMenu = ({ editor, activeFormats = {}, closeMenu }) => {
   if (!editor) return null;
@@ -18,36 +17,41 @@ const FormatMenu = ({ editor, activeFormats = {}, closeMenu }) => {
     }
   };
 
+  const getButtonClasses = (isActive) => {
+    const baseClasses = "bg-gray-50 border border-gray-200 text-gray-800 p-2 rounded cursor-pointer text-sm text-left flex-grow hover:bg-gray-200";
+    return isActive ? `${baseClasses} bg-blue-100 border-blue-300` : baseClasses;
+  };
+
   return (
-    <div className={styles.formatMenu}>
-      <div className={styles.menuSection}>
-        <div className={styles.menuHeader}>Text</div>
-        <button onClick={() => handleCommand('bold')} className={activeFormats.bold ? styles.active : ''}>Bold</button>
-        <button onClick={() => handleCommand('italic')} className={activeFormats.italic ? styles.active : ''}>Italic</button>
-        <button onClick={() => handleCommand('underline')} className={activeFormats.underline ? styles.active : ''}>Underline</button>
-        <button onClick={() => handleCommand('strikethrough')}>Strikethrough</button>
-        <button onClick={() => handleCommand('superscript')}>Superscript</button>
-        <button onClick={() => handleCommand('subscript')}>Subscript</button>
-        <button onClick={() => handleCommand('removeformat')}>Clear Formatting</button>
+    <div className="absolute top-[calc(100%+5px)] right-0 bg-white border border-gray-300 rounded-md shadow-lg z-[1000] w-[280px] p-2 flex flex-col gap-2">
+      <div className="flex flex-wrap gap-2 pb-2 border-b border-gray-200">
+        <div className="w-full text-xs font-bold text-gray-600 mb-1">Text</div>
+        <button onClick={() => handleCommand('bold')} className={getButtonClasses(activeFormats.bold)}>Bold</button>
+        <button onClick={() => handleCommand('italic')} className={getButtonClasses(activeFormats.italic)}>Italic</button>
+        <button onClick={() => handleCommand('underline')} className={getButtonClasses(activeFormats.underline)}>Underline</button>
+        <button onClick={() => handleCommand('strikethrough')} className={getButtonClasses(activeFormats.strikethrough)}>Strikethrough</button>
+        <button onClick={() => handleCommand('superscript')} className={getButtonClasses(activeFormats.superscript)}>Superscript</button>
+        <button onClick={() => handleCommand('subscript')} className={getButtonClasses(activeFormats.subscript)}>Subscript</button>
+        <button onClick={() => handleCommand('removeformat')} className={getButtonClasses(false)}>Clear Formatting</button>
       </div>
-      <div className={styles.menuSection}>
-        <div className={styles.menuHeader}>Block Style</div>
-        <button onClick={() => handleFormatBlock('p')}>Paragraph</button>
-        <button onClick={() => handleFormatBlock('h1')}>Heading 1</button>
-        <button onClick={() => handleFormatBlock('h2')}>Heading 2</button>
-        <button onClick={() => handleFormatBlock('h3')}>Heading 3</button>
+      <div className="flex flex-wrap gap-2 pb-2 border-b border-gray-200">
+        <div className="w-full text-xs font-bold text-gray-600 mb-1">Block Style</div>
+        <button onClick={() => handleFormatBlock('p')} className={getButtonClasses(activeFormats.p)}>Paragraph</button>
+        <button onClick={() => handleFormatBlock('h1')} className={getButtonClasses(activeFormats.h1)}>Heading 1</button>
+        <button onClick={() => handleFormatBlock('h2')} className={getButtonClasses(activeFormats.h2)}>Heading 2</button>
+        <button onClick={() => handleFormatBlock('h3')} className={getButtonClasses(activeFormats.h3)}>Heading 3</button>
       </div>
-      <div className={styles.menuSection}>
-        <div className={styles.menuHeader}>Alignment</div>
-        <button onClick={() => handleCommand('JustifyLeft')} className={activeFormats.justifyLeft ? styles.active : ''}>Left</button>
-        <button onClick={() => handleCommand('JustifyCenter')} className={activeFormats.justifyCenter ? styles.active : ''}>Center</button>
-        <button onClick={() => handleCommand('JustifyRight')} className={activeFormats.justifyRight ? styles.active : ''}>Right</button>
-        <button onClick={() => handleCommand('JustifyFull')} className={activeFormats.justifyFull ? styles.active : ''}>Justify</button>
+      <div className="flex flex-wrap gap-2 pb-2 border-b border-gray-200">
+        <div className="w-full text-xs font-bold text-gray-600 mb-1">Alignment</div>
+        <button onClick={() => handleCommand('JustifyLeft')} className={getButtonClasses(activeFormats.justifyLeft)}>Left</button>
+        <button onClick={() => handleCommand('JustifyCenter')} className={getButtonClasses(activeFormats.justifyCenter)}>Center</button>
+        <button onClick={() => handleCommand('JustifyRight')} className={getButtonClasses(activeFormats.justifyRight)}>Right</button>
+        <button onClick={() => handleCommand('JustifyFull')} className={getButtonClasses(activeFormats.justifyFull)}>Justify</button>
       </div>
-       <div className={styles.menuSection}>
-        <div className={styles.menuHeader}>Lists</div>
-        <button onClick={() => handleCommand('InsertUnorderedList')} className={activeFormats.unorderedList ? styles.active : ''}>Bullet List</button>
-        <button onClick={() => handleCommand('InsertOrderedList')}>Numbered List</button>
+       <div className="flex flex-wrap gap-2">
+        <div className="w-full text-xs font-bold text-gray-600 mb-1">Lists</div>
+        <button onClick={() => handleCommand('InsertUnorderedList')} className={getButtonClasses(activeFormats.unorderedList)}>Bullet List</button>
+        <button onClick={() => handleCommand('InsertOrderedList')} className={getButtonClasses(activeFormats.orderedList)}>Numbered List</button>
       </div>
     </div>
   );

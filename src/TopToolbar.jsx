@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Icon from './icons';
 import FormatMenu from './FormatMenu';
 import AddMenu from './AddMenu';
-import styles from './TopToolbar.module.css';
 
 const TopToolbar = ({ editor, activeFormats, onDone }) => {
-  const navigate = useNavigate();
   const [isFormatMenuOpen, setFormatMenuOpen] = useState(false);
   const [isAddMenuOpen, setAddMenuOpen] = useState(false);
   const formatMenuRef = useRef(null);
@@ -39,17 +36,19 @@ const TopToolbar = ({ editor, activeFormats, onDone }) => {
     setFormatMenuOpen(false); // Close other menu
   };
 
+  const buttonClasses = "bg-transparent border-none text-gray-800 cursor-pointer p-2 rounded-md transition-colors duration-200 ease-in-out flex items-center justify-center hover:bg-gray-100";
+
   return (
-    <div className={styles.topToolbar}>
-      <div className={styles.toolbarGroup}>
-        <button onClick={onDone} title="Preview">
+    <div className="flex justify-between items-center w-full px-4 box-border">
+      <div className="flex items-center gap-2">
+        <button onClick={onDone} title="Preview" className={buttonClasses}>
           <Icon name="eye" />
         </button>
       </div>
 
-      <div className={styles.toolbarGroup}>
-        <div className={styles.dropdownContainer}>
-            <button onClick={toggleAddMenu} title="Add..." ref={addButtonRef}>
+      <div className="flex items-center gap-2">
+        <div className="relative">
+            <button onClick={toggleAddMenu} title="Add..." ref={addButtonRef} className={buttonClasses}>
                 <Icon name="plus" />
             </button>
             {isAddMenuOpen && (
@@ -58,8 +57,8 @@ const TopToolbar = ({ editor, activeFormats, onDone }) => {
               </div>
             )}
         </div>
-        <div className={styles.dropdownContainer}>
-            <button onClick={toggleFormatMenu} title="Format text and paragraph" ref={formatButtonRef}>
+        <div className="relative">
+            <button onClick={toggleFormatMenu} title="Format text and paragraph" ref={formatButtonRef} className={buttonClasses}>
                 <Icon name="type" />
             </button>
             {isFormatMenuOpen && (

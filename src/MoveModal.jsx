@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import styles from './MoveModal.module.css';
 import Button from './components/Button/Button';
+import Modal from './components/Modal/Modal';
 import { FolderIcon } from './icons.jsx';
 
 function MoveModal({ file, repo, onClose, onMove }) {
@@ -14,40 +14,30 @@ function MoveModal({ file, repo, onClose, onMove }) {
     try {
       const res = await fetch(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' });
       if (!res.ok) {
-        // If a directory is not found, we can just ignore it.
         console.warn(`Could not fetch directory: ${path}`);
         return;
       }
       const items = await res.json();
       const subDirs = items.filter(item => item.type === 'dir');
-
       accumulatedDirs.push({ path, name: path.split('/').pop() });
-
-      // Recursively fetch subdirectories
       for (const dir of subDirs) {
         await fetchDirectories(dir.path, accumulatedDirs);
       }
     } catch (err) {
-      // Log error but don't crash the UI. The user will see a loading error.
       console.error(`Failed to process directory ${path}:`, err);
       setError('Could not load all directories.');
     }
   }, [repo]);
 
-
   useEffect(() => {
     const loadAllDirs = async () => {
       setIsLoading(true);
       const allDirs = [];
-      // Start fetching from the root of the content directory.
       await fetchDirectories('src/pages', allDirs);
-
-      // Sort directories alphabetically for consistent display
       const sortedDirs = allDirs.sort((a, b) => a.path.localeCompare(b.path));
       setDirectories(sortedDirs);
       setIsLoading(false);
     };
-
     loadAllDirs();
   }, [fetchDirectories]);
 
@@ -57,20 +47,16 @@ function MoveModal({ file, repo, onClose, onMove }) {
       setError('Please select a destination folder.');
       return;
     }
-
     const currentPath = file.path.substring(0, file.path.lastIndexOf('/'));
     if (selectedPath === currentPath) {
       setError('Cannot move file to its current folder.');
       return;
     }
-
     setIsMoving(true);
     setError(null);
-
     try {
-      // The onMove function from the parent handles the API logic
       await onMove(file, selectedPath);
-      onClose(); // Close modal on success
+      onClose();
     } catch (err) {
       setError(err.message || 'An unexpected error occurred.');
     } finally {
@@ -80,50 +66,52 @@ function MoveModal({ file, repo, onClose, onMove }) {
 
   const handleSelectPath = (path) => {
     setSelectedPath(path);
-    setError(null); // Clear error on new selection
+    setError(null);
   };
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        <h2>Move "{file.name}"</h2>
-        <div className={styles.currentLocation}>
-          <FolderIcon />
-          <span>Current: {file.path.substring(0, file.path.lastIndexOf('/'))}</span>
-        </div>
-
-        <div className={styles.folderListContainer}>
-          {isLoading ? (
-            <p>Loading folders...</p>
-          ) : (
-            <ul className={styles.folderList}>
-              {directories.map(dir => (
-                <li
-                  key={dir.path}
-                  className={`${styles.folderItem} ${selectedPath === dir.path ? styles.selected : ''}`}
-                  onClick={() => handleSelectPath(dir.path)}
-                >
-                  <FolderIcon />
-                  {/* Make the path more readable */}
-                  {dir.path.replace('src/pages', 'Home')}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {error && <p className={styles.errorMessage}>{error}</p>}
-
-        <div className={styles.modalActions}>
+    <Modal
+      title={`Move "${file.name}"`}
+      onClose={onClose}
+      actions={
+        <>
           <Button variant="secondary" onClick={onClose} disabled={isMoving}>
             Cancel
           </Button>
           <Button variant="primary" onClick={handleSubmit} disabled={isMoving || !selectedPath}>
             {isMoving ? 'Moving...' : 'Move to Selected'}
           </Button>
-        </div>
+        </>
+      }
+    >
+      <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-100 p-2 px-4 rounded-md mb-4">
+        <FolderIcon />
+        <span>Current: {file.path.substring(0, file.path.lastIndexOf('/'))}</span>
       </div>
-    </div>
+
+      <div className="border border-gray-300 rounded-md h-48 overflow-y-auto bg-gray-50 p-2">
+        {isLoading ? (
+          <p className="p-4 text-gray-500">Loading folders...</p>
+        ) : (
+          <ul className="list-none p-0 m-0">
+            {directories.map(dir => (
+              <li
+                key={dir.path}
+                className={`flex items-center gap-3 p-2 cursor-pointer rounded transition-colors duration-200 ${
+                  selectedPath === dir.path ? 'bg-blue-100 text-blue-800 font-medium' : 'hover:bg-gray-200'
+                }`}
+                onClick={() => handleSelectPath(dir.path)}
+              >
+                <FolderIcon />
+                {dir.path.replace('src/pages', 'Home')}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {error && <p className="text-red-600 mt-4 text-center">{error}</p>}
+    </Modal>
   );
 }
 

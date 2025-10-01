@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import FileViewer from './FileViewer';
-import styles from './PreviewPage.module.css'; // Import the new CSS
 
 function PreviewPage() {
   const navigate = useNavigate();
@@ -20,9 +19,7 @@ function PreviewPage() {
   }
 
   return (
-    <div className={styles.previewPage}>
-      <FileViewer repo={repo} path={path} />
-    </div>
+    <FileViewer repo={repo} path={path} />
   );
 }
 
