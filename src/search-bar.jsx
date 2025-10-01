@@ -1,6 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
 import { debounce } from 'lodash';
-import styles from './search-bar.module.css';
 
 const SearchBar = ({ repo }) => {
   const [query, setQuery] = useState('');
@@ -52,30 +51,32 @@ const SearchBar = ({ repo }) => {
     // For example: navigate(`/explorer/file?path=${result.path}`);
   };
 
+  const searchResultItemBase = "p-3 cursor-pointer border-b border-gray-100";
+
   return (
-    <div className={styles.searchContainer}>
+    <div className="relative w-full">
       <input
         type="text"
         value={query}
         onChange={handleChange}
         placeholder="Search for files..."
-        className={styles.searchInput}
+        className="w-full py-2 px-1 text-base bg-transparent text-dark-grey outline-none border-b-2 border-transparent transition-colors placeholder:text-gray-400 focus:border-blue-500"
       />
       {query && (
-        <div className={styles.searchResults}>
-          {loading && <div className={styles.searchResultItem}>Loading...</div>}
-          {error && <div className={`${styles.searchResultItem} ${styles.error}`}>{error}</div>}
+        <div className="absolute top-full left-0 right-0 bg-white rounded-md shadow-lg mt-2 max-h-72 overflow-y-auto z-50">
+          {loading && <div className={searchResultItemBase}>Loading...</div>}
+          {error && <div className={`${searchResultItemBase} text-red-600`}>{error}</div>}
           {!loading && !error && results.length === 0 && query && (
-            <div className={styles.searchResultItem}>No results found.</div>
+            <div className={searchResultItemBase}>No results found.</div>
           )}
           {results.map((result) => (
             <div
               key={result.sha}
-              className={styles.searchResultItem}
+              className={`${searchResultItemBase} hover:bg-gray-100 last:border-b-0`}
               onClick={() => handleResultClick(result)}
             >
-              <span className={styles.resultName}>{result.name}</span>
-              <span className={styles.resultPath}>{result.path}</span>
+              <span className="font-medium text-gray-900">{result.name}</span>
+              <span className="block text-xs text-gray-500 mt-0.5">{result.path}</span>
             </div>
           ))}
         </div>

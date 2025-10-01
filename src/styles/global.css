@@ -74,3 +74,26 @@ body {
 #__vconsole {
   z-index: 99999 !important;
 }
+
+/*
+  Override TinyMCE's default inline styles to make it flexible within our layout.
+  This ensures the editor instance correctly fills the available space in the
+  main content area of the EditorPage.
+*/
+.tox-tinymce {
+  flex-grow: 1 !important;
+  border: none !important;
+  height: 100% !important;
+}
+
+/*
+  Custom scrollbar for the MiniBreadcrumbs component.
+  This provides a subtle, cleaner scrollbar than the browser default.
+*/
+.mini-breadcrumb::-webkit-scrollbar {
+  height: 3px;
+}
+.mini-breadcrumb::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}

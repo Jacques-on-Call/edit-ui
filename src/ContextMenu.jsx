@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import styles from './ContextMenu.module.css';
 
 function ContextMenu({ x, y, file, onClose, onRename, onDelete, onDuplicate, onMove }) {
   const menuRef = useRef(null);
@@ -19,28 +18,27 @@ function ContextMenu({ x, y, file, onClose, onRename, onDelete, onDuplicate, onM
 
   const handleAction = (action, actionName) => {
     console.log(`[ContextMenu.jsx] Action triggered: ${actionName} for file:`, file.name);
-    // It's important to close the menu first, then trigger the action that
-    // will open a modal (e.g., Delete, Rename). This prevents a race condition
-    // where the new modal might not appear if the state updates happen too
-    // close together.
     onClose();
     action(file);
   };
 
+  const menuItemClasses = "px-5 py-3 cursor-pointer text-base text-black transition-colors duration-200 ease-in-out hover:bg-gray-100";
+  const menuItemWithBorder = `${menuItemClasses} border-b border-gray-200`;
+
   return (
-    <div className={styles.contextMenuOverlay} onClick={onClose}>
+    <div className="fixed inset-0 z-[2000]" onClick={onClose}>
       <div
         ref={menuRef}
-        className={styles.contextMenu}
+        className="fixed bg-white rounded-lg shadow-lg py-2 min-w-[180px] z-[2001]"
         style={{ top: `${y}px`, left: `${x}px` }}
       >
-        <ul>
-          <li onClick={() => handleAction(onRename, 'onRename')}>Rename</li>
-          <li onClick={() => handleAction(onDelete, 'onDelete')}>Delete</li>
+        <ul className="list-none m-0 p-0">
+          <li className={menuItemWithBorder} onClick={() => handleAction(onRename, 'onRename')}>Rename</li>
+          <li className={menuItemWithBorder} onClick={() => handleAction(onDelete, 'onDelete')}>Delete</li>
           {file.type !== 'dir' && (
-            <li onClick={() => handleAction(onDuplicate, 'onDuplicate')}>Duplicate</li>
+            <li className={menuItemWithBorder} onClick={() => handleAction(onDuplicate, 'onDuplicate')}>Duplicate</li>
           )}
-          <li onClick={() => handleAction(onMove, 'onMove')}>Move</li>
+          <li className={menuItemClasses} onClick={() => handleAction(onMove, 'onMove')}>Move</li>
         </ul>
       </div>
     </div>

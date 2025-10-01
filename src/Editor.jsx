@@ -10,8 +10,6 @@ import SectionEditor from './SectionEditor';
 import EditorHeader from './components/editor/EditorHeader';
 import EditorFooter from './components/editor/EditorFooter';
 
-import styles from './Editor.module.css'; // Corrected path
-
 const Editor = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -139,9 +137,9 @@ const Editor = () => {
   const initialContent = getCombinedHtmlContent(fileData?.frontmatter, fileData?.body);
 
   return (
-    <div className={styles.pageContainer}>
+    <div className="flex flex-col h-screen w-full bg-gray-50">
       <EditorHeader />
-      <main className={styles.mainContent}>
+      <main className="flex-grow overflow-y-auto p-4 bg-white">
         <SectionEditor
           initialContent={initialContent}
           onContentChange={handleContentChange}

@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react';
-import styles from './FileTile.module.css';
 import { FolderIcon, FileIcon } from './icons.jsx';
 
 function formatRelativeDate(dateString) {
@@ -28,14 +27,14 @@ function formatDisplayName(name) {
 }
 
 function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
-  const [isAnimating, setIsAnimating] = useState(false);
   const pressTimer = useRef(null);
 
-  const tileClassName = `
-    ${styles.fileTile}
-    ${isSelected ? styles.selected : ''}
-    ${isAnimating ? (file.type === 'dir' ? styles.pulseFolder : styles.pulseFile) : ''}
-  `;
+  // Note: The click-pulse animation was removed during refactoring as it requires
+  // custom keyframes in tailwind.config.js. This can be re-added later.
+  const baseTileClasses = 'flex flex-col items-center justify-center rounded-lg p-4 cursor-pointer transition-all duration-200 ease-in-out bg-gray-50 border border-gray-200 select-none relative hover:-translate-y-0.5 hover:shadow-md';
+  const selectedClasses = 'bg-[#e0eafc] border-[#003971]'; // Uses custom colors for brand alignment
+
+  const tileClassName = `${baseTileClasses} ${isSelected ? selectedClasses : ''}`;
 
   const handlePointerDown = (e) => {
     if (e.button === 2) return;
@@ -50,10 +49,6 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
 
   const handleOnClick = () => {
     onClick(file);
-    setIsAnimating(true);
-    setTimeout(() => {
-      setIsAnimating(false);
-    }, 300); // This duration must match the animation duration in CSS
   };
 
   const handleContextMenu = (e) => {
@@ -73,19 +68,23 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
       onTouchEnd={handlePointerUp}
       onContextMenu={handleContextMenu}
     >
-      <div className={styles.tileContent}>
-        <div className={styles.icon}>
-          {file.type === 'dir' ? <FolderIcon /> : <FileIcon />}
+      <div className="flex flex-col items-center justify-center text-center w-full">
+        <div className="mb-3 text-gray-500">
+          {file.type === 'dir'
+            ? <FolderIcon className="w-12 h-12" />
+            : <FileIcon className="w-12 h-12" />}
         </div>
-        <div className={styles.name}>{formatDisplayName(file.name)}</div>
-        <div className={styles.metadata}>
+        <div className="text-sm font-medium text-gray-800 break-words leading-tight h-[2.6em] overflow-hidden">
+            {formatDisplayName(file.name)}
+        </div>
+        <div className="text-xs text-gray-500 mt-1.5 flex gap-2 h-[18px]">
           {metadata ? (
             <>
-              <span className={styles.metadataAuthor}>{metadata.author.split(' ')[0]}</span>
-              <span className={styles.metadataDate}>{formatRelativeDate(metadata.date)}</span>
+              <span className="font-medium">{metadata.author.split(' ')[0]}</span>
+              <span>{formatRelativeDate(metadata.date)}</span>
             </>
           ) : (
-            <span className={styles.metadataPlaceholder}>&nbsp;</span>
+            <span className="text-gray-300">&nbsp;</span>
           )}
         </div>
       </div>

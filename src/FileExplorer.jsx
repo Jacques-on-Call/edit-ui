@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styles from './FileExplorer.module.css';
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
 import SearchBar from './search-bar.jsx';
@@ -13,6 +12,9 @@ import MoveModal from './MoveModal'; // Import the new MoveModal
 import ReadmeDisplay from './ReadmeDisplay';
 import * as cache from './cache';
 
+
+import { HomeIcon } from '@heroicons/react/24/solid';
+import MiniBreadcrumbs from './MiniBreadcrumbs';
 
 function FileExplorer({ repo }) {
   const [files, setFiles] = useState([]);
@@ -343,15 +345,25 @@ function FileExplorer({ repo }) {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className={styles.fileExplorer}>
-      <Header path={path} onNavigate={setPath} repo={repo} />
-      <main className={styles.contentArea}>
-        <div className={styles.fileGrid}>
+    <div className="flex flex-col h-screen bg-white">
+      <Header>
+        <div className="flex items-center flex-grow">
+          <button onClick={handleGoHome} className="p-2 rounded-full hover:bg-gray-200 transition-colors">
+            <HomeIcon className="h-5 w-5 text-gray-600" />
+          </button>
+          <MiniBreadcrumbs path={path} onNavigate={setPath} />
+        </div>
+        <div className="w-full max-w-xs">
+          <SearchBar repo={repo} />
+        </div>
+      </Header>
+      <main className="flex-grow overflow-y-auto p-4 pb-20">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
           {Array.isArray(files) && files
             .filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md')
             .map(file => (
               <FileTile
-                key={file.path}
+                key={file.sha}
                 file={file}
                 isSelected={selectedFilePath === file.path}
                 metadata={metadataCache[file.sha]}
