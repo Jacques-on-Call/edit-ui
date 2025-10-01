@@ -1,0 +1,49 @@
+/* ==========================================================================
+   Button Component Styles (Scoped) - Refactored with Tailwind @apply
+   ========================================================================== */
+
+/* 1. Base Button Style
+   -------------------------------------------------------------------------- */
+.button {
+  @apply inline-flex items-center justify-center gap-2 border rounded-md py-3 px-6 font-sans text-lg font-semibold leading-snug cursor-pointer transition-all duration-300 ease-in-out no-underline text-center relative;
+}
+
+.button:disabled {
+  @apply cursor-not-allowed opacity-60;
+}
+
+/* 2. Variants
+   -------------------------------------------------------------------------- */
+
+/* Primary action button (Login page) - Styled as per user feedback */
+.primary {
+  @apply bg-green text-white border-light-green;
+}
+
+.primary:hover:not(:disabled) {
+  @apply bg-opacity-80; /* Slightly fade the green on hover */
+}
+
+/* Floating Action Button (File Explorer) - Styled as per user feedback */
+.fab {
+  /* Green background, light-green icon (via text color), and light-green border */
+  @apply bg-green text-light-green border-light-green rounded-full w-14 h-14 p-0 shadow-lg -translate-y-5;
+}
+
+/* Secondary action button (e.g., Cancel) */
+.secondary {
+  @apply bg-dark-scarlet text-white border-dark-scarlet;
+}
+
+.secondary:hover:not(:disabled) {
+  @apply bg-[#c82333] border-[#bd2130];
+}
+
+/* Icon-only button (e.g., Home button in toolbar) */
+.icon {
+  @apply bg-transparent border-none p-2 text-dark-grey;
+}
+
+.icon:hover:not(:disabled) {
+  @apply bg-black/5;
+}

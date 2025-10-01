@@ -1,30 +1,20 @@
 import React from 'react';
+import styles from './Button.module.css';
 
 /**
- * A reusable, styled button component using Tailwind CSS.
+ * A reusable, styled button component.
  * @param {object} props
  * @param {React.ReactNode} props.children - The content to display inside the button.
  * @param {function} props.onClick - The function to call when the button is clicked.
- * @param {'primary' | 'secondary' | 'fab' | 'icon'} [props.variant='primary'] - The visual style of the button.
- * @param {'button' | 'submit' | 'reset'} [props.type='button'] - The button's type.
+ * @param {'primary' | 'fab' | 'icon'} [props.variant='primary'] - The visual style of the button.
  * @param {boolean} [props.disabled=false] - Whether the button is disabled.
  * @param {string} [props.className=''] - Optional additional class names.
  */
 const Button = ({ children, onClick, variant = 'primary', type = 'button', disabled = false, className = '' }) => {
-
-  const baseStyles = 'inline-flex items-center justify-center gap-2 rounded-md py-3 px-6 font-sans text-lg font-semibold leading-snug cursor-pointer transition-all duration-300 ease-in-out no-underline text-center relative disabled:cursor-not-allowed disabled:opacity-60';
-
-  const variantStyles = {
-    primary: 'bg-blue text-white border border-[#a0cfff] hover:bg-[#002a52] hover:border-[#a0cfff]',
-    secondary: 'bg-dark-scarlet text-white border-dark-scarlet hover:bg-[#c82333] hover:border-[#bd2130]',
-    fab: 'bg-green text-white rounded-full w-14 h-14 p-0 shadow-lg -translate-y-5',
-    icon: 'bg-transparent border-none p-2 text-dark-grey hover:bg-black/5',
-  };
-
-  // Combine the base styles, the selected variant style, and any additional classes.
+  // Combine the base button class, the variant class, and any additional classes.
   const buttonClasses = [
-    baseStyles,
-    variantStyles[variant],
+    styles.button,
+    styles[variant],
     className
   ].join(' ').trim();
 

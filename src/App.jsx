@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import styles from './App.module.css'; // Import the new scoped CSS module
 import RepoSelector from './RepoSelector';
 import Button from './components/Button/Button';
 
@@ -98,12 +99,12 @@ function App() {
   }
 
   return (
-    <div className="bg-blue min-h-screen flex flex-col items-center justify-center text-center">
-      <header className="text-white text-2xl">
-        <img src="/logo.webp" className="h-[20vmin] pointer-events-none mb-8" alt="logo" />
+    <div className={styles.App}>
+      <header className={styles['App-header']}>
+        <img src="/logo.webp" className={styles['App-logo']} alt="logo" />
         {!user ? (
           <div>
-            <p className="mb-4">Please login to continue.</p>
+            <p>Please login to continue.</p>
             <Button variant="primary" onClick={handleLogin}>
               Login with GitHub
             </Button>

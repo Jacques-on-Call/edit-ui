@@ -1,72 +1,46 @@
-/* Styles for the SearchBar component, adapted for a light header */
+/* Styles for the SearchBar component, adapted for a light header - Refactored with Tailwind @apply */
 .searchContainer {
-  position: relative;
-  width: 100%;
+  @apply relative w-full;
 }
 
 .searchInput {
-  width: 100%;
-  padding: 0.5rem 0.25rem;
-  font-size: 1rem;
-  border: none;
-  border-radius: 0;
-  background-color: transparent; /* "Naked" background */
-  color: #333; /* Dark text for visibility */
-  outline: none;
-  border-bottom: 2px solid transparent; /* Subtle underline for focus state */
-  transition: border-bottom-color 0.2s ease-in-out;
+  @apply w-full py-2 px-1 text-base bg-transparent text-dark-grey outline-none border-b-2 border-transparent transition-colors;
 }
 
 .searchInput::placeholder {
-  color: #888; /* Standard placeholder color */
+  @apply text-gray-400;
 }
 
 /* Add a visual cue when the user focuses the input */
 .searchInput:focus {
-  border-bottom-color: #007bff; /* Blue focus indicator */
+  @apply border-blue-500;
 }
 
-/* Styles for the search results dropdown remain largely the same */
+/* Styles for the search results dropdown */
 .searchResults {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background-color: white;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  margin-top: 8px;
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 1000;
+  @apply absolute top-full left-0 right-0 bg-white rounded-md shadow-lg mt-2 max-h-72 overflow-y-auto z-50;
 }
 
 .searchResultItem {
-  padding: 12px 16px;
-  cursor: pointer;
-  border-bottom: 1px solid #f0f2f5;
+  @apply p-3 cursor-pointer border-b border-gray-100;
 }
 
 .searchResultItem:hover {
-  background-color: #f0f2f5;
+  @apply bg-gray-100;
 }
 
 .searchResultItem:last-child {
-  border-bottom: none;
+  @apply border-b-0;
 }
 
 .resultName {
-  font-weight: 500;
-  color: #1c1c1e;
+  @apply font-medium text-gray-900;
 }
 
 .resultPath {
-  display: block;
-  font-size: 12px;
-  color: #8e8e93;
-  margin-top: 2px;
+  @apply block text-xs text-gray-500 mt-0.5;
 }
 
 .error {
-  color: #ff3b30;
+  @apply text-red-600;
 }

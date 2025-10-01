@@ -17,10 +17,6 @@ export default {
         grey: '#5a5454',
         'light-grey': '#F5F5F5',
         'dark-grey': '#333333',
-        'link-light': '#FF2400',
-        'link-dark': '#C7EA46',
-        'link-on-blue': '#C7EA46',
-        'link-on-black': '#C7EA46',
       },
       fontFamily: {
         sans: ['Roboto', 'sans-serif'],
