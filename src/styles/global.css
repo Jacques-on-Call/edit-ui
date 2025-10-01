@@ -4,9 +4,9 @@
 
 /* 1. Design Tokens & Color Scheme
    -------------------------------------------------------------------------- */
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
    :root {
   /* Design Tokens */
@@ -25,24 +25,10 @@
   --line-height-base: 1.5;
   --font-weight-base: 400;
 
-  /* Color Scheme Defaults */
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87); /* Default dark mode text */
-  background-color: #242424; /* Default dark mode background */
-
   /* Font Rendering */
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
-
-/* Use light mode colors when preferred by the user's system */
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-}
-
 
 /* 2. Base Element Styling
    -------------------------------------------------------------------------- */
@@ -53,7 +39,6 @@ body {
   font-weight: var(--font-weight-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* The background color is now handled by the :root color scheme styles. */
 }
 
 /* A top-level container for the React app. */

@@ -9,9 +9,8 @@ import SectionEditor from './SectionEditor';
 
 import EditorHeader from './components/editor/EditorHeader';
 import EditorFooter from './components/editor/EditorFooter';
-import EditorWrapper from './components/editor/EditorWrapper';
 
-import styles from './pages/EditorPage.module.css'; // reuse the pageContainer + mainContent
+import styles from './Editor.module.css'; // Corrected path
 
 const Editor = () => {
   const location = useLocation();
@@ -143,14 +142,12 @@ const Editor = () => {
     <div className={styles.pageContainer}>
       <EditorHeader />
       <main className={styles.mainContent}>
-        <EditorWrapper>
-          <SectionEditor
-            initialContent={initialContent}
-            onContentChange={handleContentChange}
-            onInit={handleEditorInit}
-            onNodeChange={handleNodeChange}
-          />
-        </EditorWrapper>
+        <SectionEditor
+          initialContent={initialContent}
+          onContentChange={handleContentChange}
+          onInit={handleEditorInit}
+          onNodeChange={handleNodeChange}
+        />
       </main>
       <EditorFooter />
     </div>
