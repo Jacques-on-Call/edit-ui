@@ -137,9 +137,9 @@ const Editor = () => {
   const initialContent = getCombinedHtmlContent(fileData?.frontmatter, fileData?.body);
 
   return (
-    <div className="flex flex-col h-screen w-full bg-gray-50">
+    <div className="flex flex-col h-screen w-full bg-white">
       <EditorHeader />
-      <main className="flex-grow overflow-y-auto p-4 bg-white">
+      <main className="flex-grow overflow-y-auto p-4">
         <SectionEditor
           initialContent={initialContent}
           onContentChange={handleContentChange}

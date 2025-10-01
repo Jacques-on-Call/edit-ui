@@ -28,7 +28,6 @@
   /* Color Scheme Defaults */
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87); /* Default dark mode text */
-  background-color: #242424; /* Default dark mode background */
 
   /* Font Rendering */
   font-synthesis: none;
@@ -39,7 +38,6 @@
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
-    background-color: #ffffff;
   }
 }
 

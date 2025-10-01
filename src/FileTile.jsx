@@ -69,10 +69,10 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
       onContextMenu={handleContextMenu}
     >
       <div className="flex flex-col items-center justify-center text-center w-full">
-        <div className="mb-3 text-gray-500">
+        <div className="mb-3">
           {file.type === 'dir'
-            ? <FolderIcon className="w-12 h-12" />
-            : <FileIcon className="w-12 h-12" />}
+            ? <FolderIcon className="w-12 h-12 text-blue" />
+            : <FileIcon className="w-12 h-12 text-green" />}
         </div>
         <div className="text-sm font-medium text-gray-800 break-words leading-tight h-[2.6em] overflow-hidden">
             {formatDisplayName(file.name)}

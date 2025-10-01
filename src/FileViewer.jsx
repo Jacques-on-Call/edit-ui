@@ -4,11 +4,38 @@ import { marked } from 'marked';
 import { Buffer } from 'buffer';
 import SectionRenderer from './SectionRenderer';
 import SearchPreviewModal from './SearchPreviewModal';
+import styles from './FileViewer.module.css';
 import { unifiedParser } from './utils/unifiedParser';
 import { stringifyAstroFile } from './utils/astroFileParser';
 import { BackIcon, SearchIcon, EditIcon } from './icons';
 
-function FileViewerV2({ repo, path, branch }) {
+// Dynamically import all CSS files from the styles directory
+const siteStyles = import.meta.glob('/src/styles/*.css', { query: '?raw', import: 'default' });
+
+function FileViewer({ repo, path, branch }) {
+  useEffect(() => {
+    const styleElements = [];
+
+    // Inject all fetched styles into the head
+    Promise.all(Object.values(siteStyles).map(load => load())).then(styles => {
+      styles.forEach((styleContent, i) => {
+        const styleElement = document.createElement('style');
+        styleElement.id = `site-style-${i}`;
+        styleElement.innerHTML = styleContent;
+        document.head.appendChild(styleElement);
+        styleElements.push(styleElement);
+      });
+    });
+
+    document.body.classList.add('light-theme');
+
+    return () => {
+      // Cleanup: remove all added style elements
+      styleElements.forEach(el => document.head.removeChild(el));
+      document.body.classList.remove('light-theme');
+    };
+  }, []);
+
   const [isHeadEditorOpen, setIsHeadEditorOpen] = useState(false);
   const [content, setContent] = useState({
     sections: null,
@@ -166,43 +193,41 @@ function FileViewerV2({ repo, path, branch }) {
     }
     if (path.endsWith('.md')) {
       const html = marked(content.body || '');
-      return <div className="leading-relaxed text-[#1d1d1f]" dangerouslySetInnerHTML={{ __html: html }} />;
+      return <div className={styles.markdownPreview} dangerouslySetInnerHTML={{ __html: html }} />;
     }
-    return <pre className="leading-relaxed text-[#1d1d1f] bg-[#f9f9f9] border border-[#d2d2d7] rounded-lg p-6 whitespace-pre-wrap break-words font-mono text-[14px]">{content.rawContent}</pre>;
+    return <pre className={styles.rawContentViewer}>{content.rawContent}</pre>;
   };
 
-  const containerClasses = "flex-grow overflow-y-auto bg-white max-w-4xl mx-auto md:p-12 p-6 md:my-8 my-4 md:rounded-xl rounded-none md:shadow-[0_1px_2px_rgba(0,0,0,0.05),_0_2px_8px_rgba(0,0,0,0.03)] shadow-none md:border border-none border-[#d2d2d7]";
-
-  if (loading) return <div className={containerClasses}>Loading...</div>;
-  if (error) return <div className={containerClasses}>Error: {error}</div>;
+  if (loading) return <div className={styles.fileViewerContainer}>Loading...</div>;
+  if (error) return <div className={styles.fileViewerContainer}>Error: {error}</div>;
 
   return (
-    <div className="flex flex-col h-screen bg-[#f6f6f7] font-sans">
-      <header className="flex justify-between items-center py-3 md:px-6 px-4 bg-white text-[#1d1d1f] sticky top-0 z-[100] border-b border-[#d2d2d7] h-[60px] box-border">
-        <h1 className="text-base font-semibold m-0 whitespace-nowrap overflow-hidden text-ellipsis hidden md:block">{getFriendlyTitle(path)}</h1>
-        <div className="flex items-center md:w-auto w-full md:justify-start justify-evenly gap-2 sm:gap-3">
-          <span className="text-[13px] py-1 px-3 rounded-xl bg-[#f5f5f7] text-[#6e6e73] font-medium items-center hidden sm:flex">
+    <div className={styles.fileViewerPage}>
+      <header className={styles.viewerHeaderBlue}>
+        <h1 className={styles.headerTitle}>{getFriendlyTitle(path)}</h1>
+        <div className={styles.headerActions}>
+          <span className={styles.statusIndicator}>
             {isDraft ? 'Draft' : 'Published'}
           </span>
-          <button className="flex items-center gap-1.5 bg-transparent text-[#007aff] border-none py-2 md:px-3 px-2 rounded-lg text-[14px] font-medium cursor-pointer transition-colors duration-200 ease-in-out hover:bg-[#f5f5f7] sm:flex-grow-0 flex-grow sm:justify-start justify-center" onClick={() => navigate('/explorer')} aria-label="Back to explorer">
+          <button className={styles.headerButton} onClick={() => navigate('/explorer')} aria-label="Back to explorer">
             <BackIcon />
-            <span className="hidden md:inline">Back</span>
+            <span>Back</span>
           </button>
-          <button className="flex items-center gap-1.5 bg-transparent text-[#007aff] border-none py-2 md:px-3 px-2 rounded-lg text-[14px] font-medium cursor-pointer transition-colors duration-200 ease-in-out hover:bg-[#f5f5f7] sm:flex-grow-0 flex-grow sm:justify-start justify-center" onClick={() => setIsHeadEditorOpen(true)} aria-label="Open search preview">
+          <button className={styles.headerButton} onClick={() => setIsHeadEditorOpen(true)} aria-label="Open search preview">
             <SearchIcon />
-            <span className="hidden md:inline">Search Preview</span>
+            <span>Search Preview</span>
           </button>
-          <button className="flex items-center gap-1.5 bg-transparent text-[#007aff] border-none py-2 md:px-3 px-2 rounded-lg text-[14px] font-medium cursor-pointer transition-colors duration-200 ease-in-out hover:bg-[#f5f5f7] sm:flex-grow-0 flex-grow sm:justify-start justify-center" onClick={() => navigate(`/edit/${repo}/${path}`)} aria-label="Edit file">
+          <button className={styles.headerButton} onClick={() => navigate(`/edit/${repo}/${path}`)} aria-label="Edit file">
             <EditIcon />
-            <span className="hidden md:inline">Edit</span>
+            <span>Edit</span>
           </button>
-          <button className="flex items-center gap-1.5 border-none py-2 md:px-3 px-2 rounded-lg text-[14px] font-medium cursor-pointer transition-colors duration-200 ease-in-out sm:flex-grow-0 flex-grow sm:justify-start justify-center bg-[#007aff] text-white hover:bg-[#0071e3] disabled:bg-[#a0c3e8] disabled:text-[#e8f0f8] disabled:cursor-not-allowed" onClick={handlePublish} disabled={!isDraft}>
+          <button className={`${styles.headerButton} ${styles.publishButton}`} onClick={handlePublish} disabled={!isDraft}>
             Publish
           </button>
         </div>
       </header>
 
-      <div className={containerClasses}>
+      <div className={styles.fileViewerContainer}>
         {isHeadEditorOpen && content.sha && (
           <SearchPreviewModal
             initialTitle={content.frontmatter.title}
@@ -214,11 +239,11 @@ function FileViewerV2({ repo, path, branch }) {
           />
         )}
         {isDraft && (
-          <div className="bg-[#fff9e6] border border-[#ffd666] rounded-xl py-4 px-6 mb-8 flex justify-between items-center">
-            <p className="m-0 font-medium text-[#594500]">You are viewing a draft. Your changes are not yet published.</p>
-            <div className="flex gap-4">
-              <button className="border py-2.5 px-5 rounded-lg text-base cursor-pointer transition-all bg-[#007aff] text-white border-transparent hover:bg-[#0071e3]" onClick={handlePublish}>Publish</button>
-              <button className="border py-2.5 px-5 rounded-lg text-base cursor-pointer transition-all bg-[#ff3b30] text-white border-transparent hover:bg-[#e02c22]" onClick={handleDiscard}>Discard Draft</button>
+          <div className={styles.draftBanner}>
+            <p>You are viewing a draft. Your changes are not yet published.</p>
+            <div className={styles.draftActions}>
+              <button className={`${styles.viewerButton} ${styles.publishButton}`} onClick={handlePublish}>Publish</button>
+              <button className={`${styles.viewerButton} ${styles.discardButton}`} onClick={handleDiscard}>Discard Draft</button>
             </div>
           </div>
         )}
@@ -228,4 +253,4 @@ function FileViewerV2({ repo, path, branch }) {
   );
 }
 
-export default FileViewerV2;
+export default FileViewer;
