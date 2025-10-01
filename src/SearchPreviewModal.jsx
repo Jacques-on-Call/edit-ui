@@ -1,24 +1,98 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import styles from './SearchPreviewModal.module.css';
+import { getAiSchemaSuggestions } from './utils/aiSchemaService.js';
+import SchemaSandbox from './components/SchemaSandbox';
 
-// A new sub-component for the visual SERP preview, refactored with Tailwind CSS.
+// A new sub-component for the visual SERP preview, defined at the top level
 function SerpPreview({ title, description, slug }) {
   const siteUrl = `https://www.strategycontent.agency/${slug}`;
   return (
-    <div className="font-sans rounded-xl border border-gray-200 bg-gray-50 p-4 sm:p-6">
-      <span className="text-sm text-gray-700">{siteUrl}</span>
-      <h3 className="mt-1 mb-1 text-xl text-blue-800">{title || 'Your Title Here'}</h3>
-      <p className="m-0 text-sm leading-relaxed text-gray-600">
-        {description || 'Your meta description will appear here. Try to keep it under 160 characters.'}
+    <div className={styles.serpPreview}>
+      <span className={styles.serpUrl}>{siteUrl}</span>
+      <h3 className={styles.serpTitle}>{title || 'Your Title Here'}</h3>
+      <p className={styles.serpDescription}>{description || 'Your meta description will appear here. Try to keep it under 160 characters.'}</p>
+    </div>
+  );
+}
+
+// --- Sub-components for the Rich Results UI ---
+
+function SuggestionCard({ suggestion, isEnabled, onToggle }) {
+  // A simple card to display a single AI suggestion.
+  // Note: The actual styles would be in the CSS module file.
+  return (
+    <div className={`${styles.suggestionCard} ${isEnabled ? styles.enabled : ''}`}>
+      <div className={styles.cardHeader}>
+        <span className={styles.schemaType}>{suggestion.type}</span>
+        <div className={styles.toggleSwitch}>
+          <input
+            type="checkbox"
+            id={`toggle-${suggestion.type}`}
+            checked={isEnabled}
+            onChange={onToggle}
+          />
+          <label htmlFor={`toggle-${suggestion.type}`}></label>
+        </div>
+      </div>
+      <p className={styles.reason}>
+        <span className={styles.confidence}>({(suggestion.confidence * 100).toFixed(0)}% confidence)</span>
+        {suggestion.reason}
       </p>
     </div>
   );
 }
+
+function SerpSimulator({ schemas }) {
+  // A simplified simulator to give a visual cue of the schema's effect.
+  if (!schemas || (Array.isArray(schemas) && schemas.length === 0)) {
+    return <p className={styles.simulatorPlaceholder}>Enable a schema to see a preview.</p>;
+  }
+
+  const schemaArray = Array.isArray(schemas) ? schemas : [schemas];
+
+  const renderSchemaPreview = (schema) => {
+    switch (schema['@type']) {
+      case 'FAQPage':
+        return (
+          <div key={schema['@type']} className={styles.faqSerp}>
+            {schema.mainEntity?.map((item, index) => (
+              <div key={index} className={styles.faqItem}><strong>{item.name}</strong></div>
+            ))}
+          </div>
+        );
+      case 'Event':
+        return (
+          <div key={schema['@type']} className={styles.eventSerp}>
+            <p><strong>Event:</strong> {schema.name}</p>
+            <p><strong>Date:</strong> {new Date(schema.startDate).toLocaleDateString()}</p>
+          </div>
+        );
+      case 'Product':
+        return (
+          <div key={schema['@type']} className={styles.productSerp}>
+            <p><strong>Product:</strong> {schema.name} - <strong>{schema.offers?.priceCurrency}{schema.offers?.price}</strong></p>
+          </div>
+        );
+      default:
+        return <p key={schema['@type']}>Preview for {schema['@type']}</p>;
+    }
+  };
+
+  return (
+    <div>
+      {schemaArray.map(renderSchemaPreview)}
+    </div>
+  );
+}
+
 
 function SearchPreviewModal({
   initialTitle = '',
   initialDescription = '',
   initialSlug = '',
   initialJsonSchema = {},
+  sections = [], // New prop for block-by-block analysis
+  pageContent = '', // Now receiving this from FileViewer
   onClose,
   onSave,
 }) {
@@ -26,108 +100,206 @@ function SearchPreviewModal({
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
   const [slug, setSlug] = useState(initialSlug);
-  const [jsonSchema, setJsonSchema] = useState(JSON.stringify(initialJsonSchema, null, 2));
+
+  // AI-related state
+  const [suggestions, setSuggestions] = useState([]);
+  const [enabledSuggestions, setEnabledSuggestions] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [finalJsonSchema, setFinalJsonSchema] = useState(initialJsonSchema);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [manualSchemas, setManualSchemas] = useState([]);
+
+  // Fetch AI suggestions when the modal opens
+  useEffect(() => {
+    if (!pageContent) {
+        setIsLoading(false);
+        return;
+    };
+
+    getAiSchemaSuggestions(pageContent).then(results => {
+      setSuggestions(results);
+      // Enable all suggestions by default
+      const initialEnabledState = results.reduce((acc, suggestion) => {
+        acc[suggestion.type] = true;
+        return acc;
+      }, {});
+      setEnabledSuggestions(initialEnabledState);
+      setIsLoading(false);
+    });
+  }, [pageContent]);
+
+  // Update the final JSON schema whenever the enabled suggestions or manual schemas change
+  useEffect(() => {
+    const aiSchemas = suggestions
+      .filter(suggestion => enabledSuggestions[suggestion.type])
+      .map(suggestion => suggestion.schema);
+
+    const combined = [...aiSchemas, ...manualSchemas];
+
+    // If multiple schemas are enabled, return an array. If one, return a single object.
+    const finalOutput = combined.length === 1 ? combined[0] : combined;
+    setFinalJsonSchema(finalOutput);
+
+  }, [suggestions, enabledSuggestions, manualSchemas]);
+
+  const handleToggleSuggestion = (type) => {
+    setEnabledSuggestions(prev => ({ ...prev, [type]: !prev[type] }));
+  };
+
+  const handleAnalyzeBlock = async (blockContent) => {
+    const newSuggestions = await getAiSchemaSuggestions(blockContent);
+    // Merge new suggestions, avoiding duplicates
+    setSuggestions(prev => {
+        const existingTypes = new Set(prev.map(s => s.type));
+        const uniqueNewSuggestions = newSuggestions.filter(s => !existingTypes.has(s.type));
+        return [...prev, ...uniqueNewSuggestions];
+    });
+    // Also enable the new suggestions by default
+    setEnabledSuggestions(prev => {
+        const newState = {...prev};
+        newSuggestions.forEach(s => {
+            newState[s.type] = true;
+        });
+        return newState;
+    });
+  };
 
   const handleSave = () => {
-    try {
-      const parsedJsonSchema = JSON.parse(jsonSchema);
-      onSave({ title, description, slug, jsonSchema: parsedJsonSchema });
-    } catch (error) {
-      alert('The JSON Schema is invalid. Please correct it before saving.');
-    }
+    // We pass the combined schema object on save
+    onSave({ title, description, slug, jsonSchema: finalJsonSchema });
   };
-
-  const getTabClasses = (tabName) => {
-    const baseClasses = "bg-transparent border-none py-3 mr-6 cursor-pointer text-sm font-medium border-b-2 transition-all transform-gpu translate-y-px";
-    return activeTab === tabName
-      ? `${baseClasses} text-gray-900 border-blue-600`
-      : `${baseClasses} text-gray-500 border-transparent`;
-  };
-
-  const inputClasses = "w-full py-2 px-3 border border-gray-300 rounded-lg text-base bg-white transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500";
-  const textareaClasses = `${inputClasses} resize-y min-h-[100px]`;
-  const jsonEditorClasses = "w-full border border-gray-300 rounded-lg font-mono text-sm p-4 bg-gray-50 text-gray-800 resize-y min-h-[200px] focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500";
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="flex w-[90%] max-w-3xl max-h-[90vh] flex-col rounded-xl border border-gray-200 bg-white shadow-lg">
-        <div className="flex items-center justify-between border-b border-gray-200 p-4 px-6">
-          <h2 className="m-0 text-lg font-semibold">Search Preview</h2>
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-transparent text-2xl text-gray-500 transition-colors hover:bg-gray-100">
-            &times;
+    <div className={styles.modalBackdrop}>
+      <div className={styles.modalContent}>
+        <div className={styles.modalHeader}>
+          <h2>Search Preview</h2>
+          <button onClick={onClose} className={styles.closeButton}>&times;</button>
+        </div>
+        <div className={styles.tabContainer}>
+          <button
+            className={`${styles.tabButton} ${activeTab === 'serp' ? styles.active : ''}`}
+            onClick={() => setActiveTab('serp')}
+          >
+            SERP View
+          </button>
+          <button
+            className={`${styles.tabButton} ${activeTab === 'rich-results' ? styles.active : ''}`}
+            onClick={() => setActiveTab('rich-results')}
+          >
+            Rich Results
           </button>
         </div>
-        <div className="border-b border-gray-200 bg-gray-50/70 px-6">
-          <div className="flex">
-            <button className={getTabClasses('serp')} onClick={() => setActiveTab('serp')}>
-              SERP View
-            </button>
-            <button className={getTabClasses('json')} onClick={() => setActiveTab('json')}>
-              JSON Schema
-            </button>
-          </div>
-        </div>
-        <div className="flex-grow overflow-y-auto p-6">
+        <div className={styles.tabContent}>
           {activeTab === 'serp' && (
-            <div>
-              <h4 className="text-base font-semibold mb-3">Live Preview</h4>
+            <div className={styles.serpTab}>
+              <h4>Live Preview</h4>
               <SerpPreview title={title} description={description} slug={slug} />
-              <hr className="my-8 border-0 border-t border-gray-200" />
+              <hr className={styles.divider} />
 
-              <div className="mb-6">
-                <div className="mb-2 flex items-center justify-between">
-                  <label htmlFor="meta-title" className="text-sm font-semibold text-gray-800">Meta Title</label>
-                  <span className="text-xs text-gray-500">{title.length} / 60</span>
+              <div className={styles.inputGroup}>
+                <div className={styles.labelContainer}>
+                  <label htmlFor="meta-title">Meta Title</label>
+                  <span className={styles.charCounter}>{title.length} / 60</span>
                 </div>
                 <input
                   id="meta-title"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className={inputClasses}
+                  className={styles.inputField}
                   maxLength="60"
                 />
               </div>
-              <div className="mb-6">
-                <div className="mb-2 flex items-center justify-between">
-                  <label htmlFor="meta-description" className="text-sm font-semibold text-gray-800">Meta Description</label>
-                  <span className="text-xs text-gray-500">{description.length} / 160</span>
+              <div className={styles.inputGroup}>
+                <div className={styles.labelContainer}>
+                  <label htmlFor="meta-description">Meta Description</label>
+                  <span className={styles.charCounter}>{description.length} / 160</span>
                 </div>
                 <textarea
                   id="meta-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className={textareaClasses}
+                  className={styles.textareaField}
                   rows="4"
                   maxLength="160"
                 />
               </div>
-              <div>
-                <label htmlFor="url-slug" className="mb-2 block text-sm font-semibold text-gray-800">URL Slug</label>
+              <div className={styles.inputGroup}>
+                <label htmlFor="url-slug">URL Slug</label>
                 <input
                   id="url-slug"
                   type="text"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
-                  className={inputClasses}
+                  className={styles.inputField}
                 />
               </div>
             </div>
           )}
-          {activeTab === 'json' && (
-            <div>
-              <textarea
-                value={jsonSchema}
-                onChange={(e) => setJsonSchema(e.target.value)}
-                className={jsonEditorClasses}
-                rows="15"
-                spellCheck="false"
-              />
+          {activeTab === 'rich-results' && (
+            <div className={styles.jsonTab}>
+              {isLoading ? (
+                <div className={styles.loadingState}>
+                  <p>🤖 Analyzing content for Rich Results...</p>
+                </div>
+              ) : (
+                <div className={styles.richResultsContainer}>
+                  <div className={styles.suggestionsPanel}>
+                    <h4>AI Suggestions</h4>
+                    {suggestions.length > 0 ? (
+                      suggestions.map(suggestion => (
+                        <SuggestionCard
+                          key={suggestion.type}
+                          suggestion={suggestion}
+                          isEnabled={!!enabledSuggestions[suggestion.type]}
+                          onToggle={() => handleToggleSuggestion(suggestion.type)}
+                        />
+                      ))
+                    ) : (
+                      <p>No schema suggestions found for the page.</p>
+                    )}
+                    <div className={styles.blockAnalyzer}>
+                      <h5>Analyze Content Blocks</h5>
+                      {sections.filter(s => s.type === 'text_block').map((section, index) => (
+                        <div key={index} className={styles.block}>
+                          <p className={styles.blockContent}>"{section.content.substring(0, 100)}..."</p>
+                          <button onClick={() => handleAnalyzeBlock(section.content)}>Analyze</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className={styles.previewPanel}>
+                    <div className={styles.jsonPreview}>
+                      <h5>Generated JSON-LD</h5>
+                      <pre>{JSON.stringify(finalJsonSchema, null, 2)}</pre>
+                    </div>
+                    <div className={styles.serpSimulator}>
+                      <h5>SERP Simulation</h5>
+                      <SerpSimulator schemas={finalJsonSchema} />
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className={styles.advancedControlsToggle}>
+                <button onClick={() => setShowAdvanced(!showAdvanced)}>
+                  {showAdvanced ? 'Hide Advanced Controls' : 'Show Advanced Controls'}
+                </button>
+              </div>
+              {showAdvanced && (
+                <div className={styles.advancedControlsContainer}>
+                  <h4>Schema Sandbox</h4>
+                  <SchemaSandbox
+                    manualSchemas={manualSchemas}
+                    onUpdate={setManualSchemas}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
-        <div className="border-t border-gray-200 bg-gray-50/70 p-4 px-6 text-right">
-          <button className="cursor-pointer rounded-lg border-none bg-blue-600 py-2 px-5 text-sm font-medium text-white transition-colors hover:bg-blue-700" onClick={handleSave}>Save Changes</button>
+        <div className={styles.modalFooter}>
+          <button className={styles.saveButton} onClick={handleSave}>Save Changes</button>
         </div>
       </div>
     </div>
