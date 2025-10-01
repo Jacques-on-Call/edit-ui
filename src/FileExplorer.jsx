@@ -374,7 +374,7 @@ function FileExplorer({ repo }) {
               />
           ))}
         </div>
-        {isReadmeLoading && <div className={styles.readmeLoading}>Loading README...</div>}
+        {isReadmeLoading && <div className="text-center p-4 text-gray-500">Loading README...</div>}
         {readmeContent && !isReadmeLoading && (
           <ReadmeDisplay
             content={readmeContent}
