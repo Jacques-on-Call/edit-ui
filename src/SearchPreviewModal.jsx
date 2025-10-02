@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import styles from './SearchPreviewModal.module.css';
 import { getAiSchemaSuggestions } from './utils/aiSchemaService.js';
+import { stripHtml } from './utils/textUtils.js';
 import SchemaSandbox from './components/SchemaSandbox';
 
 // A new sub-component for the visual SERP preview, defined at the top level
@@ -93,6 +94,7 @@ function SearchPreviewModal({
   initialJsonSchema = {},
   sections = [], // New prop for block-by-block analysis
   pageContent = '', // Now receiving this from FileViewer
+  filePath = '', // New prop for file context
   onClose,
   onSave,
 }) {
@@ -116,7 +118,7 @@ function SearchPreviewModal({
         return;
     };
 
-    getAiSchemaSuggestions(pageContent).then(results => {
+    getAiSchemaSuggestions(pageContent, filePath).then(results => {
       setSuggestions(results);
       // Enable all suggestions by default
       const initialEnabledState = results.reduce((acc, suggestion) => {
@@ -126,7 +128,7 @@ function SearchPreviewModal({
       setEnabledSuggestions(initialEnabledState);
       setIsLoading(false);
     });
-  }, [pageContent]);
+  }, [pageContent, filePath]);
 
   // Update the final JSON schema whenever the enabled suggestions or manual schemas change
   useEffect(() => {
@@ -147,7 +149,7 @@ function SearchPreviewModal({
   };
 
   const handleAnalyzeBlock = async (blockContent) => {
-    const newSuggestions = await getAiSchemaSuggestions(blockContent);
+    const newSuggestions = await getAiSchemaSuggestions(blockContent, filePath);
     // Merge new suggestions, avoiding duplicates
     setSuggestions(prev => {
         const existingTypes = new Set(prev.map(s => s.type));
@@ -263,7 +265,7 @@ function SearchPreviewModal({
                       <h5>Analyze Content Blocks</h5>
                       {sections.filter(s => s.type === 'text_block').map((section, index) => (
                         <div key={index} className={styles.block}>
-                          <p className={styles.blockContent}>"{section.content.substring(0, 100)}..."</p>
+                          <p className={styles.blockContent}>"{stripHtml(section.content).substring(0, 100)}..."</p>
                           <button onClick={() => handleAnalyzeBlock(section.content)}>Analyze</button>
                         </div>
                       ))}

@@ -165,6 +165,7 @@
   font-size: 1rem;
   box-sizing: border-box;
   background-color: #fff;
+  color: var(--text-primary); /* Fix for invisible text */
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -510,3 +511,9 @@
   background-color: #0071e3;
 }
 
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+  .richResultsContainer {
+    flex-direction: column;
+  }
+}

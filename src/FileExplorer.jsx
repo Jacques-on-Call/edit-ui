@@ -1,436 +1,259 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from './components/Header/Header';
-import Footer from './components/Footer/Footer';
-import SearchBar from './search-bar.jsx';
-import FileTile from './FileTile';
-import CreateModal from './CreateModal';
-import ContextMenu from './ContextMenu';
-import ConfirmDialog from './ConfirmDialog';
-import RenameModal from './RenameModal';
-import MoveModal from './MoveModal'; // Import the new MoveModal
-import ReadmeDisplay from './ReadmeDisplay';
-import * as cache from './cache';
+import { marked } from 'marked';
+import { Buffer } from 'buffer';
+import SectionRenderer from './SectionRenderer';
+import SearchPreviewModal from './SearchPreviewModal';
+import styles from './FileViewer.module.css';
+import { unifiedParser } from './utils/unifiedParser';
+import { stringifyAstroFile } from './utils/astroFileParser';
+import { BackIcon, SearchIcon, EditIcon } from './icons';
 
+// Dynamically import all CSS files from the styles directory
+const siteStyles = import.meta.glob('/src/styles/*.css', { query: '?raw', import: 'default' });
 
-import { HomeIcon } from '@heroicons/react/24/solid';
-import MiniBreadcrumbs from './MiniBreadcrumbs';
+function FileViewer({ repo, path, branch }) {
+  useEffect(() => {
+    const styleElements = [];
 
-function FileExplorer({ repo }) {
-  const [files, setFiles] = useState([]);
-  const [path, setPath] = useState('src/pages');
+    // Inject all fetched styles into the head
+    Promise.all(Object.values(siteStyles).map(load => load())).then(styles => {
+      styles.forEach((styleContent, i) => {
+        const styleElement = document.createElement('style');
+        styleElement.id = `site-style-${i}`;
+        styleElement.innerHTML = styleContent;
+        document.head.appendChild(styleElement);
+        styleElements.push(styleElement);
+      });
+    });
+
+    document.body.classList.add('light-theme');
+
+    return () => {
+      // Cleanup: remove all added style elements
+      styleElements.forEach(el => document.head.removeChild(el));
+      document.body.classList.remove('light-theme');
+    };
+  }, []);
+
+  const [isHeadEditorOpen, setIsHeadEditorOpen] = useState(false);
+  const [content, setContent] = useState({
+    sections: null,
+    rawContent: '',
+    sha: null,
+    body: '',
+    frontmatter: {},
+  });
+  const [debug, setDebug] = useState({ notes: [] });
+  const [isDraft, setIsDraft] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedFilePath, setSelectedFilePath] = useState(null); // Use path for selection
-  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const [contextMenu, setContextMenu] = useState(null);
-  const [fileToDelete, setFileToDelete] = useState(null);
-  const [fileToRename, setFileToRename] = useState(null);
-  const [fileToMove, setFileToMove] = useState(null); // State for the move modal
-  const [metadataCache, setMetadataCache] = useState({});
-  const [readmeContent, setReadmeContent] = useState(null);
-  const [isReadmeLoading, setReadmeLoading] = useState(false);
-  const [isReadmeVisible, setReadmeVisible] = useState(true);
+  const [newSlug, setNewSlug] = useState(null);
   const navigate = useNavigate();
+  const draftKey = `draft-content-${path}`;
 
-  const fetchMetadata = useCallback(async (file) => {
-    if (file.type === 'dir') return; // No metadata for directories
-    try {
-      // This now calls our secure backend endpoint instead of the raw GitHub API
-      const res = await fetch(`/api/metadata?repo=${repo}&path=${file.path}`, {
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        // The error will be logged but won't crash the page.
-        // The UI will just show the "--" placeholder.
-        throw new Error(`Failed to fetch metadata: ${res.statusText}`);
-      }
-      const metadata = await res.json();
-      if (metadata && metadata.author) {
-        setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
-        cache.set(file.sha, metadata);
-      }
-    } catch (err) {
-      console.error(`Failed to fetch metadata for ${file.path}:`, err);
-    }
-  }, [repo]);
-
-
-  const fetchFiles = useCallback((onSuccess) => {
+  const fetchFromServer = useCallback(async () => {
     setLoading(true);
-    setSelectedFilePath(null); // Deselect everything by default
-    setMetadataCache({});
-    setReadmeContent(null);
-    setReadmeLoading(false);
+    setError(null);
+    const apiPath = `/api/file?repo=${repo}&path=${path}&ref=${branch || ''}`;
+    setDebug(d => ({ ...d, apiPath, notes: ['Requesting file from server'] }));
+    try {
+      const res = await fetch(apiPath, { credentials: 'include' });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed to fetch file (status: ${res.status}): ${errorText}`);
+      }
+      const json = await res.json();
+      const decoded = Buffer.from(json.content, 'base64').toString('utf8');
+      const { model } = await unifiedParser(decoded, path);
 
-    fetch(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' })
-      .then(res => {
-        if (res.ok) return res.json();
-        throw new Error('Failed to fetch files');
-      })
-      .then(data => {
-        const sortedData = data.sort((a, b) => {
-          if (a.type === 'dir' && b.type !== 'dir') return -1;
-          if (a.type !== 'dir' && b.type === 'dir') return 1;
-          return a.name.localeCompare(b.name);
-        });
-        setFiles(sortedData);
-        setLoading(false);
-
-        if (onSuccess) {
-          onSuccess(sortedData); // Execute callback with the new data
-        }
-
-        const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');
-        if (readmeFile) {
-          setReadmeLoading(true);
-          fetch(`/api/file?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' })
-            .then(res => {
-              if (!res.ok) throw new Error('Could not fetch README content.');
-              return res.json();
-            })
-            .then(fileData => {
-              const decodedContent = atob(fileData.content);
-              setReadmeContent(decodedContent);
-              setReadmeLoading(false);
-            })
-            .catch(err => {
-              console.error('Failed to fetch or decode README content:', err);
-              setReadmeContent('# Error: Could not load README.');
-              setReadmeLoading(false);
-            });
-        }
-
-        data.forEach(file => {
-          const cachedData = cache.get(file.sha);
-          if (cachedData) {
-            setMetadataCache(prev => ({ ...prev, [file.sha]: cachedData }));
-          } else {
-            fetchMetadata(file);
-          }
-        });
-      })
-      .catch(err => {
-        setError(err.message);
-        setLoading(false);
+      setContent({
+        sections: model.frontmatter.sections || [],
+        rawContent: decoded,
+        sha: json.sha,
+        body: model.body || '',
+        frontmatter: model.frontmatter || {},
       });
-  }, [repo, path, fetchMetadata]);
+      setIsDraft(false);
+    } catch (err) {
+      setError(err.message);
+      setDebug(d => ({ ...d, error: err.message, notes: ['Fetch error', String(err)] }));
+    } finally {
+      setLoading(false);
+    }
+  }, [repo, path, branch]);
 
   useEffect(() => {
-    fetchFiles();
-  }, [fetchFiles]);
-
-  const handleFileClick = (file) => {
-    if (selectedFilePath === file.path) {
-      handleOpen(file);
+    const localDraft = localStorage.getItem(draftKey);
+    if (localDraft) {
+      try {
+        const draftData = JSON.parse(localDraft);
+        setContent(draftData); // Load the entire draft state
+        setIsDraft(true);
+        setLoading(false);
+        setDebug(d => ({ ...d, notes: ['Loaded content from local draft.'] }));
+      } catch (e) {
+        console.error("Failed to parse draft, fetching from server.", e);
+        fetchFromServer();
+      }
     } else {
-      setSelectedFilePath(file.path);
+      fetchFromServer();
     }
-  };
+  }, [draftKey, fetchFromServer]);
 
-  const handleOpen = (fileToOpen) => {
-    const file = fileToOpen || files.find(f => f.path === selectedFilePath);
-    if (!file) return;
-
-    if (file.type === 'dir') {
-      setPath(file.path);
-      setSelectedFilePath(null);
-    } else {
-      navigate(`/explorer/file?path=${file.path}`);
-    }
-  };
-
-  const handleGoHome = () => {
-    setPath('src/pages');
-  };
-
-  const handleDuplicate = async (fileToDuplicate) => {
-    const file = fileToDuplicate || files.find(f => f.path === selectedFilePath);
-    if (!file || file.type === 'dir') return;
+  const handlePublish = async () => {
+    const draftString = localStorage.getItem(draftKey);
+    if (!draftString) return alert("Error: No draft found.");
 
     try {
-      const readRes = await fetch(`/api/file?repo=${repo}&path=${file.path}`, { credentials: 'include' });
-      if (!readRes.ok) {
-        const errorData = await readRes.json().catch(() => ({ message: 'Could not fetch file content.' }));
-        throw new Error(errorData.message);
-      }
-      const fileData = await readRes.json();
-      const content = atob(fileData.content);
+      const draftData = JSON.parse(draftString);
+      const { frontmatter, body, sha } = draftData;
+      const newFileContent = stringifyAstroFile(frontmatter, body || '');
+      const fileExtension = path.substring(path.lastIndexOf('.'));
+      const originalSlug = path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'));
+      const parentPath = path.substring(0, path.lastIndexOf('/'));
 
-      const parts = file.name.split('.');
-      const ext = parts.length > 1 ? `.${parts.pop()}` : '';
-      const baseName = parts.join('.');
-      const newName = `${baseName}-copy${ext}`;
-      const newPath = `${path}/${newName}`;
+      if (newSlug && newSlug !== originalSlug) {
+        const newPath = `${parentPath}/${newSlug}${fileExtension}`;
+        const createRes = await fetch('/api/file', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repo, path: newPath, content: btoa(newFileContent), sha: null }),
+        });
+        if (!createRes.ok) throw new Error(`Failed to create new file: ${await createRes.text()}`);
 
-      const createRes = await fetch('/api/file', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ repo, path: newPath, content }),
-      });
+        await fetch(`/api/file?repo=${repo}&path=${path}&sha=${draftData.sha}`, { method: 'DELETE', credentials: 'include' });
 
-      if (!createRes.ok) {
-        const errorData = await createRes.json().catch(() => ({ message: 'Could not create duplicate file.' }));
-        throw new Error(errorData.message);
-      }
+        alert('Page successfully renamed and published!');
+        localStorage.removeItem(draftKey);
+        navigate(`/explorer/file?path=${newPath}`);
 
-      // Fetch the updated file list and then select the new file in a callback
-      fetchFiles(() => {
-        setSelectedFilePath(newPath);
-      });
-
-    } catch (err) {
-      console.error('[FileExplorer.jsx] Error in handleDuplicate:', err);
-      setError(err.message);
-    }
-  };
-
-  const handleLongPress = (file, event) => {
-    setContextMenu({ x: event.clientX, y: event.clientY, file });
-  };
-
-  const handleCloseContextMenu = () => {
-    setContextMenu(null);
-  };
-
-  const handleDeleteRequest = (file) => {
-    console.log('[FileExplorer.jsx] handleDeleteRequest for:', file.name);
-    if (file.type === 'dir') {
-      alert('Deleting folders is not supported at this time.');
-      return;
-    }
-    setFileToDelete(file);
-    console.log('[FileExplorer.jsx] fileToDelete state set.');
-  };
-
-  const handleDeleteConfirm = async () => {
-    console.log('[FileExplorer.jsx] handleDeleteConfirm started for:', fileToDelete?.name);
-    if (!fileToDelete) return;
-    try {
-      const res = await fetch(`/api/file?repo=${repo}&path=${fileToDelete.path}&sha=${fileToDelete.sha}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Failed to delete file.');
-
-      console.log('[FileExplorer.jsx] Delete successful. Clearing state and fetching files.');
-      cache.remove(fileToDelete.sha); // Invalidate cache
-      setFileToDelete(null);
-      fetchFiles();
-    } catch (err) {
-      console.error('[FileExplorer.jsx] Error in handleDeleteConfirm:', err);
-      setError(err.message);
-      setFileToDelete(null);
-    }
-  };
-
-  const handleShare = (file) => {
-    const fileUrl = `${window.location.origin}/explorer/file?path=${file.path}`;
-    navigator.clipboard.writeText(fileUrl)
-      .then(() => alert('Link copied to clipboard!'))
-      .catch(() => alert('Failed to copy link.'));
-  };
-
-  const handleRenameRequest = (file) => {
-    if (file.type === 'dir') {
-      alert('Renaming folders is not supported yet.');
-      return;
-    }
-    setFileToRename(file);
-  };
-
-  const handleMoveRequest = (file) => {
-    setFileToMove(file);
-  };
-
-  const handleToggleReadme = () => {
-    setReadmeVisible(prev => !prev);
-  };
-
-  const handleRenameConfirm = async (file, newName) => {
-    const oldPath = file.path;
-    const newPath = oldPath.substring(0, oldPath.lastIndexOf('/') + 1) + newName;
-
-    try {
-      // 1. Read the original file's content correctly
-      const readRes = await fetch(`/api/file?repo=${repo}&path=${oldPath}`, { credentials: 'include' });
-      if (!readRes.ok) {
-        const errorData = await readRes.json().catch(() => ({ message: 'Failed to read original file.' }));
-        throw new Error(errorData.message);
-      }
-      const fileData = await readRes.json();
-      const content = atob(fileData.content); // Decode base64 content
-
-      // 2. Create the new file with the same content
-      const createRes = await fetch('/api/file', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ repo, path: newPath, content }), // Send plain text content
-      });
-
-      if (!createRes.ok) {
-        const errorData = await createRes.json().catch(() => ({ message: 'Failed to create renamed file.' }));
-        throw new Error(errorData.message);
-      }
-
-      // 3. Delete the old file
-      const deleteRes = await fetch(`/api/file?repo=${repo}&path=${oldPath}&sha=${file.sha}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (!deleteRes.ok) {
-        alert('Failed to delete the old file. You may now have a duplicate.');
       } else {
-        cache.remove(file.sha); // Invalidate cache on successful move
+        const res = await fetch('/api/file', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repo, path, content: btoa(newFileContent), sha: sha }),
+        });
+        if (!res.ok) throw new Error(`Publish failed: ${await res.text()}`);
+        alert('Publish successful!');
+        localStorage.removeItem(draftKey);
+        fetchFromServer();
       }
     } catch (err) {
-      setError(err.message);
-    } finally {
-      // 4. Always close the modal and refresh the file list
-      setFileToRename(null);
-      fetchFiles();
+      alert(`An error occurred: ${err.message}`);
     }
   };
 
-  const handleMoveConfirm = async (file, newPath) => {
-    const oldPath = file.path;
-    const finalNewPath = newPath.endsWith('/') ? `${newPath}${file.name}` : `${newPath}/${file.name}`;
-
-    try {
-      // 1. Read the original file's content
-      const readRes = await fetch(`/api/file?repo=${repo}&path=${oldPath}`, { credentials: 'include' });
-      if (!readRes.ok) throw new Error('Failed to read original file.');
-      const fileData = await readRes.json();
-      const content = atob(fileData.content);
-
-      // 2. Create the new file at the destination
-      const createRes = await fetch('/api/file', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ repo, path: finalNewPath, content }),
-      });
-      if (!createRes.ok) throw new Error('Failed to create file at new location.');
-
-      // 3. Delete the old file
-      const deleteRes = await fetch(`/api/file?repo=${repo}&path=${oldPath}&sha=${file.sha}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (!deleteRes.ok) {
-        // This is a partial failure state, alert the user.
-        alert('Failed to delete the old file. You may now have a duplicate.');
-      } else {
-        cache.remove(file.sha); // Invalidate cache on successful move
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      // 4. Always close the modal and refresh the file list
-      setFileToMove(null);
-      fetchFiles();
+  const handleDiscard = () => {
+    if (window.confirm('Are you sure you want to discard your draft?')) {
+      localStorage.removeItem(draftKey);
+      fetchFromServer();
     }
   };
 
-  if (loading) return <div>Loading files...</div>;
-  if (error) return <div>Error: {error}</div>;
+  const handleModalSave = (data) => {
+    // data is { title, description, slug, jsonSchema }
+    const newState = { ...content }; // copy existing state
+    newState.frontmatter.title = data.title;
+    newState.frontmatter.description = data.description;
+    newState.frontmatter.jsonSchema = data.jsonSchema;
+
+    setContent(newState);
+
+    // Handle slug change for publishing
+    const originalSlug = path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'));
+    if (data.slug && data.slug !== originalSlug) {
+        setNewSlug(data.slug);
+    }
+
+    if (!isDraft) setIsDraft(true);
+    localStorage.setItem(draftKey, JSON.stringify(newState)); // Save changes to the draft
+    setIsHeadEditorOpen(false); // Close modal on save
+  };
+
+  const getFriendlyTitle = (filePath) => {
+    if (!filePath) return '';
+    const filename = filePath.split('/').pop();
+    const lastDotIndex = filename.lastIndexOf('.');
+    if (lastDotIndex > 0) {
+      const name = filename.substring(0, lastDotIndex);
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+    return filename;
+  };
+
+  const renderContent = () => {
+    if (path.endsWith('.astro')) {
+      if (content.sections && content.sections.length > 0) {
+        return <SectionRenderer sections={content.sections} />;
+      }
+      return <p>No viewable content found in sections.</p>;
+    }
+    if (path.endsWith('.md')) {
+      const html = marked(content.body || '');
+      return <div className={styles.markdownPreview} dangerouslySetInnerHTML={{ __html: html }} />;
+    }
+    return <pre className={styles.rawContentViewer}>{content.rawContent}</pre>;
+  };
+
+  if (loading) return <div className={styles.fileViewerContainer}>Loading...</div>;
+  if (error) return <div className={styles.fileViewerContainer}>Error: {error}</div>;
 
   return (
-    <div className="flex flex-col h-screen bg-white">
-      <Header>
-        <div className="flex items-center flex-grow">
-          <button onClick={handleGoHome} className="p-2 rounded-full hover:bg-gray-200 transition-colors">
-            <HomeIcon className="h-5 w-5 text-gray-600" />
+    <div className={styles.fileViewerPage}>
+      <header className={styles.viewerHeaderBlue}>
+        <h1 className={styles.headerTitle}>{getFriendlyTitle(path)}</h1>
+        <div className={styles.headerActions}>
+          <span className={styles.statusIndicator}>
+            {isDraft ? 'Draft' : 'Published'}
+          </span>
+          <button className={styles.headerButton} onClick={() => navigate('/explorer')} aria-label="Back to explorer">
+            <BackIcon />
+            <span>Back</span>
           </button>
-          <MiniBreadcrumbs path={path} onNavigate={setPath} />
+          <button className={styles.headerButton} onClick={() => setIsHeadEditorOpen(true)} aria-label="Open search preview">
+            <SearchIcon />
+            <span>Search Preview</span>
+          </button>
+          <button className={styles.headerButton} onClick={() => navigate(`/edit/${repo}/${path}`)} aria-label="Edit file">
+            <EditIcon />
+            <span>Edit</span>
+          </button>
+          <button className={`${styles.headerButton} ${styles.publishButton}`} onClick={handlePublish} disabled={!isDraft}>
+            Publish
+          </button>
         </div>
-        <div className="w-full max-w-xs">
-          <SearchBar repo={repo} />
-        </div>
-      </Header>
-      <main className="flex-grow overflow-y-auto p-4 pb-20">
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
-          {Array.isArray(files) && files
-            .filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md')
-            .map(file => (
-              <FileTile
-                key={file.sha}
-                file={file}
-                isSelected={selectedFilePath === file.path}
-                metadata={metadataCache[file.sha]}
-                onClick={handleFileClick}
-                onLongPress={(e) => handleLongPress(file, e)}
-                onRename={() => handleRenameRequest(file)}
-                onDelete={() => handleDeleteRequest(file)}
-              />
-          ))}
-        </div>
-        {isReadmeLoading && <div className="text-center p-4 text-gray-500">Loading README...</div>}
-        {readmeContent && !isReadmeLoading && (
-          <ReadmeDisplay
-            content={readmeContent}
-            isVisible={isReadmeVisible}
-            onToggle={handleToggleReadme}
+      </header>
+
+      <div className={styles.fileViewerContainer}>
+        {isHeadEditorOpen && content.sha && (
+          <SearchPreviewModal
+            initialTitle={content.frontmatter.title}
+            initialDescription={content.frontmatter.description}
+            initialSlug={path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'))}
+            initialJsonSchema={content.frontmatter.jsonSchema}
+            sections={content.sections} // Pass the full sections array
+            pageContent={content.sections?.filter(s => s.type === 'text_block').map(s => s.content).join('\n\n') || ''}
+            filePath={path} // Pass the full file path for context
+            onClose={() => setIsHeadEditorOpen(false)}
+            onSave={handleModalSave}
           />
         )}
-      </main>
-      <Footer
-        currentPath={path}
-        onGoHome={handleGoHome}
-        onCreate={() => setCreateModalOpen(true)}
-      />
-      {isCreateModalOpen && (
-        <CreateModal
-          path={path}
-          repo={repo}
-          onClose={() => setCreateModalOpen(false)}
-          onCreate={() => {
-            // No specific cache to invalidate on create, let TTL handle directory.
-            // A more complex system could track directory SHAs.
-            fetchFiles();
-          }}
-        />
-      )}
-      {contextMenu && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          file={contextMenu.file}
-          onClose={handleCloseContextMenu}
-            onRename={handleRenameRequest}
-            onDelete={handleDeleteRequest}
-          onDuplicate={handleDuplicate}
-          onShare={handleShare}
-          onMove={handleMoveRequest}
-        />
-      )}
-      {fileToDelete && (
-        <ConfirmDialog
-          message={`Are you sure you want to delete "${fileToDelete.name}"? This action cannot be undone.`}
-          onConfirm={handleDeleteConfirm}
-          onCancel={() => setFileToDelete(null)}
-        />
-      )}
-      {fileToRename && (
-        <RenameModal
-          file={fileToRename}
-          onClose={() => setFileToRename(null)}
-          onRename={handleRenameConfirm}
-        />
-      )}
-      {fileToMove && (
-        <MoveModal
-          file={fileToMove}
-          repo={repo}
-          onClose={() => setFileToMove(null)}
-          onMove={handleMoveConfirm}
-        />
-      )}
+        {isDraft && (
+          <div className={styles.draftBanner}>
+            <p>You are viewing a draft. Your changes are not yet published.</p>
+            <div className={styles.draftActions}>
+              <button className={`${styles.viewerButton} ${styles.publishButton}`} onClick={handlePublish}>Publish</button>
+              <button className={`${styles.viewerButton} ${styles.discardButton}`} onClick={handleDiscard}>Discard Draft</button>
+            </div>
+          </div>
+        )}
+        {renderContent()}
+      </div>
     </div>
   );
 }
 
-export default FileExplorer;
+export default FileViewer;
