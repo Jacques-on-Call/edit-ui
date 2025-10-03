@@ -98,7 +98,7 @@ function App() {
   }
 
   return (
-    <div className="text-center bg-blue-500 min-h-screen flex flex-col items-center justify-center">
+    <div className="text-center bg-blue min-h-screen flex flex-col items-center justify-center">
       <header className="text-2xl text-white">
         <img src="/logo.webp" className="h-[20vmin] pointer-events-none mb-8" alt="logo" />
         {!user ? (
