@@ -1,10 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Button from './components/Button/Button';
-import Modal from './components/Modal/Modal';
+import { Buffer } from 'buffer';
 
 function CreateModal({ path, repo, onClose, onCreate }) {
-  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [type, setType] = useState('file'); // 'file' or 'folder'
   const [error, setError] = useState(null);
@@ -25,12 +22,16 @@ function CreateModal({ path, repo, onClose, onCreate }) {
 
       if (type === 'folder') {
         fullPath = `${path}/${name}/.gitkeep`;
-        content = ''; // No content needed for a .gitkeep file
+        content = '';
       } else {
         const templateRes = await fetch(`/api/file?repo=${repo}&path=src/pages/_template.astro`, { credentials: 'include' });
-        if (!templateRes.ok) throw new Error('Could not load template file.');
+
+        if (!templateRes.ok) {
+          throw new Error('Could not load template file.');
+        }
+
         const templateData = await templateRes.json();
-        content = atob(templateData.content);
+        content = Buffer.from(templateData.content, 'base64').toString('utf8');
         const fileName = name.endsWith('.astro') ? name : `${name}.astro`;
         fullPath = path === '/' ? fileName : `${path}/${fileName}`;
       }
@@ -49,9 +50,7 @@ function CreateModal({ path, repo, onClose, onCreate }) {
 
       onCreate();
       onClose();
-      if (type === 'file') {
-        navigate(`/edit/${repo}/${fullPath}`);
-      }
+      // NOTE: Navigation to editor is removed as the route doesn't exist yet.
     } catch (err) {
       setError(err.message);
     } finally {
@@ -59,80 +58,60 @@ function CreateModal({ path, repo, onClose, onCreate }) {
     }
   };
 
-  const formGroupClasses = "mb-6";
-  const labelClasses = "block mb-2 font-medium text-gray-600";
-  const inputClasses = "w-full p-3 border border-gray-300 rounded-md text-base bg-gray-50 text-black focus:outline-none focus:ring-2 focus:ring-blue-500";
-  const radioGroupClasses = "flex gap-6";
-  const radioLabelClasses = "flex items-center gap-2 font-normal";
-  const radioInputClasses = "accent-green";
-
   return (
-    <Modal
-      title="Create New"
-      onClose={onClose}
-      actions={
-        <>
-          <Button variant="secondary" onClick={onClose} disabled={isCreating}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            type="submit"
-            onClick={handleSubmit}
-            disabled={isCreating}
-            className="bg-green border-light-green text-white hover:enabled:bg-opacity-80"
-          >
-            {isCreating ? 'Creating...' : 'Create'}
-          </Button>
-        </>
-      }
-    >
-      <form onSubmit={handleSubmit}>
-        <div className={formGroupClasses}>
-          <label htmlFor="name" className={labelClasses}>Name</label>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter name..."
-            className={inputClasses}
-            autoFocus
-          />
-          <div className="text-xs text-gray-500 mt-2 h-4 break-all">
-            Will be created at: {path.replace('src/pages', 'Home')}/{name}
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[1000]" onClick={onClose}>
+      <div className="bg-white p-6 rounded-lg shadow-xl w-[90%] max-w-md" onClick={(e) => e.stopPropagation()}>
+        <h2 className="mt-0 mb-6 text-xl text-gray-800">Create New</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="name" className="block mb-2 font-medium text-gray-600">Name</label>
+            <input
+              type="text"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter name..."
+              autoFocus
+              className="w-full p-3 text-base border border-gray-300 rounded-lg"
+            />
           </div>
-        </div>
-        <div className={formGroupClasses}>
-          <label className={labelClasses}>Type</label>
-          <div className={radioGroupClasses}>
-            <label className={radioLabelClasses}>
-              <input
-                type="radio"
-                name="type"
-                value="file"
-                checked={type === 'file'}
-                onChange={() => setType('file')}
-                className={radioInputClasses}
-              />
-              File
-            </label>
-            <label className={radioLabelClasses}>
-              <input
-                type="radio"
-                name="type"
-                value="folder"
-                checked={type === 'folder'}
-                onChange={() => setType('folder')}
-                className={radioInputClasses}
-              />
-              Folder
-            </label>
+          <div className="mb-4">
+            <label className="block mb-2 font-medium text-gray-600">Type</label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 font-normal">
+                <input
+                  type="radio"
+                  name="type"
+                  value="file"
+                  checked={type === 'file'}
+                  onChange={() => setType('file')}
+                />
+                File
+              </label>
+              <label className="flex items-center gap-2 font-normal">
+                <input
+                  type="radio"
+                  name="type"
+                  value="folder"
+                  checked={type === 'folder'}
+                  onChange={() => setType('folder')}
+                />
+                Folder
+              </label>
+            </div>
           </div>
-        </div>
-        {error && <p className="text-red-600 mt-4">{error}</p>}
-      </form>
-    </Modal>
+          {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+          <div className="flex justify-end gap-3 mt-6">
+            <button type="button" className="py-2 px-5 text-base rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300" onClick={onClose} disabled={isCreating}>
+              Cancel
+            </button>
+            <button type="submit" className="py-2 px-5 text-base rounded-lg bg-green-600 text-white hover:opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled={isCreating}>
+              {isCreating ? 'Creating...' : 'Create'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
