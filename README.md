@@ -84,7 +84,21 @@ The optimized and bundled assets will be placed in the `easy-seo/dist` directory
 
 ## 4. Development Notes
 
+### Tailwind CSS and Styling Setup (Oct 2025)
+
+This project uses **Tailwind CSS** for styling, not CSS Modules as some older documentation may suggest. The primary stylesheet is located at `easy-seo/src/styles/main.css`, which contains the necessary `@tailwind` directives. This file is imported once in the application's entry point, `easy-seo/src/main.jsx`.
+
+During the refactoring process, several key issues were identified and resolved to ensure a stable build and correct application behavior:
+
+*   **Vite Build Configuration:** The Vite dev server would fail to start due to a conflict with the root-level `tsconfig.json` from the parent Astro project. This was resolved by creating a local `tsconfig.json` and `tsconfig.node.json` inside the `easy-seo/` directory. This isolates the React project's build process from the monorepo's root configuration.
+
+*   **React Router Integration:** The application relies on `react-router-dom` for client-side routing. For the application to render correctly, the main `<App />` component must be wrapped in a `<BrowserRouter>` component within `easy-seo/src/main.jsx`. This file also defines all the application's routes, such as `/`, `/callback`, and `/explorer`.
+
+*   **Component Rendering:** The initial entry point was rendering a test component. This was corrected to render the main `<App />` component, which is the proper entry point for the application.
+
 ### CSS Modules Refactoring (Sept 2025)
+
+**Note:** The following notes refer to a previous refactoring and are kept for historical context. The project has since moved to a global Tailwind CSS approach.
 
 The application's styling has been refactored to align with the "Component-based styling" principle outlined in this README. All components within `easy-seo/src/` now use CSS Modules (`*.module.css`) instead of global CSS imports.
 

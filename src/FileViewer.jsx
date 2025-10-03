@@ -236,7 +236,6 @@ function FileViewer({ repo, path, branch }) {
             initialJsonSchema={content.frontmatter.jsonSchema}
             sections={content.sections} // Pass the full sections array
             pageContent={content.sections?.filter(s => s.type === 'text_block').map(s => s.content).join('\n\n') || ''}
-            filePath={path} // Pass the full file path for context
             onClose={() => setIsHeadEditorOpen(false)}
             onSave={handleModalSave}
           />

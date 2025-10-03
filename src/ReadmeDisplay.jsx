@@ -5,9 +5,12 @@ import Icon from './icons.jsx';
 
 function ReadmeDisplay({ content, onToggle, isVisible }) {
   return (
-    <div className={`border border-gray-200 rounded-lg mb-4 overflow-hidden transition-all duration-300`}>
-      <div className="flex justify-between items-center p-2 px-4 bg-[#003971] text-white cursor-pointer" onClick={onToggle}>
-        <h3 className="m-0 text-base font-semibold flex items-center gap-2">
+    <div className="border border-gray-200 rounded-md mb-4 overflow-hidden transition-all duration-300 ease-in-out">
+      <div
+        className="flex justify-between items-center p-2 px-4 bg-blue text-white cursor-pointer"
+        onClick={onToggle}
+      >
+        <h3 className="m-0 text-base flex items-center gap-2">
           <Icon name="book-open" />
           README
         </h3>
@@ -16,8 +19,13 @@ function ReadmeDisplay({ content, onToggle, isVisible }) {
         </button>
       </div>
       {isVisible && (
-        <div className="p-6 bg-white prose max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        <div className="p-6 bg-white text-gray-800">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            className="prose prose-sm max-w-none prose-a:text-green prose-a:no-underline hover:prose-a:underline"
+          >
+            {content}
+          </ReactMarkdown>
         </div>
       )}
     </div>
