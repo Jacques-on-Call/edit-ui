@@ -1,9 +1,16 @@
+import { Routes, Route } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
+import CallbackPage from './pages/CallbackPage';
+import RepositorySelectionPage from './pages/RepositorySelectionPage';
+
 function App() {
   return (
-    <div className="bg-blue-500 min-h-screen flex items-center justify-center">
-      <h1 className="text-white text-3xl font-bold">Hello, Tailwind!</h1>
-    </div>
-  )
+    <Routes>
+      <Route path="/" element={<LoginPage />} />
+      <Route path="/callback" element={<CallbackPage />} />
+      <Route path="/repository-selection" element={<RepositorySelectionPage />} />
+    </Routes>
+  );
 }
 
 export default App;
