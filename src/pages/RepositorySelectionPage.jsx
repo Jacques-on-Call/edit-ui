@@ -6,11 +6,7 @@ function RepositorySelectionPage() {
 
   const handleRepoSelect = (repo) => {
     localStorage.setItem('selectedRepo', repo);
-    // In a future step, this will navigate to the main editor/dashboard.
-    // For now, we can just confirm the selection.
-    console.log(`Repository selected: ${repo}`);
-    alert(`You selected ${repo}. Navigation to the editor will be implemented next.`);
-    // navigate('/editor');
+    navigate('/explorer');
   };
 
   return (
