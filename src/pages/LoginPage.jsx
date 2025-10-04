@@ -6,6 +6,7 @@ const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
 
 function LoginPage() {
+  // Trivial change to force a new build hash and bypass CDN cache.
   const navigate = useNavigate();
 
   // Check for an existing session on component mount
@@ -61,15 +62,15 @@ function LoginPage() {
   }, [navigate]);
 
   return (
-    <div className="bg-gray-50 min-h-screen flex flex-col items-center justify-center text-center">
+    <div className="bg-bark-blue min-h-screen flex flex-col items-center justify-center text-center">
       <div className="max-w-md w-full p-8">
         <img src="/logo.webp" className="h-24 w-auto mx-auto mb-8" alt="logo" />
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome to Easy SEO</h1>
-          <p className="text-gray-600 mb-8">Please login with GitHub to continue.</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Welcome to Easy SEO</h1>
+          <p className="text-gray-300 mb-8">Please login with GitHub to continue.</p>
           <button
             onClick={handleLogin}
-            className="bg-gray-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800 transition-all duration-300 ease-in-out"
+            className="bg-white text-bark-blue font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-all duration-300 ease-in-out"
           >
             Login with GitHub
           </button>
