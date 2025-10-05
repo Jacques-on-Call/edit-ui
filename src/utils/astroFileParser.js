@@ -1,18 +1,68 @@
 import { Parser } from 'acorn';
 
 /**
- * Parses the content of an .astro file to extract both the JavaScript frontmatter object
- * and the body content (the rest of the file).
- *
- * This function is designed to be a replacement for gray-matter, specifically for .astro files
- * that use a JavaScript object for frontmatter.
- *
- * @param {string} fileContent The full string content of the .astro file.
- * @returns {{model: {frontmatter: object, body: string, raw: string, rawType: string}|null, trace: object}}
- *          An object containing the parsed model and a trace object for debugging.
+ * A helper function to safely parse a string representing a JavaScript literal.
+ * It uses the Function constructor, which is safer than eval.
+ * @param {string} valueString - The string to parse (e.g., "'hello'", "{ a: 1 }").
+ * @returns {any} The parsed JavaScript value.
+ */
+function safelyParseValue(valueString) {
+  try {
+    return Function(`"use strict"; return (${valueString})`)();
+  } catch (e) {
+    console.error(`Could not parse value: ${valueString}`, e);
+    return valueString;
+  }
+}
+
+/**
+ * Recursively converts a JavaScript value into a valid JavaScript code string.
+ * This is a custom stringifier that handles objects, arrays, and multiline strings
+ * correctly, preserving template literals for multiline content.
+ * @param {any} value - The JavaScript value to stringify.
+ * @param {number} indent - The current indentation level.
+ * @returns {string} A string representing the value as JavaScript code.
+ */
+function valueToString(value, indent = 0) {
+  const indentStr = '  '.repeat(indent);
+  const nextIndentStr = '  '.repeat(indent + 1);
+
+  if (typeof value === 'string') {
+    // If the string contains newlines, use a template literal (backticks)
+    if (value.includes('\n')) {
+      return `\`${value}\``;
+    }
+    // Otherwise, use a regular JSON-style string
+    return JSON.stringify(value);
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '[]';
+    const arrItems = value.map(item => `${nextIndentStr}${valueToString(item, indent + 1)}`).join(',\n');
+    return `[\n${arrItems}\n${indentStr}]`;
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    if (Object.keys(value).length === 0) return '{}';
+    const objItems = Object.entries(value).map(([key, val]) => {
+      // Keys in JS objects don't need quotes if they are valid identifiers
+      const keyStr = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `"${key}"`;
+      return `${nextIndentStr}${keyStr}: ${valueToString(val, indent + 1)}`;
+    }).join(',\n');
+    return `{\n${objItems}\n${indentStr}}`;
+  }
+
+  // For numbers, booleans, null, etc.
+  return String(value);
+}
+
+
+/**
+ * Parses the content of an .astro file to extract imports, frontmatter variables,
+ * and the body content.
  */
 export async function parseAstroFile(fileContent) {
-  const trace = { detected: 'astro-js', rawFrontmatter: null, body: null, parsed: null, error: null };
+  const trace = { detected: 'astro-js-idiomatic', rawFrontmatter: null, body: null, parsed: null, error: null };
 
   if (!fileContent) {
     trace.error = 'Empty content';
@@ -26,82 +76,78 @@ export async function parseAstroFile(fileContent) {
 
     if (!match || !match[1]) {
       trace.error = 'No frontmatter block found.';
-      const model = { frontmatter: {}, body: text, raw: text, rawType: 'none' };
+      const model = { frontmatter: {}, imports: [], body: text, raw: text, rawType: 'none' };
       return { model, trace };
     }
 
-    const frontmatterContent = match[1];
+    const frontmatterContent = match[1].trim();
     trace.rawFrontmatter = frontmatterContent;
 
     const body = text.substring(match[0].length).trim();
-    trace.body = body;
 
-    const frontmatterObjectRegex = /export\s+const\s+frontmatter\s*=\s*({[\s\S]*?});/;
-    const objectMatch = frontmatterContent.match(frontmatterObjectRegex);
+    const frontmatter = {};
+    const imports = [];
 
-    let frontmatter = {};
-    if (objectMatch && objectMatch[1]) {
-      const objectString = objectMatch[1];
-      try {
-        // Use Acorn to check for syntax errors before evaluation
-        Parser.parse(objectString, { ecmaVersion: 'latest' });
-        // If parsing succeeds, we can safely use the Function constructor.
-        // For even greater safety, you could use a library that walks the AST
-        // and builds the object, but for now, this confirms syntax validity.
-        frontmatter = Function(`"use strict"; return (${objectString})`)();
-      } catch (parseError) {
-        trace.error = `Frontmatter syntax error: ${parseError.message}`;
-        // On a syntax error, do not attempt to evaluate.
-        // The model will be returned with empty frontmatter and the error trace.
+    const ast = Parser.parse(frontmatterContent, { ecmaVersion: 'latest', sourceType: 'module' });
+
+    for (const node of ast.body) {
+      if (node.type === 'ImportDeclaration') {
+        imports.push(frontmatterContent.substring(node.start, node.end));
+      } else if (node.type === 'ExportNamedDeclaration' && node.declaration && node.declaration.type === 'VariableDeclaration') {
+        for (const declaration of node.declaration.declarations) {
+          if (declaration.id.type === 'Identifier' && declaration.init) {
+            const key = declaration.id.name;
+            const valueString = frontmatterContent.substring(declaration.init.start, declaration.init.end);
+            frontmatter[key] = safelyParseValue(valueString);
+          }
+        }
       }
-    } else {
-      trace.error = "No 'export const frontmatter' object found.";
     }
 
-    trace.parsed = frontmatter;
+    if (Object.keys(frontmatter).length === 0) {
+      trace.error = "Could not find any valid 'export const' variables in the frontmatter.";
+    }
+
+    trace.parsed = { frontmatter, imports };
 
     const model = {
       frontmatter,
+      imports,
       body,
       raw: text,
-      rawType: 'astro-js',
+      rawType: 'astro-js-idiomatic',
     };
 
-    // If there was a parsing error, return the raw content in the body
-    // so the user can see and fix the problematic content.
-    if (trace.error && trace.error.startsWith('Frontmatter syntax error')) {
+    if (trace.error) {
       model.body = fileContent;
       model.rawType = 'error';
     }
 
-
     return { model, trace };
   } catch (err) {
-    trace.error = (err && err.message) || String(err);
-    const model = { frontmatter: {}, body: fileContent, raw: fileContent, rawType: 'error' };
+    trace.error = `Frontmatter syntax error: ${err.message}`;
+    const model = { frontmatter: {}, imports: [], body: fileContent, raw: fileContent, rawType: 'error' };
     return { model, trace };
   }
 }
 
 /**
- * Stringifies a frontmatter object and a body string into a complete .astro file content string.
- * This is the inverse of parseAstroFile.
- *
- * @param {object} frontmatter The JavaScript object for the frontmatter.
- * @param {string} body The body content of the file.
- * @returns {string} The complete, formatted .astro file content.
+ * Stringifies a frontmatter object, imports, and a body string into a complete .astro file content string.
  */
-export function stringifyAstroFile(frontmatter, body) {
-  // Stringify the entire frontmatter object, including the sections array.
-  // This is the fix for the critical save bug.
-  const frontmatterString = `export const frontmatter = ${JSON.stringify(
-    frontmatter,
-    null,
-    2
-  )};`;
+export function stringifyAstroFile(frontmatter, body, imports = []) {
+  const importString = imports.join('\n');
+
+  const frontmatterParts = [];
+  for (const [key, value] of Object.entries(frontmatter)) {
+    const valueString = valueToString(value);
+    frontmatterParts.push(`export const ${key} = ${valueString};`);
+  }
+  const frontmatterExportsString = frontmatterParts.join('\n\n');
+
+  const separator = importString && frontmatterExportsString ? '\n\n' : '';
 
   return `---
-${frontmatterString}
+${importString}${separator}${frontmatterExportsString}
 ---
 ${body || ''}`;
 }
