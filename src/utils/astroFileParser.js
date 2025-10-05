@@ -133,8 +133,8 @@ if (frontmatterContent) {
 
 const model = {
   frontmatter,
-  body: originalBody, // Keep original for display
-  originalBody, // Store separately for reconstruction
+  body: originalBody,
+  originalBody,
   raw: text,
   rawType: 'astro-ast',
 };
@@ -163,7 +163,6 @@ return { model, trace };
 /**
 
 - Stringifies a frontmatter object and body back into a complete .astro file.
-- For Astro files, we preserve the original component markup.
   */
   export function stringifyAstroFile(frontmatter, originalBody) {
   let frontmatterString = ‘’;
@@ -171,7 +170,6 @@ return { model, trace };
   frontmatterString += `export const ${key} = ${valueToSourceCode(value)};\n`;
   }
 
-// Preserve the original component markup
 return `—
 ${frontmatterString}—
 
