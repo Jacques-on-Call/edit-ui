@@ -113,7 +113,7 @@ function FileExplorer({ repo }) {
     if (file.type === 'dir') {
       setPath(file.path);
     } else {
-      navigate(`/explorer/file?path=${file.path}`);
+      navigate(`/editor?path=${file.path}`);
     }
   };
 
