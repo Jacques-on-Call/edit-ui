@@ -2,30 +2,38 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Editor } from '@tinymce/tinymce-react';
 import { debounce } from 'lodash';
+import matter from 'gray-matter';
 import TopToolbar from '../components/TopToolbar';
 import BottomToolbar from '../components/BottomToolbar';
-import { parseContent, reconstructContent } from '../utils/contentParser';
+import { unifiedParser } from '../utils/unifiedParser';
+import { stringifyAstroFile } from '../utils/astroFileParser';
 
 function EditorPage() {
   const [searchParams] = useSearchParams();
   const filePath = searchParams.get('path');
   const repo = localStorage.getItem('selectedRepo');
 
-  const [frontmatter, setFrontmatter] = useState('');
-  const [content, setContent] = useState(null); // Initialize content as null
+  const [frontmatter, setFrontmatter] = useState({});
+  const [content, setContent] = useState(null);
+  const [fileType, setFileType] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const draftKey = `draft_${repo}_${filePath}`;
 
   const saveDraft = useCallback(debounce((newContent) => {
-    const fullContent = reconstructContent(frontmatter, newContent);
+    let fullContent;
+    if (fileType === 'astro-js') {
+      fullContent = stringifyAstroFile(frontmatter, newContent);
+    } else {
+      fullContent = matter.stringify(newContent, frontmatter);
+    }
     localStorage.setItem(draftKey, fullContent);
-    console.log('Draft saved.');
-  }, 1000), [draftKey, frontmatter]);
+    console.log(`Draft saved for ${filePath}.`);
+  }, 1000), [draftKey, frontmatter, fileType]);
 
   useEffect(() => {
-    const fetchFileContent = async () => {
+    const fetchAndParseContent = async () => {
       if (!filePath || !repo) {
         setError('Missing file path or repository information.');
         setLoading(false);
@@ -47,10 +55,15 @@ function EditorPage() {
           fileContent = atob(data.content);
         }
 
-        const { frontmatter: parsedFrontmatter, body: parsedBody } = parseContent(fileContent);
+        const { model } = await unifiedParser(fileContent, filePath);
 
-        setFrontmatter(parsedFrontmatter);
-        setContent(parsedBody); // Only set content
+        if (model) {
+          setFrontmatter(model.frontmatter);
+          setContent(model.body);
+          setFileType(model.rawType);
+        } else {
+          throw new Error('Failed to parse file content.');
+        }
 
       } catch (err) {
         setError(err.message);
@@ -59,7 +72,7 @@ function EditorPage() {
       }
     };
 
-    fetchFileContent();
+    fetchAndParseContent();
   }, [repo, filePath, draftKey]);
 
   const handleEditorChange = (newContent, editor) => {
@@ -67,7 +80,6 @@ function EditorPage() {
     saveDraft(newContent);
   };
 
-  // Conditionally render editor only when content is loaded
   if (loading || content === null) {
     return <div className="text-center p-8">Loading editor...</div>;
   }
@@ -81,7 +93,7 @@ function EditorPage() {
       <TopToolbar />
       <div className="flex-grow w-full">
         <Editor
-          value={content} // Rely only on the value prop
+          value={content}
           init={{
             height: '100%',
             width: '100%',
