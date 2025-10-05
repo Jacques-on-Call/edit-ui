@@ -7,6 +7,7 @@ import TopToolbar from ‘../components/TopToolbar’;
 import BottomToolbar from ‘../components/BottomToolbar’;
 import { unifiedParser } from ‘../utils/unifiedParser’;
 import { stringifyAstroFile } from ‘../utils/astroFileParser’;
+import { sectionsToEditableHTML, editableHTMLToSections } from ‘../utils/sectionContentMapper’;
 
 const ErrorDisplay = ({ error, rawContent }) => (
 
@@ -33,7 +34,8 @@ const repo = localStorage.getItem(‘selectedRepo’);
 
 const [frontmatter, setFrontmatter] = useState({});
 const [content, setContent] = useState(null);
-const [originalBody, setOriginalBody] = useState(’’); // Store the original component markup
+const [originalBody, setOriginalBody] = useState(’’);
+const [originalSections, setOriginalSections] = useState([]);
 const [fileType, setFileType] = useState(null);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState(null);
@@ -42,25 +44,25 @@ const [rawContentOnError, setRawContentOnError] = useState(’’);
 
 const draftKey = `draft_${repo}_${filePath}`;
 
-const saveDraft = useCallback(debounce((newContent, currentFrontmatter, currentFileType, currentOriginalBody) => {
-let fullContent;
+const saveDraft = useCallback(
+debounce((htmlContent, currentFrontmatter, currentOriginalBody, currentOriginalSections) => {
+// Convert edited HTML back to sections array
+const updatedSections = editableHTMLToSections(htmlContent, currentOriginalSections);
 
 ```
-if (currentFileType === 'astro-ast' && !parsingError) {
-  // For Astro files, preserve the original component markup
-  fullContent = stringifyAstroFile(currentFrontmatter, currentOriginalBody);
-} else if (!parsingError) {
-  // For markdown files, use the edited content
-  fullContent = matter.stringify(newContent, currentFrontmatter);
-} else {
-  fullContent = newContent;
-}
-
-localStorage.setItem(draftKey, fullContent);
-console.log(`Draft saved for ${filePath}.`);
+  // Update frontmatter with new sections
+  const updatedFrontmatter = { ...currentFrontmatter, sections: updatedSections };
+  
+  // Stringify the complete file
+  const fullContent = stringifyAstroFile(updatedFrontmatter, currentOriginalBody);
+  
+  localStorage.setItem(draftKey, fullContent);
+  console.log(`Draft saved for ${filePath}.`);
+}, 1000),
+[draftKey, filePath]
 ```
 
-}, 1000), [draftKey, parsingError, filePath]);
+);
 
 useEffect(() => {
 const fetchAndParseContent = async () => {
@@ -102,15 +104,19 @@ return;
     } else if (model) {
       setFrontmatter(model.frontmatter);
       setFileType(model.rawType);
+      setOriginalBody(model.originalBody || model.body || '');
       
-      // For Astro files, store the original body separately
-      if (model.rawType === 'astro-ast') {
-        setOriginalBody(model.originalBody || '');
-        // Render sections data as editable JSON for now
-        // In a production app, you'd create a custom section editor
-        const sectionsData = model.frontmatter.sections || [];
-        setContent(`<h2>Editing Sections Data</h2><p>Note: This is a simplified view. In production, you'd have a custom section editor.</p><pre>${JSON.stringify(sectionsData, null, 2)}</pre>`);
+      // For Astro files with sections, convert to editable HTML
+      if (model.rawType === 'astro-ast' && model.frontmatter.sections) {
+        const sections = model.frontmatter.sections;
+        setOriginalSections(sections);
+        const editableHTML = await sectionsToEditableHTML(sections);
+        setContent(editableHTML);
+      } else if (model.rawType === 'astro-ast') {
+        // Astro file without sections
+        setContent('<p><em>This Astro file does not have a sections array to edit.</em></p>');
       } else {
+        // Regular markdown file
         setContent(model.body);
       }
     } else {
@@ -131,7 +137,18 @@ fetchAndParseContent();
 
 const handleEditorChange = (newContent, editor) => {
 setContent(newContent);
-saveDraft(newContent, frontmatter, fileType, originalBody);
+
+```
+// Only save draft for Astro files with sections
+if (fileType === 'astro-ast' && originalSections.length > 0) {
+  saveDraft(newContent, frontmatter, originalBody, originalSections);
+} else if (fileType !== 'astro-ast') {
+  // For regular markdown files, save as before
+  const fullContent = matter.stringify(newContent, frontmatter);
+  localStorage.setItem(draftKey, fullContent);
+}
+```
+
 };
 
 if (loading || content === null) {
@@ -142,38 +159,31 @@ if (error) {
 return <div className="text-center p-8 text-red-600">{error}</div>;
 }
 
-const editorConfig = parsingError
-? {
+const editorConfig = {
 height: ‘100%’,
 width: ‘100%’,
 menubar: false,
-toolbar: ‘undo redo | code’,
-plugins: ‘code’
-}
-: {
-height: ‘100%’,
-width: ‘100%’,
-menubar: false,
+mobile: {
+theme: ‘silver’,
+plugins: ‘lists link’,
+toolbar: ‘undo redo | bold italic | bullist numlist | link’
+},
 plugins: [
-‘advlist’, ‘autolink’, ‘lists’, ‘link’, ‘image’, ‘charmap’, ‘preview’,
-‘anchor’, ‘searchreplace’, ‘visualblocks’, ‘code’, ‘fullscreen’,
-‘insertdatetime’, ‘media’, ‘table’, ‘code’, ‘help’, ‘wordcount’
+‘advlist’, ‘autolink’, ‘lists’, ‘link’, ‘image’, ‘charmap’,
+‘searchreplace’, ‘visualblocks’, ‘code’,
+‘insertdatetime’, ‘table’, ‘help’, ‘wordcount’
 ],
-toolbar: ’undo redo | blocks | ’ +
-’bold italic forecolor | alignleft aligncenter ’ +
-’alignright alignjustify | bullist numlist outdent indent | ’ +
-‘removeformat | help’,
-content_style: ‘body { font-family:Helvetica,Arial,sans-serif; font-size:14px }’
+toolbar: ‘undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link | removeformat’,
+content_style: `body {  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;  font-size: 16px; line-height: 1.6; padding: 1rem; } .section { margin-bottom: 2rem; padding: 1rem; background: #f9fafb; border-radius: 8px; } .hero-section { text-align: center; padding: 2rem 1rem; } .grid-section { padding: 1rem; } .grid-items { display: grid; gap: 1rem; margin-top: 1rem; } .grid-item { padding: 1rem; background: white; border-radius: 6px; border: 1px solid #e5e7eb; } hr { margin: 2rem 0; border: none; border-top: 2px dashed #d1d5db; }`,
 };
 
 return (
 <div className="flex flex-col h-screen">
 <TopToolbar />
 {parsingError && <ErrorDisplay error={parsingError} rawContent={rawContentOnError} />}
-{fileType === ‘astro-ast’ && (
-<div className="bg-yellow-50 border-b border-yellow-200 p-3 text-sm text-yellow-800">
-⚠️ <strong>Astro Component File:</strong> This file uses components. Direct HTML editing is disabled.
-You should edit the frontmatter data or use a specialized section editor.
+{fileType === ‘astro-ast’ && originalSections.length > 0 && (
+<div className="bg-blue-50 border-b border-blue-200 p-3 text-sm text-blue-800">
+📝 <strong>Section Editor:</strong> Edit the content below. Each section is clearly marked. Changes are auto-saved.
 </div>
 )}
 <div className="flex-grow w-full">
