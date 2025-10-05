@@ -52,7 +52,11 @@ function EditorPage() {
           const res = await fetch(`/api/file?repo=${repo}&path=${filePath}`, { credentials: 'include' });
           if (!res.ok) throw new Error(`Failed to fetch file content: ${res.statusText}`);
           const data = await res.json();
-          fileContent = atob(data.content);
+
+          // Correctly decode base64 content with UTF-8 support.
+          const binaryString = atob(data.content);
+          const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
+          fileContent = new TextDecoder('utf-8').decode(bytes);
         }
 
         const { model } = await unifiedParser(fileContent, filePath);
