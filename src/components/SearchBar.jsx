@@ -51,13 +51,13 @@ const SearchBar = ({ repo }) => {
   };
 
   return (
-    <div className="relative w-full max-w-lg mx-auto">
+    <div className="relative w-full">
       <input
         type="text"
         value={query}
         onChange={handleChange}
-        placeholder="Search for files in this repository..."
-        className="w-full px-4 py-3 text-lg text-gray-700 bg-white border-2 border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-bark-blue focus:border-transparent transition-all"
+        placeholder="Search files..."
+        className="w-full px-4 py-2 text-gray-800 bg-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bark-blue transition-all"
       />
       {query && (
         <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl z-20 max-h-80 overflow-y-auto">
