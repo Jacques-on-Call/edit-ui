@@ -8,14 +8,48 @@ marked.use(gfmHeadingId());
 marked.use(mangle());
 
 /**
- * Parses the content of an .astro file to extract both the JavaScript frontmatter object
- * and the body content, converting the body to HTML for TinyMCE.
+ * Traverses an Acorn AST node to convert it into a JavaScript value.
+ * This is a simplified implementation for demonstration.
+ * @param {object} node The AST node from Acorn.
+ * @param {string} source The source code string for the AST.
+ * @returns {*} The JavaScript value represented by the node.
+ */
+function astNodeToValue(node, source) {
+  switch (node.type) {
+    case 'Literal':
+      return node.value;
+    case 'ObjectExpression': {
+      const obj = {};
+      for (const prop of node.properties) {
+        const key = prop.key.name || prop.key.value;
+        obj[key] = astNodeToValue(prop.value, source);
+      }
+      return obj;
+    }
+    case 'ArrayExpression':
+      return node.elements.map(element => astNodeToValue(element, source));
+    // For other complex types, we fall back to extracting the source text
+    // and evaluating it. This handles template literals, etc.
+    default:
+      try {
+        const valueString = source.substring(node.start, node.end);
+        return Function(`"use strict"; return (${valueString})`)();
+      } catch (e) {
+        console.error("Could not evaluate AST node:", e);
+        return null;
+      }
+  }
+}
+
+/**
+ * Parses an .astro file's frontmatter using an AST parser to correctly
+ * extract all exported variables.
  *
  * @param {string} fileContent The full string content of the .astro file.
- * @returns {{model: {frontmatter: object, body: string, raw: string, rawType: string}|null, trace: object}}
+ * @returns {Promise<{model: {frontmatter: object, body: string, raw: string, rawType: string}|null, trace: object}>}
  */
 export async function parseAstroFile(fileContent) {
-  const trace = { detected: 'astro-js', rawFrontmatter: null, body: null, parsed: null, error: null };
+  const trace = { detected: 'astro-ast', rawFrontmatter: null, body: null, parsed: null, error: null };
 
   if (!fileContent) {
     trace.error = 'Empty content';
@@ -33,43 +67,45 @@ export async function parseAstroFile(fileContent) {
       return { model, trace };
     }
 
-    const frontmatterContent = match[1];
+    const frontmatterContent = match[1].trim();
     trace.rawFrontmatter = frontmatterContent;
 
     const markdownBody = text.substring(match[0].length).trim();
-    const htmlBody = await marked.parse(markdownBody); // Use marked to convert Markdown to HTML
+    const htmlBody = await marked.parse(markdownBody);
     trace.body = htmlBody;
 
-    const frontmatterObjectRegex = /export\s+const\s+frontmatter\s*=\s*({[\s\S]*?});/;
-    const objectMatch = frontmatterContent.match(frontmatterObjectRegex);
-
-    let frontmatter = {};
-    if (objectMatch && objectMatch[1]) {
-      const objectString = objectMatch[1];
-      try {
-        Parser.parse(objectString, { ecmaVersion: 'latest' });
-        frontmatter = Function(`"use strict"; return (${objectString})`)();
-      } catch (parseError) {
-        trace.error = `Frontmatter syntax error: ${parseError.message}`;
-      }
-    } else {
-      trace.error = "No 'export const frontmatter' object found.";
+    const frontmatter = {};
+    if (frontmatterContent) {
+        try {
+            const ast = Parser.parse(frontmatterContent, { ecmaVersion: 'latest', sourceType: 'module' });
+            for (const node of ast.body) {
+                if (node.type === 'ExportNamedDeclaration' && node.declaration && node.declaration.type === 'VariableDeclaration') {
+                    for (const declarator of node.declaration.declarations) {
+                        if (declarator.id.type === 'Identifier' && declarator.init) {
+                            const name = declarator.id.name;
+                            const value = astNodeToValue(declarator.init, frontmatterContent);
+                            frontmatter[name] = value;
+                        }
+                    }
+                }
+            }
+            trace.parsed = frontmatter;
+        } catch (parseError) {
+            trace.error = `Frontmatter syntax error: ${parseError.message}`;
+        }
     }
-
-    trace.parsed = frontmatter;
 
     const model = {
       frontmatter,
-      body: htmlBody, // The body is now HTML
+      body: htmlBody,
       raw: text,
-      rawType: 'astro-js',
+      rawType: 'astro-ast',
     };
 
-    if (trace.error && trace.error.startsWith('Frontmatter syntax error')) {
+    if (trace.error) {
       model.body = `<p>Error parsing frontmatter. Please check the syntax.</p><pre>${fileContent}</pre>`;
       model.rawType = 'error';
     }
-
 
     return { model, trace };
   } catch (err) {
@@ -80,28 +116,29 @@ export async function parseAstroFile(fileContent) {
 }
 
 /**
- * Stringifies a frontmatter object and an HTML body string into a complete .astro file content string.
- * NOTE: This function is a placeholder and does not correctly convert HTML back to Markdown.
- * A proper HTML-to-Markdown converter (like turndown) would be needed for a full implementation.
+ * Stringifies a frontmatter object and an HTML body into a complete .astro file.
  *
- * @param {object} frontmatter The JavaScript object for the frontmatter.
- * @param {string} body The HTML body content from the editor.
- * @returns {string} The complete, formatted .astro file content.
+ * @param {object} frontmatter The frontmatter object.
+ * @param {string} body The HTML content from the editor.
+ * @returns {string} The complete file content.
  */
 export function stringifyAstroFile(frontmatter, body) {
-  const frontmatterString = `export const frontmatter = ${JSON.stringify(
-    frontmatter,
-    null,
-    2
-  )};`;
+    let frontmatterString = '';
+    for (const [key, value] of Object.entries(frontmatter)) {
+        // The 'layout' prop should be a literal, not a string, so we handle it specially.
+        if (key === 'layout') {
+            frontmatterString += `export const layout = ${value};\n`;
+        } else {
+            frontmatterString += `export const ${key} = ${JSON.stringify(value, null, 2)};\n`;
+        }
+    }
 
-  // This is a critical limitation: we are not converting HTML back to Markdown.
-  // The original body is returned, which means edits will not be saved correctly.
-  // A proper implementation requires a library like 'turndown'.
-  console.warn("HTML to Markdown conversion is not implemented. Edits will not be saved correctly.");
+    // This is a critical limitation: we are not converting HTML back to Markdown.
+    console.warn("HTML to Markdown conversion is not implemented. Edits will not be saved correctly.");
+    const markdownBody = body; // Placeholder
 
-  return `---
+    return `---
 ${frontmatterString}
 ---
-${body || ''}`; // This should be converted from HTML to Markdown
+${markdownBody || ''}`;
 }
