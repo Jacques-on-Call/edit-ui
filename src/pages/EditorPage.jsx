@@ -11,11 +11,17 @@ import { stringifyAstroFile } from '../utils/astroFileParser';
 const ErrorDisplay = ({ error, rawContent }) => (
   <div className="p-4 sm:p-6 lg:p-8 bg-red-50">
     <h1 className="text-2xl font-bold text-red-700 mb-4">File Parsing Error</h1>
-    <p className="text-red-600 mb-2">The editor could not separate the frontmatter from the body content because of the following error:</p>
+    <p className="text-red-600 mb-2">The editor could not parse the file content due to the following error. This usually means there is a syntax error (like a missing comma or unclosed quote) in the frontmatter.</p>
     <pre className="bg-white p-4 rounded-lg border border-red-200 text-red-800 whitespace-pre-wrap font-mono text-sm">
       <code>{error}</code>
     </pre>
-    <p className="mt-4 text-gray-700">The full, raw content of the file is loaded in the editor below so you can manually correct the issue. Use the 'Code' button in the toolbar to view and edit the source.</p>
+    <p className="mt-4 text-gray-700 font-semibold">Problematic File Content:</p>
+    <p className="text-gray-600 mb-2">The full, raw content of the file is shown below. You can copy this content, correct the error in your local code editor, and then commit the fix.</p>
+    <textarea
+      className="w-full h-64 p-2 border border-gray-300 rounded-md font-mono text-sm bg-gray-50"
+      readOnly
+      defaultValue={rawContent}
+    />
   </div>
 );
 
@@ -30,6 +36,7 @@ function EditorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [parsingError, setParsingError] = useState(null);
+  const [rawContentOnError, setRawContentOnError] = useState('');
 
   const draftKey = `draft_${repo}_${filePath}`;
 
@@ -57,6 +64,7 @@ function EditorPage() {
 
       setLoading(true);
       setParsingError(null);
+      setRawContentOnError('');
 
       try {
         let fileContent;
@@ -80,7 +88,8 @@ function EditorPage() {
 
         if (trace.error) {
           setParsingError(trace.error);
-          setContent(fileContent); // Show raw content on error
+          setRawContentOnError(fileContent);
+          setContent(''); // Load empty string to prevent editor crash
         } else if (model) {
           setFrontmatter(model.frontmatter);
           setContent(model.body);
@@ -139,7 +148,7 @@ function EditorPage() {
   return (
     <div className="flex flex-col h-screen">
       <TopToolbar />
-      {parsingError && <ErrorDisplay error={parsingError} />}
+      {parsingError && <ErrorDisplay error={parsingError} rawContent={rawContentOnError} />}
       <div className="flex-grow w-full">
         <Editor
           value={content}
