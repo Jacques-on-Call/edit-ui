@@ -12,10 +12,17 @@ export default defineConfig({
       },
     },
   },
-  // This is the definitive fix for the 'Buffer is not defined' error.
-  // It tells Vite to replace any instance of 'global' with 'window',
+  // This tells Vite to replace any instance of 'global' with 'window',
   // which is the correct global object in a browser environment.
   define: {
     'global': 'window',
+  },
+  // This is the definitive fix for the 'Buffer is not defined' error.
+  // It ensures that any import for the 'buffer' module is correctly
+  // redirected to the browser-safe version.
+  resolve: {
+    alias: {
+      buffer: 'buffer/',
+    },
   },
 })
