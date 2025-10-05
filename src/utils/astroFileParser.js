@@ -1,68 +1,21 @@
 import { Parser } from 'acorn';
+import { marked } from 'marked';
+import { gfmHeadingId } from 'marked-gfm-heading-id';
+import { mangle } from "marked-mangle";
+
+// Configure marked to handle GitHub Flavored Markdown
+marked.use(gfmHeadingId());
+marked.use(mangle());
 
 /**
- * A helper function to safely parse a string representing a JavaScript literal.
- * It uses the Function constructor, which is safer than eval.
- * @param {string} valueString - The string to parse (e.g., "'hello'", "{ a: 1 }").
- * @returns {any} The parsed JavaScript value.
- */
-function safelyParseValue(valueString) {
-  try {
-    return Function(`"use strict"; return (${valueString})`)();
-  } catch (e) {
-    console.error(`Could not parse value: ${valueString}`, e);
-    return valueString;
-  }
-}
-
-/**
- * Recursively converts a JavaScript value into a valid JavaScript code string.
- * This is a custom stringifier that handles objects, arrays, and multiline strings
- * correctly, preserving template literals for multiline content.
- * @param {any} value - The JavaScript value to stringify.
- * @param {number} indent - The current indentation level.
- * @returns {string} A string representing the value as JavaScript code.
- */
-function valueToString(value, indent = 0) {
-  const indentStr = '  '.repeat(indent);
-  const nextIndentStr = '  '.repeat(indent + 1);
-
-  if (typeof value === 'string') {
-    // If the string contains newlines, use a template literal (backticks)
-    if (value.includes('\n')) {
-      return `\`${value}\``;
-    }
-    // Otherwise, use a regular JSON-style string
-    return JSON.stringify(value);
-  }
-
-  if (Array.isArray(value)) {
-    if (value.length === 0) return '[]';
-    const arrItems = value.map(item => `${nextIndentStr}${valueToString(item, indent + 1)}`).join(',\n');
-    return `[\n${arrItems}\n${indentStr}]`;
-  }
-
-  if (typeof value === 'object' && value !== null) {
-    if (Object.keys(value).length === 0) return '{}';
-    const objItems = Object.entries(value).map(([key, val]) => {
-      // Keys in JS objects don't need quotes if they are valid identifiers
-      const keyStr = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `"${key}"`;
-      return `${nextIndentStr}${keyStr}: ${valueToString(val, indent + 1)}`;
-    }).join(',\n');
-    return `{\n${objItems}\n${indentStr}}`;
-  }
-
-  // For numbers, booleans, null, etc.
-  return String(value);
-}
-
-
-/**
- * Parses the content of an .astro file to extract imports, frontmatter variables,
- * and the body content.
+ * Parses the content of an .astro file to extract both the JavaScript frontmatter object
+ * and the body content, converting the body to HTML for TinyMCE.
+ *
+ * @param {string} fileContent The full string content of the .astro file.
+ * @returns {{model: {frontmatter: object, body: string, raw: string, rawType: string}|null, trace: object}}
  */
 export async function parseAstroFile(fileContent) {
-  const trace = { detected: 'astro-js-idiomatic', rawFrontmatter: null, body: null, parsed: null, error: null };
+  const trace = { detected: 'astro-js', rawFrontmatter: null, body: null, parsed: null, error: null };
 
   if (!fileContent) {
     trace.error = 'Empty content';
@@ -76,78 +29,79 @@ export async function parseAstroFile(fileContent) {
 
     if (!match || !match[1]) {
       trace.error = 'No frontmatter block found.';
-      const model = { frontmatter: {}, imports: [], body: text, raw: text, rawType: 'none' };
+      const model = { frontmatter: {}, body: text, raw: text, rawType: 'none' };
       return { model, trace };
     }
 
-    const frontmatterContent = match[1].trim();
+    const frontmatterContent = match[1];
     trace.rawFrontmatter = frontmatterContent;
 
-    const body = text.substring(match[0].length).trim();
+    const markdownBody = text.substring(match[0].length).trim();
+    const htmlBody = await marked.parse(markdownBody); // Use marked to convert Markdown to HTML
+    trace.body = htmlBody;
 
-    const frontmatter = {};
-    const imports = [];
+    const frontmatterObjectRegex = /export\s+const\s+frontmatter\s*=\s*({[\s\S]*?});/;
+    const objectMatch = frontmatterContent.match(frontmatterObjectRegex);
 
-    const ast = Parser.parse(frontmatterContent, { ecmaVersion: 'latest', sourceType: 'module' });
-
-    for (const node of ast.body) {
-      if (node.type === 'ImportDeclaration') {
-        imports.push(frontmatterContent.substring(node.start, node.end));
-      } else if (node.type === 'ExportNamedDeclaration' && node.declaration && node.declaration.type === 'VariableDeclaration') {
-        for (const declaration of node.declaration.declarations) {
-          if (declaration.id.type === 'Identifier' && declaration.init) {
-            const key = declaration.id.name;
-            const valueString = frontmatterContent.substring(declaration.init.start, declaration.init.end);
-            frontmatter[key] = safelyParseValue(valueString);
-          }
-        }
+    let frontmatter = {};
+    if (objectMatch && objectMatch[1]) {
+      const objectString = objectMatch[1];
+      try {
+        Parser.parse(objectString, { ecmaVersion: 'latest' });
+        frontmatter = Function(`"use strict"; return (${objectString})`)();
+      } catch (parseError) {
+        trace.error = `Frontmatter syntax error: ${parseError.message}`;
       }
+    } else {
+      trace.error = "No 'export const frontmatter' object found.";
     }
 
-    if (Object.keys(frontmatter).length === 0) {
-      trace.error = "Could not find any valid 'export const' variables in the frontmatter.";
-    }
-
-    trace.parsed = { frontmatter, imports };
+    trace.parsed = frontmatter;
 
     const model = {
       frontmatter,
-      imports,
-      body,
+      body: htmlBody, // The body is now HTML
       raw: text,
-      rawType: 'astro-js-idiomatic',
+      rawType: 'astro-js',
     };
 
-    if (trace.error) {
-      model.body = fileContent;
+    if (trace.error && trace.error.startsWith('Frontmatter syntax error')) {
+      model.body = `<p>Error parsing frontmatter. Please check the syntax.</p><pre>${fileContent}</pre>`;
       model.rawType = 'error';
     }
 
+
     return { model, trace };
   } catch (err) {
-    trace.error = `Frontmatter syntax error: ${err.message}`;
-    const model = { frontmatter: {}, imports: [], body: fileContent, raw: fileContent, rawType: 'error' };
+    trace.error = (err && err.message) || String(err);
+    const model = { frontmatter: {}, body: `<p>A critical error occurred.</p><pre>${fileContent}</pre>`, raw: fileContent, rawType: 'error' };
     return { model, trace };
   }
 }
 
 /**
- * Stringifies a frontmatter object, imports, and a body string into a complete .astro file content string.
+ * Stringifies a frontmatter object and an HTML body string into a complete .astro file content string.
+ * NOTE: This function is a placeholder and does not correctly convert HTML back to Markdown.
+ * A proper HTML-to-Markdown converter (like turndown) would be needed for a full implementation.
+ *
+ * @param {object} frontmatter The JavaScript object for the frontmatter.
+ * @param {string} body The HTML body content from the editor.
+ * @returns {string} The complete, formatted .astro file content.
  */
-export function stringifyAstroFile(frontmatter, body, imports = []) {
-  const importString = imports.join('\n');
+export function stringifyAstroFile(frontmatter, body) {
+  const frontmatterString = `export const frontmatter = ${JSON.stringify(
+    frontmatter,
+    null,
+    2
+  )};`;
 
-  const frontmatterParts = [];
-  for (const [key, value] of Object.entries(frontmatter)) {
-    const valueString = valueToString(value);
-    frontmatterParts.push(`export const ${key} = ${valueString};`);
-  }
-  const frontmatterExportsString = frontmatterParts.join('\n\n');
-
-  const separator = importString && frontmatterExportsString ? '\n\n' : '';
+  // This is a critical limitation: we are not converting HTML back to Markdown.
+  // The original body is returned, which means edits will not be saved correctly.
+  // A proper implementation requires a library like 'turndown'.
+  console.warn("HTML to Markdown conversion is not implemented. Edits will not be saved correctly.");
 
   return `---
-${importString}${separator}${frontmatterExportsString}
+${frontmatterString}
 ---
-${body || ''}`;
+${body || ''}`; // This should be converted from HTML to Markdown
 }

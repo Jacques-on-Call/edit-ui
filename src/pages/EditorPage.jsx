@@ -31,7 +31,6 @@ function EditorPage() {
   const repo = localStorage.getItem('selectedRepo');
 
   const [frontmatter, setFrontmatter] = useState({});
-  const [imports, setImports] = useState([]);
   const [content, setContent] = useState(null);
   const [fileType, setFileType] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,9 +42,7 @@ function EditorPage() {
 
   const saveDraft = useCallback(debounce((newContent) => {
     let fullContent;
-    if (fileType === 'astro-js-idiomatic' && !parsingError) {
-      fullContent = stringifyAstroFile(frontmatter, newContent, imports);
-    } else if (fileType === 'astro-js' && !parsingError) {
+    if (fileType === 'astro-js' && !parsingError) {
       fullContent = stringifyAstroFile(frontmatter, newContent);
     } else if (!parsingError) {
       fullContent = matter.stringify(newContent, frontmatter);
@@ -55,7 +52,7 @@ function EditorPage() {
     }
     localStorage.setItem(draftKey, fullContent);
     console.log(`Draft saved for ${filePath}.`);
-  }, 1000), [draftKey, frontmatter, imports, fileType, parsingError]);
+  }, 1000), [draftKey, frontmatter, fileType, parsingError]);
 
   useEffect(() => {
     const fetchAndParseContent = async () => {
@@ -95,7 +92,6 @@ function EditorPage() {
           setContent(''); // Load empty string to prevent editor crash
         } else if (model) {
           setFrontmatter(model.frontmatter);
-          setImports(model.imports || []);
           setContent(model.body);
           setFileType(model.rawType);
         } else {
