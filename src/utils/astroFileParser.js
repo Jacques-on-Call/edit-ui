@@ -123,12 +123,9 @@ export async function parseAstroFile(fileContent) {
 export function stringifyAstroFile(frontmatter, body) {
     let frontmatterString = '';
     for (const [key, value] of Object.entries(frontmatter)) {
-        // The 'layout' prop should be a literal, not a string, so we handle it specially.
-        if (key === 'layout') {
-            frontmatterString += `export const layout = ${value};\n`;
-        } else {
-            frontmatterString += `export const ${key} = ${JSON.stringify(value, null, 2)};\n`;
-        }
+        // Use JSON.stringify to correctly handle all data types, including
+        // strings (which will be correctly quoted), objects, and arrays.
+        frontmatterString += `export const ${key} = ${JSON.stringify(value, null, 2)};\n`;
     }
 
     // This is a critical limitation: we are not converting HTML back to Markdown.
