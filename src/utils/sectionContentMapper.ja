@@ -1,0 +1,152 @@
+import { marked } from ‘marked’;
+import TurndownService from ‘turndown’;
+
+const turndownService = new TurndownService({
+headingStyle: ‘atx’,
+codeBlockStyle: ‘fenced’,
+bulletListMarker: ‘*’,
+});
+
+/**
+
+- Converts sections array into editable HTML content for TinyMCE
+  */
+  export async function sectionsToEditableHTML(sections) {
+  if (!sections || !Array.isArray(sections)) {
+  return ‘<p>No sections found.</p>’;
+  }
+
+let html = ‘’;
+
+for (const section of sections) {
+html += `<div class="section" data-section-type="${section.type || 'unknown'}">`;
+
+```
+switch (section.type) {
+  case 'hero':
+    html += `<div class="hero-section">`;
+    if (section.title) {
+      html += `<h1 data-field="title">${section.title}</h1>`;
+    }
+    if (section.subtitle) {
+      html += `<h2 data-field="subtitle">${section.subtitle}</h2>`;
+    }
+    html += `</div>`;
+    break;
+
+  case 'text_block':
+    if (section.content) {
+      const contentHtml = await marked.parse(section.content);
+      html += `<div class="text-block" data-field="content">${contentHtml}</div>`;
+    }
+    break;
+
+  case 'grid':
+    html += `<div class="grid-section">`;
+    if (section.title) {
+      html += `<h2 data-field="title">${section.title}</h2>`;
+    }
+    if (section.items && Array.isArray(section.items)) {
+      html += `<div class="grid-items">`;
+      section.items.forEach((item, index) => {
+        html += `<div class="grid-item" data-item-index="${index}">`;
+        if (item.title) {
+          html += `<h3 data-field="title">${item.title}</h3>`;
+        }
+        if (item.text) {
+          html += `<p data-field="text">${item.text}</p>`;
+        }
+        html += `</div>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+    break;
+
+  default:
+    html += `<div class="unknown-section">`;
+    html += `<p><em>Section type: ${section.type}</em></p>`;
+    html += `</div>`;
+}
+
+html += `</div><hr style="margin: 2rem 0; border: none; border-top: 2px dashed #ccc;">`;
+```
+
+}
+
+return html;
+}
+
+/**
+
+- Extracts text content from HTML and maps it back to sections structure
+  */
+  export function editableHTMLToSections(html, originalSections) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, ‘text/html’);
+  const sectionDivs = doc.querySelectorAll(’.section’);
+
+const updatedSections = [];
+
+sectionDivs.forEach((div, index) => {
+const sectionType = div.getAttribute(‘data-section-type’);
+const originalSection = originalSections[index] || {};
+
+```
+// Start with a copy of the original section to preserve all fields
+const section = { ...originalSection, type: sectionType };
+
+switch (sectionType) {
+  case 'hero': {
+    const heroDiv = div.querySelector('.hero-section');
+    if (heroDiv) {
+      const titleEl = heroDiv.querySelector('[data-field="title"]');
+      const subtitleEl = heroDiv.querySelector('[data-field="subtitle"]');
+      
+      if (titleEl) section.title = titleEl.textContent.trim();
+      if (subtitleEl) section.subtitle = subtitleEl.textContent.trim();
+    }
+    break;
+  }
+
+  case 'text_block': {
+    const textBlockDiv = div.querySelector('[data-field="content"]');
+    if (textBlockDiv) {
+      // Convert HTML back to Markdown
+      const markdown = turndownService.turndown(textBlockDiv.innerHTML);
+      section.content = markdown;
+    }
+    break;
+  }
+
+  case 'grid': {
+    const gridDiv = div.querySelector('.grid-section');
+    if (gridDiv) {
+      const titleEl = gridDiv.querySelector('[data-field="title"]');
+      if (titleEl) section.title = titleEl.textContent.trim();
+
+      const itemDivs = gridDiv.querySelectorAll('.grid-item');
+      section.items = Array.from(itemDivs).map((itemDiv, itemIndex) => {
+        const originalItem = originalSection.items?.[itemIndex] || {};
+        const item = { ...originalItem };
+
+        const titleEl = itemDiv.querySelector('[data-field="title"]');
+        const textEl = itemDiv.querySelector('[data-field="text"]');
+
+        if (titleEl) item.title = titleEl.textContent.trim();
+        if (textEl) item.text = textEl.textContent.trim();
+
+        return item;
+      });
+    }
+    break;
+  }
+}
+
+updatedSections.push(section);
+```
+
+});
+
+return updatedSections;
+}
