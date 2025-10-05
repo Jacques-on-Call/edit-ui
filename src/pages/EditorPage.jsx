@@ -8,6 +8,17 @@ import BottomToolbar from '../components/BottomToolbar';
 import { unifiedParser } from '../utils/unifiedParser';
 import { stringifyAstroFile } from '../utils/astroFileParser';
 
+const ErrorDisplay = ({ error, rawContent }) => (
+  <div className="p-4 sm:p-6 lg:p-8 bg-red-50">
+    <h1 className="text-2xl font-bold text-red-700 mb-4">File Parsing Error</h1>
+    <p className="text-red-600 mb-2">The editor could not separate the frontmatter from the body content because of the following error:</p>
+    <pre className="bg-white p-4 rounded-lg border border-red-200 text-red-800 whitespace-pre-wrap font-mono text-sm">
+      <code>{error}</code>
+    </pre>
+    <p className="mt-4 text-gray-700">The full, raw content of the file is loaded in the editor below so you can manually correct the issue. Use the 'Code' button in the toolbar to view and edit the source.</p>
+  </div>
+);
+
 function EditorPage() {
   const [searchParams] = useSearchParams();
   const filePath = searchParams.get('path');
@@ -24,14 +35,17 @@ function EditorPage() {
 
   const saveDraft = useCallback(debounce((newContent) => {
     let fullContent;
-    if (fileType === 'astro-js') {
+    if (fileType === 'astro-js' && !parsingError) {
       fullContent = stringifyAstroFile(frontmatter, newContent);
-    } else {
+    } else if (!parsingError) {
       fullContent = matter.stringify(newContent, frontmatter);
+    } else {
+      // If there was a parsing error, we save the raw content as is.
+      fullContent = newContent;
     }
     localStorage.setItem(draftKey, fullContent);
     console.log(`Draft saved for ${filePath}.`);
-  }, 1000), [draftKey, frontmatter, fileType]);
+  }, 1000), [draftKey, frontmatter, fileType, parsingError]);
 
   useEffect(() => {
     const fetchAndParseContent = async () => {
@@ -42,22 +56,23 @@ function EditorPage() {
       }
 
       setLoading(true);
-      setParsingError(null); // Reset parsing error on new load
+      setParsingError(null);
 
       try {
         let fileContent;
         const localDraft = localStorage.getItem(draftKey);
 
         if (localDraft) {
-          console.log('Loading from local draft.');
           fileContent = localDraft;
         } else {
           const res = await fetch(`/api/file?repo=${repo}&path=${filePath}`, { credentials: 'include' });
           if (!res.ok) throw new Error(`Failed to fetch file content: ${res.statusText}`);
           const data = await res.json();
-
           const binaryString = atob(data.content);
-          const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
           fileContent = new TextDecoder('utf-8').decode(bytes);
         }
 
@@ -89,7 +104,7 @@ function EditorPage() {
     saveDraft(newContent);
   };
 
-  if (loading) {
+  if (loading || content === null) {
     return <div className="text-center p-8">Loading editor...</div>;
   }
 
@@ -97,58 +112,38 @@ function EditorPage() {
     return <div className="text-center p-8 text-red-600">{error}</div>;
   }
 
-  // Display a dedicated error report if parsing fails
-  if (parsingError) {
-    return (
-      <div className="h-screen flex flex-col">
-        <TopToolbar />
-        <div className="flex-grow p-4 sm:p-6 lg:p-8 bg-red-50">
-          <h1 className="text-2xl font-bold text-red-700 mb-4">File Parsing Error</h1>
-          <p className="text-red-600 mb-2">The editor could not separate the frontmatter from the body content because of the following error:</p>
-          <pre className="bg-white p-4 rounded-lg border border-red-200 text-red-800 whitespace-pre-wrap font-mono text-sm">
-            <code>{parsingError}</code>
-          </pre>
-          <p className="mt-4 text-gray-700">The full, raw content of the file is loaded in the editor below so you can manually correct the issue.</p>
-        </div>
-        <div className="flex-grow w-full">
-          <Editor
-            value={content} // Show raw content
-            init={{
-              height: '100%',
-              width: '100%',
-              menubar: false,
-              toolbar: 'undo redo | code',
-              plugins: 'code'
-            }}
-            onEditorChange={handleEditorChange}
-          />
-        </div>
-        <BottomToolbar />
-      </div>
-    );
-  }
+  const editorConfig = parsingError
+    ? { // Simplified config for raw editing on error
+        height: '100%',
+        width: '100%',
+        menubar: false,
+        toolbar: 'undo redo | code',
+        plugins: 'code'
+      }
+    : { // Full-featured config for normal editing
+        height: '100%',
+        width: '100%',
+        menubar: false,
+        plugins: [
+          'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+          'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+          'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+        ],
+        toolbar: 'undo redo | blocks | ' +
+          'bold italic forecolor | alignleft aligncenter ' +
+          'alignright alignjustify | bullist numlist outdent indent | ' +
+          'removeformat | help',
+        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+      };
 
   return (
     <div className="flex flex-col h-screen">
       <TopToolbar />
+      {parsingError && <ErrorDisplay error={parsingError} />}
       <div className="flex-grow w-full">
         <Editor
           value={content}
-          init={{
-            height: '100%',
-            width: '100%',
-            menubar: false,
-            plugins: [
-              'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-              'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-              'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
-            ],
-            toolbar: 'undo redo | blocks | ' +
-              'bold italic forecolor | alignleft aligncenter ' +
-              'alignright alignjustify | bullist numlist outdent indent | ' +
-              'removeformat | help',
-            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
-          }}
+          init={editorConfig}
           onEditorChange={handleEditorChange}
         />
       </div>
