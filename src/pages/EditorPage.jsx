@@ -12,8 +12,7 @@ function EditorPage() {
   const repo = localStorage.getItem('selectedRepo');
 
   const [frontmatter, setFrontmatter] = useState('');
-  const [initialValue, setInitialValue] = useState('');
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState(null); // Initialize content as null
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -40,8 +39,6 @@ function EditorPage() {
 
         if (localDraft) {
           console.log('Loading from local draft.');
-          // When loading a draft, we assume it's the full content for now.
-          // The next step will refine this to save/load reconstructed content.
           fileContent = localDraft;
         } else {
           const res = await fetch(`/api/file?repo=${repo}&path=${filePath}`, { credentials: 'include' });
@@ -53,8 +50,7 @@ function EditorPage() {
         const { frontmatter: parsedFrontmatter, body: parsedBody } = parseContent(fileContent);
 
         setFrontmatter(parsedFrontmatter);
-        setInitialValue(parsedBody);
-        setContent(parsedBody);
+        setContent(parsedBody); // Only set content
 
       } catch (err) {
         setError(err.message);
@@ -71,7 +67,8 @@ function EditorPage() {
     saveDraft(newContent);
   };
 
-  if (loading) {
+  // Conditionally render editor only when content is loaded
+  if (loading || content === null) {
     return <div className="text-center p-8">Loading editor...</div>;
   }
 
@@ -84,8 +81,7 @@ function EditorPage() {
       <TopToolbar />
       <div className="flex-grow w-full">
         <Editor
-          value={content}
-          initialValue={initialValue}
+          value={content} // Rely only on the value prop
           init={{
             height: '100%',
             width: '100%',

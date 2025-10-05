@@ -1,20 +1,36 @@
 /**
  * Parses a string of file content to separate the frontmatter from the body.
- * Frontmatter is expected to be enclosed in `---` delimiters.
+ * Frontmatter is expected to be enclosed in `---` delimiters at the start of the file.
+ * This function is designed to be robust against different newline characters and file endings.
  * @param {string} content The raw content of the file.
  * @returns {{frontmatter: string, body: string}} An object containing the frontmatter and body.
  */
 export function parseContent(content) {
-  const frontmatterRegex = /^---\n([\s\S]*?)\n---\n/;
-  const match = content.match(frontmatterRegex);
+  // Normalize newlines to \n for consistent parsing
+  const normalizedContent = content.replace(/\r\n/g, '\n');
+  const lines = normalizedContent.split('\n');
 
-  if (match) {
-    const frontmatter = match[0];
-    const body = content.substring(frontmatter.length);
+  // Check for the opening '---' on the first line
+  if (lines[0].trim() !== '---') {
+    return { frontmatter: '', body: content };
+  }
+
+  // Find the closing '---'
+  let endOfFrontmatter = -1;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '---') {
+      endOfFrontmatter = i;
+      break;
+    }
+  }
+
+  if (endOfFrontmatter > 0) {
+    const frontmatter = lines.slice(0, endOfFrontmatter + 1).join('\n');
+    const body = lines.slice(endOfFrontmatter + 1).join('\n');
     return { frontmatter, body };
   }
 
-  // If no frontmatter is found, assume the whole file is the body.
+  // If no closing delimiter is found, assume the file has no frontmatter.
   return { frontmatter: '', body: content };
 }
 
@@ -25,11 +41,9 @@ export function parseContent(content) {
  * @returns {string} The full file content.
  */
 export function reconstructContent(frontmatter, body) {
-  // If there's no frontmatter, just return the body.
   if (!frontmatter) {
     return body;
   }
-
-  // Ensure there's no extra space between frontmatter and body.
-  return `${frontmatter.trim()}\n${body.trim()}`;
+  // Ensure the frontmatter ends with a single newline before joining with the body.
+  return `${frontmatter.trimEnd()}\n${body}`;
 }
