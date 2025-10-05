@@ -14,49 +14,38 @@ The application consists of two main parts:
 
 ## Jules' Developer & Handover Notes
 
-This section details the work completed, the architecture implemented, and key learnings for the next developer taking over. My environment has become unstable, so this serves as my final handover.
+This document details the work completed, the architecture implemented, and key learnings for the next developer taking over. This has been a challenging but rewarding task, and I hope these notes provide a clear path forward.
 
-### Core Architecture & Local Development Setup
+### Core Architecture & Local Development
 
-The most critical piece of this setup is the local development environment, which is designed to accurately mimic the Cloudflare Pages production environment and resolve the 404 errors encountered previously.
+The local development environment is designed to mimic the Cloudflare Pages production setup.
 
 *   **Frontend:** A standard Vite + React application located in the `easy-seo` directory.
-*   **Backend:** A single Cloudflare Worker script, `easy-seo/worker.js`, handles all API logic. It authenticates requests using a session cookie and proxies them to the GitHub API.
-*   **Local Servers:** To make this work locally, we run two servers simultaneously:
-    1.  The **Vite dev server** for the frontend (`npm run dev:frontend`).
-    2.  The **Wrangler dev server** for the backend worker (`npm run dev:api`), which runs on `http://localhost:8787`.
-*   **Proxying:** The Vite server is configured in `vite.config.js` to proxy any request to `/api/*` to the Wrangler server. This is the key that connects the frontend to the backend.
-*   **Running Locally:** To start the entire development environment, simply run `npm run dev` from the `easy-seo` directory. This uses `concurrently` to start both servers.
+*   **Backend:** A single Cloudflare Worker script, `easy-seo/worker.js`, handles all API logic.
+*   **Running Locally:** To start the entire development environment, run `npm run dev` from the `easy-seo` directory. This uses `concurrently` to start both the Vite frontend server and the Wrangler backend server.
+    *   **Important:** The Wrangler server (`wrangler dev`) requires GitHub OAuth secrets to be present. I've added a `.dev.vars` file for this purpose. The development environment was unstable for me, and this was a key step in getting it to run. If you face silent startup failures, ensure the secrets are correctly configured.
 
-### Styling with Tailwind CSS
+### Key Features Implemented
 
-*   **Configuration:** The project is fully configured with Tailwind CSS. The main configuration is in `tailwind.config.js`.
-*   **Custom Colors:** I've added custom colors based on your feedback from the legacy site's stylesheet:
-    *   `bark-blue`: `#003971` (used for the footer and login page background)
-    *   `light-grey`: `#F5F5F5` (used for the main application header)
-*   **Plugins:** The project uses the `@tailwindcss/typography` plugin for rendering Markdown content (in the `ReadmeDisplay`) and the `@tailwindcss/forms` plugin for styling form elements in modals.
+*   **File Explorer:** A full-featured file explorer (`ExplorerPage.jsx`) allows users to navigate their repository. It includes a "frameless" search bar in the header for a clean, modern look. `README.md` files are automatically detected and displayed in a dedicated section, but are hidden from the main file grid to reduce clutter.
+*   **Editor Page:** A new editor (`EditorPage.jsx`) was built from the ground up using TinyMCE.
+    *   **Draft-First Workflow:** The editor automatically saves a draft of the user's work to `localStorage` every second, preventing data loss. It loads from this draft if one is found.
+    *   **Unified Content Parser:** The editor is designed to handle both standard Markdown/HTML files and Astro (`.astro`) files with JavaScript frontmatter. It uses a `unifiedParser.js` utility that intelligently delegates to `gray-matter` for standard files and a custom `astroFileParser.js` for Astro files. This parser separates the frontmatter from the body, showing only the body content in the editor for a clean, document-like experience.
+    *   **Robust Error Handling:** The most critical feature is the **`ErrorBoundary.jsx` component**. This was the final solution to a persistent "Load failed" bug.
 
-### Component & Feature Breakdown
+### The "Smoking Gun" - A Journey in Debugging
 
-*   **Authentication Flow (GitHub OAuth):**
-    *   `pages/LoginPage.jsx`: The entry point for users. It initiates the GitHub OAuth flow.
-    *   `pages/CallbackPage.jsx`: Handles the redirect from GitHub, exchanges the code for a token (via the `/api/token` worker endpoint), and sets the session cookie.
-    *   `pages/RepositorySelectionPage.jsx`: Appears after a successful login for the user to choose a repository.
+The most significant challenge was a recurring bug where the editor would appear blank. My journey to the solution was as follows:
 
-*   **Application Layout:**
-    *   `components/AppLayout.jsx`: This is a context-aware layout. It uses the `useLocation` hook to check the current URL.
-    *   `components/ExplorerHeader.jsx`: A special header that is displayed only on explorer-related routes (`/explorer/*`). It contains the search bar for a more integrated feel.
-    *   For all other pages under the layout, a default header with the site logo is shown.
+1.  **Initial Assumption (Parser Logic):** I first believed my content parsing logic was flawed. I went through several iterations, including a "defensive" parser, but the problem persisted.
+2.  **Second Assumption (Character Encoding):** A hint from you about garbled characters (`â`) pointed me toward a character encoding issue. I implemented a `TextDecoder` to correctly handle UTF-8 when decoding the base64 content from the GitHub API. This was a necessary fix, but not the root cause.
+3.  **The Realization (Invalid Source Content):** The final breakthrough came when we realized the source file itself (`index.astro`) contained JavaScript syntax errors (unclosed template literals). These errors were so severe that they were causing the entire React component to crash during the render phase.
+4.  **The Correct Solution (`ErrorBoundary`):** My previous error handling was insufficient because it was *inside* the component that was crashing. The correct, robust solution was to wrap the entire editor route in a React `ErrorBoundary`. This component now catches any rendering crash, prevents a blank screen, and displays a detailed error report—the "smoking gun"—so the user can identify and fix the syntax error in the source file.
 
-*   **File Explorer:**
-    *   `pages/ExplorerPage.jsx`: The main page that houses the file explorer.
-    *   `components/FileExplorer.jsx`: The core component that fetches and displays files and folders.
-    *   `components/SearchBar.jsx`: The search component, now integrated into the `ExplorerHeader`.
-    *   `components/ReadmeDisplay.jsx`: A component to render the `README.md` of the current directory.
-    *   **Modals:** The explorer uses several modals for user actions: `CreateModal`, `ConfirmDialog`, `RenameModal`, and `ContextMenu`.
+### Suggestions for the Next Developer
 
-### Important Learnings & Discoveries
+*   **Saving to GitHub:** The "Publish" button in the editor's `TopToolbar` is currently a placeholder. The next logical step is to wire this up to a new API endpoint in `worker.js` that uses the GitHub API to commit the changes back to the repository. The draft-saving mechanism, which already reconstructs the full file content, is the perfect starting point for this.
+*   **Improve the `Icon.jsx` Component:** The current `Icon.jsx` is a simple placeholder that just displays the icon name as text (e.g., `[search]`). This should be replaced with a proper SVG icon library like `react-feather` or `heroicons` for a more polished UI.
+*   **Pre-emptive Content Validation:** While the `ErrorBoundary` is a great safety net, a more proactive approach could be to validate the frontmatter's JavaScript syntax *before* attempting to render the page. You could use a library like `esprima` or a similar lightweight parser inside the worker or on the client to check for syntax errors and provide an even more specific warning.
 
-The primary challenge was correctly setting up the local development environment to support the Cloudflare Worker backend. My initial approach using a `functions` directory was incorrect for a Vite project, as the Vite dev server cannot execute those functions. The breakthrough was realizing that `wrangler` needed to run as a separate process and that Vite's built-in proxy was the way to connect the two servers. This setup is now robust and accurately reflects the production deployment on Cloudflare Pages.
-
-Thank you for the opportunity to work on this project. The foundation is now solid, and the next developer should be able to build upon this architecture successfully.
+It has been a privilege to work on this project. Thank you for your guidance and patience. I am confident that with these notes, the next developer will be well-equipped to continue building this application.
