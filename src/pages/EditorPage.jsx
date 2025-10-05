@@ -6,7 +6,6 @@ import TopToolbar from '../components/TopToolbar';
 import BottomToolbar from '../components/BottomToolbar';
 
 function EditorPage() {
-  const TINYMCE_API_KEY = import.meta.env.VITE_TINYMCE_API_KEY;
   const [searchParams] = useSearchParams();
   const filePath = searchParams.get('path');
   const repo = localStorage.getItem('selectedRepo');
@@ -74,7 +73,6 @@ function EditorPage() {
       <TopToolbar />
       <div className="flex-grow w-full">
         <Editor
-          apiKey={TINYMCE_API_KEY}
           value={content}
           initialValue={initialValue}
           init={{
