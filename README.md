@@ -78,3 +78,22 @@ Despite implementing all three fixes (correcting the route and adding robust err
 2.  The core of the parser uses `Function("use strict"; return (...))()` to evaluate the frontmatter object. Is there a more resilient alternative for parsing a string of a JavaScript object that would return a syntax error instead of throwing a process-crashing exception?
 3.  Could there be a silent failure mode in the Vite dev server's interaction with the browser? For example, could a dependency with a critical flaw be bundled without error but fail immediately on execution in the browser?
 4.  Considering the `concurrently` setup running `vite` and `wrangler dev`, could there be an issue with the proxy or the backend API response that is causing the frontend to fail before it can render? How could we best investigate this?
+
+---
+
+## Astro Development Standards
+
+### **Using Idiomatic Layouts**
+
+To ensure consistency and align with Astro best practices, all new pages should use the idiomatic layout system.
+
+*   **Page (`src/pages/*.astro`):**
+    *   Specify the layout file using the `layout` property in the frontmatter (e.g., `export const layout = '../../layouts/MainLayout.astro';`).
+    *   Define all page-specific metadata (like `title`, `description`) as top-level `export const` variables.
+    *   The body of the page should only contain the content to be injected into the layout's `<slot />`. Do not wrap the content in the layout component directly.
+
+*   **Layout (`src/layouts/*.astro`):**
+    *   The layout should access the page's frontmatter variables directly from `Astro.props` (e.g., `const { title } = Astro.props;`).
+    *   Do not expect a single `frontmatter` object. This makes the layout more flexible and reusable.
+
+This approach simplifies page structure and makes the relationship between pages and layouts clearer and more maintainable.
