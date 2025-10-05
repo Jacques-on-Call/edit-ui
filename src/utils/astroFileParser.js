@@ -1,11 +1,9 @@
 import { Parser } from 'acorn';
 import { marked } from 'marked';
-import { gfmHeadingId } from 'marked-gfm-heading-id';
-import { mangle } from "marked-mangle";
 
-// Configure marked to handle GitHub Flavored Markdown
-marked.use(gfmHeadingId());
-marked.use(mangle());
+// Note: The gfmHeadingId and mangle plugins have been removed as they
+// were causing a browser-compatibility issue (Buffer not defined).
+// The core 'marked' library is browser-safe.
 
 /**
  * Traverses an Acorn AST node to convert it into a JavaScript value.
