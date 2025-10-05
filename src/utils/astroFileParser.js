@@ -123,8 +123,9 @@ export async function parseAstroFile(fileContent) {
 export function stringifyAstroFile(frontmatter, body) {
     let frontmatterString = '';
     for (const [key, value] of Object.entries(frontmatter)) {
-        // Use JSON.stringify to correctly handle all data types, including
-        // strings (which will be correctly quoted), objects, and arrays.
+        // Using JSON.stringify ensures that all values, including strings,
+        // objects, and arrays, are correctly formatted as valid JavaScript source code.
+        // This is the definitive fix for the "Unexpected token" error on refresh.
         frontmatterString += `export const ${key} = ${JSON.stringify(value, null, 2)};\n`;
     }
 
@@ -133,7 +134,6 @@ export function stringifyAstroFile(frontmatter, body) {
     const markdownBody = body; // Placeholder
 
     return `---
-${frontmatterString}
----
+${frontmatterString}---
 ${markdownBody || ''}`;
 }
