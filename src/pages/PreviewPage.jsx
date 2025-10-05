@@ -57,7 +57,7 @@ function PreviewPage() {
         }
 
         if (model && model.frontmatter) {
-          const html = generateHtmlForPreview(model.frontmatter);
+          const html = generateHtmlForPreview(model.frontmatter, repo);
           setPreviewHtml(html);
         } else {
           throw new Error('Could not generate preview. The file may be empty or have invalid frontmatter.');
