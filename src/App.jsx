@@ -5,6 +5,7 @@ import CallbackPage from './pages/CallbackPage';
 import RepositorySelectionPage from './pages/RepositorySelectionPage';
 import ExplorerPage from './pages/ExplorerPage';
 import EditorPage from './pages/EditorPage';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
@@ -12,7 +13,7 @@ function App() {
       {/* Standalone routes without the AppLayout */}
       <Route path="/" element={<LoginPage />} />
       <Route path="/callback" element={<CallbackPage />} />
-      <Route path="/editor" element={<EditorPage />} />
+      <Route path="/editor" element={<ErrorBoundary><EditorPage /></ErrorBoundary>} />
 
       {/* Routes that use the AppLayout */}
       <Route element={<AppLayout />}>
