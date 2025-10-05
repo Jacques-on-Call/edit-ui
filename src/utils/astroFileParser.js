@@ -1,3 +1,5 @@
+import { Parser } from 'acorn';
+
 /**
  * Parses the content of an .astro file to extract both the JavaScript frontmatter object
  * and the body content (the rest of the file).
@@ -24,7 +26,6 @@ export async function parseAstroFile(fileContent) {
 
     if (!match || !match[1]) {
       trace.error = 'No frontmatter block found.';
-      // If no frontmatter, treat the whole file as body
       const model = { frontmatter: {}, body: text, raw: text, rawType: 'none' };
       return { model, trace };
     }
@@ -32,18 +33,27 @@ export async function parseAstroFile(fileContent) {
     const frontmatterContent = match[1];
     trace.rawFrontmatter = frontmatterContent;
 
-    // Extract the body by finding where the frontmatter ends
     const body = text.substring(match[0].length).trim();
     trace.body = body;
 
-    // A more robust regex to find the exported frontmatter object
     const frontmatterObjectRegex = /export\s+const\s+frontmatter\s*=\s*({[\s\S]*?});/;
     const objectMatch = frontmatterContent.match(frontmatterObjectRegex);
 
     let frontmatter = {};
     if (objectMatch && objectMatch[1]) {
-      // Use the safe Function constructor to parse the object string.
-      frontmatter = Function(`"use strict"; return (${objectMatch[1]})`)();
+      const objectString = objectMatch[1];
+      try {
+        // Use Acorn to check for syntax errors before evaluation
+        Parser.parse(objectString, { ecmaVersion: 'latest' });
+        // If parsing succeeds, we can safely use the Function constructor.
+        // For even greater safety, you could use a library that walks the AST
+        // and builds the object, but for now, this confirms syntax validity.
+        frontmatter = Function(`"use strict"; return (${objectString})`)();
+      } catch (parseError) {
+        trace.error = `Frontmatter syntax error: ${parseError.message}`;
+        // On a syntax error, do not attempt to evaluate.
+        // The model will be returned with empty frontmatter and the error trace.
+      }
     } else {
       trace.error = "No 'export const frontmatter' object found.";
     }
@@ -57,10 +67,17 @@ export async function parseAstroFile(fileContent) {
       rawType: 'astro-js',
     };
 
+    // If there was a parsing error, return the raw content in the body
+    // so the user can see and fix the problematic content.
+    if (trace.error && trace.error.startsWith('Frontmatter syntax error')) {
+      model.body = fileContent;
+      model.rawType = 'error';
+    }
+
+
     return { model, trace };
   } catch (err) {
     trace.error = (err && err.message) || String(err);
-    // On error, return a model with the raw content to avoid crashing the UI
     const model = { frontmatter: {}, body: fileContent, raw: fileContent, rawType: 'error' };
     return { model, trace };
   }
