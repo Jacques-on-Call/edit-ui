@@ -1,27 +1,25 @@
-import { marked } from ‘marked’;
-import TurndownService from ‘turndown’;
+import { marked } from 'marked';
+import TurndownService from 'turndown';
 
 const turndownService = new TurndownService({
-headingStyle: ‘atx’,
-codeBlockStyle: ‘fenced’,
-bulletListMarker: ‘*’,
+headingStyle: 'atx',
+codeBlockStyle: 'fenced',
+bulletListMarker: '*',
 });
 
 /**
-
 - Converts sections array into editable HTML content for TinyMCE
   */
   export async function sectionsToEditableHTML(sections) {
   if (!sections || !Array.isArray(sections)) {
-  return ‘<p>No sections found.</p>’;
+  return '<p>No sections found.</p>';
   }
 
-let html = ‘’;
+let html = '';
 
 for (const section of sections) {
 html += `<div class="section" data-section-type="${section.type || 'unknown'}">`;
 
-```
 switch (section.type) {
   case 'hero':
     html += `<div class="hero-section">`;
@@ -70,29 +68,25 @@ switch (section.type) {
 }
 
 html += `</div><hr style="margin: 2rem 0; border: none; border-top: 2px dashed #ccc;">`;
-```
-
 }
 
 return html;
 }
 
 /**
-
 - Extracts text content from HTML and maps it back to sections structure
   */
   export function editableHTMLToSections(html, originalSections) {
   const parser = new DOMParser();
-  const doc = parser.parseFromString(html, ‘text/html’);
-  const sectionDivs = doc.querySelectorAll(’.section’);
+  const doc = parser.parseFromString(html, 'text/html');
+  const sectionDivs = doc.querySelectorAll('.section');
 
 const updatedSections = [];
 
 sectionDivs.forEach((div, index) => {
-const sectionType = div.getAttribute(‘data-section-type’);
+const sectionType = div.getAttribute('data-section-type');
 const originalSection = originalSections[index] || {};
 
-```
 // Start with a copy of the original section to preserve all fields
 const section = { ...originalSection, type: sectionType };
 
@@ -144,8 +138,6 @@ switch (sectionType) {
 }
 
 updatedSections.push(section);
-```
-
 });
 
 return updatedSections;

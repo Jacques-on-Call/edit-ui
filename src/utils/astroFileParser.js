@@ -1,23 +1,21 @@
-import { Parser } from ‘acorn’;
+import { Parser } from 'acorn';
 
 /**
-
 - Converts a JavaScript value to source code string
   */
   function valueToSourceCode(value, indent = 0) {
-  const indentStr = ’  ’.repeat(indent);
+  const indentStr = '  '.repeat(indent);
 
-if (value === null) return ‘null’;
-if (value === undefined) return ‘undefined’;
+if (value === null) return 'null';
+if (value === undefined) return 'undefined';
 
 switch (typeof value) {
-case ‘string’:
-if (value.includes(’\n’)) {
-return ‘`' + value.replace(/`/g, ‘\`').replace(/\$/g, '\\$') + '`’;
+case 'string':
+if (value.includes('\n')) {
+return '`' + value.replace(/`/g, '\\`').replace(/\$/g, '\\$') + '`';
 }
-return “’” + value.replace(/’/g, “\’”) + “’”;
+return "'" + value.replace(/'/g, "\\'") + "'";
 
-```
 case 'number':
 case 'boolean':
   return String(value);
@@ -43,20 +41,17 @@ case 'object':
 
 default:
   return JSON.stringify(value);
-```
-
 }
 }
 
 /**
-
 - Traverses an Acorn AST node to convert it into a JavaScript value.
   */
   function astNodeToValue(node, source) {
   switch (node.type) {
-  case ‘Literal’:
+  case 'Literal':
   return node.value;
-  case ‘ObjectExpression’: {
+  case 'ObjectExpression': {
   const obj = {};
   for (const prop of node.properties) {
   const key = prop.key.name || prop.key.value;
@@ -64,39 +59,37 @@ default:
   }
   return obj;
   }
-  case ‘ArrayExpression’:
+  case 'ArrayExpression':
   return node.elements.map(element => astNodeToValue(element, source));
-  case ‘TemplateLiteral’:
-  return node.quasis.map(q => q.value.cooked).join(’’);
+  case 'TemplateLiteral':
+  return node.quasis.map(q => q.value.cooked).join('');
   default:
   try {
   const valueString = source.substring(node.start, node.end);
   return Function(`"use strict"; return (${valueString})`)();
   } catch (e) {
-  console.error(“Could not evaluate AST node:”, e);
+  console.error("Could not evaluate AST node:", e);
   return null;
   }
   }
   }
 
 /**
-
-- Parses an .astro file’s frontmatter and body.
+- Parses an .astro file's frontmatter and body.
   */
   export async function parseAstroFile(fileContent) {
-  const trace = { detected: ‘astro-ast’, rawFrontmatter: null, body: null, parsed: null, error: null };
+  const trace = { detected: 'astro-ast', rawFrontmatter: null, body: null, parsed: null, error: null };
 
 if (!fileContent) {
-trace.error = ‘Empty content’;
+trace.error = 'Empty content';
 return { model: null, trace };
 }
 
 try {
-const text = fileContent.replace(/\r\n/g, ‘\n’);
-const frontmatterRegex = /^—([\s\S]*?)—/;
+const text = fileContent.replace(/\r\n/g, '\n');
+const frontmatterRegex = /^---([\s\S]*?)---/;
 const match = text.match(frontmatterRegex);
 
-```
 if (!match || !match[1]) {
   trace.error = 'No frontmatter block found.';
   const model = { frontmatter: {}, body: text, originalBody: text, raw: text, rawType: 'none' };
@@ -145,8 +138,6 @@ if (trace.error) {
 }
 
 return { model, trace };
-```
-
 } catch (err) {
 trace.error = (err && err.message) || String(err);
 const model = {
@@ -154,24 +145,23 @@ frontmatter: {},
 body: fileContent,
 originalBody: fileContent,
 raw: fileContent,
-rawType: ‘error’
+rawType: 'error'
 };
 return { model, trace };
 }
 }
 
 /**
-
 - Stringifies a frontmatter object and body back into a complete .astro file.
   */
   export function stringifyAstroFile(frontmatter, originalBody) {
-  let frontmatterString = ‘’;
+  let frontmatterString = '';
   for (const [key, value] of Object.entries(frontmatter)) {
   frontmatterString += `export const ${key} = ${valueToSourceCode(value)};\n`;
   }
 
-return `—
-${frontmatterString}—
+return `---
+${frontmatterString}---
 
 ${originalBody}`;
 }
