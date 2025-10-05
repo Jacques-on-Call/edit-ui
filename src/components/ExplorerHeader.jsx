@@ -5,7 +5,7 @@ function ExplorerHeader() {
 
   return (
     <header className="bg-light-grey shadow-md">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center">
+      <div className="px-4 sm:px-6 lg:px-8 py-2 flex items-center">
         <div className="flex-grow">
           {/* The SearchBar will take up the majority of the header space */}
           <SearchBar repo={repo} />
