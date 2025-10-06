@@ -97,3 +97,35 @@ To ensure consistency and align with Astro best practices, all new pages should 
     *   Do not expect a single `frontmatter` object. This makes the layout more flexible and reusable.
 
 This approach simplifies page structure and makes the relationship between pages and layouts clearer and more maintainable.
+
+### The Preview System: A Deep Dive
+
+One of the most significant features we implemented was a robust, workflow-driven preview system, replacing a manual command-line process.
+
+**The Goal:**
+To allow a content editor to generate a static preview of their changes with a single button click, without ever leaving the editor UI.
+
+**The Architecture & The "Why":**
+The initial plan was to add a build trigger to the Cloudflare Worker. However, a critical technical constraint makes this impossible: a Cloudflare Worker (even in local development) is a sandboxed environment and cannot execute local shell commands like `npm run build`.
+
+To solve this, we implemented a standard and robust architectural pattern for local development environments:
+1.  **A Local-Only Build Trigger Server (`easy-seo/build-trigger-server.js`):** A lightweight Node.js server was created. Its *only* job is to listen for an API call from the frontend and, in response, execute the build script on the local machine. This server runs concurrently with the Vite and Wrangler servers.
+2.  **A Dedicated Build Script:** We added a `build:preview` script to the root `package.json`. This script contains the exact, correct command to build the main Astro website into the `easy-seo/public/preview` directory. Centralizing the command here makes it more reliable.
+3.  **The Frontend Workflow (`EditorPage.jsx`):**
+    *   When the user clicks "Generate Preview," the editor sends a request to the build trigger server.
+    *   The UI then enters a "building" state, displaying a custom SVG animation.
+    *   It polls a `build-status.json` file every few seconds to check the status.
+    *   Once the status is "success" or "error", the UI updates to show either the preview in an `<iframe>` or a detailed error report.
+
+**The Debugging Journey & Key Learnings:**
+This feature's development was a masterclass in iterative debugging. We encountered and solved several issues:
+1.  **Incorrect Build Target:** We initially built the wrong project (the editor instead of the Astro site).
+2.  **Missing Dependencies:** We discovered the build was failing because we hadn't run `npm install` in the root directory to install Astro itself.
+3.  **Pathing and Permissions:** The most persistent bug was related to the script's execution context. Our final, robust solution centralizes all path logic into the `build-trigger-server.js`, which then provides a clean, reliable environment for the `build-preview.js` script to execute in.
+
+**The Final Polish - The "Smart" Loader:**
+Your suggestion to create a more engaging loading animation was a brilliant touch. We implemented a custom `StatusLoader.jsx` component that:
+*   Displays a "flowing documents" SVG animation while the build is in progress.
+*   Intelligently switches to a red, static error state if the build fails, providing clear and immediate visual feedback.
+
+This journey highlights the importance of understanding the execution environment and the value of persistent, collaborative debugging. The result is a feature that is not only functional but also a pleasure to use.
