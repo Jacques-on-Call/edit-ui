@@ -179,18 +179,22 @@ function EditorPage() {
     const intervalId = setInterval(async () => {
       try {
         const response = await fetch(`/api/build-status?t=${Date.now()}`);
+
         if (!response.ok) {
-          // Continue polling on server errors like 502, but stop on client errors.
-          if (response.status >= 400 && response.status < 500) {
-            clearInterval(intervalId);
-            setBuildInfo({ message: 'Failed to check build status.', details: `Server returned ${response.status}` });
-            setPreviewDisplay('error');
-          }
-          return; // Keep polling for transient server issues
+          clearInterval(intervalId);
+          const errorData = await response.json().catch(() => ({
+            message: `An unexpected error occurred (HTTP ${response.status}).`
+          }));
+          setBuildInfo({
+            message: 'Failed to check build status.',
+            details: errorData.message
+          });
+          setPreviewDisplay('error');
+          return;
         }
 
         const latestRun = await response.json();
-        setBuildInfo(latestRun); // Store the latest run info
+        setBuildInfo(latestRun);
 
         if (latestRun.status === 'completed') {
           clearInterval(intervalId);
@@ -200,19 +204,15 @@ function EditorPage() {
             setPreviewDisplay('error');
           }
         }
-        // If status is 'in_progress' or 'queued', do nothing and let the interval continue.
-
       } catch (error) {
         clearInterval(intervalId);
         setBuildInfo({ message: 'Error checking build status.', details: error.message });
         setPreviewDisplay('error');
       }
-    }, 3000); // Poll every 3 seconds
+    }, 3000);
 
-    // Stop polling after 3 minutes
     setTimeout(() => {
       clearInterval(intervalId);
-      // Consider updating UI to indicate a timeout
     }, 180000);
   };
 
@@ -315,10 +315,13 @@ function EditorPage() {
                 <div className="mt-4 bg-white text-left text-sm text-red-900 p-4 rounded-lg border border-red-200 w-full max-w-3xl">
                   <p className="font-bold mb-2">Build Failed</p>
                   <p>The preview build failed to complete.</p>
-                  {buildInfo && (
-                    <p className="mt-2">
-                      Reason: <span className="font-mono bg-red-100 p-1 rounded">{buildInfo.conclusion}</span>
-                    </p>
+                  {buildInfo?.details && (
+                    <div className="mt-2 text-left">
+                      <p className="font-semibold">Details:</p>
+                      <pre className="mt-1 p-2 bg-red-50 text-red-800 rounded text-xs whitespace-pre-wrap">
+                        <code>{buildInfo.details}</code>
+                      </pre>
+                    </div>
                   )}
                   {buildInfo?.html_url && (
                     <a

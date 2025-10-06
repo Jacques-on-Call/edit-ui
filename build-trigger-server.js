@@ -89,22 +89,39 @@ const server = http.createServer((req, res) => {
         'User-Agent': 'Easy-SEO-Build-Status-Checker',
       },
     })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        // If the response is not OK, we want to capture the error text from GitHub
+        return response.text().then(text => {
+          // And throw an error that includes the status and the text
+          throw new Error(`GitHub API Error: ${response.status} - ${text}`);
+        });
+      }
+      return response.json();
+    })
     .then(data => {
+      // Handle cases where GitHub API returns a 2xx status but with an error message in the body
+      if (data.message) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: `GitHub API Error: ${data.message}` }));
+        return;
+      }
+
       if (!data.workflow_runs || data.workflow_runs.length === 0) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message: 'No workflow runs found.' }));
         return;
       }
+
       // Return the most recent workflow run
       const latestRun = data.workflow_runs[0];
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(latestRun));
     })
     .catch(error => {
-      console.error('Error fetching build status:', error);
+      console.error('Error fetching build status:', error.message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ message: `Error fetching build status: ${error.message}` }));
+      res.end(JSON.stringify({ message: `Failed to fetch build status: ${error.message}` }));
     });
 
   } else {
