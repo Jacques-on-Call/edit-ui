@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import SearchBar from './SearchBar';
 
 function ExplorerHeader() {
