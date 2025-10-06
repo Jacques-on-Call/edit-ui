@@ -58,7 +58,7 @@ const PreviewError = ({ buildInfo, onRetry }) => (
             onClick={onRetry}
             className="mt-6 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
         >
-            Reload Preview
+            Rebuild Preview
         </button>
     </div>
 );
@@ -196,7 +196,14 @@ function EditorPage() {
       try {
         const response = await fetch(`/preview/build-status.json?t=${Date.now()}`);
         if (!response.ok) {
-          // If the file doesn't exist yet, just continue polling
+          // If the file doesn't exist yet (404), just continue polling
+          return;
+        }
+
+        // Check content type to prevent parsing HTML as JSON during race conditions
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          // If it's not JSON, it's probably the fallback HTML page. Ignore and continue polling.
           return;
         }
 
