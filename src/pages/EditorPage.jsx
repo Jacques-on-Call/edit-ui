@@ -5,6 +5,7 @@ import { debounce } from 'lodash';
 import matter from 'gray-matter';
 import TopToolbar from '../components/TopToolbar';
 import BottomToolbar from '../components/BottomToolbar';
+import BuildingLoader from '../components/BuildingLoader';
 import { unifiedParser } from '../utils/unifiedParser';
 import { stringifyAstroFile } from '../utils/astroFileParser';
 import { sectionsToEditableHTML, editableHTMLToSections } from '../utils/sectionContentMapper';
@@ -26,7 +27,7 @@ const ErrorDisplay = ({ error, rawContent }) => (
   </div>
 );
 
-const PreviewInstructions = ({ onBuild, isLoading }) => (
+const PreviewInstructions = ({ onBuild }) => (
   <div className="h-full flex flex-col items-center justify-center bg-gray-50 p-8 text-center">
     <h2 className="text-xl font-bold text-gray-800">Live Preview Generator</h2>
     <p className="mt-2 text-gray-600">
@@ -37,10 +38,9 @@ const PreviewInstructions = ({ onBuild, isLoading }) => (
     </p>
     <button
       onClick={onBuild}
-      disabled={isLoading}
-      className="mt-6 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 disabled:bg-gray-400"
+      className="mt-6 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
     >
-      {isLoading ? 'Building Preview...' : 'Generate Preview'}
+      Generate Preview
     </button>
   </div>
 );
@@ -318,9 +318,9 @@ function EditorPage() {
           </div>
         )}
         {activeTab === 'preview' && (
-          <div className="w-full h-full bg-gray-100">
-            {previewDisplay === 'instructions' && <PreviewInstructions onBuild={triggerBuild} isLoading={false} />}
-            {previewDisplay === 'loading' && <PreviewInstructions onBuild={triggerBuild} isLoading={true} />}
+          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+            {previewDisplay === 'instructions' && <PreviewInstructions onBuild={triggerBuild} />}
+            {previewDisplay === 'loading' && <BuildingLoader />}
             {previewDisplay === 'error' && <PreviewError buildInfo={buildInfo} onRetry={triggerBuild} />}
             {previewDisplay === 'iframe' && (
               <div className="w-full h-full flex flex-col">

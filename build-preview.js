@@ -36,14 +36,14 @@ async function buildPreview() {
 
 function executeBuild() {
   return new Promise((resolve, reject) => {
-    // The output path should be relative to the `easy-seo` directory,
-    // because `npm --prefix` effectively runs the command from there.
-    const outDirForVite = join('public', 'preview');
+    // The output path must be relative to the project root, where the command is run.
+    const outDirRelative = join('easy-seo', 'public', 'preview');
 
     const buildProcess = spawn(
       'npm',
-      // Use --prefix to target the package.json inside the easy-seo directory
-      ['run', 'build', '--prefix', 'easy-seo', '--', `--out-dir=${outDirForVite}`],
+      // Run the 'build' script from the root package.json, which builds the Astro site.
+      // Pass the correct output directory for the Astro build.
+      ['run', 'build', '--', `--out-dir=${outDirRelative}`],
       {
         cwd: rootDir, // Execute the npm command from the project root
         stdio: 'pipe',
