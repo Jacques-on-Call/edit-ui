@@ -9,9 +9,8 @@
     "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:api\"",
     "build": "vite build",
     "lint": "eslint .",
-    "watch": "node build-watcher.js",
-    "preview": "node preview-server.js",
-    "dev:preview": "concurrently --kill-others-on-fail \"npm:watch\" \"npm:preview\""
+    "preview": "vite preview",
+    "build:preview": "node build-preview.js"
   },
   "dependencies": {
     "@tinymce/tinymce-react": "^6.3.0",
@@ -37,11 +36,9 @@
     "@vitejs/plugin-react": "^4.3.1",
     "acorn": "^8.15.0",
     "autoprefixer": "^10.4.21",
-    "chokidar": "^3.5.0",
     "concurrently": "^9.2.1",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
-    "express": "^4.18.0",
     "eslint-plugin-react-refresh": "^0.4.22",
     "globals": "^16.4.0",
     "postcss": "^8.5.6",
