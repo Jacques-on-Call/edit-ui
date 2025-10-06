@@ -8,7 +8,10 @@ const DefaultHeader = () => (
         <img src="/logo.webp" alt="Easy SEO Logo" className="h-10 w-auto" />
         <span className="text-2xl font-bold text-gray-800">Easy SEO</span>
       </Link>
-      {/* Future navigation links can go here */}
+      <div className="flex items-center space-x-4">
+        <Link to="/explorer" className="text-gray-600 hover:text-gray-800">Explorer</Link>
+        <Link to="/preview" className="text-gray-600 hover:text-gray-800">Preview</Link>
+      </div>
     </nav>
   </header>
 );
