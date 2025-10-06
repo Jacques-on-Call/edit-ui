@@ -36,10 +36,10 @@ function executeBuild() {
   return new Promise((resolve, reject) => {
     // Note: The output path is relative to the CWD of the spawn, which is rootDir.
     const outDirRelative = join('easy-seo', 'public', 'preview');
-
+    
     const buildProcess = spawn(
-      'npm',
-      ['run', 'build', '--', `--out-dir=${outDirRelative}`],
+      'npm', 
+      ['run', 'build', '--', `--out-dir=${outDirRelative}`], 
       {
         cwd: rootDir,
         stdio: 'pipe',
