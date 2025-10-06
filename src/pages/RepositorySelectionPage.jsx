@@ -10,8 +10,8 @@ function RepositorySelectionPage() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen flex flex-col items-center justify-center py-12">
-      <div className="max-w-2xl w-full">
+    <div className="bg-bark-blue min-h-screen flex flex-col items-center justify-center py-12">
+      <div className="max-w-2xl w-full px-4">
         <RepoSelector onRepoSelect={handleRepoSelect} />
       </div>
     </div>

@@ -26,24 +26,24 @@ function RepoSelector({ onRepoSelect }) {
   }, []);
 
   if (loading) {
-    return <div className="text-center text-gray-500 animate-pulse">Loading repositories...</div>;
+    return <div className="text-center text-white/70 animate-pulse">Loading repositories...</div>;
   }
 
   if (error) {
-    return <div className="text-center text-red-600 bg-red-50 p-4 rounded-lg">{error}</div>;
+    return <div className="text-center text-red-100 bg-red-500/30 p-4 rounded-lg">{error}</div>;
   }
 
   return (
-    <div className="w-full max-w-xl mx-auto bg-white shadow-2xl rounded-2xl p-8">
-      <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Select a Repository</h2>
+    <div className="w-full max-w-xl mx-auto">
+      <h2 className="text-3xl font-bold text-white mb-12 text-center">Select a Repository</h2>
       <ul className="space-y-4">
         {repos.map(repo => (
           <li
             key={repo.id}
             onClick={() => onRepoSelect(repo.full_name)}
-            className="p-5 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 hover:border-gray-300 hover:shadow-md transition-all duration-300 ease-in-out"
+            className="p-5 bg-white/10 border border-white/20 rounded-xl cursor-pointer hover:bg-white/20 backdrop-blur-sm transition-all duration-300 ease-in-out"
           >
-            <span className="font-semibold text-lg text-gray-700">{repo.full_name}</span>
+            <span className="font-semibold text-lg text-white">{repo.full_name}</span>
           </li>
         ))}
       </ul>
