@@ -87,7 +87,7 @@ function EditorPage() {
   const [activeTab, setActiveTab] = useState('editor');
   const [buildInfo, setBuildInfo] = useState(null);
   const [previewDisplay, setPreviewDisplay] = useState('instructions'); // 'instructions', 'loading', 'iframe', 'error'
-
+  
   const draftKey = `draft_${repo}_${filePath}`;
 
   const saveDraft = useCallback(
@@ -176,7 +176,7 @@ function EditorPage() {
       localStorage.setItem(draftKey, fullContent);
     }
   };
-
+  
   const loadPreview = async () => {
     setPreviewDisplay('loading');
     try {
@@ -273,7 +273,7 @@ function EditorPage() {
             {previewDisplay === 'iframe' && (
               <div className="w-full h-full flex flex-col">
                 <div className="p-2 bg-white border-b flex items-center gap-4">
-                  <button
+                  <button 
                     onClick={loadPreview}
                     className="px-4 py-1 bg-blue-500 text-white text-sm font-semibold rounded hover:bg-blue-600"
                   >
