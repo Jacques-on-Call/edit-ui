@@ -10,6 +10,11 @@ export default defineConfig({
         target: 'http://localhost:8787',
         changeOrigin: true,
       },
+      '/preview-server': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/preview-server/, ''),
+      },
     },
   },
   define: {

@@ -4,7 +4,7 @@ function PreviewPage() {
   const iframeRef = useRef(null);
 
   useEffect(() => {
-    const eventSource = new EventSource('http://localhost:3001/sse');
+    const eventSource = new EventSource('/preview-server/sse');
 
     eventSource.onmessage = (event) => {
       if (event.data === 'reload') {
@@ -30,7 +30,7 @@ function PreviewPage() {
     <div style={{ width: '100%', height: '100vh', overflow: 'hidden' }}>
       <iframe
         ref={iframeRef}
-        src="http://localhost:3001"
+        src="/preview-server/"
         style={{ width: '100%', height: '100%', border: 'none' }}
         title="Live Preview"
       />
