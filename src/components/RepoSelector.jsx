@@ -35,15 +35,15 @@ function RepoSelector({ onRepoSelect }) {
 
   return (
     <div className="w-full max-w-xl mx-auto">
-      <h2 className="text-3xl font-bold text-white mb-12 text-center">Select a Repository</h2>
-      <ul className="space-y-4">
+      <h2 className="text-2xl font-bold text-white mb-8 text-center">Select a Repository</h2>
+      <ul className="space-y-3">
         {repos.map(repo => (
           <li
             key={repo.id}
             onClick={() => onRepoSelect(repo.full_name)}
-            className="p-5 bg-white/10 border border-white/20 rounded-xl cursor-pointer hover:bg-white/20 backdrop-blur-sm transition-all duration-300 ease-in-out"
+            className="p-3 bg-white/10 border border-white/20 rounded-lg cursor-pointer hover:bg-white/20 backdrop-blur-sm transition-all duration-300 ease-in-out"
           >
-            <span className="font-semibold text-lg text-white">{repo.full_name}</span>
+            <span className="font-medium text-base text-white">{repo.full_name}</span>
           </li>
         ))}
       </ul>

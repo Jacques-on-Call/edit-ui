@@ -10,8 +10,9 @@ function RepositorySelectionPage() {
   };
 
   return (
-    <div className="bg-bark-blue min-h-screen flex flex-col items-center justify-center py-12">
+    <div className="bg-bark-blue min-h-screen flex flex-col items-center justify-center py-12 text-center">
       <div className="max-w-2xl w-full px-4">
+        <img src="/logo.webp" className="h-20 w-auto mx-auto mb-8" alt="Easy SEO Logo" />
         <RepoSelector onRepoSelect={handleRepoSelect} />
       </div>
     </div>

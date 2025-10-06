@@ -15,9 +15,10 @@ function App() {
       <Route path="/" element={<LoginPage />} />
       <Route path="/callback" element={<CallbackPage />} />
 
+      <Route path="/repository-selection" element={<RepositorySelectionPage />} />
+
       {/* Routes that use the AppLayout */}
       <Route element={<AppLayout />}>
-        <Route path="/repository-selection" element={<RepositorySelectionPage />} />
         <Route path="/explorer" element={<ExplorerPage />} />
         <Route path="/editor" element={<ErrorBoundary><EditorPage /></ErrorBoundary>} />
         <Route path="/preview" element={<PreviewPage />} />
