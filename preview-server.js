@@ -5,102 +5,117 @@ import { dirname, join, resolve } from 'path';
 import fs from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
 const app = express();
-const PORT = 3001;
+let PORT = 3001;
 
-// Serve static files from dist folder (Astro's build output)
-const distPath = resolve(process.cwd(), '..', 'dist');
-app.use(express.static(distPath));
+// Resolve paths from the root of the project
+const rootDir = resolve(__dirname, '..');
+const distPath = resolve(rootDir, 'dist');
+const errorHtmlPath = resolve(__dirname, 'error.html');
 
-// Add CORS headers for cross-origin requests
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  next();
+// --- Live Reload SSE Setup ---
+const clients = [];
+const watcher = chokidar.watch(distPath, {
+  ignored: /(^|[\/\\])\..|build-status\.json/, // Ignore dotfiles and the status file itself
+  persistent: true,
+  ignoreInitial: true, // Don't fire on initial scan
 });
 
-// Handle SPA routing - serve index.html for all routes
-app.get('*', (req, res) => {
-  const indexPath = join(distPath, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.status(404).send('Preview not ready - build your Astro site first');
-  }
+watcher.on('all', (event, path) => {
+  console.log(`File change detected in dist: ${path}. Sending reload signal.`);
+  clients.forEach(client => {
+    client.write('data: reload\n\n');
+  });
 });
-
-// Enhanced SSE for live reload
-const clients = new Set();
 
 app.get('/sse', (req, res) => {
-  console.log('🔗 SSE client connected');
-
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
   });
-
-  // Send initial connection message
-  res.write('data: connected\n\n');
-
-  const client = {
-    id: Date.now(),
-    response: res
-  };
-
-  clients.add(client);
-
-  // Heartbeat to keep connection alive
-  const heartbeat = setInterval(() => {
-    try {
-      res.write('data: heartbeat\n\n');
-    } catch (e) {
-      // Client disconnected
-      console.log('Client disconnected, clearing heartbeat.');
-      clearInterval(heartbeat);
-      clients.delete(client);
-    }
-  }, 30000);
+  console.log('Client connected for SSE.');
+  clients.push(res);
 
   req.on('close', () => {
-    console.log('🔒 SSE client disconnected');
-    clearInterval(heartbeat);
-    clients.delete(client);
+    console.log('Client disconnected.');
+    clients.splice(clients.indexOf(res), 1);
+  });
+
+  req.on('error', (err) => {
+    console.error('SSE client connection error:', err);
+    clients.splice(clients.indexOf(res), 1);
   });
 });
 
-// File watcher with better error handling
-const watcher = chokidar.watch(distPath, {
-  ignored: /node_modules/,
-  persistent: true,
-  ignoreInitial: true
-});
+// --- Static File Serving & Error Handling ---
+app.use(express.static(distPath));
 
-watcher.on('change', (path) => {
-  console.log(`📁 File changed: ${path}`);
-  clients.forEach(client => {
+app.get('*', (req, res) => {
+  const statusFilePath = join(distPath, 'build-status.json');
+
+  // First, check if the build has ever run
+  if (!fs.existsSync(distPath) || !fs.existsSync(statusFilePath)) {
+    return res.status(404).send('<h1>Preview not ready</h1><p>The Astro site has not been built yet. Please wait for the first build to complete.</p>');
+  }
+
+  // Read build status
+  fs.readFile(statusFilePath, 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).send('Could not read build status file.');
+    }
+
     try {
-      client.response.write('data: reload\n\n');
-    } catch (error) {
-      console.log('❌ Failed to send reload to client, removing...');
-      clients.delete(client);
+      const { status, message, lastSuccess } = JSON.parse(data);
+
+      if (status === 'error') {
+        // Serve the custom error page
+        fs.readFile(errorHtmlPath, 'utf8', (err, errorHtml) => {
+          if (err) {
+            return res.status(500).send('Could not load the error page.');
+          }
+          const finalHtml = errorHtml
+            .replace('{{ERROR_MESSAGE}}', message)
+            .replace('{{LAST_SUCCESS}}', new Date(lastSuccess).toLocaleString());
+          res.status(500).send(finalHtml);
+        });
+      } else {
+        // Serve the main index.html for SPA routing
+        const indexPath = join(distPath, 'index.html');
+        if (fs.existsSync(indexPath)) {
+          res.sendFile(indexPath);
+        } else {
+          res.status(404).send('index.html not found in dist folder.');
+        }
+      }
+    } catch (parseError) {
+      res.status(500).send('Could not parse build status file.');
     }
   });
 });
 
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('🛑 Shutting down preview server...');
-  watcher.close();
-  clients.forEach(client => {
-    client.response.end();
-  });
-  process.exit(0);
-});
 
-app.listen(PORT, () => {
-  console.log(`🚀 Preview server running at http://localhost:${PORT}`);
-  console.log(`📁 Serving from: ${distPath}`);
-  console.log(`🔗 SSE endpoint: http://localhost:${PORT}/sse`);
-});
+// --- Server Startup ---
+function startServer(port) {
+  const server = app.listen(port, () => {
+    console.log(`🚀 Preview server running at http://localhost:${port}`);
+    console.log(`📁 Serving from: ${distPath}`);
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`Port ${port} is in use, trying next port...`);
+      startServer(port + 1);
+    } else {
+      console.error('❌ Failed to start server:', err);
+      process.exit(1);
+    }
+  });
+}
+
+// Initial check for dist folder
+if (!fs.existsSync(distPath)) {
+    console.warn(`⚠️ Warning: dist folder not found at ${distPath}.`);
+    console.warn('The server will start, but will show a "not ready" message until the first Astro build completes.');
+}
+
+startServer(PORT);

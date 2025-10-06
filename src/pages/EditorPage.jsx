@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Editor } from '@tinymce/tinymce-react';
 import { debounce } from 'lodash';
@@ -40,6 +40,8 @@ function EditorPage() {
   const [error, setError] = useState(null);
   const [parsingError, setParsingError] = useState(null);
   const [rawContentOnError, setRawContentOnError] = useState('');
+  const [activeTab, setActiveTab] = useState('editor'); // 'editor' or 'preview'
+  const iframeRef = useRef(null);
 
   const draftKey = `draft_${repo}_${filePath}`;
 
@@ -128,6 +130,33 @@ function EditorPage() {
     fetchAndParseContent();
   }, [repo, filePath, draftKey]);
 
+  useEffect(() => {
+    if (activeTab !== 'preview') {
+      return;
+    }
+
+    const eventSource = new EventSource('http://localhost:3001/sse');
+
+    eventSource.onmessage = (event) => {
+      if (event.data === 'reload' && iframeRef.current) {
+        console.log('🔄 Reloading preview...');
+        if (iframeRef.current.contentWindow) {
+          iframeRef.current.contentWindow.location.reload();
+        }
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('SSE connection error. Closing connection.', error);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [activeTab]);
+
+
   const handleEditorChange = (newContent, editor) => {
     setContent(newContent);
 
@@ -168,20 +197,53 @@ function EditorPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-gray-50">
       <TopToolbar />
       {parsingError && <ErrorDisplay error={parsingError} rawContent={rawContentOnError} />}
-      {fileType === 'astro-ast' && originalSections.length > 0 && (
-        <div className="bg-blue-50 border-b border-blue-200 p-3 text-sm text-blue-800">
-          📝 <strong>Section Editor:</strong> Edit the content below. Each section is clearly marked. Changes are auto-saved.
-        </div>
-      )}
-      <div className="flex-grow w-full">
-        <Editor
-          value={content}
-          init={editorConfig}
-          onEditorChange={handleEditorChange}
-        />
+
+      {/* Tab Navigation */}
+      <div className="flex border-b border-gray-200 bg-white shadow-sm">
+        <button
+          className={`px-6 py-3 text-sm font-semibold focus:outline-none transition-colors duration-200 ${activeTab === 'editor' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'}`}
+          onClick={() => setActiveTab('editor')}
+        >
+          Editor
+        </button>
+        <button
+          className={`px-6 py-3 text-sm font-semibold focus:outline-none transition-colors duration-200 ${activeTab === 'preview' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'}`}
+          onClick={() => setActiveTab('preview')}
+        >
+          Preview
+        </button>
+      </div>
+
+      {/* Conditional Content */}
+      <div className="flex-grow w-full overflow-y-auto">
+        {activeTab === 'editor' && (
+          <div className="w-full h-full flex flex-col bg-white">
+            {fileType === 'astro-ast' && originalSections.length > 0 && (
+              <div className="bg-blue-50 border-b border-blue-200 p-3 text-sm text-blue-800">
+                📝 <strong>Section Editor:</strong> Edit the content below. Each section is clearly marked. Changes are auto-saved.
+              </div>
+            )}
+            <div className="flex-grow">
+              <Editor
+                value={content}
+                init={editorConfig}
+                onEditorChange={handleEditorChange}
+              />
+            </div>
+          </div>
+        )}
+        {activeTab === 'preview' && (
+          <iframe
+            ref={iframeRef}
+            src="http://localhost:3001"
+            title="Live Preview"
+            className="w-full h-full border-0"
+            sandbox="allow-scripts allow-same-origin"
+          />
+        )}
       </div>
       <BottomToolbar />
     </div>
