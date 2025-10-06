@@ -6,14 +6,14 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      '/api/trigger-build': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/trigger-build/, '/api/trigger-build'),
+      },
       '/api': {
         target: 'http://localhost:8787',
         changeOrigin: true,
-      },
-      '/preview-server': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/preview-server/, ''),
       },
     },
   },

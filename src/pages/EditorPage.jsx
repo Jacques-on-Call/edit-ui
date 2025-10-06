@@ -26,27 +26,21 @@ const ErrorDisplay = ({ error, rawContent }) => (
   </div>
 );
 
-const PreviewInstructions = ({ onLoad, isLoading }) => (
+const PreviewInstructions = ({ onBuild, isLoading }) => (
   <div className="h-full flex flex-col items-center justify-center bg-gray-50 p-8 text-center">
-    <h2 className="text-xl font-bold text-gray-800">Generate a Static Preview</h2>
+    <h2 className="text-xl font-bold text-gray-800">Live Preview Generator</h2>
     <p className="mt-2 text-gray-600">
-      To see a preview of your page, you first need to build it using the command line.
+      Click the button below to generate a preview of your page.
     </p>
-    <p className="mt-4 text-sm text-gray-600">
-      From the <code className="bg-gray-200 text-gray-800 p-1 rounded">easy-seo</code> directory in your terminal, run:
-    </p>
-    <pre className="bg-gray-800 text-white p-4 rounded-lg mt-2 w-full max-w-md">
-      <code>npm run build:preview</code>
-    </pre>
-    <p className="mt-4 text-gray-600">
-      Once the build is complete, click the button below to load it.
+    <p className="mt-4 text-sm text-gray-500">
+      This will start a build process that may take a few moments. The preview will load automatically when it's ready.
     </p>
     <button
-      onClick={onLoad}
+      onClick={onBuild}
       disabled={isLoading}
       className="mt-6 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 disabled:bg-gray-400"
     >
-      {isLoading ? 'Loading...' : 'Load Preview'}
+      {isLoading ? 'Building Preview...' : 'Generate Preview'}
     </button>
   </div>
 );
@@ -166,6 +160,13 @@ function EditorPage() {
     fetchAndParseContent();
   }, [repo, filePath, draftKey]);
 
+  useEffect(() => {
+    // When the user switches to the preview tab, check if a preview already exists.
+    if (activeTab === 'preview') {
+      loadPreview();
+    }
+  }, [activeTab]);
+
   const handleEditorChange = (newContent, editor) => {
     setContent(newContent);
 
@@ -177,29 +178,73 @@ function EditorPage() {
     }
   };
   
-  const loadPreview = async () => {
-    setPreviewDisplay('loading');
+  const triggerBuild = async () => {
+    console.log('Triggering preview build...');
+    setPreviewDisplay('loading'); // Show loading state immediately
     try {
-      // Use a cache-busting query param
-      const response = await fetch(`/preview/build-status.json?t=${Date.now()}`);
-      if (!response.ok) {
-        throw new Error('Build status file not found. Please run the build command.');
-      }
-      const data = await response.json();
-      setBuildInfo(data);
-
-      if (data.status === 'success') {
-        setPreviewDisplay('iframe');
-      } else if (data.status === 'error') {
-        setPreviewDisplay('error');
-      } else {
-        throw new Error(`Unknown build status: '${data.status}'. Build may still be in progress.`);
-      }
+      await fetch('/api/trigger-build', { method: 'POST' });
+      pollForBuildStatus(); // Start polling immediately
     } catch (error) {
-      setBuildInfo({ message: error.message, details: 'Check the terminal where you ran the build command for more info.' });
+      console.error('Failed to trigger build:', error);
+      setBuildInfo({ message: 'Failed to start the build process.', details: error.message });
       setPreviewDisplay('error');
     }
   };
+
+  const pollForBuildStatus = () => {
+    const intervalId = setInterval(async () => {
+      try {
+        const response = await fetch(`/preview/build-status.json?t=${Date.now()}`);
+        if (!response.ok) {
+          // If the file doesn't exist yet, just continue polling
+          return;
+        }
+
+        const data = await response.json();
+
+        if (data.status === 'success' || data.status === 'error') {
+          clearInterval(intervalId);
+          setBuildInfo(data);
+          setPreviewDisplay(data.status === 'success' ? 'iframe' : 'error');
+        }
+        // If status is 'building', do nothing and let the interval continue.
+
+      } catch (error) {
+        // This catches network errors etc. during polling
+        clearInterval(intervalId);
+        setBuildInfo({ message: 'Error checking build status.', details: error.message });
+        setPreviewDisplay('error');
+      }
+    }, 2000); // Poll every 2 seconds
+
+    // Optional: Add a timeout to stop polling after a certain duration
+    setTimeout(() => {
+        clearInterval(intervalId);
+        // You might want to update the UI to indicate a timeout here
+    }, 120000); // Stop polling after 2 minutes
+  };
+
+  // This function is now only for loading an *existing* preview without rebuilding.
+  const loadPreview = async () => {
+    try {
+      const response = await fetch(`/preview/build-status.json?t=${Date.now()}`);
+      if (!response.ok) {
+        // If no status file, it means no build has been run. Show instructions.
+        setPreviewDisplay('instructions');
+        return;
+      }
+      const data = await response.json();
+      setBuildInfo(data);
+      if (data.status === 'success') {
+        setPreviewDisplay('iframe');
+      } else {
+        // If the last build failed or is somehow stuck, show instructions to trigger a new build.
+        setPreviewDisplay('instructions');
+      }
+    } catch (error) {
+      setPreviewDisplay('instructions');
+    }
+  }
 
 
   if (loading || content === null) {
@@ -267,17 +312,17 @@ function EditorPage() {
         )}
         {activeTab === 'preview' && (
           <div className="w-full h-full bg-gray-100">
-            {previewDisplay === 'instructions' && <PreviewInstructions onLoad={loadPreview} isLoading={false} />}
-            {previewDisplay === 'loading' && <PreviewInstructions onLoad={loadPreview} isLoading={true} />}
-            {previewDisplay === 'error' && <PreviewError buildInfo={buildInfo} onRetry={loadPreview} />}
+            {previewDisplay === 'instructions' && <PreviewInstructions onBuild={triggerBuild} isLoading={false} />}
+            {previewDisplay === 'loading' && <PreviewInstructions onBuild={triggerBuild} isLoading={true} />}
+            {previewDisplay === 'error' && <PreviewError buildInfo={buildInfo} onRetry={triggerBuild} />}
             {previewDisplay === 'iframe' && (
               <div className="w-full h-full flex flex-col">
                 <div className="p-2 bg-white border-b flex items-center gap-4">
                   <button 
-                    onClick={loadPreview}
+                    onClick={triggerBuild}
                     className="px-4 py-1 bg-blue-500 text-white text-sm font-semibold rounded hover:bg-blue-600"
                   >
-                    Reload Preview
+                    Rebuild Preview
                   </button>
                   <p className="text-sm text-gray-600">
                     Last built: {buildInfo ? new Date(buildInfo.timestamp).toLocaleString() : 'N/A'}

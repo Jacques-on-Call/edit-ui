@@ -6,7 +6,8 @@
   "scripts": {
     "dev:frontend": "vite",
     "dev:api": "wrangler dev",
-    "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:api\"",
+    "dev:build-trigger": "node build-trigger-server.js",
+    "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:api\" \"npm:dev:build-trigger\"",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",

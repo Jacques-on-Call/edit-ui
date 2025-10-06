@@ -2,12 +2,13 @@ import { spawn } from 'child_process';
 import { resolve, join } from 'path';
 import fs from 'fs/promises';
 
+// This script is run from the `easy-seo` directory, so the root is one level up.
 const rootDir = resolve(process.cwd(), '..');
-const outputDir = resolve(rootDir, 'easy-seo', 'public', 'preview');
+const outputDir = resolve(process.cwd(), 'public', 'preview');
 const statusFilePath = join(outputDir, 'build-status.json');
 
 async function buildPreview() {
-  console.log('🚀 Starting Astro preview build...');
+  console.log('🚀 Starting Astro preview build from build-preview.js...');
 
   try {
     // 1. Ensure the output directory exists and is clean.
@@ -17,33 +18,36 @@ async function buildPreview() {
     // 2. Write an initial "building" status.
     await writeStatus('building', 'Astro build is in progress...');
 
-    // 3. Execute the build command with a custom output directory.
+    // 3. Execute the build command. The CWD needs to be the Astro project root.
     const output = await executeBuild();
 
     // 4. Write success status.
     await writeStatus('success', 'Build completed successfully.', output);
     console.log('✅ Preview build completed successfully.');
-    console.log(`\nPreview is ready. Please go to the "Preview" tab in the editor and click "Load Preview".`);
 
   } catch (error) {
     // 5. Write error status.
     console.error('❌ Preview build failed.');
-    await writeStatus('error', error.message, error.stack);
+    // Ensure the error object is stringified properly for the JSON file.
+    const errorDetails = error instanceof Error ? { message: error.message, stack: error.stack } : { message: String(error) };
+    await writeStatus('error', errorDetails.message, errorDetails.stack);
   }
 }
 
 function executeBuild() {
   return new Promise((resolve, reject) => {
-    // Note: The output path is relative to the CWD of the spawn, which is rootDir.
-    const outDirRelative = join('easy-seo', 'public', 'preview');
-    
+    // The output path should be relative to the `easy-seo` directory,
+    // because `npm --prefix` effectively runs the command from there.
+    const outDirForVite = join('public', 'preview');
+
     const buildProcess = spawn(
-      'npm', 
-      ['run', 'build', '--', `--out-dir=${outDirRelative}`], 
+      'npm',
+      // Use --prefix to target the package.json inside the easy-seo directory
+      ['run', 'build', '--prefix', 'easy-seo', '--', `--out-dir=${outDirForVite}`],
       {
-        cwd: rootDir,
+        cwd: rootDir, // Execute the npm command from the project root
         stdio: 'pipe',
-        shell: true
+        shell: true,
       }
     );
 
@@ -52,19 +56,19 @@ function executeBuild() {
 
     buildProcess.stdout.on('data', (data) => {
       stdout += data.toString();
+      console.log(data.toString()); // Log output as it comes
     });
 
     buildProcess.stderr.on('data', (data) => {
       stderr += data.toString();
+      console.error(data.toString()); // Log errors as they come
     });
 
     buildProcess.on('close', (code) => {
       if (code === 0) {
-        console.log(stdout);
         resolve(stdout);
       } else {
         const errorMessage = `Build process exited with code ${code}\n\nSTDOUT:\n${stdout}\n\nSTDERR:\n${stderr}`;
-        console.error(errorMessage);
         reject(new Error(errorMessage));
       }
     });
