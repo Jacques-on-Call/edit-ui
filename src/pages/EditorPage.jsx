@@ -164,13 +164,24 @@ function EditorPage() {
   
   const triggerBuild = async () => {
     console.log('Triggering preview build...');
-    setPreviewDisplay('loading'); // Show loading state immediately
+    setPreviewDisplay('loading');
     try {
-      await fetch('/api/trigger-build', { method: 'POST' });
-      pollForBuildStatus(); // Start polling immediately
+      const response = await fetch('/api/trigger-build', { method: 'POST' });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+          message: `Failed to trigger build (HTTP ${response.status}).`
+        }));
+        // Use the detailed message from the API or a fallback.
+        throw new Error(errorData.message || 'An unknown error occurred while triggering the build.');
+      }
+      // If the trigger request was accepted, start polling for status.
+      pollForBuildStatus();
     } catch (error) {
-      console.error('Failed to trigger build:', error);
-      setBuildInfo({ message: 'Failed to start the build process.', details: error.message });
+      console.error('Failed to trigger build:', error.message);
+      setBuildInfo({
+        message: 'Could not start the build process.',
+        details: error.message,
+      });
       setPreviewDisplay('error');
     }
   };
