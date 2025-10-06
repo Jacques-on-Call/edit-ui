@@ -12,6 +12,13 @@ const PORT = 3001;
 const distPath = resolve(process.cwd(), '..', 'dist');
 app.use(express.static(distPath));
 
+// Add CORS headers for cross-origin requests
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+
 // Handle SPA routing - serve index.html for all routes
 app.get('*', (req, res) => {
   const indexPath = join(distPath, 'index.html');
@@ -22,37 +29,78 @@ app.get('*', (req, res) => {
   }
 });
 
-// Live reload when files change
-const watcher = chokidar.watch(distPath, {
-  ignored: /node_modules/,
-  persistent: true
-});
+// Enhanced SSE for live reload
+const clients = new Set();
 
-const clients = [];
-
-// SSE for live reload
 app.get('/sse', (req, res) => {
+  console.log('🔗 SSE client connected');
+
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
   });
 
-  clients.push(res);
+  // Send initial connection message
+  res.write('data: connected\n\n');
+
+  const client = {
+    id: Date.now(),
+    response: res
+  };
+
+  clients.add(client);
+
+  // Heartbeat to keep connection alive
+  const heartbeat = setInterval(() => {
+    try {
+      res.write('data: heartbeat\n\n');
+    } catch (e) {
+      // Client disconnected
+      console.log('Client disconnected, clearing heartbeat.');
+      clearInterval(heartbeat);
+      clients.delete(client);
+    }
+  }, 30000);
 
   req.on('close', () => {
-    clients.splice(clients.indexOf(res), 1);
+    console.log('🔒 SSE client disconnected');
+    clearInterval(heartbeat);
+    clients.delete(client);
   });
 });
 
+// File watcher with better error handling
+const watcher = chokidar.watch(distPath, {
+  ignored: /node_modules/,
+  persistent: true,
+  ignoreInitial: true
+});
+
 watcher.on('change', (path) => {
-  console.log(`File changed: ${path}`);
+  console.log(`📁 File changed: ${path}`);
   clients.forEach(client => {
-    client.write('data: reload\n\n');
+    try {
+      client.response.write('data: reload\n\n');
+    } catch (error) {
+      console.log('❌ Failed to send reload to client, removing...');
+      clients.delete(client);
+    }
   });
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('🛑 Shutting down preview server...');
+  watcher.close();
+  clients.forEach(client => {
+    client.response.end();
+  });
+  process.exit(0);
 });
 
 app.listen(PORT, () => {
   console.log(`🚀 Preview server running at http://localhost:${PORT}`);
   console.log(`📁 Serving from: ${distPath}`);
+  console.log(`🔗 SSE endpoint: http://localhost:${PORT}/sse`);
 });
