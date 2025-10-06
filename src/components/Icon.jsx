@@ -36,9 +36,13 @@ function Icon({ name, className }) {
     return <span className="text-red-500">[?]</span>;
   }
 
-  // Clone the SVG element to add the new className
+  // Combine the SVG's intrinsic classes (for size) with any passed in via props (for color)
+  // This ensures that we don't lose the base styling when adding new classes.
+  const combinedClassName = [IconSvg.props.className, className].filter(Boolean).join(' ');
+
+  // Clone the SVG element to apply the combined classes
   return React.cloneElement(IconSvg, {
-    className: className || IconSvg.props.className,
+    className: combinedClassName,
   });
 }
 
