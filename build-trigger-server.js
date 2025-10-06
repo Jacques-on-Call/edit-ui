@@ -1,6 +1,12 @@
 import http from 'http';
 import { spawn } from 'child_process';
-import path from 'path';
+import { dirname, resolve, join } from 'path';
+import { fileURLToPath } from 'url';
+
+// --- Robust Path Resolution ---
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const projectRoot = resolve(__dirname, '..');
+const buildScriptPath = join(__dirname, 'build-preview.js');
 
 const server = http.createServer((req, res) => {
   // Set CORS headers to allow requests from the Vite dev server
@@ -19,15 +25,13 @@ const server = http.createServer((req, res) => {
   if (req.url === '/api/trigger-build' && (req.method === 'POST' || req.method === 'GET')) {
     console.log('Build trigger received. Starting preview build...');
 
-    const buildScriptPath = path.resolve(process.cwd(), 'build-preview.js');
-
     // We use spawn to run the build script in a separate process.
     // This is non-blocking, so we can immediately respond to the client.
     const buildProcess = spawn('node', [buildScriptPath], {
-      // Run from the 'easy-seo' directory context
-      cwd: process.cwd(),
+      // **Crucially, set the working directory for the script to be the project root.**
+      cwd: projectRoot,
       stdio: 'inherit', // Pipe output to the trigger server's console
-      shell: true
+      shell: false // Shell is not needed when we have a direct path
     });
 
     buildProcess.on('error', (error) => {

@@ -1,34 +1,25 @@
 import { spawn } from 'child_process';
-import { resolve, join } from 'path';
+import { join } from 'path';
 import fs from 'fs/promises';
 
-// This script is run from the `easy-seo` directory, so the root is one level up.
-const rootDir = resolve(process.cwd(), '..');
-const outputDir = resolve(process.cwd(), 'public', 'preview');
+// --- Simplified Path Resolution ---
+// This script now assumes it's being run from the project root,
+// which is set by the build-trigger-server.js.
+const outputDir = join('easy-seo', 'public', 'preview');
 const statusFilePath = join(outputDir, 'build-status.json');
 
 async function buildPreview() {
-  console.log('🚀 Starting Astro preview build from build-preview.js...');
+  console.log('🚀 Starting Astro preview build from simplified build-preview.js...');
 
   try {
-    // 1. Ensure the output directory exists and is clean.
     await fs.rm(outputDir, { recursive: true, force: true });
     await fs.mkdir(outputDir, { recursive: true });
-
-    // 2. Write an initial "building" status.
     await writeStatus('building', 'Astro build is in progress...');
-
-    // 3. Execute the build command. The CWD needs to be the Astro project root.
     const output = await executeBuild();
-
-    // 4. Write success status.
     await writeStatus('success', 'Build completed successfully.', output);
     console.log('✅ Preview build completed successfully.');
-
   } catch (error) {
-    // 5. Write error status.
     console.error('❌ Preview build failed.');
-    // Ensure the error object is stringified properly for the JSON file.
     const errorDetails = error instanceof Error ? { message: error.message, stack: error.stack } : { message: String(error) };
     await writeStatus('error', errorDetails.message, errorDetails.stack);
   }
@@ -36,16 +27,12 @@ async function buildPreview() {
 
 function executeBuild() {
   return new Promise((resolve, reject) => {
-    // The output path must be relative to the project root, where the command is run.
-    const outDirRelative = join('easy-seo', 'public', 'preview');
-
     const buildProcess = spawn(
       'npm',
-      // Run the 'build' script from the root package.json, which builds the Astro site.
-      // Pass the correct output directory for the Astro build.
-      ['run', 'build', '--', `--out-dir=${outDirRelative}`],
+      // This command runs the 'build:preview' script from the root package.json
+      ['run', 'build:preview'],
       {
-        cwd: rootDir, // Execute the npm command from the project root
+        // The cwd is now set by the trigger server, so it's not needed here.
         stdio: 'pipe',
         shell: true,
       }
@@ -56,12 +43,12 @@ function executeBuild() {
 
     buildProcess.stdout.on('data', (data) => {
       stdout += data.toString();
-      console.log(data.toString()); // Log output as it comes
+      console.log(data.toString());
     });
 
     buildProcess.stderr.on('data', (data) => {
       stderr += data.toString();
-      console.error(data.toString()); // Log errors as they come
+      console.error(data.toString());
     });
 
     buildProcess.on('close', (code) => {

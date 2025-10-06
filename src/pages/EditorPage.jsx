@@ -5,7 +5,7 @@ import { debounce } from 'lodash';
 import matter from 'gray-matter';
 import TopToolbar from '../components/TopToolbar';
 import BottomToolbar from '../components/BottomToolbar';
-import BuildingLoader from '../components/BuildingLoader';
+import StatusLoader from '../components/StatusLoader';
 import { unifiedParser } from '../utils/unifiedParser';
 import { stringifyAstroFile } from '../utils/astroFileParser';
 import { sectionsToEditableHTML, editableHTMLToSections } from '../utils/sectionContentMapper';
@@ -43,24 +43,6 @@ const PreviewInstructions = ({ onBuild }) => (
       Generate Preview
     </button>
   </div>
-);
-
-const PreviewError = ({ buildInfo, onRetry }) => (
-    <div className="h-full flex flex-col items-center justify-center bg-red-50 p-8 text-center">
-        <h2 className="text-xl font-bold text-red-800">Preview Build Failed</h2>
-        <p className="mt-2 text-red-700">
-            The preview could not be generated. The build process reported the following error:
-        </p>
-        <pre className="mt-4 bg-white text-left text-sm text-red-900 p-4 rounded-lg border border-red-200 w-full max-w-3xl h-64 overflow-auto font-mono whitespace-pre-wrap">
-            <code>{buildInfo.message}\n\n{buildInfo.details}</code>
-        </pre>
-        <button
-            onClick={onRetry}
-            className="mt-6 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
-        >
-            Rebuild Preview
-        </button>
-    </div>
 );
 
 function EditorPage() {
@@ -320,8 +302,21 @@ function EditorPage() {
         {activeTab === 'preview' && (
           <div className="w-full h-full bg-gray-100 flex items-center justify-center">
             {previewDisplay === 'instructions' && <PreviewInstructions onBuild={triggerBuild} />}
-            {previewDisplay === 'loading' && <BuildingLoader />}
-            {previewDisplay === 'error' && <PreviewError buildInfo={buildInfo} onRetry={triggerBuild} />}
+            {previewDisplay === 'loading' && <StatusLoader status="building" />}
+            {previewDisplay === 'error' && (
+              <div className="text-center p-8">
+                <StatusLoader status="error" />
+                <pre className="mt-4 bg-white text-left text-sm text-red-900 p-4 rounded-lg border border-red-200 w-full max-w-3xl h-64 overflow-auto font-mono whitespace-pre-wrap">
+                  <code>{buildInfo?.message}\n\n{buildInfo?.details}</code>
+                </pre>
+                <button
+                  onClick={triggerBuild}
+                  className="mt-6 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
+                >
+                  Rebuild Preview
+                </button>
+              </div>
+            )}
             {previewDisplay === 'iframe' && (
               <div className="w-full h-full flex flex-col">
                 <div className="p-2 bg-white border-b flex items-center gap-4">
