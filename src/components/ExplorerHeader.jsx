@@ -11,9 +11,7 @@ function ExplorerHeader() {
           <SearchBar repo={repo} />
         </div>
         <div className="ml-4 flex items-center space-x-4">
-          <Link to="/preview" className="text-gray-600 hover:text-gray-800 whitespace-nowrap">
-            Live Preview
-          </Link>
+          {/* The Live Preview link has been removed as per user feedback for a cleaner UI */}
         </div>
       </div>
     </header>

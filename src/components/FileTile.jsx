@@ -26,30 +26,13 @@ function formatDisplayName(name) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-const getIconNameForFile = (file) => {
-  if (file.type === 'dir') {
-    return 'folder';
-  }
-  const extension = file.name.split('.').pop().toLowerCase();
-  switch (extension) {
-    case 'jpg': case 'jpeg': case 'png': case 'gif': case 'webp': case 'svg':
-      return 'image';
-    case 'js': case 'jsx': case 'ts': case 'tsx':
-      return 'code';
-    case 'css': case 'scss':
-      return 'code';
-    case 'html': case 'json':
-      return 'code';
-    case 'md': case 'astro':
-      return 'file-text';
-    default:
-      return 'file-text';
-  }
-};
-
 function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
-  const iconName = getIconNameForFile(file);
   const pressTimer = useRef(null);
+
+  const isDir = file.type === 'dir';
+  const iconName = isDir ? 'folder' : 'file';
+  // Set the icon color based on file type as per user request
+  const iconClassName = isDir ? 'text-blue-500' : 'text-green-600';
 
   const tileClassName = `
     p-2 rounded-lg cursor-pointer transition-all duration-200 text-center flex flex-col items-center justify-center h-32
@@ -84,8 +67,8 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
       onTouchEnd={handlePointerUp}
       onContextMenu={handleContextMenu}
     >
-      <div className="text-4xl text-gray-600 mb-2">
-        <Icon name={iconName} />
+      <div className="mb-2">
+        <Icon name={iconName} className={iconClassName} />
       </div>
       <div className="font-semibold text-sm text-gray-800 truncate w-full px-1">
         {formatDisplayName(file.name)}
