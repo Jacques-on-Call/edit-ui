@@ -20,7 +20,7 @@ case 'number':
 case 'boolean':
   return String(value);
 
-case 'object':
+case 'object': {
   if (Array.isArray(value)) {
     if (value.length === 0) return '[]';
     const items = value.map(item => 
@@ -38,6 +38,7 @@ case 'object':
     return indentStr + '  ' + safeKey + ': ' + valueToSourceCode(val, indent + 1);
   }).join(',\n');
   return '{\n' + props + '\n' + indentStr + '}';
+}
 
 default:
   return JSON.stringify(value);

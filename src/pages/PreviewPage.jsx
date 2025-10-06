@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 const MAX_RECONNECT_ATTEMPTS = 10;
 const RECONNECT_INTERVAL = 3000; // 3 seconds
@@ -9,7 +9,7 @@ function PreviewPage() {
   const reconnectAttempts = useRef(0);
   const eventSourceRef = useRef(null);
 
-  const connect = () => {
+  const connect = useCallback(() => {
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
@@ -34,8 +34,8 @@ function PreviewPage() {
         setStatus('Change detected. Reloading preview...');
         console.log('🔄 Reloading preview...');
         if (iframeRef.current) {
-          // A simple way to force iframe reload
-          iframeRef.current.src = iframeRef.current.src;
+          // Reload the iframe's content
+          iframeRef.current.contentWindow.location.reload();
         }
         setTimeout(() => setStatus('Connected'), 1000);
       } else if (event.data === 'connected') {
@@ -52,7 +52,7 @@ function PreviewPage() {
       reconnectAttempts.current++;
       setTimeout(connect, RECONNECT_INTERVAL);
     };
-  };
+  }, []);
 
   useEffect(() => {
     connect();
@@ -63,7 +63,7 @@ function PreviewPage() {
         eventSourceRef.current.close();
       }
     };
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, [connect]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>

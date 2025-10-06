@@ -66,6 +66,8 @@ function EditorPage() {
   
   const draftKey = `draft_${repo}_${filePath}`;
 
+  // The linter can be wrong about the dependencies for a useCallback that wraps a debounce, so we disable the check.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const saveDraft = useCallback(
     debounce((htmlContent, currentFrontmatter, currentOriginalBody, currentOriginalSections) => {
       const updatedSections = editableHTMLToSections(htmlContent, currentOriginalSections);
@@ -149,7 +151,7 @@ function EditorPage() {
     }
   }, [activeTab]);
 
-  const handleEditorChange = (newContent, editor) => {
+  const handleEditorChange = (newContent) => {
     setContent(newContent);
 
     if (fileType === 'astro-ast' && originalSections.length > 0) {
@@ -176,64 +178,68 @@ function EditorPage() {
   const pollForBuildStatus = () => {
     const intervalId = setInterval(async () => {
       try {
-        const response = await fetch(`/preview/build-status.json?t=${Date.now()}`);
+        const response = await fetch(`/api/build-status?t=${Date.now()}`);
         if (!response.ok) {
-          // If the file doesn't exist yet (404), just continue polling
-          return;
+          // Continue polling on server errors like 502, but stop on client errors.
+          if (response.status >= 400 && response.status < 500) {
+            clearInterval(intervalId);
+            setBuildInfo({ message: 'Failed to check build status.', details: `Server returned ${response.status}` });
+            setPreviewDisplay('error');
+          }
+          return; // Keep polling for transient server issues
         }
 
-        // Check content type to prevent parsing HTML as JSON during race conditions
-        const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          // If it's not JSON, it's probably the fallback HTML page. Ignore and continue polling.
-          return;
-        }
+        const latestRun = await response.json();
+        setBuildInfo(latestRun); // Store the latest run info
 
-        const data = await response.json();
-
-        if (data.status === 'success' || data.status === 'error') {
+        if (latestRun.status === 'completed') {
           clearInterval(intervalId);
-          setBuildInfo(data);
-          setPreviewDisplay(data.status === 'success' ? 'iframe' : 'error');
+          if (latestRun.conclusion === 'success') {
+            setPreviewDisplay('iframe');
+          } else {
+            setPreviewDisplay('error');
+          }
         }
-        // If status is 'building', do nothing and let the interval continue.
+        // If status is 'in_progress' or 'queued', do nothing and let the interval continue.
 
       } catch (error) {
-        // This catches network errors etc. during polling
         clearInterval(intervalId);
         setBuildInfo({ message: 'Error checking build status.', details: error.message });
         setPreviewDisplay('error');
       }
-    }, 2000); // Poll every 2 seconds
+    }, 3000); // Poll every 3 seconds
 
-    // Optional: Add a timeout to stop polling after a certain duration
+    // Stop polling after 3 minutes
     setTimeout(() => {
-        clearInterval(intervalId);
-        // You might want to update the UI to indicate a timeout here
-    }, 120000); // Stop polling after 2 minutes
+      clearInterval(intervalId);
+      // Consider updating UI to indicate a timeout
+    }, 180000);
   };
 
-  // This function is now only for loading an *existing* preview without rebuilding.
+  // This function checks the last build status to see if a valid preview already exists.
   const loadPreview = async () => {
+    setPreviewDisplay('loading');
     try {
-      const response = await fetch(`/preview/build-status.json?t=${Date.now()}`);
+      const response = await fetch(`/api/build-status?t=${Date.now()}`);
       if (!response.ok) {
-        // If no status file, it means no build has been run. Show instructions.
         setPreviewDisplay('instructions');
         return;
       }
-      const data = await response.json();
-      setBuildInfo(data);
-      if (data.status === 'success') {
+      const latestRun = await response.json();
+      setBuildInfo(latestRun);
+
+      // If the latest run was successful, show the preview.
+      if (latestRun.status === 'completed' && latestRun.conclusion === 'success') {
         setPreviewDisplay('iframe');
       } else {
-        // If the last build failed or is somehow stuck, show instructions to trigger a new build.
+        // Otherwise, show instructions to start a new build.
         setPreviewDisplay('instructions');
       }
     } catch (error) {
+      console.error('Failed to load preview status:', error);
       setPreviewDisplay('instructions');
     }
-  }
+  };
 
 
   if (loading || content === null) {
@@ -306,9 +312,25 @@ function EditorPage() {
             {previewDisplay === 'error' && (
               <div className="text-center p-8">
                 <StatusLoader status="error" />
-                <pre className="mt-4 bg-white text-left text-sm text-red-900 p-4 rounded-lg border border-red-200 w-full max-w-3xl h-64 overflow-auto font-mono whitespace-pre-wrap">
-                  <code>{buildInfo?.message}\n\n{buildInfo?.details}</code>
-                </pre>
+                <div className="mt-4 bg-white text-left text-sm text-red-900 p-4 rounded-lg border border-red-200 w-full max-w-3xl">
+                  <p className="font-bold mb-2">Build Failed</p>
+                  <p>The preview build failed to complete.</p>
+                  {buildInfo && (
+                    <p className="mt-2">
+                      Reason: <span className="font-mono bg-red-100 p-1 rounded">{buildInfo.conclusion}</span>
+                    </p>
+                  )}
+                  {buildInfo?.html_url && (
+                    <a
+                      href={buildInfo.html_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 inline-block px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700"
+                    >
+                      View Build Logs on GitHub
+                    </a>
+                  )}
+                </div>
                 <button
                   onClick={triggerBuild}
                   className="mt-6 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
@@ -327,12 +349,12 @@ function EditorPage() {
                     Rebuild Preview
                   </button>
                   <p className="text-sm text-gray-600">
-                    Last built: {buildInfo ? new Date(buildInfo.timestamp).toLocaleString() : 'N/A'}
+                    Last built: {buildInfo ? new Date(buildInfo.updated_at).toLocaleString() : 'N/A'}
                   </p>
                 </div>
                 <iframe
-                  key={buildInfo ? buildInfo.timestamp : 'initial'} // Force re-render on new build
-                  src={`/preview/index.html`}
+                  key={buildInfo ? buildInfo.id : 'initial'} // Force re-render on new build
+                  src={`https://jacques-on-call.github.io/StrategyContent/`}
                   title="Static Preview"
                   className="w-full flex-grow border-0"
                 />

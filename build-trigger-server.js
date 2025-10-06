@@ -1,18 +1,17 @@
+/* eslint-env node */
 import http from 'http';
-import { spawn } from 'child_process';
-import { dirname, resolve, join } from 'path';
-import { fileURLToPath } from 'url';
 
-// --- Robust Path Resolution ---
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = resolve(__dirname, '..');
-const buildScriptPath = join(__dirname, 'build-preview.js');
+// --- GitHub Actions Configuration ---
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const REPO_OWNER = 'Jacques-on-Call';
+const REPO_NAME = 'StrategyContent';
+const WORKFLOW_ID = 'build-preview.yml'; // The name of the workflow file
 
 const server = http.createServer((req, res) => {
-  // Set CORS headers to allow requests from the Vite dev server
+  // Set CORS headers to allow requests from any origin
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   // Handle preflight CORS requests
   if (req.method === 'OPTIONS') {
@@ -21,34 +20,92 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // The main endpoint to trigger the build
+  // Endpoint to trigger the GitHub Actions workflow
   if (req.url === '/api/trigger-build' && (req.method === 'POST' || req.method === 'GET')) {
-    console.log('Build trigger received. Starting preview build...');
+    console.log('Build trigger received. Dispatching GitHub Actions workflow...');
 
-    // We use spawn to run the build script in a separate process.
-    // This is non-blocking, so we can immediately respond to the client.
-    const buildProcess = spawn('node', [buildScriptPath], {
-      // **Crucially, set the working directory for the script to be the project root.**
-      cwd: projectRoot,
-      stdio: 'inherit', // Pipe output to the trigger server's console
-      shell: false // Shell is not needed when we have a direct path
+    if (!GITHUB_TOKEN) {
+      console.error('GITHUB_TOKEN is not set.');
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: 'Server configuration error: GITHUB_TOKEN is missing.' }));
+      return;
+    }
+
+    // Construct the API URL for dispatching the workflow
+    const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_ID}/dispatches`;
+
+    // Trigger the workflow via the GitHub API
+    fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'Easy-SEO-Build-Trigger',
+      },
+      body: JSON.stringify({
+        ref: 'main', // The branch to build from
+        inputs: {
+          repo: REPO_NAME,
+        },
+      }),
+    })
+    .then(response => {
+      if (response.ok) {
+        console.log('Successfully dispatched workflow.');
+        res.writeHead(202, { 'Content-Type': 'application/json' }); // 202 Accepted is more appropriate
+        res.end(JSON.stringify({ message: 'Build workflow successfully triggered.' }));
+      } else {
+        // Log the error response from GitHub for better debugging
+        response.text().then(text => {
+          console.error(`Failed to trigger workflow. Status: ${response.status}, Body: ${text}`);
+          res.writeHead(response.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ message: `Failed to trigger workflow: ${text}` }));
+        });
+      }
+    })
+    .catch(error => {
+      console.error('Error triggering workflow:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: `Error triggering workflow: ${error.message}` }));
     });
 
-    buildProcess.on('error', (error) => {
-      console.error(`Failed to start build process: ${error.message}`);
-    });
+  } else if (req.url.startsWith('/api/build-status') && req.method === 'GET') {
+    console.log('Checking GitHub Actions build status...');
 
-    buildProcess.on('close', (code) => {
-        if (code === 0) {
-            console.log('Build process completed successfully.');
-        } else {
-            console.error(`Build process exited with code ${code}`);
-        }
-    });
+    if (!GITHUB_TOKEN) {
+      console.error('GITHUB_TOKEN is not set.');
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: 'Server configuration error: GITHUB_TOKEN is missing.' }));
+      return;
+    }
 
-    // Immediately send a response to the client
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ message: 'Build process started.' }));
+    const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_ID}/runs`;
+
+    fetch(apiUrl, {
+      headers: {
+        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'Easy-SEO-Build-Status-Checker',
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (!data.workflow_runs || data.workflow_runs.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'No workflow runs found.' }));
+        return;
+      }
+      // Return the most recent workflow run
+      const latestRun = data.workflow_runs[0];
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(latestRun));
+    })
+    .catch(error => {
+      console.error('Error fetching build status:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ message: `Error fetching build status: ${error.message}` }));
+    });
 
   } else {
     res.writeHead(404, { 'Content-Type': 'application/json' });
