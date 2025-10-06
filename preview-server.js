@@ -14,6 +14,12 @@ const rootDir = resolve(__dirname, '..');
 const distPath = resolve(rootDir, 'dist');
 const errorHtmlPath = resolve(__dirname, 'error.html');
 
+// --- CORS Middleware ---
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+});
+
 // --- Live Reload SSE Setup ---
 const clients = [];
 const watcher = chokidar.watch(distPath, {
