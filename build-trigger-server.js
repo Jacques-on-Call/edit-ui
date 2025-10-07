@@ -60,8 +60,18 @@ const server = http.createServer((req, res) => {
         // Log the error response from GitHub for better debugging
         response.text().then(text => {
           console.error(`Failed to trigger workflow. Status: ${response.status}, Body: ${text}`);
+
+          let errorMessage = `Failed to trigger workflow. GitHub API responded with status ${response.status}: ${text}`;
+          if (response.status === 405 || response.status === 403) {
+            errorMessage = 'GitHub API Error (403/405 - Forbidden/Method Not Allowed): The GITHUB_TOKEN used by the local build server does not have sufficient permissions. Please ensure your Personal Access Token (PAT) has the full "repo" scope to trigger a workflow_dispatch event.';
+          } else if (response.status === 404) {
+            errorMessage = `GitHub API Error (404 Not Found): The workflow file ('${WORKFLOW_ID}') or repository ('${REPO_OWNER}/${REPO_NAME}') could not be found. Please check the configuration in build-trigger-server.js.`;
+          } else if (response.status === 401) {
+             errorMessage = 'GitHub API Error (401 Unauthorized): The GITHUB_TOKEN is likely invalid, expired, or missing. Please check your .env file or environment variables.';
+          }
+
           res.writeHead(response.status, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ message: `Failed to trigger workflow: ${text}` }));
+          res.end(JSON.stringify({ message: errorMessage, details: text }));
         });
       }
     })
