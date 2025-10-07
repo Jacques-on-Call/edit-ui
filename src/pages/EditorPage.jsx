@@ -6,6 +6,7 @@ import matter from 'gray-matter';
 import TopToolbar from '../components/TopToolbar';
 import BottomToolbar from '../components/BottomToolbar';
 import StatusLoader from '../components/StatusLoader';
+import PreviewRenderer from '../components/PreviewRenderer';
 import { unifiedParser } from '../utils/unifiedParser';
 import { stringifyAstroFile } from '../utils/astroFileParser';
 import { sectionsToEditableHTML, editableHTMLToSections } from '../utils/sectionContentMapper';
@@ -120,6 +121,7 @@ function EditorPage() {
     debounce((htmlContent, currentFrontmatter, currentOriginalBody, currentOriginalSections) => {
       const updatedSections = editableHTMLToSections(htmlContent, currentOriginalSections);
       const updatedFrontmatter = { ...currentFrontmatter, sections: updatedSections };
+      setFrontmatter(updatedFrontmatter); // Update frontmatter for instant preview
       const fullContent = stringifyAstroFile(updatedFrontmatter, currentOriginalBody);
       localStorage.setItem(draftKey, fullContent);
       console.log(`Draft saved for ${filePath}.`);
@@ -363,65 +365,64 @@ function EditorPage() {
           </div>
         )}
         {activeTab === 'preview' && (
-          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-            {previewDisplay === 'instructions' && <PreviewInstructions onBuild={triggerBuild} />}
-            {previewDisplay === 'loading' && <StatusLoader status="building" />}
-            {previewDisplay === 'error' && (
-              <div className="text-center p-8">
-                <StatusLoader status="error" />
-                <div className="mt-4 bg-white text-left text-sm text-red-900 p-4 rounded-lg border border-red-200 w-full max-w-3xl">
-                  <p className="font-bold mb-2">Build Failed</p>
-                  <p>The preview build failed to complete.</p>
-                  {buildInfo?.details && (
-                    <div className="mt-2 text-left">
-                      <p className="font-semibold">Details:</p>
-                      <pre className="mt-1 p-2 bg-red-50 text-red-800 rounded text-xs whitespace-pre-wrap">
-                        <code>{buildInfo.details}</code>
-                      </pre>
+          <div className="w-full h-full bg-gray-100 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+            <div className="max-w-4xl mx-auto">
+              {/* --- Instant Preview --- */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-700 border-b pb-2 mb-3">Instant Preview</h2>
+                <div className="bg-white rounded-lg border border-gray-200">
+                   <PreviewRenderer frontmatter={frontmatter} />
+                </div>
+                 <p className="text-xs text-gray-500 mt-2">This is a live, component-based preview. It updates instantly but may not reflect the final site's exact styling.</p>
+              </div>
+
+              {/* --- High-Fidelity Preview --- */}
+              <div>
+                <h2 className="text-lg font-semibold text-gray-700 border-b pb-2 mb-3">High-Fidelity Preview</h2>
+                <p className="text-xs text-gray-500 mb-4">This generates a true build of your site. It is more accurate but takes a moment to generate.</p>
+                <div className="bg-white rounded-lg border border-gray-200 p-4 min-h-[400px] flex flex-col items-center justify-center">
+                  {previewDisplay === 'instructions' && <PreviewInstructions onBuild={triggerBuild} />}
+                  {previewDisplay === 'loading' && <StatusLoader status="building" />}
+                  {previewDisplay === 'error' && (
+                    <div className="text-center p-4">
+                      <StatusLoader status="error" />
+                      <div className="mt-4 bg-white text-left text-sm text-red-900 p-4 rounded-lg border border-red-200 w-full max-w-3xl">
+                        <p className="font-bold mb-2">Build Failed</p>
+                        {buildInfo?.details && (
+                          <div className="mt-2 text-left">
+                            <p className="font-semibold">Details:</p>
+                            <pre className="mt-1 p-2 bg-red-50 text-red-800 rounded text-xs whitespace-pre-wrap">
+                              <code>{buildInfo.details}</code>
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                      <button onClick={triggerBuild} className="mt-6 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md">
+                        Rebuild Preview
+                      </button>
                     </div>
                   )}
-                  {buildInfo?.html_url && (
-                    <a
-                      href={buildInfo.html_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-4 inline-block px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700"
-                    >
-                      View Build Logs on GitHub
-                    </a>
+                  {previewDisplay === 'iframe' && (
+                    <div className="w-full h-full flex flex-col">
+                       <div className="p-2 bg-gray-50 border-b flex items-center justify-between gap-4">
+                         <p className="text-sm text-gray-600">
+                          Last built: {buildInfo ? new Date(buildInfo.updated_at).toLocaleString() : 'N/A'}
+                        </p>
+                        <button onClick={triggerBuild} className="px-4 py-1 bg-blue-500 text-white text-sm font-semibold rounded hover:bg-blue-600">
+                          Rebuild
+                        </button>
+                      </div>
+                      <iframe
+                        key={buildInfo ? buildInfo.id : 'initial'}
+                        src={`/preview/?v=${buildInfo ? buildInfo.id : 'initial'}`}
+                        title="Static Preview"
+                        className="w-full flex-grow border-0 h-[600px]"
+                      />
+                    </div>
                   )}
                 </div>
-                <button
-                  onClick={triggerBuild}
-                  className="mt-6 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
-                >
-                  Rebuild Preview
-                </button>
               </div>
-            )}
-            {previewDisplay === 'iframe' && (
-              <div className="w-full h-full flex flex-col">
-                <div className="p-2 bg-white border-b flex items-center gap-4">
-                  <button 
-                    onClick={triggerBuild}
-                    className="px-4 py-1 bg-blue-500 text-white text-sm font-semibold rounded hover:bg-blue-600"
-                  >
-                    Rebuild Preview
-                  </button>
-                  <p className="text-sm text-gray-600">
-                    Last built: {buildInfo ? new Date(buildInfo.updated_at).toLocaleString() : 'N/A'}
-                  </p>
-                </div>
-                <iframe
-                  key={buildInfo ? buildInfo.id : 'initial'} // Force re-render on new build
-                  // Point to the relative path where the preview is now committed.
-                  // Add a version query parameter to break browser cache on rebuild.
-                  src={`/preview/?v=${buildInfo ? buildInfo.id : 'initial'}`}
-                  title="Static Preview"
-                  className="w-full flex-grow border-0"
-                />
-              </div>
-            )}
+            </div>
           </div>
         )}
       </div>

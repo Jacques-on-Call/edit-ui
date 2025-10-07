@@ -1,0 +1,18 @@
+<!DOCTYPE html><h2 id="user-experience-features">User Experience Features</h2>
+<p>The file explorer is designed with a mobile-first, user-friendly interface.</p>
+<ul>
+<li><strong>Breadcrumb Navigation:</strong> A header at the top of the screen shows the current folder path (e.g., <code>Home > Decide</code>), allowing for easy navigation back to parent directories.</li>
+<li><strong>Floating Action Button (FAB):</strong> A prominent <code>+</code> button is fixed to the bottom-right of the screen, providing a consistent and accessible way to create new files and folders.</li>
+<li><strong>File-Specific Icons:</strong> To make content easily scannable, different icons are used for different file types:
+<ul>
+<li><code>📁</code> for folders</li>
+<li><code>🖼️</code> for images (e.g., <code>.jpg</code>, <code>.png</code>)</li>
+<li><code>📝</code> for markdown files</li>
+<li><code>💻</code> for code files (e.g., <code>.js</code>, <code>.astro</code>)</li>
+<li><code>📄</code> for other text files</li>
+</ul>
+</li>
+<li><strong>Responsive Toolbar:</strong> The bottom toolbar adapts to screen size. On narrow mobile screens, it displays icons only, preventing layout issues and ensuring all buttons are visible.</li>
+<li><strong>Formatted File Names:</strong> File names are cleaned up for display. For example, <code>about.astro</code> is shown as <code>About</code>.</li>
+<li><strong>File Metadata:</strong> Each file tile displays the author of the last change and how long ago it was made (e.g., “Jacques, 2h ago”), providing at-a-glance context. This data is fetched securely through the backend worker.</li>
+</ul>

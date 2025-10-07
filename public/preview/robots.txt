@@ -1,0 +1,17 @@
+User-agent: *
+Disallow: /proposal-tool/
+Disallow: /react-library/
+Disallow: /cgi-bin/
+Disallow: /privacy.html/
+Disallow: /jacques-damhuis.html/
+Disallow: /contact.html/
+Disallow: /contact-success.html/
+Disallow: /content-editor/
+Disallow: /sun-editor/
+Disallow: /squire/
+Disallow: /contact/contact.html/
+Disallow: /privacy.html/
+Disallow: /test.html/
+
+
+Sitemap: https://strategycontent.agency/sitemap.xml
