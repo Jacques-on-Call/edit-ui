@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
+import NewTemplateModal from './NewTemplateModal';
+import AssignTemplateModal from './AssignTemplateModal';
 import ContextMenu from './ContextMenu';
 import ConfirmDialog from './ConfirmDialog';
 import RenameModal from './RenameModal';
@@ -23,7 +25,45 @@ function FileExplorer({ repo }) {
   const [readmeContent, setReadmeContent] = useState(null);
   const [isReadmeLoading, setReadmeLoading] = useState(false);
   const [isReadmeVisible, setReadmeVisible] = useState(true);
+  const [isNewTemplateModalOpen, setNewTemplateModalOpen] = useState(false);
+  const [fileToAssignLayout, setFileToAssignLayout] = useState(null);
   const navigate = useNavigate();
+
+  const handleNewLayout = () => {
+    setNewTemplateModalOpen(true);
+  };
+
+  const handleCreateNewTemplate = (templateName) => {
+    const encodedName = encodeURIComponent(templateName);
+    navigate(`/layout-editor?template_name=${encodedName}`);
+    setNewTemplateModalOpen(false);
+  };
+
+  const handleAssignLayoutRequest = (file) => {
+    setFileToAssignLayout(file);
+  };
+
+  const handleAssignLayoutConfirm = async (file, templateId) => {
+    try {
+      const response = await fetch(`/api/pages/${file.path}/assign-template`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          credentials: 'include',
+        },
+        body: JSON.stringify({ template_id: templateId }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to assign layout');
+      }
+      alert(`Successfully assigned layout to ${file.name}`);
+      setFileToAssignLayout(null);
+    } catch (error) {
+      console.error('Assign layout error:', error);
+      alert(`Error assigning layout: ${error.message}`);
+    }
+  };
 
   const fetchMetadata = useCallback(async (file) => {
     if (file.type === 'dir') return;
@@ -159,11 +199,21 @@ function FileExplorer({ repo }) {
         />
       )}
       <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 flex justify-between items-center p-2 z-10">
-        <div className="flex-1"></div>
+        <div className="flex-1 flex justify-start">
+            <button
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-200"
+                onClick={handleNewLayout}
+                title="Create a new reusable layout template"
+            >
+                <Icon name="layout-editor" className="h-6 w-6" />
+                <span className="font-semibold hidden sm:inline">New Layout</span>
+            </button>
+        </div>
         <div className="flex-1 flex justify-center">
             <button
                 className="bg-bark-blue text-white rounded-full h-14 w-14 flex items-center justify-center shadow-lg hover:bg-opacity-90 transition-transform transform hover:scale-105"
                 onClick={() => setCreateModalOpen(true)}
+                title="Create a new file or folder"
             >
                 <Icon name="plus" />
             </button>
@@ -180,7 +230,9 @@ function FileExplorer({ repo }) {
         </div>
       </div>
       {isCreateModalOpen && <CreateModal path={path} repo={repo} onClose={() => setCreateModalOpen(false)} onCreate={fetchFiles} />}
-      {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} file={contextMenu.file} onClose={handleCloseContextMenu} onRename={handleRenameRequest} onDelete={handleDeleteRequest} onDuplicate={handleDuplicate} onShare={handleShare} />}
+      {isNewTemplateModalOpen && <NewTemplateModal onClose={() => setNewTemplateModalOpen(false)} onSubmit={handleCreateNewTemplate} />}
+      {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} file={contextMenu.file} onClose={handleCloseContextMenu} onRename={handleRenameRequest} onDelete={handleDeleteRequest} onDuplicate={handleDuplicate} onShare={handleShare} onAssignLayout={handleAssignLayoutRequest} />}
+      {fileToAssignLayout && <AssignTemplateModal file={fileToAssignLayout} onClose={() => setFileToAssignLayout(null)} onAssign={handleAssignLayoutConfirm} />}
       {fileToDelete && <ConfirmDialog message={`Are you sure you want to delete "${fileToDelete.name}"?`} onConfirm={handleDeleteConfirm} onCancel={() => setFileToDelete(null)} />}
       {fileToRename && <RenameModal file={fileToRename} onClose={() => setFileToRename(null)} onRename={handleRenameConfirm} />}
     </div>
