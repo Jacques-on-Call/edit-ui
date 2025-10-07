@@ -19,12 +19,19 @@ const DefaultHeader = () => (
 function AppLayout() {
   const location = useLocation();
   const isExplorerPage = location.pathname.startsWith('/explorer');
+  const isEditorPage = location.pathname.startsWith('/editor');
+
+  const renderHeader = () => {
+    if (isExplorerPage) return <ExplorerHeader />;
+    if (isEditorPage) return null; // No header for the editor page
+    return <DefaultHeader />;
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
-      {isExplorerPage ? <ExplorerHeader /> : <DefaultHeader />}
+      {renderHeader()}
 
-      <main className="flex-grow">
+      <main className="flex-grow h-full">
         <Outlet />
       </main>
 

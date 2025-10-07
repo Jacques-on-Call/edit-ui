@@ -302,11 +302,6 @@ function EditorPage() {
       <div className="flex-grow w-full overflow-y-auto">
         {activeTab === 'editor' && (
           <div className="w-full h-full flex flex-col bg-white">
-            {fileType === 'astro-ast' && originalSections.length > 0 && (
-              <div className="bg-blue-50 border-b border-blue-200 p-3 text-sm text-blue-800">
-                📝 <strong>Section Editor:</strong> Edit the content below. Each section is clearly marked. Changes are auto-saved.
-              </div>
-            )}
             <div className="flex-grow">
               <Editor
                 value={content}
