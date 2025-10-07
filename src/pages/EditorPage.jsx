@@ -414,7 +414,9 @@ function EditorPage() {
                 </div>
                 <iframe
                   key={buildInfo ? buildInfo.id : 'initial'} // Force re-render on new build
-                  src={`https://jacques-on-call.github.io/StrategyContent/`}
+                  // Point to the relative path where the preview is now committed.
+                  // Add a version query parameter to break browser cache on rebuild.
+                  src={`/preview/?v=${buildInfo ? buildInfo.id : 'initial'}`}
                   title="Static Preview"
                   className="w-full flex-grow border-0"
                 />
