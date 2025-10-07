@@ -166,7 +166,7 @@ function EditorPage() {
     console.log('Triggering preview build...');
     setPreviewDisplay('loading');
     try {
-      const response = await fetch('/api/trigger-build', { method: 'POST' });
+      const response = await fetch('/api-build/trigger-build', { method: 'POST' });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({
           message: `Failed to trigger build (HTTP ${response.status}).`
@@ -189,7 +189,7 @@ function EditorPage() {
   const pollForBuildStatus = () => {
     const intervalId = setInterval(async () => {
       try {
-        const response = await fetch(`/api/build-status?t=${Date.now()}`);
+        const response = await fetch(`/api-build/build-status?t=${Date.now()}`);
 
         if (!response.ok) {
           clearInterval(intervalId);
@@ -231,7 +231,7 @@ function EditorPage() {
   const loadPreview = async () => {
     setPreviewDisplay('loading');
     try {
-      const response = await fetch(`/api/build-status?t=${Date.now()}`);
+      const response = await fetch(`/api-build/build-status?t=${Date.now()}`);
       if (!response.ok) {
         setPreviewDisplay('instructions');
         return;
