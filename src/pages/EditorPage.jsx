@@ -56,6 +56,7 @@ function EditorPage() {
   const [originalSections, setOriginalSections] = useState([]);
   const [fileType, setFileType] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState(null);
   const [parsingError, setParsingError] = useState(null);
   const [rawContentOnError, setRawContentOnError] = useState('');
@@ -65,6 +66,53 @@ function EditorPage() {
   const [previewDisplay, setPreviewDisplay] = useState('instructions'); // 'instructions', 'loading', 'iframe', 'error'
   
   const draftKey = `draft_${repo}_${filePath}`;
+
+  const handlePublish = async () => {
+    if (!filePath || !repo) {
+      setError('Cannot publish without file path and repository information.');
+      return;
+    }
+
+    setIsPublishing(true);
+    setError(null);
+
+    try {
+      let fullContent;
+      if (fileType === 'astro-ast' && originalSections.length > 0) {
+        const updatedSections = editableHTMLToSections(content, originalSections);
+        const updatedFrontmatter = { ...frontmatter, sections: updatedSections };
+        fullContent = stringifyAstroFile(updatedFrontmatter, originalBody);
+      } else {
+        fullContent = matter.stringify(content, frontmatter);
+      }
+
+      const response = await fetch('/api/file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          repo,
+          path: filePath,
+          content: btoa(unescape(encodeURIComponent(fullContent))),
+          message: `docs: update content for ${filePath}`
+        }),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred during publishing.' }));
+        throw new Error(errorData.message);
+      }
+
+      localStorage.removeItem(draftKey);
+      console.log('Publish successful. Draft removed from local storage.');
+
+    } catch (err) {
+      console.error('Publishing failed:', err);
+      setError(err.message);
+    } finally {
+      setIsPublishing(false);
+    }
+  };
 
   // The linter can be wrong about the dependencies for a useCallback that wraps a debounce, so we disable the check.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -281,7 +329,7 @@ function EditorPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      <TopToolbar />
+      <TopToolbar onPublish={handlePublish} isPublishing={isPublishing} />
       {parsingError && <ErrorDisplay error={parsingError} rawContent={rawContentOnError} />}
 
       <div className="flex border-b border-gray-200 bg-white shadow-sm">

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Icon from './Icon';
 
-function TopToolbar() {
+function TopToolbar({ onPublish, isPublishing }) {
   const buttonClass = "p-2 rounded-md hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500";
 
   return (
@@ -12,7 +12,12 @@ function TopToolbar() {
       </Link>
       <div className="flex-grow"></div>
       <div className="flex items-center space-x-2">
-        <button className={`${buttonClass} bg-bark-blue text-white hover:bg-bark-blue/90`} aria-label="Publish">
+        <button
+          onClick={onPublish}
+          disabled={isPublishing}
+          className={`${buttonClass} bg-bark-blue text-white hover:bg-bark-blue/90 disabled:bg-gray-400 disabled:cursor-not-allowed`}
+          aria-label={isPublishing ? "Publishing..." : "Publish"}
+        >
           <Icon name="publish" className="text-white" />
         </button>
       </div>
