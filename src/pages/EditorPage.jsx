@@ -3,14 +3,17 @@ import { useSearchParams } from 'react-router-dom';
 import { Editor } from '@tinymce/tinymce-react';
 import { debounce } from 'lodash';
 import matter from 'gray-matter';
+import { marked } from 'marked';
+import TurndownService from 'turndown';
+
 import TopToolbar from '../components/TopToolbar';
 import BottomToolbar from '../components/BottomToolbar';
-import StatusLoader from '../components/StatusLoader';
-import PreviewRenderer from '../components/PreviewRenderer';
-import PreviewFrame from '../components/PreviewFrame';
 import { unifiedParser } from '../utils/unifiedParser';
 import { stringifyAstroFile } from '../utils/astroFileParser';
 import { sectionsToEditableHTML, editableHTMLToSections } from '../utils/sectionContentMapper';
+import { generatePreviewHtml } from '../utils/htmlGenerator';
+
+const turndownService = new TurndownService();
 
 const ErrorDisplay = ({ error, rawContent }) => (
   <div className="p-4 sm:p-6 lg:p-8 bg-red-50">
@@ -29,43 +32,26 @@ const ErrorDisplay = ({ error, rawContent }) => (
   </div>
 );
 
-const PreviewInstructions = ({ onBuild }) => (
-  <div className="h-full flex flex-col items-center justify-center bg-gray-50 p-8 text-center">
-    <h2 className="text-xl font-bold text-gray-800">Live Preview Generator</h2>
-    <p className="mt-2 text-gray-600">
-      Click the button below to generate a preview of your page.
-    </p>
-    <p className="mt-4 text-sm text-gray-500">
-      This will start a build process that may take a few moments. The preview will load automatically when it's ready.
-    </p>
-    <button
-      onClick={onBuild}
-      className="mt-6 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
-    >
-      Generate Preview
-    </button>
-  </div>
-);
-
 function EditorPage() {
   const [searchParams] = useSearchParams();
   const filePath = searchParams.get('path');
   const repo = localStorage.getItem('selectedRepo');
 
+  // Core state
   const [frontmatter, setFrontmatter] = useState({});
-  const [content, setContent] = useState(null);
+  const [content, setContent] = useState(null); // This is always HTML for the editor
   const [originalBody, setOriginalBody] = useState('');
   const [originalSections, setOriginalSections] = useState([]);
   const [fileType, setFileType] = useState(null);
+
+  // UI/Loading state
   const [loading, setLoading] = useState(true);
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState(null);
   const [parsingError, setParsingError] = useState(null);
   const [rawContentOnError, setRawContentOnError] = useState('');
-
   const [activeTab, setActiveTab] = useState('editor');
-  const [buildInfo, setBuildInfo] = useState(null);
-  const [previewDisplay, setPreviewDisplay] = useState('instructions'); // 'instructions', 'loading', 'iframe', 'error'
+  const [previewHtml, setPreviewHtml] = useState('');
   
   const draftKey = `draft_${repo}_${filePath}`;
 
@@ -74,10 +60,8 @@ function EditorPage() {
       setError('Cannot publish without file path and repository information.');
       return;
     }
-
     setIsPublishing(true);
     setError(null);
-
     try {
       let fullContent;
       if (fileType === 'astro-ast' && originalSections.length > 0) {
@@ -85,7 +69,8 @@ function EditorPage() {
         const updatedFrontmatter = { ...frontmatter, sections: updatedSections };
         fullContent = stringifyAstroFile(updatedFrontmatter, originalBody);
       } else {
-        fullContent = matter.stringify(content, frontmatter);
+        const markdownBody = turndownService.turndown(content);
+        fullContent = matter.stringify(markdownBody, frontmatter);
       }
 
       const response = await fetch('/api/file', {
@@ -99,15 +84,12 @@ function EditorPage() {
         }),
         credentials: 'include'
       });
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred during publishing.' }));
         throw new Error(errorData.message);
       }
-
       localStorage.removeItem(draftKey);
       console.log('Publish successful. Draft removed from local storage.');
-
     } catch (err) {
       console.error('Publishing failed:', err);
       setError(err.message);
@@ -116,13 +98,38 @@ function EditorPage() {
     }
   };
 
-  const saveDraft = useCallback(
-    debounce((fileContentString) => {
-      localStorage.setItem(draftKey, fileContentString);
+  const updateDraftAndPreview = useCallback(
+    debounce((newContent, currentFrontmatter, currentFileType, currentOriginalBody, currentOriginalSections) => {
+      let fullContentString;
+      let updatedFrontmatter = currentFrontmatter;
+
+      if (currentFileType === 'astro-ast' && currentOriginalSections.length > 0) {
+        const updatedSections = editableHTMLToSections(newContent, currentOriginalSections);
+        updatedFrontmatter = { ...currentFrontmatter, sections: updatedSections };
+        fullContentString = stringifyAstroFile(updatedFrontmatter, currentOriginalBody);
+      } else {
+        const markdownBody = turndownService.turndown(newContent);
+        updatedFrontmatter = currentFrontmatter;
+        fullContentString = matter.stringify(markdownBody, updatedFrontmatter);
+      }
+
+      localStorage.setItem(draftKey, fullContentString);
       console.log(`Draft saved for ${filePath}.`);
-    }, 1000),
-    [draftKey]
+
+      const generatedHtml = generatePreviewHtml(updatedFrontmatter, newContent, repo);
+      setPreviewHtml(generatedHtml);
+
+      if (currentFileType === 'astro-ast') {
+        setFrontmatter(updatedFrontmatter);
+      }
+    }, 500),
+    [repo]
   );
+
+  const handleEditorChange = (newContent) => {
+    setContent(newContent);
+    updateDraftAndPreview(newContent, frontmatter, fileType, originalBody, originalSections);
+  };
 
   useEffect(() => {
     const fetchAndParseContent = async () => {
@@ -131,15 +138,12 @@ function EditorPage() {
         setLoading(false);
         return;
       }
-
       setLoading(true);
       setParsingError(null);
       setRawContentOnError('');
-
       try {
         let fileContent;
         const localDraft = localStorage.getItem(draftKey);
-
         if (localDraft) {
           fileContent = localDraft;
         } else {
@@ -163,140 +167,35 @@ function EditorPage() {
         } else if (model) {
           setFrontmatter(model.frontmatter);
           setFileType(model.rawType);
-          setOriginalBody(model.originalBody || model.body || '');
 
-          if (model.rawType === 'astro-ast' && model.frontmatter.sections) {
-            const sections = model.frontmatter.sections;
-            setOriginalSections(sections);
-            const editableHTML = await sectionsToEditableHTML(sections);
-            setContent(editableHTML);
-          } else if (model.rawType === 'astro-ast') {
-            setContent('<p><em>This Astro file does not have a sections array to edit.</em></p>');
+          let bodyAsHtml;
+          if (model.rawType === 'astro-ast') {
+             setOriginalBody(model.originalBody || '');
+             if (model.frontmatter.sections) {
+                setOriginalSections(model.frontmatter.sections);
+                bodyAsHtml = await sectionsToEditableHTML(model.frontmatter.sections);
+             } else {
+                bodyAsHtml = '<p><em>This Astro file does not have a sections array to edit.</em></p>';
+             }
           } else {
-            setContent(model.body);
+            setOriginalBody(model.body);
+            bodyAsHtml = marked(model.body);
           }
+
+          setContent(bodyAsHtml);
+          const initialPreviewHtml = generatePreviewHtml(model.frontmatter, bodyAsHtml, repo);
+          setPreviewHtml(initialPreviewHtml);
         } else {
           throw new Error('An unknown parsing error occurred.');
         }
-
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-
     fetchAndParseContent();
-  }, [repo, filePath, draftKey]);
-
-  const handleEditorChange = useCallback((newContent) => {
-    setContent(newContent);
-
-    setFrontmatter(prevFrontmatter => {
-      let updatedFrontmatter = prevFrontmatter;
-      if (fileType === 'astro-ast' && originalSections.length > 0) {
-        const updatedSections = editableHTMLToSections(newContent, originalSections);
-        updatedFrontmatter = { ...prevFrontmatter, sections: updatedSections };
-      }
-
-      const fullContent = fileType === 'astro-ast'
-        ? stringifyAstroFile(updatedFrontmatter, originalBody)
-        : matter.stringify(newContent, updatedFrontmatter);
-
-      saveDraft(fullContent);
-
-      return updatedFrontmatter;
-    });
-  }, [fileType, originalSections, originalBody, saveDraft]);
-  
-  const triggerBuild = async () => {
-    console.log('Triggering preview build...');
-    setPreviewDisplay('loading');
-    try {
-      const response = await fetch('/api/trigger-build', { method: 'POST', credentials: 'include' });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: `Failed to trigger build (HTTP ${response.status}).` }));
-        throw new Error(errorData.message || 'An unknown error occurred while triggering the build.');
-      }
-    } catch (error) {
-      console.error('Failed to trigger build:', error.message);
-      setBuildInfo({
-        message: 'Could not start the build process.',
-        details: error.message,
-      });
-      setPreviewDisplay('error');
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === 'preview' && previewDisplay === 'instructions') {
-        const checkInitialStatus = async () => {
-            try {
-                const response = await fetch(`/api/build-status?t=${Date.now()}`, { credentials: 'include' });
-                if (response.ok) {
-                    const latestRun = await response.json();
-                    if (latestRun.status === 'completed' && latestRun.conclusion === 'success') {
-                        setBuildInfo(latestRun);
-                        setPreviewDisplay('iframe');
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to check initial build status:', error);
-            }
-        };
-        checkInitialStatus();
-    }
-
-    if (previewDisplay !== 'loading') {
-      return;
-    }
-
-    let isCancelled = false;
-
-    const checkStatus = async () => {
-      if (isCancelled) return;
-
-      try {
-        const response = await fetch(`/api/build-status?t=${Date.now()}`, { credentials: 'include' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const latestRun = await response.json();
-        if (isCancelled) return;
-
-        setBuildInfo(latestRun);
-
-        if (latestRun.status === 'completed') {
-          if (latestRun.conclusion === 'success') {
-            setPreviewDisplay('iframe');
-          } else {
-            setPreviewDisplay('error');
-          }
-          return; // Stop polling
-        }
-
-        // Continue polling if not completed
-        setTimeout(checkStatus, 3000);
-      } catch (error) {
-        if (!isCancelled) {
-          console.error('Build status check failed:', error);
-          setBuildInfo({
-            message: 'Failed to check build status.',
-            details: error.message
-          });
-          setPreviewDisplay('error');
-        }
-      }
-    };
-
-    const pollerTimeout = setTimeout(checkStatus, 3000);
-
-    // Cleanup function
-    return () => {
-      isCancelled = true;
-      clearTimeout(pollerTimeout);
-    };
-  }, [previewDisplay, activeTab]);
-
+  }, [repo, filePath, draftKey, updateDraftAndPreview]);
 
   if (loading || content === null) {
     return <div className="text-center p-8">Loading editor…</div>;
@@ -357,54 +256,13 @@ function EditorPage() {
           </div>
         )}
         {activeTab === 'preview' && (
-          <div className="w-full h-full bg-gray-100 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-            <div className="max-w-4xl mx-auto">
-              {/* --- Instant Preview --- */}
-              <div className="mb-8">
-                <h2 className="text-lg font-semibold text-gray-700 border-b pb-2 mb-3">Instant Preview</h2>
-                <div className="bg-white rounded-lg border border-gray-200">
-                   <PreviewRenderer frontmatter={frontmatter} />
-                </div>
-                 <p className="text-xs text-gray-500 mt-2">This is a live, component-based preview. It updates instantly but may not reflect the final site's exact styling.</p>
-              </div>
-
-              {/* --- High-Fidelity Preview --- */}
-              <div>
-                <h2 className="text-lg font-semibold text-gray-700 border-b pb-2 mb-3">High-Fidelity Preview</h2>
-                <p className="text-xs text-gray-500 mb-4">This generates a true build of your site. It is more accurate but takes a moment to generate.</p>
-                <div className="bg-white rounded-lg border border-gray-200 p-4 min-h-[400px] flex flex-col items-center justify-center">
-                  {previewDisplay === 'instructions' && <PreviewInstructions onBuild={triggerBuild} />}
-                  {previewDisplay === 'loading' && <StatusLoader status="building" />}
-                  {previewDisplay === 'error' && (
-                    <div className="text-center p-4">
-                      <StatusLoader status="error" />
-                      <div className="mt-4 bg-white text-left text-sm text-red-900 p-4 rounded-lg border border-red-200 w-full max-w-3xl">
-                        <p className="font-bold mb-2">Build Failed</p>
-                        {buildInfo?.details && (
-                          <div className="mt-2 text-left">
-                            <p className="font-semibold">Details:</p>
-                            <pre className="mt-1 p-2 bg-red-50 text-red-800 rounded text-xs whitespace-pre-wrap">
-                              <code>{buildInfo.details}</code>
-                            </pre>
-                          </div>
-                        )}
-                      </div>
-                      <button onClick={triggerBuild} className="mt-6 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md">
-                        Rebuild Preview
-                      </button>
-                    </div>
-                  )}
-                  {previewDisplay === 'iframe' && (
-                    <div className="w-full h-[600px] flex flex-col">
-                       <PreviewFrame
-                         src={`/preview/?v=${buildInfo?.id || Date.now()}`}
-                         onReload={triggerBuild}
-                       />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+          <div className="w-full h-full bg-white">
+            <iframe
+              srcDoc={previewHtml}
+              title="Live Preview"
+              className="w-full h-full border-0"
+              sandbox="allow-scripts"
+            />
           </div>
         )}
       </div>
