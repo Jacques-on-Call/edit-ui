@@ -7,6 +7,7 @@ import TopToolbar from '../components/TopToolbar';
 import BottomToolbar from '../components/BottomToolbar';
 import StatusLoader from '../components/StatusLoader';
 import PreviewRenderer from '../components/PreviewRenderer';
+import PreviewFrame from '../components/PreviewFrame';
 import { unifiedParser } from '../utils/unifiedParser';
 import { stringifyAstroFile } from '../utils/astroFileParser';
 import { sectionsToEditableHTML, editableHTMLToSections } from '../utils/sectionContentMapper';
@@ -115,18 +116,12 @@ function EditorPage() {
     }
   };
 
-  // The linter can be wrong about the dependencies for a useCallback that wraps a debounce, so we disable the check.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const saveDraft = useCallback(
-    debounce((htmlContent, currentFrontmatter, currentOriginalBody, currentOriginalSections) => {
-      const updatedSections = editableHTMLToSections(htmlContent, currentOriginalSections);
-      const updatedFrontmatter = { ...currentFrontmatter, sections: updatedSections };
-      setFrontmatter(updatedFrontmatter); // Update frontmatter for instant preview
-      const fullContent = stringifyAstroFile(updatedFrontmatter, currentOriginalBody);
-      localStorage.setItem(draftKey, fullContent);
+    debounce((fileContentString) => {
+      localStorage.setItem(draftKey, fileContentString);
       console.log(`Draft saved for ${filePath}.`);
     }, 1000),
-    [draftKey, filePath]
+    [draftKey]
   );
 
   useEffect(() => {
@@ -194,39 +189,35 @@ function EditorPage() {
     fetchAndParseContent();
   }, [repo, filePath, draftKey]);
 
-  useEffect(() => {
-    // When the user switches to the preview tab, check if a preview already exists.
-    if (activeTab === 'preview') {
-      loadPreview();
-    }
-  }, [activeTab]);
-
-  const handleEditorChange = (newContent) => {
+  const handleEditorChange = useCallback((newContent) => {
     setContent(newContent);
 
-    if (fileType === 'astro-ast' && originalSections.length > 0) {
-      saveDraft(newContent, frontmatter, originalBody, originalSections);
-    } else if (fileType !== 'astro-ast') {
-      const fullContent = matter.stringify(newContent, frontmatter);
-      localStorage.setItem(draftKey, fullContent);
-    }
-  };
+    setFrontmatter(prevFrontmatter => {
+      let updatedFrontmatter = prevFrontmatter;
+      if (fileType === 'astro-ast' && originalSections.length > 0) {
+        const updatedSections = editableHTMLToSections(newContent, originalSections);
+        updatedFrontmatter = { ...prevFrontmatter, sections: updatedSections };
+      }
+
+      const fullContent = fileType === 'astro-ast'
+        ? stringifyAstroFile(updatedFrontmatter, originalBody)
+        : matter.stringify(newContent, updatedFrontmatter);
+
+      saveDraft(fullContent);
+
+      return updatedFrontmatter;
+    });
+  }, [fileType, originalSections, originalBody, saveDraft]);
   
   const triggerBuild = async () => {
     console.log('Triggering preview build...');
     setPreviewDisplay('loading');
     try {
-      // This now calls the serverless function.
       const response = await fetch('/api/trigger-build', { method: 'POST', credentials: 'include' });
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          message: `Failed to trigger build (HTTP ${response.status}).`
-        }));
-        // Use the detailed message from the API or a fallback.
+        const errorData = await response.json().catch(() => ({ message: `Failed to trigger build (HTTP ${response.status}).` }));
         throw new Error(errorData.message || 'An unknown error occurred while triggering the build.');
       }
-      // If the trigger request was accepted, start polling for status.
-      pollForBuildStatus();
     } catch (error) {
       console.error('Failed to trigger build:', error.message);
       setBuildInfo({
@@ -237,73 +228,74 @@ function EditorPage() {
     }
   };
 
-  const pollForBuildStatus = () => {
-    const intervalId = setInterval(async () => {
-      try {
-        // This now calls the serverless function.
-        const response = await fetch(`/api/build-status?t=${Date.now()}`, { credentials: 'include' });
+  useEffect(() => {
+    if (activeTab === 'preview' && previewDisplay === 'instructions') {
+        const checkInitialStatus = async () => {
+            try {
+                const response = await fetch(`/api/build-status?t=${Date.now()}`, { credentials: 'include' });
+                if (response.ok) {
+                    const latestRun = await response.json();
+                    if (latestRun.status === 'completed' && latestRun.conclusion === 'success') {
+                        setBuildInfo(latestRun);
+                        setPreviewDisplay('iframe');
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to check initial build status:', error);
+            }
+        };
+        checkInitialStatus();
+    }
 
-        if (!response.ok) {
-          clearInterval(intervalId);
-          const errorData = await response.json().catch(() => ({
-            message: `An unexpected error occurred (HTTP ${response.status}).`
-          }));
-          setBuildInfo({
-            message: 'Failed to check build status.',
-            details: errorData.message
-          });
-          setPreviewDisplay('error');
-          return;
-        }
+    if (previewDisplay !== 'loading') {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const checkStatus = async () => {
+      if (isCancelled) return;
+
+      try {
+        const response = await fetch(`/api/build-status?t=${Date.now()}`, { credentials: 'include' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const latestRun = await response.json();
+        if (isCancelled) return;
+
         setBuildInfo(latestRun);
 
         if (latestRun.status === 'completed') {
-          clearInterval(intervalId);
           if (latestRun.conclusion === 'success') {
             setPreviewDisplay('iframe');
           } else {
             setPreviewDisplay('error');
           }
+          return; // Stop polling
         }
+
+        // Continue polling if not completed
+        setTimeout(checkStatus, 3000);
       } catch (error) {
-        clearInterval(intervalId);
-        setBuildInfo({ message: 'Error checking build status.', details: error.message });
-        setPreviewDisplay('error');
+        if (!isCancelled) {
+          console.error('Build status check failed:', error);
+          setBuildInfo({
+            message: 'Failed to check build status.',
+            details: error.message
+          });
+          setPreviewDisplay('error');
+        }
       }
-    }, 3000);
+    };
 
-    setTimeout(() => {
-      clearInterval(intervalId);
-    }, 180000);
-  };
+    const pollerTimeout = setTimeout(checkStatus, 3000);
 
-  // This function checks the last build status to see if a valid preview already exists.
-  const loadPreview = async () => {
-    setPreviewDisplay('loading');
-    try {
-      // This now calls the serverless function.
-      const response = await fetch(`/api/build-status?t=${Date.now()}`, { credentials: 'include' });
-      if (!response.ok) {
-        setPreviewDisplay('instructions');
-        return;
-      }
-      const latestRun = await response.json();
-      setBuildInfo(latestRun);
-
-      // If the latest run was successful, show the preview.
-      if (latestRun.status === 'completed' && latestRun.conclusion === 'success') {
-        setPreviewDisplay('iframe');
-      } else {
-        // Otherwise, show instructions to start a new build.
-        setPreviewDisplay('instructions');
-      }
-    } catch (error) {
-      console.error('Failed to load preview status:', error);
-      setPreviewDisplay('instructions');
-    }
-  };
+    // Cleanup function
+    return () => {
+      isCancelled = true;
+      clearTimeout(pollerTimeout);
+    };
+  }, [previewDisplay, activeTab]);
 
 
   if (loading || content === null) {
@@ -403,21 +395,11 @@ function EditorPage() {
                     </div>
                   )}
                   {previewDisplay === 'iframe' && (
-                    <div className="w-full h-full flex flex-col">
-                       <div className="p-2 bg-gray-50 border-b flex items-center justify-between gap-4">
-                         <p className="text-sm text-gray-600">
-                          Last built: {buildInfo ? new Date(buildInfo.updated_at).toLocaleString() : 'N/A'}
-                        </p>
-                        <button onClick={triggerBuild} className="px-4 py-1 bg-blue-500 text-white text-sm font-semibold rounded hover:bg-blue-600">
-                          Rebuild
-                        </button>
-                      </div>
-                      <iframe
-                        key={buildInfo ? buildInfo.id : 'initial'}
-                        src={`/preview/?v=${buildInfo ? buildInfo.id : 'initial'}`}
-                        title="Static Preview"
-                        className="w-full flex-grow border-0 h-[600px]"
-                      />
+                    <div className="w-full h-[600px] flex flex-col">
+                       <PreviewFrame
+                         src={`/preview/?v=${buildInfo?.id || Date.now()}`}
+                         onReload={triggerBuild}
+                       />
                     </div>
                   )}
                 </div>
