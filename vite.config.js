@@ -6,11 +6,16 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      // Specific routes for the build-trigger server must come first
       '/api/trigger-build': {
         target: 'http://localhost:3002',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/trigger-build/, '/api/trigger-build'),
       },
+      '/api/build-status': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+      // A general catch-all for all other API calls to the Wrangler server
       '/api': {
         target: 'http://localhost:8787',
         changeOrigin: true,
