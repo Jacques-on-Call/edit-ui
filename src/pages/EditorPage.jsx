@@ -215,7 +215,7 @@ function EditorPage() {
     setPreviewDisplay('loading');
     try {
       // This now calls the serverless function.
-      const response = await fetch('/api/trigger-build', { method: 'POST' });
+      const response = await fetch('/api/trigger-build', { method: 'POST', credentials: 'include' });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({
           message: `Failed to trigger build (HTTP ${response.status}).`
@@ -239,7 +239,7 @@ function EditorPage() {
     const intervalId = setInterval(async () => {
       try {
         // This now calls the serverless function.
-        const response = await fetch(`/api/build-status?t=${Date.now()}`);
+        const response = await fetch(`/api/build-status?t=${Date.now()}`, { credentials: 'include' });
 
         if (!response.ok) {
           clearInterval(intervalId);
@@ -282,7 +282,7 @@ function EditorPage() {
     setPreviewDisplay('loading');
     try {
       // This now calls the serverless function.
-      const response = await fetch(`/api/build-status?t=${Date.now()}`);
+      const response = await fetch(`/api/build-status?t=${Date.now()}`, { credentials: 'include' });
       if (!response.ok) {
         setPreviewDisplay('instructions');
         return;
