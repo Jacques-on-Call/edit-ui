@@ -214,6 +214,7 @@ function EditorPage() {
     console.log('Triggering preview build...');
     setPreviewDisplay('loading');
     try {
+      // This now calls the serverless function.
       const response = await fetch('/api/trigger-build', { method: 'POST' });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({
@@ -237,6 +238,7 @@ function EditorPage() {
   const pollForBuildStatus = () => {
     const intervalId = setInterval(async () => {
       try {
+        // This now calls the serverless function.
         const response = await fetch(`/api/build-status?t=${Date.now()}`);
 
         if (!response.ok) {
@@ -279,6 +281,7 @@ function EditorPage() {
   const loadPreview = async () => {
     setPreviewDisplay('loading');
     try {
+      // This now calls the serverless function.
       const response = await fetch(`/api/build-status?t=${Date.now()}`);
       if (!response.ok) {
         setPreviewDisplay('instructions');
