@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
-import AssignTemplateModal from './AssignTemplateModal';
 import ContextMenu from './ContextMenu';
 import ConfirmDialog from './ConfirmDialog';
 import RenameModal from './RenameModal';
@@ -24,36 +23,10 @@ function FileExplorer({ repo }) {
   const [readmeContent, setReadmeContent] = useState(null);
   const [isReadmeLoading, setReadmeLoading] = useState(false);
   const [isReadmeVisible, setReadmeVisible] = useState(true);
-  const [fileToAssignLayout, setFileToAssignLayout] = useState(null);
   const navigate = useNavigate();
 
   const handleNewLayout = () => {
     navigate('/layouts');
-  };
-
-  const handleAssignLayoutRequest = (file) => {
-    setFileToAssignLayout(file);
-  };
-
-  const handleAssignLayoutConfirm = async (file, templateId) => {
-    try {
-      const response = await fetch(`/api/pages/${file.path}/assign-template`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          credentials: 'include',
-        },
-        body: JSON.stringify({ template_id: templateId }),
-      });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || `Failed to assign layout. Status: ${response.status}`);
-      }
-      console.log(`Successfully assigned layout to ${file.name}`);
-      setFileToAssignLayout(null);
-    } catch (error) {
-      console.error('Assign layout error:', error.message);
-    }
   };
 
   const fetchMetadata = useCallback(async (file) => {
@@ -221,8 +194,7 @@ function FileExplorer({ repo }) {
         </div>
       </div>
       {isCreateModalOpen && <CreateModal path={path} repo={repo} onClose={() => setCreateModalOpen(false)} onCreate={fetchFiles} />}
-      {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} file={contextMenu.file} onClose={handleCloseContextMenu} onRename={handleRenameRequest} onDelete={handleDeleteRequest} onDuplicate={handleDuplicate} onShare={handleShare} onAssignLayout={handleAssignLayoutRequest} />}
-      {fileToAssignLayout && <AssignTemplateModal file={fileToAssignLayout} onClose={() => setFileToAssignLayout(null)} onAssign={handleAssignLayoutConfirm} />}
+      {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} file={contextMenu.file} onClose={handleCloseContextMenu} onRename={handleRenameRequest} onDelete={handleDeleteRequest} onDuplicate={handleDuplicate} onShare={handleShare} />}
       {fileToDelete && <ConfirmDialog message={`Are you sure you want to delete "${fileToDelete.name}"?`} onConfirm={handleDeleteConfirm} onCancel={() => setFileToDelete(null)} />}
       {fileToRename && <RenameModal file={fileToRename} onClose={() => setFileToRename(null)} onRename={handleRenameConfirm} />}
     </div>

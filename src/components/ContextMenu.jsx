@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-function ContextMenu({ x, y, file, onClose, onRename, onDelete, onDuplicate, onShare, onAssignLayout }) {
+function ContextMenu({ x, y, file, onClose, onRename, onDelete, onDuplicate, onShare }) {
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -40,21 +40,12 @@ function ContextMenu({ x, y, file, onClose, onRename, onDelete, onDuplicate, onS
           </button>
         </li>
         {file.type !== 'dir' && (
-        <>
-          <div className="border-t my-1 border-gray-200"></div>
-          <li>
-            <button onClick={() => handleAction(onAssignLayout)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-              Assign Layout
-            </button>
-          </li>
           <li>
             <button onClick={() => handleAction(onDuplicate)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
               Duplicate
             </button>
           </li>
-        </>
         )}
-      <div className="border-t my-1 border-gray-200"></div>
         <li>
           <button onClick={() => handleAction(onShare)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
             Share

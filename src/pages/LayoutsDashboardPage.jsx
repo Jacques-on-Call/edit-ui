@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import NewTemplateModal from '../components/NewTemplateModal';
 import Icon from '../components/Icon';
+
+// Mock data to simulate fetching from an API
+const mockTemplates = [
+  { id: 1, name: 'Blog Post', updated_at: '2025-10-07T10:00:00Z' },
+  { id: 2, name: 'Service Page', updated_at: '2025-10-06T15:30:00Z' },
+  { id: 3, name: 'Contact Us', updated_at: '2025-10-05T12:00:00Z' },
+];
 
 const LayoutsDashboardPage = () => {
   const [templates, setTemplates] = useState([]);
@@ -11,27 +18,20 @@ const LayoutsDashboardPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchTemplates = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/layout-templates', { credentials: 'include' });
-        if (!response.ok) {
-          throw new Error(`Failed to fetch layout templates: ${response.statusText}`);
-        }
-        const data = await response.json();
-        setTemplates(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTemplates();
+    // Simulate fetching data
+    setLoading(true);
+    setTimeout(() => {
+      setTemplates(mockTemplates);
+      setLoading(false);
+    }, 500);
   }, []);
 
   const handleCreateNewTemplate = (templateName) => {
-    const encodedName = encodeURIComponent(templateName);
-    navigate(`/layout-editor?template_name=${encodedName}`);
+    console.log(`Creating new template named: ${templateName}`);
+    // In a real implementation, this would navigate to the editor:
+    // const encodedName = encodeURIComponent(templateName);
+    // navigate(`/layout-editor?template_name=${encodedName}`);
+    alert(`(Placeholder) Would create new template: "${templateName}"`);
     setModalOpen(false);
   };
 
@@ -62,12 +62,12 @@ const LayoutsDashboardPage = () => {
                     Last updated: {new Date(template.updated_at).toLocaleString()}
                   </p>
                 </div>
-                <Link
-                  to={`/layout-editor?template_id=${template.id}`}
+                <button
+                  onClick={() => alert(`(Placeholder) Would navigate to editor for template ID: ${template.id}`)}
                   className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
                 >
                   Edit
-                </Link>
+                </button>
               </li>
             ))
           ) : (

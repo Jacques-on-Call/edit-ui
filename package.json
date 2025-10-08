@@ -14,7 +14,6 @@
     "build:preview": "node build-preview.js"
   },
   "dependencies": {
-    "@craftjs/core": "^0.2.12",
     "@tinymce/tinymce-react": "^6.3.0",
     "buffer": "^6.0.3",
     "gray-matter": "^4.0.3",
@@ -27,8 +26,7 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.9.3",
     "remark-gfm": "^4.0.1",
-    "turndown": "^7.2.0",
-    "zod": "^4.1.12"
+    "turndown": "^7.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
