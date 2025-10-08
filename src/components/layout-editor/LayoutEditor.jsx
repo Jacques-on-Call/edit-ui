@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Sidebar } from './Sidebar';
 import { Page } from './render/Page';
-import { EditorBlock } from './Block.editor';
+import { EditorSection } from './Section.editor';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -122,7 +122,7 @@ export const LayoutEditor = () => {
     <Editor
       resolver={{
         Page,
-        EditorBlock
+        EditorSection
       }}
     >
       <LayoutEditorInner templateName={currentTemplateName} templateId={templateId} initialJson={initialJson} />

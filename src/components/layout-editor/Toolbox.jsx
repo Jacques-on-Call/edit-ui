@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEditor } from '@craftjs/core';
-import { EditorBlock } from './Block.editor';
+import { EditorSection } from './Section.editor';
 
 const DraggableItem = ({ component, name }) => {
   const { connectors } = useEditor();
@@ -19,7 +19,7 @@ export const Toolbox = () => {
     <div>
       <h2 className="text-md font-medium mb-2">Toolbox</h2>
       <p className="text-sm text-gray-600 mb-4">Drag components to the canvas</p>
-      <DraggableItem component={<EditorBlock />} name="Block" />
+      <DraggableItem component={<EditorSection />} name="Section" />
       {/* Add other draggable components here */}
     </div>
   );

@@ -1,23 +1,23 @@
 import React from 'react';
 import { Canvas } from '@craftjs/core';
-import { Block } from './render/Block';
+import { Section } from './render/Section';
 
-export const EditorBlock = (props) => {
+export const EditorSection = (props) => {
   return (
-    <Block {...props}>
-      <Canvas id="block-canvas" />
-    </Block>
+    <Section {...props}>
+      <Canvas id="section-canvas" />
+    </Section>
   );
 };
 
-EditorBlock.craft = {
-  displayName: 'Block',
+EditorSection.craft = {
+  displayName: 'Section',
   isCanvas: true, // Allows other components to be dropped inside
   props: {
     style: {
       padding: '16px',
       border: '1px dashed #ccc',
-      minHeight: '50px',
+      minHeight: '100px',
     },
   },
   related: {

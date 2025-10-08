@@ -10,6 +10,7 @@ const DefaultHeader = () => (
       </Link>
       <div className="flex items-center space-x-4">
         <Link to="/explorer" className="text-gray-600 hover:text-gray-800">Explorer</Link>
+        <Link to="/layouts" className="text-gray-600 hover:text-gray-800">Layouts</Link>
         <Link to="/preview" className="text-gray-600 hover:text-gray-800">Preview</Link>
       </div>
     </nav>
