@@ -1,3 +1,4 @@
+// Force new deployment hash: 2025-10-07 22:56
 const GITHUB_API_URL = 'https://api.github.com';
 
 const corsHeaders = (origin) => ({
