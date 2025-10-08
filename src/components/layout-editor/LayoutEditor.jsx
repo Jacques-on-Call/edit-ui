@@ -9,7 +9,6 @@ import { EditorHero } from './blocks/Hero.editor';
 import { EditorFeatureGrid } from './blocks/FeatureGrid.editor';
 import { EditorTestimonial } from './blocks/Testimonial.editor';
 import { EditorCTA } from './blocks/CTA.editor';
-import { TouchBackend } from 'react-dnd-touch-backend';
 import { EditorFooter } from './blocks/Footer.editor';
 
 function useQuery() {
@@ -44,7 +43,7 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate }) => {
   };
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex flex-col md:flex-row h-screen w-full bg-gray-100">
       <div className="flex-1 overflow-auto">
         <Frame />
       </div>
@@ -107,12 +106,6 @@ export const LayoutEditor = () => {
 
   return (
     <Editor
-      backend={TouchBackend}
-      backendOptions={{
-        enableMouseEvents: true,
-        touchSlop: 2,
-        ignoreContextMenu: true,
-      }}
       resolver={{
         Page,
         EditorSection,

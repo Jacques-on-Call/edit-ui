@@ -29,20 +29,20 @@ export const Sidebar = ({ onSave }) => {
 
   return (
     <>
-      <div className="w-96 bg-gray-50 border-l border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
+      <div className="w-full md:w-96 bg-gray-50 border-t md:border-t-0 md:border-l border-gray-200 flex flex-col">
+        <div className="p-4 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-800">
             {selected ? `Settings: ${selected.name}` : 'Toolbox'}
           </h2>
         </div>
         <div className="flex-grow overflow-y-auto">
           {selected && selected.settings ? (
-            React.createElement(selected.settings)
+            <div className="p-4">{React.createElement(selected.settings)}</div>
           ) : (
             <Toolbox />
           )}
         </div>
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200 flex-shrink-0">
           <div className="flex space-x-2">
             <button
               onClick={onSave}
