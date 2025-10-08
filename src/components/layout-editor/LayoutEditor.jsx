@@ -11,6 +11,7 @@ import { EditorFeatureGrid } from './blocks/FeatureGrid.editor';
 import { EditorTestimonial } from './blocks/Testimonial.editor';
 import { EditorCTA } from './blocks/CTA.editor';
 import { EditorFooter } from './blocks/Footer.editor';
+import { EditorProvider } from './EditorContext';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -136,25 +137,27 @@ export const LayoutEditor = () => {
   }
 
   return (
-    <Editor
-      resolver={{
-        Page,
-        EditorSection,
-        EditorHero,
-        EditorFeatureGrid,
-        EditorTestimonial,
-        EditorCTA,
-        EditorFooter,
-      }}
-      json={initialJson} // State is loaded declaratively here.
-    >
-      <LayoutEditorInner
-        templateId={templateId}
-        currentTemplateName={currentTemplateName}
-        isStarter={isStarter}
-        navigate={navigate}
-        onNameUpdate={setCurrentTemplateName}
-      />
-    </Editor>
+    <EditorProvider value={{ pageType: currentTemplateName }}>
+      <Editor
+        resolver={{
+          Page,
+          EditorSection,
+          EditorHero,
+          EditorFeatureGrid,
+          EditorTestimonial,
+          EditorCTA,
+          EditorFooter,
+        }}
+        json={initialJson} // State is loaded declaratively here.
+      >
+        <LayoutEditorInner
+          templateId={templateId}
+          currentTemplateName={currentTemplateName}
+          isStarter={isStarter}
+          navigate={navigate}
+          onNameUpdate={setCurrentTemplateName}
+        />
+      </Editor>
+    </EditorProvider>
   );
 };
