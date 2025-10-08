@@ -5,21 +5,19 @@ import JsonDebugModal from './JsonDebugModal';
 
 export const Sidebar = ({ onSave }) => {
   const [isJsonDebugModalOpen, setJsonDebugModalOpen] = useState(false);
-  const { selected, related, query, enabled } = useEditor((state, query) => {
+  const { selected, enabled, query } = useEditor((state) => {
     const [selectedId] = state.events.selected;
     let selectedNode;
     if (selectedId) {
-      selectedNode = {
-        id: selectedId,
-        name: state.nodes[selectedId].data.displayName,
-        settings: state.nodes[selectedId].related && state.nodes[selectedId].related.settings,
-      };
+        selectedNode = {
+            id: selectedId,
+            name: state.nodes[selectedId].data.displayName,
+            settings: state.nodes[selectedId].related && state.nodes[selectedId].related.settings,
+        };
     }
     return {
-      selected: selectedNode,
-      related,
-      query,
-      enabled: state.options.enabled,
+        selected: selectedNode,
+        enabled: state.options.enabled,
     };
   });
 
