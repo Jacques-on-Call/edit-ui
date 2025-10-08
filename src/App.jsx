@@ -7,7 +7,6 @@ import ExplorerPage from './pages/ExplorerPage';
 import EditorPage from './pages/EditorPage';
 import LayoutsDashboardPage from './pages/LayoutsDashboardPage';
 import LayoutEditorPage from './pages/LayoutEditorPage';
-import LayoutPreviewPage from './pages/LayoutPreviewPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
@@ -16,7 +15,6 @@ function App() {
       {/* Standalone routes without the AppLayout */}
       <Route path="/" element={<LoginPage />} />
       <Route path="/callback" element={<CallbackPage />} />
-      <Route path="/preview/type/:pageType" element={<LayoutPreviewPage />} />
 
       <Route path="/repository-selection" element={<RepositorySelectionPage />} />
 

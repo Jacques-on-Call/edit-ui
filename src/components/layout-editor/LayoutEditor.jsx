@@ -3,6 +3,7 @@ import { Editor, Frame, useEditor } from '@craftjs/core';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Sidebar } from './Sidebar';
+import SaveAsModal from '../SaveAsModal';
 import { Page } from './render/Page';
 import { EditorSection } from './Section.editor';
 import { EditorHero } from './blocks/Hero.editor';
@@ -17,38 +18,62 @@ function useQuery() {
 
 // This inner component is rendered within the <Editor> provider's context.
 // It has access to the editor's state and actions through the useEditor hook.
-const LayoutEditorInner = ({ templateId, currentTemplateName, navigate }) => {
+const LayoutEditorInner = ({ templateId, currentTemplateName, isStarter, navigate, onNameUpdate }) => {
   const { query } = useEditor();
+  const [isSaveAsModalOpen, setSaveAsModalOpen] = useState(false);
 
-  const handleSave = async () => {
+  const performSave = async (name) => {
     const json = query.serialize();
     try {
       const response = await fetch(`/api/layout-templates`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ json_content: json, name: currentTemplateName }),
+        body: JSON.stringify({ json_content: JSON.parse(json), name }),
       });
       const data = await response.json();
       if (!data.success) throw new Error(data.error || 'Failed to save.');
 
-      console.log(`Template '${currentTemplateName}' saved successfully!`);
+      console.log(`Template '${name}' saved successfully!`);
 
-      if (!templateId && data.template_id) {
-        navigate(`/layout-editor?template_id=${data.template_id}`, { replace: true });
-      }
+      // After a successful save, navigate to the new, permanent URL for the template
+      navigate(`/layout-editor?template_id=${data.template_id}`, { replace: true });
     } catch (error) {
       console.error(`Save error: ${error.message}`);
     }
   };
 
+  const handleSave = () => {
+    // If it's a starter template that hasn't been saved yet (no ID), open the 'Save As' modal.
+    if (isStarter && !templateId) {
+      setSaveAsModalOpen(true);
+    } else {
+      performSave(currentTemplateName);
+    }
+  };
+
+  const handleConfirmSaveAs = async (newName) => {
+    setSaveAsModalOpen(false);
+    onNameUpdate(newName); // Update the name in the parent component
+    await performSave(newName);
+  };
+
   return (
-    <div className="flex h-screen w-full">
-      <div className="flex-1 overflow-auto">
-        <Frame />
+    <>
+      <div className="flex h-screen w-full">
+        <div className="flex-1 overflow-auto">
+          <Frame />
+        </div>
+        <Sidebar onSave={handleSave} />
       </div>
-      <Sidebar onSave={handleSave} />
-    </div>
+      {isSaveAsModalOpen && (
+        <SaveAsModal
+          onClose={() => setSaveAsModalOpen(false)}
+          onSubmit={handleConfirmSaveAs}
+          initialName={currentTemplateName}
+        />
+      )}
+    </>
   );
 };
 
@@ -56,15 +81,21 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate }) => {
 export const LayoutEditor = () => {
   const query = useQuery();
   const navigate = useNavigate();
+  const location = useLocation();
   const templateId = query.get('template_id');
   const templateName = query.get('template_name');
 
+  const { templateJson: starterJson, templateName: starterName, isStarter } = location.state || {};
+
   const [initialJson, setInitialJson] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [currentTemplateName, setCurrentTemplateName] = useState(templateName);
+  const [currentTemplateName, setCurrentTemplateName] = useState(templateName || starterName);
 
   useEffect(() => {
-    if (templateId) {
+    if (isStarter && starterJson) {
+      setInitialJson(starterJson);
+      setLoading(false);
+    } else if (templateId) {
       setLoading(true);
       fetch(`/api/layout-templates?template_id=${templateId}`, { credentials: 'include' })
         .then(res => {
@@ -96,7 +127,7 @@ export const LayoutEditor = () => {
     } else {
       setLoading(false);
     }
-  }, [templateId, templateName]);
+  }, [templateId, templateName, isStarter, starterJson]);
 
   if (loading) return <div className="p-8 animate-pulse">Loading Editor...</div>;
 
@@ -120,7 +151,9 @@ export const LayoutEditor = () => {
       <LayoutEditorInner
         templateId={templateId}
         currentTemplateName={currentTemplateName}
+        isStarter={isStarter}
         navigate={navigate}
+        onNameUpdate={setCurrentTemplateName}
       />
     </Editor>
   );
