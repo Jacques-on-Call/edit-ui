@@ -6,6 +6,7 @@ import RepositorySelectionPage from './pages/RepositorySelectionPage';
 import ExplorerPage from './pages/ExplorerPage';
 import EditorPage from './pages/EditorPage';
 import LayoutsDashboardPage from './pages/LayoutsDashboardPage';
+import LayoutEditorPage from './pages/LayoutEditorPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
       <Route element={<AppLayout />}>
         <Route path="/explorer" element={<ExplorerPage />} />
         <Route path="/layouts" element={<ErrorBoundary><LayoutsDashboardPage /></ErrorBoundary>} />
+        <Route path="/layout-editor" element={<LayoutEditorPage />} />
         <Route path="/editor" element={<ErrorBoundary><EditorPage /></ErrorBoundary>} />
       </Route>
     </Routes>
