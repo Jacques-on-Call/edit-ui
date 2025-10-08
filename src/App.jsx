@@ -17,12 +17,12 @@ function App() {
       <Route path="/callback" element={<CallbackPage />} />
 
       <Route path="/repository-selection" element={<RepositorySelectionPage />} />
-      <Route path="/layout-editor" element={<LayoutEditorPage />} />
 
       {/* Routes that use the AppLayout */}
       <Route element={<AppLayout />}>
         <Route path="/explorer" element={<ExplorerPage />} />
         <Route path="/layouts" element={<ErrorBoundary><LayoutsDashboardPage /></ErrorBoundary>} />
+        <Route path="/layout-editor" element={<LayoutEditorPage />} />
         <Route path="/editor" element={<ErrorBoundary><EditorPage /></ErrorBoundary>} />
       </Route>
     </Routes>

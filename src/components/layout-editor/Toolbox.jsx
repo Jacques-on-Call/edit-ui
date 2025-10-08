@@ -12,7 +12,8 @@ const DraggableItem = ({ component, name }) => {
   return (
     <div
       ref={(ref) => connectors.create(ref, component)}
-      className="p-3 bg-white border border-gray-300 rounded-lg cursor-grab hover:bg-gray-100 hover:shadow-md transition-all text-center flex-shrink-0 w-28 md:w-auto"
+      className="p-2 border rounded-md bg-white cursor-grab text-center text-sm"
+      style={{ userSelect: 'none', WebkitUserSelect: 'none' }} // Prevents text selection on drag
     >
       {name}
     </div>
@@ -21,15 +22,13 @@ const DraggableItem = ({ component, name }) => {
 
 export const Toolbox = () => {
   return (
-    <div className="p-2 md:p-4">
-      <div className="flex space-x-2 overflow-x-auto md:grid md:grid-cols-2 md:gap-2 md:space-x-0">
-        <DraggableItem component={<EditorSection />} name="Section" />
-        <DraggableItem component={<EditorHero />} name="Hero" />
-        <DraggableItem component={<EditorFeatureGrid />} name="Features" />
-        <DraggableItem component={<EditorTestimonial />} name="Testimonial" />
-        <DraggableItem component={<EditorCTA />} name="CTA" />
-        <DraggableItem component={<EditorFooter />} name="Footer" />
-      </div>
+    <div className="flex space-x-2 overflow-x-auto py-1">
+      <DraggableItem component={<EditorSection />} name="Section" />
+      <DraggableItem component={<EditorHero />} name="Hero" />
+      <DraggableItem component={<EditorFeatureGrid />} name="Features" />
+      <DraggableItem component={<EditorTestimonial />} name="Testimonial" />
+      <DraggableItem component={<EditorCTA />} name="CTA" />
+      <DraggableItem component={<EditorFooter />} name="Footer" />
     </div>
   );
 };
