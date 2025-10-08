@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
-import NewTemplateModal from './NewTemplateModal';
 import AssignTemplateModal from './AssignTemplateModal';
 import ContextMenu from './ContextMenu';
 import ConfirmDialog from './ConfirmDialog';
@@ -25,18 +24,11 @@ function FileExplorer({ repo }) {
   const [readmeContent, setReadmeContent] = useState(null);
   const [isReadmeLoading, setReadmeLoading] = useState(false);
   const [isReadmeVisible, setReadmeVisible] = useState(true);
-  const [isNewTemplateModalOpen, setNewTemplateModalOpen] = useState(false);
   const [fileToAssignLayout, setFileToAssignLayout] = useState(null);
   const navigate = useNavigate();
 
   const handleNewLayout = () => {
-    setNewTemplateModalOpen(true);
-  };
-
-  const handleCreateNewTemplate = (templateName) => {
-    const encodedName = encodeURIComponent(templateName);
-    navigate(`/layout-editor?template_name=${encodedName}`);
-    setNewTemplateModalOpen(false);
+    navigate('/layouts');
   };
 
   const handleAssignLayoutRequest = (file) => {
@@ -53,15 +45,14 @@ function FileExplorer({ repo }) {
         },
         body: JSON.stringify({ template_id: templateId }),
       });
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to assign layout');
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || `Failed to assign layout. Status: ${response.status}`);
       }
-      alert(`Successfully assigned layout to ${file.name}`);
+      console.log(`Successfully assigned layout to ${file.name}`);
       setFileToAssignLayout(null);
     } catch (error) {
-      console.error('Assign layout error:', error);
-      alert(`Error assigning layout: ${error.message}`);
+      console.error('Assign layout error:', error.message);
     }
   };
 
@@ -203,10 +194,10 @@ function FileExplorer({ repo }) {
             <button
                 className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-200"
                 onClick={handleNewLayout}
-                title="Create a new reusable layout template"
+                title="Manage Layouts"
             >
                 <Icon name="layout-editor" className="h-6 w-6" />
-                <span className="font-semibold hidden sm:inline">New Layout</span>
+                <span className="font-semibold hidden sm:inline">Layouts</span>
             </button>
         </div>
         <div className="flex-1 flex justify-center">
@@ -230,7 +221,6 @@ function FileExplorer({ repo }) {
         </div>
       </div>
       {isCreateModalOpen && <CreateModal path={path} repo={repo} onClose={() => setCreateModalOpen(false)} onCreate={fetchFiles} />}
-      {isNewTemplateModalOpen && <NewTemplateModal onClose={() => setNewTemplateModalOpen(false)} onSubmit={handleCreateNewTemplate} />}
       {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} file={contextMenu.file} onClose={handleCloseContextMenu} onRename={handleRenameRequest} onDelete={handleDeleteRequest} onDuplicate={handleDuplicate} onShare={handleShare} onAssignLayout={handleAssignLayoutRequest} />}
       {fileToAssignLayout && <AssignTemplateModal file={fileToAssignLayout} onClose={() => setFileToAssignLayout(null)} onAssign={handleAssignLayoutConfirm} />}
       {fileToDelete && <ConfirmDialog message={`Are you sure you want to delete "${fileToDelete.name}"?`} onConfirm={handleDeleteConfirm} onCancel={() => setFileToDelete(null)} />}

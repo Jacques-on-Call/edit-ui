@@ -5,13 +5,16 @@ import JsonDebugModal from './JsonDebugModal';
 
 export const Sidebar = ({ saveLayout }) => {
   const [isJsonDebugModalOpen, setJsonDebugModalOpen] = useState(false);
-  const { selected, query } = useEditor((state, query) => ({
+  const { selected, query, enabled } = useEditor((state, query) => ({
     selected: state.events.selected,
     query: query,
+    enabled: state.options.enabled,
   }));
 
   const handleShowJson = () => {
-    setJsonDebugModalOpen(true);
+    if (enabled) {
+      setJsonDebugModalOpen(true);
+    }
   };
 
   return (
@@ -38,20 +41,22 @@ export const Sidebar = ({ saveLayout }) => {
             <button
               onClick={saveLayout}
               className="flex-grow bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+              disabled={!enabled}
             >
               Save Layout
             </button>
             <button
               onClick={handleShowJson}
-              className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+              className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
               title="Show Live JSON State"
+              disabled={!enabled}
             >
               JSON
             </button>
           </div>
         </div>
       </div>
-      {isJsonDebugModalOpen && (
+      {enabled && isJsonDebugModalOpen && (
         <JsonDebugModal
           json={JSON.parse(query.serialize())}
           onClose={() => setJsonDebugModalOpen(false)}

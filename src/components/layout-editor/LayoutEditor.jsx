@@ -33,7 +33,7 @@ const LayoutEditorInner = ({ templateName, templateId, initialJson }) => {
       });
       const data = await response.json();
       if (data.success) {
-        alert(`Template '${templateName}' saved successfully!`);
+        console.log(`Template '${templateName}' saved successfully!`);
         // If this was a new template, update the URL to use its new ID
         if (!templateId && data.template_id) {
           navigate(`/layout-editor?template_id=${data.template_id}`, { replace: true });
@@ -42,8 +42,7 @@ const LayoutEditorInner = ({ templateName, templateId, initialJson }) => {
         throw new Error(data.error || 'Failed to save layout template');
       }
     } catch (error) {
-      console.error('Save error:', error);
-      alert(`Error saving layout: ${error.message}`);
+      console.error(`Error saving layout: ${error.message}`);
     }
   };
 
@@ -84,8 +83,7 @@ export const LayoutEditor = () => {
             throw new Error(`Failed to fetch layout template: ${response.statusText}`);
           }
         } catch (error) {
-          console.error('Fetch error:', error);
-          alert(`Error loading layout: ${error.message}`);
+          console.error(`Error loading layout: ${error.message}`);
         } finally {
           setLoading(false);
         }
