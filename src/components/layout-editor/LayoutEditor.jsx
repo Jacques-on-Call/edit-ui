@@ -108,7 +108,11 @@ export const LayoutEditor = () => {
   return (
     <Editor
       backend={TouchBackend}
-      backendOptions={{ enableMouseEvents: true }}
+      backendOptions={{
+        enableMouseEvents: true,
+        touchSlop: 2,
+        ignoreContextMenu: true,
+      }}
       resolver={{
         Page,
         EditorSection,
