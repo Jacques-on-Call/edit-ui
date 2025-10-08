@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import NewTemplateModal from '../components/NewTemplateModal';
 import Icon from '../components/Icon';
-import { starterTemplates } from '../utils/starter-templates';
 
 const LayoutsDashboardPage = () => {
   const [templates, setTemplates] = useState([]);
@@ -80,27 +79,6 @@ const LayoutsDashboardPage = () => {
             </li>
           )}
         </ul>
-      </div>
-
-      <div className="mt-12">
-        <h2 className="text-xl font-bold text-gray-700 mb-4">Or, Start from a Template</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {starterTemplates.map((template) => (
-            <div key={template.name} className="bg-white shadow-lg rounded-lg p-6 flex flex-col justify-between border border-gray-200 hover:shadow-xl transition-shadow">
-              <div>
-                <h3 className="font-semibold text-lg text-gray-900">{template.name}</h3>
-                <p className="text-sm text-gray-500 mt-1">A professional, pre-built layout to get you started quickly.</p>
-              </div>
-              <Link
-                to={`/layout-editor`}
-                state={{ templateJson: template.json, templateName: template.name, isStarter: true }}
-                className="mt-6 bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors text-center"
-              >
-                Use Template
-              </Link>
-            </div>
-          ))}
-        </div>
       </div>
 
       {isModalOpen && <NewTemplateModal onClose={() => setModalOpen(false)} onSubmit={handleCreateNewTemplate} />}
