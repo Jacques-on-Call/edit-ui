@@ -18,7 +18,8 @@ const LayoutsDashboardPage = () => {
         throw new Error(`Failed to fetch layout templates: ${response.statusText}`);
       }
       const data = await response.json();
-      setTemplates(data);
+      // Defensively ensure that we always set an array to prevent render crashes
+      setTemplates(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message);
     } finally {
