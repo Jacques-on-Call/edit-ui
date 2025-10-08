@@ -32,6 +32,11 @@ The local development environment is designed to mimic the Cloudflare Pages prod
     *   **Draft-First Workflow:** The editor automatically saves a draft of the user's work to `localStorage` every second, preventing data loss. It loads from this draft if one is found.
     *   **Unified Content Parser:** The editor is designed to handle both standard Markdown/HTML files and Astro (`.astro`) files with JavaScript frontmatter. It uses a `unifiedParser.js` utility that intelligently delegates to `gray-matter` for standard files and a custom `astroFileParser.js` for Astro files. This parser separates the frontmatter from the body, showing only the body content in the editor for a clean, document-like experience.
     *   **Robust Error Handling:** The most critical feature is the **`ErrorBoundary.jsx` component**. This was the final solution to a persistent "Load failed" bug.
+*   **Graphical Layout Editor:** A powerful, component-based layout editor for creating and managing reusable page templates.
+    *   **Technology:** Built with **Craft.js**, providing a drag-and-drop interface for assembling pages from components.
+    *   **Block Library:** Includes a set of standardized, reusable building blocks: `Hero`, `FeatureGrid`, `Testimonial`, `CTA`, and `Footer`. Each block is a fully serializable React component with editable content and style properties.
+    *   **Persistent Templates:** Layouts can be saved as named templates to the Cloudflare D1 database. The editor serializes the entire layout state into a JSON object, which is sent to the backend API.
+    *   **Reusable & Editable:** Saved templates can be loaded back into the editor via the `/layouts` dashboard, allowing users to create, view, and edit reusable structures for different pages.
 
 ### The "Smoking Gun" - A Journey in Debugging
 

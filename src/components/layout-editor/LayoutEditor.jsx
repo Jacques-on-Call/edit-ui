@@ -65,7 +65,22 @@ export const LayoutEditor = () => {
         .finally(() => setLoading(false));
     } else if (templateName) {
       setCurrentTemplateName(templateName);
-      setInitialJson(null);
+      // Set a default empty state for a new layout to prevent the editor from crashing.
+      const defaultState = {
+        "ROOT": {
+          "type": { "resolvedName": "Page" },
+          "isCanvas": true,
+          "props": {
+            "style": { "width": "100%", "minHeight": "100vh", "backgroundColor": "#ffffff" }
+          },
+          "displayName": "Page",
+          "custom": {},
+          "hidden": false,
+          "nodes": [],
+          "linkedNodes": {}
+        }
+      };
+      setInitialJson(JSON.stringify(defaultState));
       setLoading(false);
     } else {
       setLoading(false);
