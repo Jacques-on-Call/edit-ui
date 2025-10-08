@@ -31,10 +31,22 @@ const LayoutsDashboardPage = () => {
     fetchTemplates();
   }, []);
 
-  const handleCreateNewTemplate = (templateName) => {
-    const encodedName = encodeURIComponent(templateName);
-    navigate(`/layout-editor?template_name=${encodedName}`);
+  const handleCreateNewTemplate = (template) => {
     setModalOpen(false);
+    if (template.json) {
+      // If it's a starter template, pass the data via state
+      navigate('/layout-editor', {
+        state: {
+          templateJson: template.json,
+          templateName: template.name,
+          isStarter: true
+        }
+      });
+    } else {
+      // If it's a blank template, just pass the name in the URL
+      const encodedName = encodeURIComponent(template.name);
+      navigate(`/layout-editor?template_name=${encodedName}`);
+    }
   };
 
   if (loading) return <div className="p-8 text-center animate-pulse">Loading Layouts...</div>;

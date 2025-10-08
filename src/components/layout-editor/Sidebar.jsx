@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useEditor } from '@craftjs/core';
+import { useNavigate } from 'react-router-dom';
 import { Toolbox } from './Toolbox';
 import JsonDebugModal from './JsonDebugModal';
+import Icon from '../Icon';
 
 export const Sidebar = ({ onSave }) => {
   const [isJsonDebugModalOpen, setJsonDebugModalOpen] = useState(false);
+  const navigate = useNavigate();
   const { selected, enabled, query } = useEditor((state) => {
     const [selectedId] = state.events.selected;
     let selectedNode;
@@ -29,37 +32,43 @@ export const Sidebar = ({ onSave }) => {
 
   return (
     <>
-      <div className="w-96 bg-gray-50 border-l border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">
-            {selected ? `Settings: ${selected.name}` : 'Toolbox'}
+      <div className="w-full md:w-96 bg-gray-50 border-t md:border-t-0 md:border-l border-gray-200 flex flex-col">
+        <div className="p-2 border-b border-gray-200 flex-shrink-0 flex items-center justify-between">
+          <button
+            onClick={() => navigate('/layouts')}
+            className="p-2 rounded-md hover:bg-gray-200"
+            title="Back to Layouts"
+          >
+            <Icon name="arrow-left" className="w-5 h-5 text-gray-600" />
+          </button>
+          <h2 className="text-lg font-semibold text-gray-800 px-4">
+            {selected ? selected.name : 'Toolbox'}
           </h2>
-        </div>
-        <div className="flex-grow overflow-y-auto">
-          {selected && selected.settings ? (
-            React.createElement(selected.settings)
-          ) : (
-            <Toolbox />
-          )}
-        </div>
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex space-x-2">
-            <button
-              onClick={onSave}
-              className="flex-grow bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
-              disabled={!enabled}
-            >
-              Save Layout
-            </button>
+          <div className="flex items-center space-x-2">
             <button
               onClick={handleShowJson}
-              className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
+              className="p-2 rounded-md hover:bg-gray-200 disabled:text-gray-300"
               title="Show Live JSON State"
               disabled={!enabled}
             >
-              JSON
+              <Icon name="code" className="w-5 h-5" />
+            </button>
+            <button
+              onClick={onSave}
+              className="p-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-400"
+              disabled={!enabled}
+              title="Save Layout"
+            >
+              <Icon name="save" className="w-5 h-5" />
             </button>
           </div>
+        </div>
+        <div className="flex-grow overflow-y-auto">
+          {selected && selected.settings ? (
+            <div className="p-4">{React.createElement(selected.settings)}</div>
+          ) : (
+            <Toolbox />
+          )}
         </div>
       </div>
       {enabled && isJsonDebugModalOpen && (

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Editor, Frame, useEditor } from '@craftjs/core';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { TouchBackend } from 'react-dnd-touch-backend';
 
-import { EditorHeader } from './EditorHeader';
+import { Sidebar } from './Sidebar';
 import { Page } from './render/Page';
 import { EditorSection } from './Section.editor';
 import { EditorHero } from './blocks/Hero.editor';
 import { EditorFeatureGrid } from './blocks/FeatureGrid.editor';
 import { EditorTestimonial } from './blocks/Testimonial.editor';
 import { EditorCTA } from './blocks/CTA.editor';
+import { TouchBackend } from 'react-dnd-touch-backend';
 import { EditorFooter } from './blocks/Footer.editor';
 
 function useQuery() {
@@ -17,6 +17,7 @@ function useQuery() {
 }
 
 // This inner component is rendered within the <Editor> provider's context.
+// It has access to the editor's state and actions through the useEditor hook.
 const LayoutEditorInner = ({ templateId, currentTemplateName, navigate }) => {
   const { query } = useEditor();
 
@@ -27,11 +28,13 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ json_content: JSON.parse(json), name: currentTemplateName }),
+        body: JSON.stringify({ json_content: json, name: currentTemplateName }),
       });
       const data = await response.json();
       if (!data.success) throw new Error(data.error || 'Failed to save.');
+
       console.log(`Template '${currentTemplateName}' saved successfully!`);
+
       if (!templateId && data.template_id) {
         navigate(`/layout-editor?template_id=${data.template_id}`, { replace: true });
       }
@@ -41,11 +44,11 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate }) => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-full bg-gray-200">
-      <EditorHeader onSave={handleSave} />
+    <div className="flex h-screen w-full">
       <div className="flex-1 overflow-auto">
         <Frame />
       </div>
+      <Sidebar onSave={handleSave} />
     </div>
   );
 };
@@ -54,49 +57,78 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate }) => {
 export const LayoutEditor = () => {
   const query = useQuery();
   const navigate = useNavigate();
+  const location = useLocation();
   const templateId = query.get('template_id');
   const templateName = query.get('template_name');
 
+  const { templateJson: starterJson, templateName: starterName } = location.state || {};
+
   const [initialJson, setInitialJson] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [currentTemplateName, setCurrentTemplateName] = useState(templateName);
+  const [currentTemplateName, setCurrentTemplateName] = useState(templateName || starterName);
 
   useEffect(() => {
-    if (templateId) {
+    if (starterJson) {
+      setInitialJson(starterJson);
+      setCurrentTemplateName(starterName);
+      setLoading(false);
+    } else if (templateId) {
       setLoading(true);
       fetch(`/api/layout-templates?template_id=${templateId}`, { credentials: 'include' })
-        .then(res => res.ok ? res.json() : Promise.reject(res))
+        .then(res => {
+          if (!res.ok) throw new Error(res.statusText);
+          return res.json();
+        })
         .then(data => {
           setInitialJson(data.json_content);
           setCurrentTemplateName(data.name);
         })
         .catch(err => console.error("Error fetching layout:", err))
         .finally(() => setLoading(false));
-    } else {
+    } else if (templateName) {
+      setCurrentTemplateName(templateName);
       const defaultState = {
         "ROOT": {
-          "type": { "resolvedName": "Page" }, "isCanvas": true, "props": {},
-          "displayName": "Page", "custom": {}, "hidden": false, "nodes": [], "linkedNodes": {}
+          "type": { "resolvedName": "Page" },
+          "isCanvas": true,
+          "props": { "style": { "width": "100%", "minHeight": "100vh", "backgroundColor": "#ffffff" } },
+          "displayName": "Page",
+          "custom": {},
+          "hidden": false,
+          "nodes": [],
+          "linkedNodes": {}
         }
       };
       setInitialJson(JSON.stringify(defaultState));
-      setCurrentTemplateName(templateName || 'New Layout');
+      setLoading(false);
+    } else {
       setLoading(false);
     }
-  }, [templateId, templateName]);
+  }, [templateId, templateName, starterJson, starterName]);
 
   if (loading) return <div className="p-8 animate-pulse">Loading Editor...</div>;
-  if (!initialJson) return <div className="p-8 text-center">Could not load layout.</div>;
+
+  if (!initialJson) {
+     return <div className="p-8 text-center">Loading...</div>;
+  }
 
   return (
     <Editor
       backend={TouchBackend}
-      backendOptions={{ enableMouseEvents: true, touchSlop: 2, ignoreContextMenu: true }}
-      resolver={{
-        Page, EditorSection, EditorHero, EditorFeatureGrid,
-        EditorTestimonial, EditorCTA, EditorFooter,
+      backendOptions={{
+        enableMouseEvents: true,
+        delayTouchStart: 100,
       }}
-      json={initialJson}
+      resolver={{
+        Page,
+        EditorSection,
+        EditorHero,
+        EditorFeatureGrid,
+        EditorTestimonial,
+        EditorCTA,
+        EditorFooter,
+      }}
+      json={initialJson} // State is loaded declaratively here.
     >
       <LayoutEditorInner
         templateId={templateId}
