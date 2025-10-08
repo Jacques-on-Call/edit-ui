@@ -54,6 +54,15 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* Fix for craft.js drag-and-drop on touch devices */
+.craftjs-renderer {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

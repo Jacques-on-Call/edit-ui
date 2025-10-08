@@ -5,30 +5,48 @@ import Icon from '../components/Icon';
 
 const LayoutsDashboardPage = () => {
   const [templates, setTemplates] = useState([]);
+  const [astroLayouts, setAstroLayouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const navigate = useNavigate();
 
-  const fetchTemplates = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/layout-templates', { credentials: 'include' });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch layout templates: ${response.statusText}`);
-      }
-      const data = await response.json();
-      // Defensively ensure that we always set an array to prevent render crashes
-      setTemplates(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchTemplates();
+    const fetchAllLayouts = async () => {
+      try {
+        setLoading(true);
+        const selectedRepo = localStorage.getItem('selectedRepo');
+        if (!selectedRepo) {
+          throw new Error("No repository selected. Please select a repository first.");
+        }
+
+        // Fetch both D1 templates and Astro layouts in parallel
+        const [templatesResponse, astroLayoutsResponse] = await Promise.all([
+          fetch('/api/layout-templates', { credentials: 'include' }),
+          fetch(`/api/astro-layouts?repo=${selectedRepo}`, { credentials: 'include' })
+        ]);
+
+        if (!templatesResponse.ok) {
+          throw new Error(`Failed to fetch layout templates: ${templatesResponse.statusText}`);
+        }
+        if (!astroLayoutsResponse.ok) {
+          throw new Error(`Failed to fetch Astro layouts: ${astroLayoutsResponse.statusText}`);
+        }
+
+        const templatesData = await templatesResponse.json();
+        const astroLayoutsData = await astroLayoutsResponse.json();
+
+        setTemplates(Array.isArray(templatesData) ? templatesData : []);
+        setAstroLayouts(Array.isArray(astroLayoutsData) ? astroLayoutsData : []);
+
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllLayouts();
   }, []);
 
   const handleCreateNewTemplate = (template) => {
@@ -55,7 +73,7 @@ const LayoutsDashboardPage = () => {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Layout Templates</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Layouts</h1>
         <button
           onClick={() => setModalOpen(true)}
           className="bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-600 transition-all flex items-center space-x-2"
@@ -65,7 +83,12 @@ const LayoutsDashboardPage = () => {
         </button>
       </div>
 
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      {/* Graphical Templates Section */}
+      <div className="bg-white shadow-md rounded-lg overflow-hidden mb-8">
+        <div className="p-4 bg-gray-50 border-b">
+            <h2 className="text-xl font-bold text-gray-700">Graphical Templates</h2>
+            <p className="text-sm text-gray-500">Editable drag-and-drop layouts.</p>
+        </div>
         <ul className="divide-y divide-gray-200">
           {templates.length > 0 ? (
             templates.map(template => (
@@ -86,8 +109,38 @@ const LayoutsDashboardPage = () => {
             ))
           ) : (
             <li className="p-8 text-center text-gray-500">
-              <p>No layout templates found.</p>
+              <p>No graphical templates found.</p>
               <p className="mt-2">Click "Create New Template" to get started.</p>
+            </li>
+          )}
+        </ul>
+      </div>
+
+      {/* Astro Code Layouts Section */}
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <div className="p-4 bg-gray-50 border-b">
+            <h2 className="text-xl font-bold text-gray-700">Astro Code Layouts</h2>
+            <p className="text-sm text-gray-500">Base layouts from your repository. Editable as code.</p>
+        </div>
+        <ul className="divide-y divide-gray-200">
+          {astroLayouts.length > 0 ? (
+            astroLayouts.map(layout => (
+              <li key={layout.path} className="p-4 flex justify-between items-center hover:bg-gray-50">
+                <div>
+                  <p className="font-semibold text-lg text-gray-900">{layout.name}</p>
+                  <p className="text-sm text-gray-500">{layout.path}</p>
+                </div>
+                <Link
+                  to={`/editor?repo=${localStorage.getItem('selectedRepo')}&path=${encodeURIComponent(layout.path)}`}
+                  className="bg-green-100 text-green-800 font-semibold py-2 px-4 rounded-lg hover:bg-green-200 transition-colors"
+                >
+                  Open in Editor
+                </Link>
+              </li>
+            ))
+          ) : (
+            <li className="p-8 text-center text-gray-500">
+              <p>No Astro layouts found in <code>/src/layouts</code>.</p>
             </li>
           )}
         </ul>

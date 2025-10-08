@@ -45,7 +45,7 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate }) => {
 
   return (
     <div className="flex h-screen w-full">
-      <div className="flex-1 overflow-auto">
+      <div className="craftjs-renderer flex-1 overflow-auto">
         <Frame />
       </div>
       <Sidebar onSave={handleSave} />
@@ -68,11 +68,20 @@ export const LayoutEditor = () => {
   const [currentTemplateName, setCurrentTemplateName] = useState(templateName || starterName);
 
   useEffect(() => {
+    console.log("LayoutEditor useEffect triggered.", { templateId, templateName, starterJson, starterName, locationState: location.state });
     if (starterJson) {
-      setInitialJson(starterJson);
-      setCurrentTemplateName(starterName);
+      console.log("Loading from starter template:", starterName);
+      try {
+        // Ensure it's valid JSON before setting
+        JSON.parse(starterJson);
+        setInitialJson(starterJson);
+        setCurrentTemplateName(starterName);
+      } catch (e) {
+        console.error("Invalid starter template JSON:", e);
+      }
       setLoading(false);
     } else if (templateId) {
+      console.log("Fetching template by ID:", templateId);
       setLoading(true);
       fetch(`/api/layout-templates?template_id=${templateId}`, { credentials: 'include' })
         .then(res => {
