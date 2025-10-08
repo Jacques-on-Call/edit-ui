@@ -15,24 +15,46 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-const LayoutEditorInner = ({ onSave, initialJson }) => {
-  const { actions } = useEditor();
+const LayoutEditorInner = ({ initialJson, templateId, currentTemplateName, navigate }) => {
+  const { actions, query } = useEditor();
 
   useEffect(() => {
     if (initialJson && actions) {
-      // The `actions.deserialize` function is what loads the saved JSON state into the editor.
       actions.deserialize(initialJson);
     }
   }, [initialJson, actions]);
 
+  const handleSave = async () => {
+    const json = query.serialize();
+    try {
+      const response = await fetch(`/api/layout-templates`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ json_content: json, name: currentTemplateName }),
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Failed to save.');
+
+      console.log(`Template '${currentTemplateName}' saved successfully!`);
+
+      // If it's a new template, navigate to the new URL with the template_id
+      if (!templateId && data.template_id) {
+        navigate(`/layout-editor?template_id=${data.template_id}`, { replace: true });
+      }
+    } catch (error) {
+      console.error(`Save error: ${error.message}`);
+    }
+  };
+
   return (
     <div className="flex h-screen w-full">
       <div className="flex-1 overflow-auto">
-        <Frame json={initialJson}>
+        <Frame>
           <Page />
         </Frame>
       </div>
-      <Sidebar onSave={onSave} />
+      <Sidebar onSave={handleSave} />
     </div>
   );
 };
@@ -46,8 +68,6 @@ export const LayoutEditor = () => {
   const [initialJson, setInitialJson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentTemplateName, setCurrentTemplateName] = useState(templateName);
-
-  const { query: editorQuery } = useEditor();
 
   useEffect(() => {
     if (templateId) {
@@ -65,14 +85,11 @@ export const LayoutEditor = () => {
         .finally(() => setLoading(false));
     } else if (templateName) {
       setCurrentTemplateName(templateName);
-      // Set a default empty state for a new layout to prevent the editor from crashing.
       const defaultState = {
         "ROOT": {
           "type": { "resolvedName": "Page" },
           "isCanvas": true,
-          "props": {
-            "style": { "width": "100%", "minHeight": "100vh", "backgroundColor": "#ffffff" }
-          },
+          "props": { "style": { "width": "100%", "minHeight": "100vh", "backgroundColor": "#ffffff" } },
           "displayName": "Page",
           "custom": {},
           "hidden": false,
@@ -86,28 +103,6 @@ export const LayoutEditor = () => {
       setLoading(false);
     }
   }, [templateId, templateName]);
-
-  const handleSave = async () => {
-    const json = editorQuery.serialize();
-    try {
-      const response = await fetch(`/api/layout-templates`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ json_content: json, name: currentTemplateName }),
-      });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error || 'Failed to save.');
-
-      console.log(`Template '${currentTemplateName}' saved successfully!`);
-
-      if (!templateId && data.template_id) {
-        navigate(`/layout-editor?template_id=${data.template_id}`, { replace: true });
-      }
-    } catch (error) {
-      console.error(`Save error: ${error.message}`);
-    }
-  };
 
   if (loading) return <div className="p-8 animate-pulse">Loading Editor...</div>;
 
@@ -127,7 +122,12 @@ export const LayoutEditor = () => {
         EditorFooter,
       }}
     >
-      <LayoutEditorInner onSave={handleSave} initialJson={initialJson} />
+      <LayoutEditorInner
+        initialJson={initialJson}
+        templateId={templateId}
+        currentTemplateName={currentTemplateName}
+        navigate={navigate}
+      />
     </Editor>
   );
 };
