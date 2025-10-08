@@ -15,14 +15,10 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-const LayoutEditorInner = ({ initialJson, templateId, currentTemplateName, navigate }) => {
-  const { actions, query } = useEditor();
-
-  useEffect(() => {
-    if (initialJson && actions) {
-      actions.deserialize(initialJson);
-    }
-  }, [initialJson, actions]);
+// This inner component is rendered within the <Editor> provider's context.
+// It has access to the editor's state and actions through the useEditor hook.
+const LayoutEditorInner = ({ templateId, currentTemplateName, navigate }) => {
+  const { query } = useEditor();
 
   const handleSave = async () => {
     const json = query.serialize();
@@ -38,7 +34,6 @@ const LayoutEditorInner = ({ initialJson, templateId, currentTemplateName, navig
 
       console.log(`Template '${currentTemplateName}' saved successfully!`);
 
-      // If it's a new template, navigate to the new URL with the template_id
       if (!templateId && data.template_id) {
         navigate(`/layout-editor?template_id=${data.template_id}`, { replace: true });
       }
@@ -50,15 +45,14 @@ const LayoutEditorInner = ({ initialJson, templateId, currentTemplateName, navig
   return (
     <div className="flex h-screen w-full">
       <div className="flex-1 overflow-auto">
-        <Frame>
-          <Page />
-        </Frame>
+        <Frame />
       </div>
       <Sidebar onSave={handleSave} />
     </div>
   );
 };
 
+// This is the main component that fetches data and sets up the Editor provider.
 export const LayoutEditor = () => {
   const query = useQuery();
   const navigate = useNavigate();
@@ -106,8 +100,8 @@ export const LayoutEditor = () => {
 
   if (loading) return <div className="p-8 animate-pulse">Loading Editor...</div>;
 
-  if (!templateId && !templateName) {
-    return <div className="p-8 text-center">...</div>;
+  if (!initialJson) {
+     return <div className="p-8 text-center">Loading...</div>;
   }
 
   return (
@@ -121,9 +115,9 @@ export const LayoutEditor = () => {
         EditorCTA,
         EditorFooter,
       }}
+      json={initialJson} // State is loaded declaratively here.
     >
       <LayoutEditorInner
-        initialJson={initialJson}
         templateId={templateId}
         currentTemplateName={currentTemplateName}
         navigate={navigate}
