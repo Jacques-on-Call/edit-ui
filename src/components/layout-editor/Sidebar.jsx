@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useEditor } from '@craftjs/core';
 import { Toolbox } from './Toolbox';
 import JsonDebugModal from './JsonDebugModal';
-import Icon from '../../../components/Icon';
+import Icon from '../Icon';
 
 export const Sidebar = () => {
   const [isJsonDebugModalOpen, setJsonDebugModalOpen] = useState(false);

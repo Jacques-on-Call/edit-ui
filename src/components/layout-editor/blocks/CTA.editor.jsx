@@ -16,7 +16,7 @@ export const EditorCTA = (props) => {
 };
 
 EditorCTA.craft = {
-  displayName: 'EditorCTA',
+  displayName: 'Call to Action',
   props: {
     title: 'Ready to Dive In?',
     text: 'Start your free trial today. No credit card required.',

@@ -16,7 +16,7 @@ export const EditorTestimonial = (props) => {
 };
 
 EditorTestimonial.craft = {
-  displayName: 'EditorTestimonial',
+  displayName: 'Testimonial',
   props: {
     quote: 'This is an amazing product. It has changed my life for the better and I cannot imagine working without it.',
     author: 'Jane Doe',

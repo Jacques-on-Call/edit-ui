@@ -16,7 +16,7 @@ export const EditorFooter = (props) => {
 };
 
 EditorFooter.craft = {
-  displayName: 'EditorFooter',
+  displayName: 'Footer',
   props: {
     text: 'Your Company, Inc. All rights reserved.',
     style: {

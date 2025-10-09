@@ -21,9 +21,7 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    // Add a defensive check to ensure `actions` is defined before deserializing.
-    // This prevents a race condition on component mount.
-    if (initialJson && actions) {
+    if (initialJson) {
       try {
         actions.deserialize(initialJson);
       } catch (e) {

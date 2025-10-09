@@ -114,18 +114,10 @@ function FileExplorer({ repo }) {
   const handleOpen = (fileToOpen) => {
     const file = fileToOpen || selectedFile;
     if (!file) return;
-
     if (file.type === 'dir') {
       setPath(file.path);
     } else {
-      const encodedPath = encodeURIComponent(file.path);
-      // If the file is in the /layouts/ directory, send it to the layout editor.
-      if (file.path.startsWith('src/layouts/')) {
-        navigate(`/layout-editor?repo=${repo}&path=${encodedPath}`);
-      } else {
-        // Otherwise, send it to the standard content editor.
-        navigate(`/editor?repo=${repo}&path=${encodedPath}`);
-      }
+      navigate(`/editor?path=${file.path}`);
     }
   };
 

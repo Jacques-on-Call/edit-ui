@@ -6,7 +6,7 @@ import RepositorySelectionPage from './pages/RepositorySelectionPage';
 import ExplorerPage from './pages/ExplorerPage';
 import EditorPage from './pages/EditorPage';
 import LayoutsDashboardPage from './pages/LayoutsDashboardPage';
-import LayoutEditorPage from './pages/layout-editor/LayoutEditorPage';
+import LayoutEditorPage from './pages/LayoutEditorPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
