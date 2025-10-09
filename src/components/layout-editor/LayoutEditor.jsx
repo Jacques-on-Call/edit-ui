@@ -3,23 +3,30 @@ import { Editor, Frame, useEditor } from '@craftjs/core';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Sidebar } from './Sidebar';
+import { LayoutEditorHeader } from './LayoutEditorHeader';
 import { Page } from './render/Page';
 import { EditorSection } from './Section.editor';
 import { EditorHero } from './blocks/Hero.editor';
 import { EditorFeatureGrid } from './blocks/FeatureGrid.editor';
 import { EditorTestimonial } from './blocks/Testimonial.editor';
 import { EditorCTA } from './blocks/CTA.editor';
-import { TouchBackend } from 'react-dnd-touch-backend';
 import { EditorFooter } from './blocks/Footer.editor';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-// This inner component is rendered within the <Editor> provider's context.
-// It has access to the editor's state and actions through the useEditor hook.
-const LayoutEditorInner = ({ templateId, currentTemplateName, navigate }) => {
-  const { query } = useEditor();
+const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, json }) => {
+  const { query, actions } = useEditor();
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+
+  // When the initial JSON content changes (e.g., a new template is loaded),
+  // deserialize it into the editor state to update the canvas.
+  useEffect(() => {
+    if (json) {
+      actions.deserialize(json);
+    }
+  }, [json, actions]);
 
   const handleSave = async () => {
     const json = query.serialize();
@@ -44,11 +51,34 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate }) => {
   };
 
   return (
-    <div className="flex h-screen w-full">
-      <div className="craftjs-renderer flex-1 overflow-auto">
-        <Frame />
+    <div className="flex flex-col h-screen w-full bg-gray-100">
+      <LayoutEditorHeader onSave={handleSave} onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
+      <div className="flex flex-1 overflow-hidden">
+        {/* Main Canvas */}
+        <div className="craftjs-renderer flex-1 overflow-auto">
+          <Frame />
+        </div>
+
+        {/* Sidebar for Desktop */}
+        <div className="hidden md:block">
+          <Sidebar />
+        </div>
+
+        {/* Sidebar Drawer for Mobile */}
+        {isSidebarOpen && (
+          <div
+            className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-20"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <div
+              className="absolute right-0 top-0 h-full w-4/5 max-w-sm bg-white shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Sidebar />
+            </div>
+          </div>
+        )}
       </div>
-      <Sidebar onSave={handleSave} />
     </div>
   );
 };
@@ -123,11 +153,6 @@ export const LayoutEditor = () => {
 
   return (
     <Editor
-      backend={TouchBackend}
-      backendOptions={{
-        enableMouseEvents: true,
-        delayTouchStart: 100,
-      }}
       resolver={{
         Page,
         EditorSection,
@@ -137,12 +162,12 @@ export const LayoutEditor = () => {
         EditorCTA,
         EditorFooter,
       }}
-      json={initialJson} // State is loaded declaratively here.
     >
       <LayoutEditorInner
         templateId={templateId}
         currentTemplateName={currentTemplateName}
         navigate={navigate}
+        json={initialJson}
       />
     </Editor>
   );

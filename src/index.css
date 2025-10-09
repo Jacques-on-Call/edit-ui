@@ -61,6 +61,7 @@ button:focus-visible {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  -webkit-touch-callout: none; /* Specifically for iOS to prevent the callout menu */
 }
 
 @media (prefers-color-scheme: light) {
