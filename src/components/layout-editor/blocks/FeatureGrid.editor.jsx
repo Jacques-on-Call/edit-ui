@@ -16,7 +16,7 @@ export const EditorFeatureGrid = (props) => {
 };
 
 EditorFeatureGrid.craft = {
-  displayName: 'Feature Grid',
+  displayName: 'EditorFeatureGrid',
   props: {
     title: 'Discover Our Features',
     features: [

@@ -11,7 +11,7 @@ export const EditorSection = (props) => {
 };
 
 EditorSection.craft = {
-  displayName: 'Section',
+  displayName: 'EditorSection',
   isCanvas: true, // Allows other components to be dropped inside
   props: {
     style: {

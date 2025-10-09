@@ -16,7 +16,7 @@ export const EditorHero = (props) => {
 };
 
 EditorHero.craft = {
-  displayName: 'Hero',
+  displayName: 'EditorHero',
   props: {
     title: 'This is the Hero Title',
     subtitle: 'This is the hero subtitle. Click here to edit.',
