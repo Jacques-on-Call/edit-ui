@@ -21,7 +21,9 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (initialJson) {
+    // Add a defensive check to ensure `actions` is defined before deserializing.
+    // This prevents a race condition on component mount.
+    if (initialJson && actions) {
       try {
         actions.deserialize(initialJson);
       } catch (e) {
@@ -153,7 +155,7 @@ export const LayoutEditor = () => {
         </div>
       )}
       <Editor
-        key={templateId || starterJson || templateName || astroLayoutPath}
+        key={templateId || templateName || astroLayoutPath}
         resolver={{
           Page,
           EditorSection,
