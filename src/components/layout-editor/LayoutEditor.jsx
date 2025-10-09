@@ -153,7 +153,7 @@ export const LayoutEditor = () => {
         </div>
       )}
       <Editor
-        key={templateId || templateName || astroLayoutPath}
+        key={templateId || starterJson || templateName || astroLayoutPath}
         resolver={{
           Page,
           EditorSection,
