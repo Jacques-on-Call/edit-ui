@@ -98,6 +98,7 @@ function EditorPage() {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const updateDraftAndPreview = useCallback(
     debounce((newContent, currentFrontmatter, currentFileType, currentOriginalBody, currentOriginalSections) => {
       let fullContentString;
@@ -123,7 +124,7 @@ function EditorPage() {
         setFrontmatter(updatedFrontmatter);
       }
     }, 500),
-    [repo]
+    [repo, draftKey, filePath]
   );
 
   const handleEditorChange = (newContent) => {

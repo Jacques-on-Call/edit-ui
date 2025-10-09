@@ -122,14 +122,17 @@ function FileExplorer({ repo }) {
   };
 
   const handleGoHome = () => setPath('src/pages');
+  // eslint-disable-next-line no-unused-vars
   const handleDuplicate = async (fileToDuplicate) => { /* ... logic ... */ };
   const handleLongPress = (file, event) => setContextMenu({ x: event.clientX, y: event.clientY, file });
   const handleCloseContextMenu = () => setContextMenu(null);
   const handleDeleteRequest = (file) => setFileToDelete(file);
   const handleDeleteConfirm = async () => { /* ... logic ... */ };
+  // eslint-disable-next-line no-unused-vars
   const handleShare = (file) => { /* ... logic ... */ };
   const handleRenameRequest = (file) => setFileToRename(file);
   const handleToggleReadme = () => setReadmeVisible(prev => !prev);
+  // eslint-disable-next-line no-unused-vars
   const handleRenameConfirm = async (file, newName) => { /* ... logic ... */ };
 
   if (loading) return <div className="text-center p-8 text-gray-500 animate-pulse">Loading files...</div>;

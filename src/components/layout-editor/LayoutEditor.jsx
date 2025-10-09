@@ -16,9 +16,23 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-const LayoutEditorInner = ({ templateId, currentTemplateName, navigate }) => {
-  const { query } = useEditor();
+const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJson }) => {
+  const { actions, query } = useEditor();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    // Safely deserialize the initial JSON data once the editor is ready.
+    // This avoids race conditions inherent with using the `json` prop on the <Editor />.
+    if (initialJson) {
+      try {
+        actions.deserialize(initialJson);
+      } catch (e) {
+        console.error("Error deserializing layout JSON:", e);
+        // Consider showing an error to the user here
+      }
+    }
+  }, [initialJson, actions]);
+
 
   const handleSave = async () => {
     const json = query.serialize();
@@ -150,12 +164,15 @@ export const LayoutEditor = () => {
         EditorCTA,
         EditorFooter,
       }}
-      json={initialJson}
+      // By removing the `json` prop and using `actions.deserialize` in a child component,
+      // we ensure the editor is fully initialized before we attempt to load data,
+      // preventing the "Invariant failed" crash.
     >
       <LayoutEditorInner
         templateId={templateId}
         currentTemplateName={currentTemplateName}
         navigate={navigate}
+        initialJson={initialJson}
       />
     </Editor>
   );
