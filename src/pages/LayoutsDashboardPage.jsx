@@ -116,11 +116,11 @@ const LayoutsDashboardPage = () => {
         </ul>
       </div>
 
-      {/* Astro Code Layouts Section */}
+      {/* Astro File-based Layouts Section */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-4 bg-gray-50 border-b">
-            <h2 className="text-xl font-bold text-gray-700">Astro Code Layouts</h2>
-            <p className="text-sm text-gray-500">Base layouts from your repository. Editable as code.</p>
+            <h2 className="text-xl font-bold text-gray-700">Astro File-based Layouts</h2>
+            <p className="text-sm text-gray-500">Base layouts from your repository. Click to open in the graphical editor.</p>
         </div>
         <ul className="divide-y divide-gray-200">
           {astroLayouts.length > 0 ? (
@@ -131,10 +131,10 @@ const LayoutsDashboardPage = () => {
                   <p className="text-sm text-gray-500">{layout.path}</p>
                 </div>
                 <Link
-                  to={`/editor?repo=${localStorage.getItem('selectedRepo')}&path=${encodeURIComponent(layout.path)}`}
-                  className="bg-green-100 text-green-800 font-semibold py-2 px-4 rounded-lg hover:bg-green-200 transition-colors"
+                  to={`/layout-editor?repo=${localStorage.getItem('selectedRepo')}&path=${encodeURIComponent(layout.path)}`}
+                  className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
                 >
-                  Open in Editor
+                  Edit
                 </Link>
               </li>
             ))

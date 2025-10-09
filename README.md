@@ -4,11 +4,23 @@ This project is a React-based content editor designed to work with Astro sites. 
 
 ## Architecture Overview
 
-*(This section is a placeholder for the original architectural notes.)*
-
 The application consists of two main parts:
 1.  A **React single-page application (SPA)** built with Vite, responsible for the user interface.
 2.  A **Cloudflare Worker backend** that handles authentication and acts as a secure proxy to the GitHub API.
+
+### Project Structure & Key Concepts
+
+To navigate this project effectively, it's important to understand the distinction between the two core editors and the different types of layouts they handle.
+
+*   **Content Editor (`src/pages/EditorPage.jsx`)**
+    *   **Purpose:** This is a WYSIWYG editor powered by TinyMCE, designed for editing the final, readable content of pages (e.g., blog posts, articles).
+    *   **Handles:** `.md`, `.html`, and `.astro` files. For Astro files, it specifically targets the `sections` array in the frontmatter, allowing for structured content editing.
+
+*   **Graphical Layout Editor (`src/pages/layout-editor/LayoutEditorPage.jsx`)**
+    *   **Purpose:** This is a visual, drag-and-drop editor powered by Craft.js, designed for building and managing the reusable structure of pages.
+    *   **Handles:** Two types of layouts that are managed via the **Layouts Dashboard** (`/layouts`):
+        1.  **Graphical Templates:** These are JSON-based layouts stored in the D1 database. They are created and edited entirely within the graphical editor.
+        2.  **Astro File-based Layouts:** These are standard `.astro` files located in the user's repository (e.g., in `src/layouts`). When you click "Edit" on one of these, the application opens a **blank canvas** in the graphical editor. This allows you to build a new graphical template inspired by the file-based one, but it does not (yet) parse the Astro file for direct graphical editing.
 
 ---
 
