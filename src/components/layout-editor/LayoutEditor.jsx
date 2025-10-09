@@ -16,17 +16,9 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, json }) => {
-  const { query, actions } = useEditor();
+const LayoutEditorInner = ({ templateId, currentTemplateName, navigate }) => {
+  const { query } = useEditor();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-
-  // When the initial JSON content changes (e.g., a new template is loaded),
-  // deserialize it into the editor state to update the canvas.
-  useEffect(() => {
-    if (json) {
-      actions.deserialize(json);
-    }
-  }, [json, actions]);
 
   const handleSave = async () => {
     const json = query.serialize();
@@ -98,21 +90,20 @@ export const LayoutEditor = () => {
   const [currentTemplateName, setCurrentTemplateName] = useState(templateName || starterName);
 
   useEffect(() => {
-    console.log("LayoutEditor useEffect triggered.", { templateId, templateName, starterJson, starterName, locationState: location.state });
+    // This effect now exclusively handles fetching data and setting the state.
+    // It does not interact with the editor directly.
+    setLoading(true);
     if (starterJson) {
-      console.log("Loading from starter template:", starterName);
       try {
-        // Ensure it's valid JSON before setting
         JSON.parse(starterJson);
         setInitialJson(starterJson);
         setCurrentTemplateName(starterName);
       } catch (e) {
         console.error("Invalid starter template JSON:", e);
+        setInitialJson(null);
       }
       setLoading(false);
     } else if (templateId) {
-      console.log("Fetching template by ID:", templateId);
-      setLoading(true);
       fetch(`/api/layout-templates?template_id=${templateId}`, { credentials: 'include' })
         .then(res => {
           if (!res.ok) throw new Error(res.statusText);
@@ -122,37 +113,34 @@ export const LayoutEditor = () => {
           setInitialJson(data.json_content);
           setCurrentTemplateName(data.name);
         })
-        .catch(err => console.error("Error fetching layout:", err))
+        .catch(err => {
+          console.error("Error fetching layout:", err);
+          setInitialJson(null);
+        })
         .finally(() => setLoading(false));
-    } else if (templateName) {
-      setCurrentTemplateName(templateName);
+    } else {
+      // Default state for a new, blank canvas
       const defaultState = {
-        "ROOT": {
-          "type": { "resolvedName": "Page" },
-          "isCanvas": true,
-          "props": { "style": { "width": "100%", "minHeight": "100vh", "backgroundColor": "#ffffff" } },
-          "displayName": "Page",
-          "custom": {},
-          "hidden": false,
-          "nodes": [],
-          "linkedNodes": {}
-        }
+        "ROOT": { "type": { "resolvedName": "Page" }, "isCanvas": true, "props": {}, "displayName": "Page", "custom": {}, "hidden": false, "nodes": [], "linkedNodes": {} }
       };
       setInitialJson(JSON.stringify(defaultState));
-      setLoading(false);
-    } else {
+      setCurrentTemplateName(templateName || "New Layout");
       setLoading(false);
     }
-  }, [templateId, templateName, starterJson, starterName]);
+  }, [templateId, starterJson, starterName, templateName]);
 
   if (loading) return <div className="p-8 animate-pulse">Loading Editor...</div>;
 
   if (!initialJson) {
-     return <div className="p-8 text-center">Loading...</div>;
+     return <div className="p-8 text-center text-red-500">Could not load template data.</div>;
   }
 
   return (
+    // By providing a `key`, we ensure that React creates a brand new Editor
+    // instance whenever the templateId or templateName changes. This is the
+    // standard and most reliable way to reset component state.
     <Editor
+      key={templateId || templateName}
       resolver={{
         Page,
         EditorSection,
@@ -162,12 +150,12 @@ export const LayoutEditor = () => {
         EditorCTA,
         EditorFooter,
       }}
+      json={initialJson}
     >
       <LayoutEditorInner
         templateId={templateId}
         currentTemplateName={currentTemplateName}
         navigate={navigate}
-        json={initialJson}
       />
     </Editor>
   );
