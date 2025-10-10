@@ -8,11 +8,10 @@ import './global.css';
 import App from './App.jsx';
 import { initialize } from '@astrojs/compiler';
 
-// Initialize the Astro compiler's WASM module.
-// This must be done once at startup before any parsing functions are called.
-// It returns a promise, but we don't need to await it here.
-// The app can render while the WASM is loading in the background.
-initialize();
+// Initialize the Astro compiler's WASM module and export the promise.
+// This must be done once at startup. Other modules can await this promise
+// to ensure the compiler is ready before using it.
+export const astroCompilerReady = initialize();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

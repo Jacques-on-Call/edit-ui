@@ -1,4 +1,5 @@
 import { parse } from '@astrojs/compiler';
+import { astroCompilerReady } from '../main.jsx';
 
 /**
  * @file Component Mapper
@@ -18,6 +19,8 @@ export async function parseAstroComponents(fileContent) {
   const islands = new Set();
 
   try {
+    // Ensure the WASM module is initialized before attempting to parse.
+    await astroCompilerReady;
     const { ast } = await parse(fileContent);
 
     // The walk function recursively traverses the AST.
