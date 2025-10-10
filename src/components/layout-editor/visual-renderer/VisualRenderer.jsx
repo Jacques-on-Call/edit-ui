@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { normalizeFrontmatter, validateLayoutSchema } from '../../../utils/layoutInterpreter';
 import { extractComponentsFromAstro, detectIslands } from '../../../utils/componentMapper';
 import { generateAstroPreviewHtml, generateFallbackHtml } from '../../../utils/layoutRenderer';
+import { normalizeLayoutData } from '../../../utils/normalizationPatch';
 import matter from 'gray-matter';
 
 /**
@@ -30,10 +31,12 @@ const VisualRenderer = ({ fileContent, filePath, onError }) => {
       const { content: bodyContent } = matter(fileContent);
 
       // 2. Normalize and Validate Frontmatter
-      report.frontmatter = await normalizeFrontmatter(fileContent, filePath);
-      if (report.frontmatter.error) {
-        report.errors.push(report.frontmatter.error);
+      let rawFrontmatter = await normalizeFrontmatter(fileContent, filePath);
+      if (rawFrontmatter.error) {
+        report.errors.push(rawFrontmatter.error);
+        report.frontmatter = normalizeLayoutData(rawFrontmatter); // Normalize even on error to have a consistent shape
       } else {
+        report.frontmatter = normalizeLayoutData(rawFrontmatter);
         const { isValid, errors: validationErrors } = validateLayoutSchema(report.frontmatter);
         if (!isValid) {
           report.errors.push(...validationErrors);
