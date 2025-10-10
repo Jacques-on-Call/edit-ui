@@ -20,6 +20,7 @@ const VisualRenderer = ({ fileContent, filePath, onError }) => {
       setIsLoading(true);
       const report = {
           errors: [],
+          warnings: [],
           frontmatter: {},
           components: [],
           islands: [],
@@ -33,13 +34,14 @@ const VisualRenderer = ({ fileContent, filePath, onError }) => {
       let rawFrontmatter = await normalizeFrontmatter(fileContent, filePath);
       if (rawFrontmatter.error) {
         report.errors.push(rawFrontmatter.error);
-        report.frontmatter = normalizeLayoutData(rawFrontmatter); // Normalize even on error to have a consistent shape
+        report.frontmatter = normalizeLayoutData(rawFrontmatter); // Normalize even on error
       } else {
         report.frontmatter = normalizeLayoutData(rawFrontmatter);
-        const { isValid, errors: validationErrors } = validateLayoutSchema(report.frontmatter);
+        const { isValid, errors: validationErrors, warnings } = validateLayoutSchema(report.frontmatter);
         if (!isValid) {
           report.errors.push(...validationErrors);
         }
+        report.warnings = warnings; // Pass warnings along
       }
 
       // 3. Parse Components and Islands using the new compiler
@@ -51,13 +53,26 @@ const VisualRenderer = ({ fileContent, filePath, onError }) => {
         report.islands = islands;
       }
 
-      // 4. Generate appropriate HTML and report errors
-      if (report.errors.length > 0) {
-        onError(report);
-        setPreviewHtml(generateFallbackHtml(report));
-      } else {
-        onError(null); // Clear errors on success
-        setPreviewHtml(generateAstroPreviewHtml(fileContent, report.frontmatter, report.components));
+      // 4. Generate appropriate HTML and report state
+      try {
+        if (report.errors.length > 0) {
+          // If there are validation errors, render the fallback UI immediately.
+          setPreviewHtml(generateFallbackHtml(report, false, false));
+          onError({ ...report, ready: false });
+        } else {
+          // If validation passes, try to generate the full visual preview.
+          // This is where a real renderer would go. For now, we use the placeholder.
+          const visualHtml = generateAstroPreviewHtml(fileContent, report.frontmatter, report.components);
+          setPreviewHtml(visualHtml);
+          // Report success, but indicate the full visual renderer isn't "ready" yet.
+          // This can be set to `true` once a real renderer is implemented.
+          onError({ ...report, ready: true, errors: [] }); // No critical errors
+        }
+      } catch (e) {
+        // Catch any unexpected rendering errors.
+        report.errors.push(`A critical error occurred during rendering: ${e.message}`);
+        setPreviewHtml(generateFallbackHtml(report, false, false));
+        onError({ ...report, ready: false });
       }
 
       setIsLoading(false);

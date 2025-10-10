@@ -63,18 +63,19 @@ export async function normalizeFrontmatter(fileContent, filePath) {
  */
 export function validateLayoutSchema(frontmatter) {
   const errors = [];
+  const warnings = [];
   const layoutSchema = {
     title: 'string',
     description: 'string',
-    meta: 'object', // optional
-    schema: 'object' // optional
+    meta: 'object',
+    schema: 'object'
   };
 
   if (!frontmatter || typeof frontmatter !== 'object' || frontmatter.error) {
-    return { isValid: false, errors: ['Invalid or null frontmatter object.'] };
+    return { isValid: false, errors: ['Invalid or null frontmatter object.'], warnings: [] };
   }
 
-  // Check required fields
+  // CRITICAL: Check required fields. Their absence is an error.
   if (typeof frontmatter.title !== layoutSchema.title) {
     errors.push(`'title' is missing or not a string. Found: ${typeof frontmatter.title}`);
   }
@@ -82,16 +83,17 @@ export function validateLayoutSchema(frontmatter) {
     errors.push(`'description' is missing or not a string. Found: ${typeof frontmatter.description}`);
   }
 
-  // Check optional fields
+  // NON-CRITICAL: Check optional fields. Their absence is fine, but wrong type is a warning.
   if (frontmatter.meta && typeof frontmatter.meta !== layoutSchema.meta) {
-    errors.push(`'meta' field, if present, must be an object. Found: ${typeof frontmatter.meta}`);
+    warnings.push(`'meta' field, if present, must be an object. Found: ${typeof frontmatter.meta}`);
   }
-    if (frontmatter.schema && typeof frontmatter.schema !== layoutSchema.schema) {
-    errors.push(`'schema' field, if present, must be an object. Found: ${typeof frontmatter.schema}`);
+  if (frontmatter.schema && typeof frontmatter.schema !== layoutSchema.schema) {
+    warnings.push(`'schema' field, if present, must be an object. Found: ${typeof frontmatter.schema}`);
   }
 
   return {
     isValid: errors.length === 0,
     errors,
+    warnings,
   };
 }

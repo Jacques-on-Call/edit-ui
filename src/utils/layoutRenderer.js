@@ -16,49 +16,45 @@
 export function generateAstroPreviewHtml(fileContent, frontmatter, components) {
   const title = frontmatter.title || 'Astro Layout Preview';
 
-  return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${title}</title>
-      <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="bg-gray-100 p-8 font-sans">
-      <div class="bg-white p-6 rounded-lg shadow-lg">
-        <h1 class="text-2xl font-bold text-green-600">Render Successful (Placeholder)</h1>
-        <p class="mt-2 text-gray-700">This is a placeholder for the full visual renderer. Below is the data that would be used to construct the preview.</p>
-        <div class="mt-4">
-          <h2 class="text-lg font-semibold">Frontmatter</h2>
-          <pre class="bg-gray-200 p-3 rounded mt-1 text-sm"><code>${JSON.stringify(frontmatter, null, 2)}</code></pre>
-        </div>
-        <div class="mt-4">
-          <h2 class="text-lg font-semibold">Detected Components</h2>
-          <ul class="list-disc list-inside bg-gray-200 p-3 rounded mt-1 text-sm">
-            ${components.map(c => `<li>${c}</li>`).join('')}
-          </ul>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
+  // NOTE: This function is now effectively a specific case of the fallback renderer.
+  // It's kept separate for clarity, but the logic is similar.
+  // The key difference is the "Visual Renderer Active" status.
+  const fallbackData = {
+    filePath: 'N/A',
+    errors: [],
+    warnings: ["This is a placeholder preview. Full visual rendering is not yet implemented."],
+    frontmatter,
+    components,
+    islands: []
+  };
+
+  return generateFallbackHtml(fallbackData, true, true);
 }
 
+
 /**
- * Generates a rich, diagnostic fallback HTML page when an Astro layout fails to parse or render.
- * This serves as the "visual debugging layer".
+ * Generates a rich, diagnostic fallback HTML page.
+ * This serves as the "visual debugging layer" and the placeholder view.
  *
  * @param {object} details - An object containing error information.
- * @param {string} details.filePath - The path of the file that failed.
- * @param {string[]} details.errors - A list of specific error messages.
- * @param {object} details.frontmatter - The parsed frontmatter, which may contain an error key.
- * @param {string[]} details.components - The list of components that were detected before the failure.
- * @param {string[]} details.islands - The list of Astro islands detected.
+ * @param {boolean} isPlaceholder - If true, renders a placeholder view instead of an error view.
+ * @param {boolean} isSuccess - If true, shows the "Visual Renderer Active" status.
  * @returns {string} A complete HTML document as a string.
  */
-export function generateFallbackHtml({ filePath, errors, frontmatter, components, islands }) {
+export function generateFallbackHtml(details, isPlaceholder = false, isSuccess = false) {
+  const { filePath, errors = [], warnings = [], frontmatter = {}, components = [], islands = [] } = details;
   const frontmatterString = JSON.stringify(frontmatter, null, 2);
+  const pageTitle = isPlaceholder ? 'Layout Preview' : 'Layout Preview Failed';
+  const mainTitle = isPlaceholder ? 'Render Successful (Placeholder)' : 'Layout Preview Failed';
+  const mainMessage = isPlaceholder
+    ? "This placeholder appears only until visual rendering is fully integrated."
+    : `The layout at <code class="text-sm bg-gray-200 p-1 rounded">${filePath}</code> could not be rendered. Here's a summary of what we found.`;
+
+  const statusBadge = `
+    <div class="fixed top-4 right-4 text-xs font-bold py-1 px-3 rounded-full shadow-md ${isSuccess ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}">
+      ${isSuccess ? '🟢 Visual Renderer Active' : '🟠 Placeholder Mode'}
+    </div>
+  `;
 
   return `
     <!DOCTYPE html>
@@ -66,7 +62,7 @@ export function generateFallbackHtml({ filePath, errors, frontmatter, components
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Layout Preview Failed</title>
+      <title>${pageTitle}</title>
       <script src="https://cdn.tailwindcss.com"></script>
       <style>
         .card {
@@ -91,16 +87,22 @@ export function generateFallbackHtml({ filePath, errors, frontmatter, components
             background-color: #F0FFF4;
             color: #2F855A;
         }
+         .tag-warning {
+            background-color: #FFFBEB;
+            color: #B45309;
+        }
       </style>
     </head>
     <body class="bg-gray-50 font-sans">
+      ${statusBadge}
       <div class="container mx-auto p-4 md:p-8">
 
         <div class="card">
-          <h1 class="text-2xl font-bold text-gray-800">Layout Preview Failed</h1>
-          <p class="mt-2 text-gray-600">The layout at <code class="text-sm bg-gray-200 p-1 rounded">${filePath}</code> could not be rendered. Here's a summary of what we found.</p>
+          <h1 class="text-2xl font-bold text-gray-800">${mainTitle}</h1>
+          <p class="mt-2 text-gray-600">${mainMessage}</p>
         </div>
 
+        ${errors && errors.length > 0 ? `
         <div class="card">
           <h2 class="text-xl font-semibold text-gray-800">Errors</h2>
           <div class="mt-3 space-y-2">
@@ -111,6 +113,20 @@ export function generateFallbackHtml({ filePath, errors, frontmatter, components
             `).join('')}
           </div>
         </div>
+        ` : ''}
+
+        ${warnings && warnings.length > 0 ? `
+        <div class="card">
+          <h2 class="text-xl font-semibold text-gray-800">Warnings</h2>
+          <div class="mt-3 space-y-2">
+            ${warnings.map(warn => `
+              <div class="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                <p class="text-sm text-yellow-700">${warn}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        ` : ''}
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="card">
@@ -127,7 +143,7 @@ export function generateFallbackHtml({ filePath, errors, frontmatter, components
             <div class="mt-3 space-y-2">
               ${components && components.length > 0
                 ? components.map(c => `<div class="flex items-center space-x-3"><span class="tag tag-success">${c}</span></div>`).join('')
-                : '<p class="text-sm text-gray-500">No components were detected before the error occurred.</p>'
+                : '<p class="text-sm text-gray-500">No components were detected.</p>'
               }
             </div>
           </div>
@@ -138,7 +154,7 @@ export function generateFallbackHtml({ filePath, errors, frontmatter, components
             <p class="text-xs text-gray-500 mt-1">These components have a <code class="text-sm bg-gray-200 p-1 rounded">client:</code> directive.</p>
             <div class="mt-3 space-y-2">
                 ${islands && islands.length > 0
-                    ? islands.map(i => `<div class="flex items-center space-x-3"><span class="tag tag-error">${i}</span></div>`).join('')
+                    ? islands.map(i => `<div class="flex items-center space-x-3"><span class="tag tag-warning">${i}</span></div>`).join('')
                     : '<p class="text-sm text-gray-500">No client-side islands were detected.</p>'
                 }
             </div>
