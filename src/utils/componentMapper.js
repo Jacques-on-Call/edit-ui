@@ -34,7 +34,7 @@ export function extractComponentsFromAstro(astroBody) {
 
       // Recurse into children
       for (const key in node) {
-        if (node.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(node, key)) {
           const child = node[key];
           if (typeof child === 'object' && child !== null) {
             if (Array.isArray(child)) {

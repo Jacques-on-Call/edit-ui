@@ -12,6 +12,7 @@ import { EditorTestimonial } from './blocks/Testimonial.editor';
 import { EditorCTA } from './blocks/CTA.editor';
 import { EditorFooter } from './blocks/Footer.editor';
 import { checkLayoutIntegrity } from '../../utils/layoutIntegrityLogger';
+import VisualRenderer from './visual-renderer/VisualRenderer';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -22,8 +23,6 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    // Only deserialize when the editor is ready and we have initial JSON to load.
-    // This prevents a race condition on the initial render by waiting for the editor to be fully initialized.
     if (ready && initialJson) {
       try {
         actions.deserialize(initialJson);
@@ -94,7 +93,8 @@ export const LayoutEditor = () => {
   const [initialJson, setInitialJson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentTemplateName, setCurrentTemplateName] = useState(templateName || starterName);
-  const [isAstroLayout, setIsAstroLayout] = useState(false);
+  const [isAstroLayout, setIsAstroLayout] = useState(!!astroLayoutPath);
+  const [astroFileContent, setAstroFileContent] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -104,11 +104,20 @@ export const LayoutEditor = () => {
 
     if (astroLayoutPath) {
       setIsAstroLayout(true);
-      setInitialJson(defaultState);
-      const pathParts = astroLayoutPath.split('/');
-      const fileName = pathParts[pathParts.length - 1];
-      setCurrentTemplateName(`New Layout (from ${fileName})`);
-      setLoading(false);
+      fetch(`/api/get-file-content?path=${encodeURIComponent(astroLayoutPath)}`, { credentials: 'include' })
+        .then(res => {
+          if (!res.ok) throw new Error(`Failed to fetch file content: ${res.statusText}`);
+          return res.text();
+        })
+        .then(content => {
+          setAstroFileContent(content);
+        })
+        .catch(err => {
+          console.error(err);
+          setAstroFileContent(null); // Explicitly set to null on error
+        })
+        .finally(() => setLoading(false));
+
     } else if (starterJson) {
       try {
         JSON.parse(starterJson);
@@ -155,37 +164,36 @@ export const LayoutEditor = () => {
 
   if (loading) return <div className="p-8 animate-pulse">Loading Editor...</div>;
 
+  if (isAstroLayout) {
+    if (!astroFileContent) {
+      return <div className="p-8 text-center text-red-500">Could not load Astro layout file.</div>;
+    }
+    return <VisualRenderer fileContent={astroFileContent} filePath={astroLayoutPath} />;
+  }
+
   if (!initialJson) {
      return <div className="p-8 text-center text-red-500">Could not load template data.</div>;
   }
 
   return (
-    <div className="w-full h-full">
-      {isAstroLayout && (
-        <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 m-4 rounded-md" role="alert">
-          <p className="font-bold">Opening Astro Layout</p>
-          <p>Graphical editing for existing Astro files is not yet supported. This is a blank canvas you can use to build a new layout inspired by your file. Click 'Save' to create a new graphical template.</p>
-        </div>
-      )}
-      <Editor
-        key={templateId || templateName || astroLayoutPath}
-        resolver={{
-          Page,
-          EditorSection,
-          EditorHero,
-          EditorFeatureGrid,
-          EditorTestimonial,
-          EditorCTA,
-          EditorFooter,
-        }}
-      >
-        <LayoutEditorInner
-          templateId={templateId}
-          currentTemplateName={currentTemplateName}
-          navigate={navigate}
-          initialJson={initialJson}
-        />
-      </Editor>
-    </div>
+    <Editor
+      key={templateId || templateName}
+      resolver={{
+        Page,
+        EditorSection,
+        EditorHero,
+        EditorFeatureGrid,
+        EditorTestimonial,
+        EditorCTA,
+        EditorFooter,
+      }}
+    >
+      <LayoutEditorInner
+        templateId={templateId}
+        currentTemplateName={currentTemplateName}
+        navigate={navigate}
+        initialJson={initialJson}
+      />
+    </Editor>
   );
 };
