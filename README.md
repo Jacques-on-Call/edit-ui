@@ -442,3 +442,51 @@ For Jules to implement:
 4.  `debugLayer.tsx` → Displays missing components, errors, suggestions
 5.  `islandHydrator.ts` → Loads Astro islands and React/Vue elements safely
 6.  `normalizationPatch.ts` → Reshapes data for stable rendering
+
+---
+
+## 🚀 Development Roadmap: The Creative Intelligence Engine
+
+The following roadmap outlines the evolution of the layout editor from a technical interpreter into a modern, AI-powered creative tool.
+
+### Tier 1: Modern Design Capability Layer
+
+The goal of this tier is to empower users to create and preview modern, trend-aware web aesthetics directly within the editor.
+
+*   **Phase 1: Modern Design Schema**
+    *   Enhance the layout schema to include modern design tokens for themes, animations, color palettes, UI elements (buttons, cards), and motion. This allows for a declarative, editable JSON-based theme system.
+
+*   **Phase 2: Visual DNA System (Trend Engine)**
+    *   Implement a "style pack" engine to load and merge pre-made modern themes (e.g., "Soft Neo," "Cyber Grid," "Play Minimal"). This allows for instant design application via CSS variables and component classes.
+
+*   **Phase 3: Modular Layout Components**
+    *   Create an internal library of atomic, theme-compatible layout components (`HeroSection`, `FeatureGrid`, `CTASection`, etc.) that users can mix and match.
+
+*   **Phase 4: Real-Time Interaction Preview**
+    *   Integrate a lightweight reactive engine (e.g., Preact Signals) into the preview `iframe` to provide live feedback on hover animations, button interactions, and theme toggles without a full rebuild.
+
+*   **Phase 5: Smart Modernization Suggestions (AI Assist)**
+    *   Develop an AI layer that suggests modern upgrades (e.g., "apply a gradient hover animation to your buttons") based on the current layout's structure and style.
+
+*   **Phase 6: Accessibility & Device Awareness**
+    *   Add automated color contrast checks, touch gesture optimization, and a responsive scaling preview to ensure layouts are inclusive and mobile-first.
+
+*   **Phase 7: Design Plugin System**
+    *   Structure the rendering engine to support a plugin system, allowing future developers to add new UI packs and animation libraries without modifying the core.
+
+### Tier 2: AI Layout Decoder Layer
+
+The goal of this tier is to bridge the gap between design perception and structural generation, allowing users to create layouts from visual inputs.
+
+*   **Phase 1: AI-Powered Input Analysis**
+    *   Create a `/api/ai-decode` endpoint that accepts an image or a URL.
+    *   Integrate an AI vision model (e.g., Gemini Vision) to analyze images for layout structure, typography, and color palettes.
+    *   Build a lightweight scraper to parse the DOM of a given URL for the same information.
+
+*   **Phase 2: Schema Translator**
+    *   Develop a translation layer that maps the AI/DOM findings to the editor's internal component library (e.g., a `<header>` tag maps to the `Header` component).
+
+*   **Phase 3: Visual Assembly & Feedback Loop**
+    *   The Layout Editor will use the translated JSON to render the generated structure.
+    *   If the AI cannot find a perfect component match, it will suggest the closest substitute.
+    *   The system will learn from user corrections, improving its mapping accuracy over time.

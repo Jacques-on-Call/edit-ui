@@ -8,6 +8,7 @@ const baseLayoutSchema = {
   description: 'string',
   meta: 'object',
   schema: 'object',
+  layout: 'object', // Added for modern design tokens
 };
 
 const defaultLayoutValues = {
@@ -15,6 +16,7 @@ const defaultLayoutValues = {
   description: 'No description provided.',
   meta: {},
   schema: {},
+  layout: {}, // Default to an empty object
 };
 
 /**

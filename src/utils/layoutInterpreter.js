@@ -91,6 +91,25 @@ export function validateLayoutSchema(frontmatter) {
     warnings.push(`'schema' field, if present, must be an object. Found: ${typeof frontmatter.schema}`);
   }
 
+  // Validate the modern design schema if it exists
+  if (frontmatter.layout && typeof frontmatter.layout === 'object') {
+    const designTokens = ['structure', 'theme', 'animation'];
+    for (const token of designTokens) {
+      if (frontmatter.layout[token] && typeof frontmatter.layout[token] !== 'string') {
+        warnings.push(`Design token 'layout.${token}' must be a string. Found: ${typeof frontmatter.layout[token]}`);
+      }
+    }
+    if (frontmatter.layout.colorPalette && typeof frontmatter.layout.colorPalette !== 'object') {
+      warnings.push(`Design token 'layout.colorPalette' must be an object. Found: ${typeof frontmatter.layout.colorPalette}`);
+    }
+    if (frontmatter.layout.uiElements && typeof frontmatter.layout.uiElements !== 'object') {
+        warnings.push(`Design token 'layout.uiElements' must be an object. Found: ${typeof frontmatter.layout.uiElements}`);
+    }
+    if (frontmatter.layout.motion && typeof frontmatter.layout.motion !== 'object') {
+        warnings.push(`Design token 'layout.motion' must be an object. Found: ${typeof frontmatter.layout.motion}`);
+    }
+  }
+
   return {
     isValid: errors.length === 0,
     errors,

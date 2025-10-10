@@ -137,6 +137,16 @@ export function generateFallbackHtml(details, isPlaceholder = false, isSuccess =
             </div>
           </div>
 
+          ${frontmatter.layout && Object.keys(frontmatter.layout).length > 0 ? `
+          <div class="card">
+            <h2 class="text-xl font-semibold text-gray-800">Design Tokens</h2>
+            <p class="text-xs text-gray-500 mt-1">Modern design tokens from the 'layout' object.</p>
+            <div class="mt-3 bg-gray-900 text-white p-4 rounded-lg text-sm overflow-x-auto">
+              <pre><code>${JSON.stringify(frontmatter.layout, null, 2)}</code></pre>
+            </div>
+          </div>
+          ` : ''}
+
           <div class="card">
             <h2 class="text-xl font-semibold text-gray-800">Detected Components</h2>
              <p class="text-xs text-gray-500 mt-1">These components were found in the file body.</p>
