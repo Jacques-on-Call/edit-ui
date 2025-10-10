@@ -22,7 +22,7 @@ function App() {
       <Route element={<AppLayout />}>
         <Route path="/explorer" element={<ExplorerPage />} />
         <Route path="/layouts" element={<ErrorBoundary><LayoutsDashboardPage /></ErrorBoundary>} />
-        <Route path="/layout-editor" element={<LayoutEditorPage />} />
+        <Route path="/layout-editor" element={<ErrorBoundary><LayoutEditorPage /></ErrorBoundary>} />
         <Route path="/editor" element={<ErrorBoundary><EditorPage /></ErrorBoundary>} />
       </Route>
     </Routes>
