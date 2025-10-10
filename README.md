@@ -291,3 +291,186 @@ if (file.path.startsWith("src/layouts")) {
 }
 ```
 If this condition is missing or inverted, `.astro` layouts open in the wrong editor.
+
+---
+
+## Universal Layout Interpreter - Implementation Plan
+
+Below is a developer-ready implementation plan designed to make the layout editor resilient, debuggable, and forward-compatible.
+
+**🧠 Goal Summary**
+
+*   **Goal:** Create a universal layout interpreter that can safely parse, render, and visualize .astro layout files (and embedded React/Vue islands) inside a visual editor — with built-in data normalization, error fallbacks, and live debugging hooks.
+*   **Outcomes:**
+    *   Works with current and future Astro versions
+    *   Supports React/Vue/Svelte islands
+    *   Detects, parses, and renders all layout types
+    *   Never breaks due to data shape or missing component imports
+    *   Visual debugging layer for non-renderable layouts
+
+---
+
+**⚙️ Phase 1 – Core Layout Interpreter (In Progress)**
+
+**1. File Parsing Layer**
+Create a parser that can detect and classify layouts automatically.
+```javascript
+// pseudo-code
+detectLayoutType(fileContent) {
+  if (fileContent.includes("import React") || fileContent.includes("from 'react'")) return 'react';
+  if (fileContent.includes("from 'vue'")) return 'vue';
+  if (fileContent.includes("from 'svelte'")) return 'svelte';
+  if (fileContent.includes("---") && fileContent.includes("<html")) return 'astro';
+  return 'unknown';
+}
+```
+
+**2. Frontmatter Extractor**
+Use regex or gray-matter to extract the `---` block and normalize it into JSON.
+```javascript
+normalizeFrontmatter(rawFrontmatter) {
+  try {
+    return parseFrontmatter(rawFrontmatter); // converts Astro frontmatter into JSON
+  } catch (err) {
+    return { error: `Invalid frontmatter: ${err.message}` };
+  }
+}
+```
+
+**3. Schema Validation**
+Add schema checking for layout props (e.g., title, description, meta, schema).
+```javascript
+const layoutSchema = {
+  title: 'string',
+  description: 'string',
+  meta: 'object?',
+  schema: 'object?'
+};
+```
+*🔧 Optional: use Zod or ajv for strict schema validation.*
+
+---
+
+**🧩 Phase 2 – Component Mapper**
+
+**1. AST (Abstract Syntax Tree) Reader**
+Use `@babel/parser` or `astro-compiler` to map `<Header />`, `<Footer />`, and `<slot />` as layout nodes.
+```javascript
+components = extractComponentsFromAstro(fileContent);
+// returns: ['Header', 'Footer', 'slot']
+```
+
+**2. Component Registry**
+Maintain a registry with dynamic import fallbacks:
+```javascript
+registry = {
+  Header: async () => import('../components/Header.astro').catch(showPlaceholder),
+  Footer: async () => import('../components/Footer.astro').catch(showPlaceholder),
+};
+```
+If import fails → render `<MissingComponent name="Header" />`.
+
+---
+
+**🧱 Phase 3 – Visual Render Engine**
+
+**1. Safe Renderer**
+Wrap all renders in an isolated `iframe` or shadow DOM for safety.
+```javascript
+try {
+  renderToIframe(layoutContent, props);
+} catch (err) {
+  renderFallback(`Render failed: ${err.message}`);
+}
+```
+
+**2. Fallback Renderer**
+If the file can’t render properly:
+*   Display component map
+*   Show frontmatter and meta data
+*   Display missing component warnings visually (e.g., in yellow boxes)
+```html
+<div class="debug-fallback">
+  <h3>Layout Preview Failed</h3>
+  <ul>
+    <li>Detected Components: Header, Footer</li>
+    <li>Missing: slot content</li>
+  </ul>
+</div>
+```
+
+---
+
+**🪄 Phase 4 – Error & Debugging Layer**
+
+**1. Live Error Feed**
+Create a persistent sidebar or console area that logs:
+*   Missing imports
+*   Frontmatter parse errors
+*   Render exceptions
+*   Layout type conflicts
+
+**2. Visual Indicators**
+Add small overlays (like Chrome DevTools):
+*   🟢 Valid Component
+*   🟠 Missing Prop
+*   🔴 Missing Component
+
+**3. Interactive Fix Suggestions**
+If possible, show suggestions:
+“Header component missing. Would you like to auto-generate a placeholder?”
+
+---
+
+**🧩 Phase 5 – Reactive Islands Support**
+
+**1. Astro Island Auto-Detection**
+Detect and isolate `<Island client:load>` blocks.
+```javascript
+detectIslands(fileContent) {
+  const matches = fileContent.matchAll(/<([^ ]+)\s+client:[^>]+>/g);
+  return Array.from(matches).map(m => m[1]);
+}
+```
+
+**2. Hydration Controller**
+Hydrate islands only after the main layout is mounted (avoiding premature runtime errors).
+```javascript
+hydrateIslandsAfterRender(() => {
+  islands.forEach(loadIslandSafely);
+});
+```
+
+**3. Reactive Renderer Adapters**
+Create adapters for React, Vue, and Svelte using micro-frontends (import maps or modular federation).
+
+---
+
+**🧰 Phase 6 – Long-Term Stability Features**
+*   **Normalization Patch System:** Each layout load passes through a `normalizeLayoutData(layout)` function that reshapes props to a safe base schema.
+*   **Version-Aware Engine:** Detect Astro version (via `astro.config.mjs`) and enable compatibility shims if syntax changes.
+*   **Diagnostics Export:** Export layout maps, dependencies, and render logs as JSON for bug reports or debugging sessions.
+
+---
+
+**🔒 Bonus: Developer Safety Tools**
+
+| Tool                     | Purpose                          |
+| ------------------------ | -------------------------------- |
+| `vite-plugin-inspect`    | View actual component graph      |
+| `astro-check` CLI        | Validate syntax before render    |
+| `react-error-boundary`   | Catch React island crashes       |
+| `console.groupCollapsed()`| Clean, readable logs             |
+| Source Map Overlay       | Map rendered view to file lines  |
+
+---
+
+**✅ Summary of Deliverables**
+
+For Jules to implement:
+1.  `layoutInterpreter.ts` → Detects type, parses frontmatter, validates schema
+2.  `componentMapper.ts` → Maps and loads components dynamically
+3.  `layoutRenderer.ts` → Safely renders with iframe/shadow DOM
+4.  `debugLayer.tsx` → Displays missing components, errors, suggestions
+5.  `islandHydrator.ts` → Loads Astro islands and React/Vue elements safely
+6.  `normalizationPatch.ts` → Reshapes data for stable rendering
