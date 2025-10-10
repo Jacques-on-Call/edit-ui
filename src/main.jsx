@@ -11,7 +11,7 @@ import { initialize } from '@astrojs/compiler';
 // Initialize the Astro compiler's WASM module and export the promise.
 // This must be done once at startup. Other modules can await this promise
 // to ensure the compiler is ready before using it.
-export const astroCompilerReady = initialize();
+export const astroCompilerReady = initialize({ wasmURL: '/astro.wasm' });
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
