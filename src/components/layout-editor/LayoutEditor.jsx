@@ -179,7 +179,7 @@ export const LayoutEditor = () => {
             onError={setDebugReport}
           />
         </div>
-        {debugReport && (
+        {debugReport && debugReport.errors && debugReport.errors.length > 0 && (
           <DebugSidebar
             report={debugReport}
             onClose={() => setDebugReport(null)}
