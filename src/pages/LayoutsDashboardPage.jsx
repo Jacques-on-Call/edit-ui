@@ -57,7 +57,9 @@ const LayoutsDashboardPage = () => {
             : [];
 
         const d1Layouts = extractArray(d1Raw).map(normalizeD1);
-        const astroLayouts = extractArray(astroRaw).map(normalizeAstro).filter(l => l.name.endsWith('.astro'));
+        const astroLayouts = extractArray(astroRaw)
+          .filter(item => item.name && item.name.endsWith('.astro'))
+          .map(normalizeAstro);
 
         const allLayouts = [...d1Layouts, ...astroLayouts];
 
