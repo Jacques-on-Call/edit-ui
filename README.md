@@ -351,14 +351,11 @@ const layoutSchema = {
 
 ---
 
-**🧩 Phase 2 – Component Mapper (In Progress)**
+**🧩 Phase 2 – Component Mapper (Completed)**
 
 **1. AST (Abstract Syntax Tree) Reader**
-Use `@babel/parser` or `astro-compiler` to map `<Header />`, `<Footer />`, and `<slot />` as layout nodes.
-```javascript
-components = extractComponentsFromAstro(fileContent);
-// returns: ['Header', 'Footer', 'slot']
-```
+Use `@astrojs/compiler` to walk the AST and map all components, including standard components and client-side islands.
+*   **Note:** The initial implementation using a generic JSX parser (`acorn-jsx`) was replaced with the official Astro compiler. This was a critical fix to ensure accurate parsing of Astro-specific syntax (e.g., `<style>` tags, `client:*` directives), which resolved a fundamental `Failed to parse Astro body` error.
 
 **2. Component Registry**
 Maintain a registry with dynamic import fallbacks:
@@ -372,66 +369,37 @@ If import fails → render `<MissingComponent name="Header" />`.
 
 ---
 
-**🧱 Phase 3 – Visual Render Engine**
+**🧱 Phase 3 – Visual Render Engine (Completed)**
 
 **1. Safe Renderer**
-Wrap all renders in an isolated `iframe` or shadow DOM for safety.
-```javascript
-try {
-  renderToIframe(layoutContent, props);
-} catch (err) {
-  renderFallback(`Render failed: ${err.message}`);
-}
-```
+All layout previews are rendered in a sandboxed `<iframe>` to isolate them from the main application, preventing style and script conflicts.
 
 **2. Fallback Renderer**
-If the file can’t render properly:
-*   Display component map
-*   Show frontmatter and meta data
-*   Display missing component warnings visually (e.g., in yellow boxes)
-```html
-<div class="debug-fallback">
-  <h3>Layout Preview Failed</h3>
-  <ul>
-    <li>Detected Components: Header, Footer</li>
-    <li>Missing: slot content</li>
-  </ul>
-</div>
-```
+If a layout file cannot be parsed or rendered, a detailed fallback view is displayed within the `iframe`. This view includes:
+*   A clear error message.
+*   The file's frontmatter.
+*   A list of all detected components.
+*   A list of all detected client-side islands.
 
 ---
 
-**🪄 Phase 4 – Error & Debugging Layer**
+**🪄 Phase 4 – Error & Debugging Layer (Completed)**
 
 **1. Live Error Feed**
-Create a persistent sidebar or console area that logs:
-*   Missing imports
-*   Frontmatter parse errors
-*   Render exceptions
-*   Layout type conflicts
+A responsive, mobile-first `DebugSidebar` component displays a live feed of diagnostic information when a layout fails to render. It shows all the information from the fallback renderer in a persistent sidebar for easier debugging.
 
 **2. Visual Indicators**
-Add small overlays (like Chrome DevTools):
-*   🟢 Valid Component
-*   🟠 Missing Prop
-*   🔴 Missing Component
+*Not yet implemented.*
 
 **3. Interactive Fix Suggestions**
-If possible, show suggestions:
-“Header component missing. Would you like to auto-generate a placeholder?”
+*Not yet implemented.*
 
 ---
 
-**🧩 Phase 5 – Reactive Islands Support**
+**🧩 Phase 5 – Reactive Islands Support (Partially Completed)**
 
 **1. Astro Island Auto-Detection**
-Detect and isolate `<Island client:load>` blocks.
-```javascript
-detectIslands(fileContent) {
-  const matches = fileContent.matchAll(/<([^ ]+)\s+client:[^>]+>/g);
-  return Array.from(matches).map(m => m[1]);
-}
-```
+The system now uses the `@astrojs/compiler` to accurately detect all components with a `client:*` directive. These are displayed in the fallback renderer and the debug sidebar.
 
 **2. Hydration Controller**
 Hydrate islands only after the main layout is mounted (avoiding premature runtime errors).

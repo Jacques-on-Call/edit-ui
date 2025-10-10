@@ -89,12 +89,40 @@ The Cloudflare Worker exposes a series of API endpoints under the `/api/` path. 
 | `GET`  | `/api/layout-templates`     | Fetches a list of all graphical layout templates from the D1 database.                                                                                                                | `LayoutsDashboardPage.jsx`                             |
 | `POST` | `/api/layout-templates`     | Creates or updates a graphical layout template in the D1 database.                                                                                                                    | `LayoutEditorPage.jsx`                                 |
 | `GET`  | `/api/astro-layouts`        | A specialized version of `/api/files` that specifically lists files in the `src/layouts` directory of the user's repository.                                                            | `LayoutsDashboardPage.jsx`                             |
+| `GET`  | `/api/get-file-content`     | Fetches the raw, decoded content of a single file from the repository.                                                                                                                | `LayoutEditorPage.jsx` (for Astro layouts)             |
 | `POST` | `/api/trigger-build`        | Triggers a GitHub Actions workflow (`build-preview.yml`) to generate a site preview. Requires a `GITHUB_TOKEN` secret on the worker.                                                  | *(Currently Unused, for future preview functionality)* |
 | `GET`  | `/api/build-status`         | Checks the status of the latest run of the `build-preview.yml` workflow.                                                                                                              | **(Currently Unused, for future preview functionality)*** |
 
 ---
 
-## 4. Architectural Questions & Observations
+## 4. The Universal Layout Interpreter
+
+A key feature of the `easy-seo` application is the **Universal Layout Interpreter**, which is responsible for analyzing `.astro` layout files. This system allows the application to provide a visual preview and a rich debugging experience without needing to fully render the Astro file.
+
+### 4.1. Core Components
+
+| Component                   | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VisualRenderer.jsx`        | **[Orchestrator]** This component is rendered in place of the graphical editor when an `.astro` file is opened. It orchestrates the entire process: it fetches the file content, calls the necessary parsers and normalizers, and then renders the final HTML preview or fallback view into a sandboxed `<iframe>`.                                                                                                                      |
+| `DebugSidebar.jsx`          | **[UI for Debugging]** A responsive, mobile-first sidebar component that displays a live feed of diagnostic information when a layout fails to parse or render. It shows a list of errors, the extracted frontmatter, detected components, and any client-side islands.                                                                                                                                                               |
+
+### 4.2. Utility Pipeline
+
+The `VisualRenderer` uses a pipeline of utility functions to process the file content:
+
+1.  **`normalizeFrontmatter()` (`layoutInterpreter.js`)**: Extracts the frontmatter from the file.
+2.  **`normalizeLayoutData()` (`normalizationPatch.js`)**: Ensures the extracted frontmatter conforms to a safe, base schema by providing default values for missing or invalid properties. This enhances long-term stability.
+3.  **`validateLayoutSchema()` (`layoutInterpreter.js`)**: Validates the normalized frontmatter against a defined schema.
+4.  **`parseAstroComponents()` (`componentMapper.js`)**: This is the core of the parser. It uses the official **`@astrojs/compiler`** to parse the entire `.astro` file into an Abstract Syntax Tree (AST). It then traverses the AST to accurately identify all components and client-side islands. This replaced a previous, less robust implementation that used a generic JSX parser.
+5.  **`generateFallbackHtml()` (`layoutRenderer.js`)**: If any step in the pipeline produces an error, this function generates a detailed HTML error report that is displayed in the `iframe` and the `DebugSidebar`.
+
+### 4.3. Initialization
+
+The `@astrojs/compiler` is a WebAssembly (WASM) based module. As such, it must be initialized before it can be used. This is handled by calling the `initialize()` function from the compiler in the application's main entry point (`src/main.jsx`) to ensure it's ready before any parsing is attempted.
+
+---
+
+## 5. Architectural Questions & Observations
 
 1.  **Dual `package.json` Files**: The project has a `package.json` at the root and another inside `easy-seo/`. This is typical for a monorepo structure but can sometimes lead to confusion about which one to use for which task. The root one seems to manage the broader Astro project and worker, while the nested one is specific to the React editor. This separation is logical but requires careful dependency management.
 2.  **Hardcoded Paths**: The `FileExplorer.jsx` component has a hardcoded initial path of `src/pages`. While this makes sense for an Astro project, it makes the component less flexible if it were to be used for browsing other parts of a repository. This is a deliberate design choice for the current use case but is worth noting.
