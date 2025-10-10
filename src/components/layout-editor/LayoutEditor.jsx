@@ -17,23 +17,20 @@ function useQuery() {
 }
 
 const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJson }) => {
-  const { actions, query } = useEditor();
+  const { actions, query, ready } = useEditor((state) => ({ ready: state.events.ready }));
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (initialJson) {
-      // Use a timeout to ensure the editor is fully initialized before deserializing.
-      // This prevents a race condition on the initial render.
-      const timer = setTimeout(() => {
-        try {
-          actions.deserialize(initialJson);
-        } catch (e) {
-          console.error("Error deserializing layout JSON:", e);
-        }
-      }, 0);
-      return () => clearTimeout(timer);
+    // Only deserialize when the editor is ready and we have initial JSON to load.
+    // This prevents a race condition on the initial render by waiting for the editor to be fully initialized.
+    if (ready && initialJson) {
+      try {
+        actions.deserialize(initialJson);
+      } catch (e) {
+        console.error("Error deserializing layout JSON:", e);
+      }
     }
-  }, [initialJson, actions]);
+  }, [ready, initialJson, actions]);
 
   const handleSave = async () => {
     const json = query.serialize();
