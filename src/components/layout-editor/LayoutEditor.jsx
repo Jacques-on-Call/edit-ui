@@ -11,6 +11,7 @@ import { EditorFeatureGrid } from './blocks/FeatureGrid.editor';
 import { EditorTestimonial } from './blocks/Testimonial.editor';
 import { EditorCTA } from './blocks/CTA.editor';
 import { EditorFooter } from './blocks/Footer.editor';
+import { checkLayoutIntegrity } from '../../utils/layoutIntegrityLogger';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -125,6 +126,18 @@ export const LayoutEditor = () => {
           return res.json();
         })
         .then(data => {
+          console.group(`[Layout Integrity Report] for Template ID: ${templateId}`);
+          const report = checkLayoutIntegrity(data.json_content);
+          if (report.isValid) {
+            console.log("✅ Layout data is valid.");
+          } else {
+            console.error("❌ Layout data is invalid. Errors:", report.errors);
+          }
+          if (report.warnings.length > 0) {
+            console.warn("⚠️ Warnings:", report.warnings);
+          }
+          console.groupEnd();
+
           setInitialJson(data.json_content);
           setCurrentTemplateName(data.name);
         })
