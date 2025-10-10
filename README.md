@@ -146,3 +146,185 @@ Your suggestion to create a more engaging loading animation was a brilliant touc
 *   Intelligently switches to a red, static error state if the build fails, providing clear and immediate visual feedback.
 
 This journey highlights the importance of understanding the execution environment and the value of persistent, collaborative debugging. The result is a feature that is not only functional but also a pleasure to use.
+
+---
+
+## 🧭 Layout Loading Debug Checklist
+
+**Goal:** Determine why layout templates (from D1) and Astro layout files (from GitHub) do not appear or render in the layout editor.
+
+Each step builds on the previous. Don’t skip ahead until one is confirmed working.
+
+---
+
+### 🔹 Phase 1 – Verify Backend Output
+
+**✅ Step 1. Check /api/layout-templates Worker Handler**
+
+Open `cloudflare-worker-code.js` and locate: `case "/api/layout-templates":`
+
+**Confirm:**
+- The SQL query: `const result = await env.DB.prepare("SELECT * FROM layout_templates").all();`
+- It returns `JSON.stringify(result.results)` or `Response.json(result.results)` (not just `result`).
+
+**✅ Expected Output Example:**
+```json
+[
+  {
+    "id": 1,
+    "name": "Homepage Layout",
+    "json_content": "{\\"ROOT\\":{\\"type\\":\\"div\\",\\"props\\":{},\\"nodes\\":[]}}",
+    "created_at": "2025-10-05T12:00:00Z"
+  }
+]
+```
+
+**❌ Red Flags:**
+- Returns `{ success: true, results: [] }`
+- Or returns Base64 instead of raw JSON string
+→ indicates D1 query or JSON encoding mismatch.
+
+---
+
+**✅ Step 2. Check /api/astro-layouts**
+
+Still in `cloudflare-worker-code.js`: `case "/api/astro-layouts":`
+
+**Confirm:**
+- It’s calling GitHub’s API endpoint like: `GET /repos/{owner}/{repo}/contents/src/layouts`
+- That it filters only `.astro` files before returning.
+
+**✅ Expected Output Example:**
+```json
+[
+  { "name": "BaseLayout.astro", "path": "src/layouts/BaseLayout.astro" },
+  { "name": "LandingPage.astro", "path": "src/layouts/LandingPage.astro" }
+]
+```
+
+**❌ Common Pitfalls:**
+- The path is hardcoded incorrectly (`src/layout` instead of `src/layouts`).
+- The GitHub API returns an array of file objects, but the Worker only passes a single `file.content`.
+
+**🧩 Debug Tip:**
+In the Worker’s console (via `wrangler dev`), log the result before returning:
+`console.log("Astro layouts:", result);`
+
+---
+
+### 🔹 Phase 2 – Verify Frontend Data Consumption
+
+**✅ Step 3. Find Fetch Logic in `LayoutsDashboardPage.jsx`**
+
+Locate:
+```jsx
+useEffect(() => {
+  Promise.all([
+    fetch("/api/layout-templates").then((r) => r.json()),
+    fetch("/api/astro-layouts").then((r) => r.json())
+  ]).then(([d1Layouts, astroLayouts]) => {
+    setLayouts([...d1Layouts, ...astroLayouts]);
+  });
+}, []);
+```
+
+**Check:**
+- Does it call `setLayouts` only after both succeed?
+- Are both responses arrays (not nested under `.results`)?
+
+**❌ Symptom of Issue:**
+If either endpoint returns `{ results: [...] }`, then `setLayouts([...undefined, ...undefined])` leads to an empty UI.
+
+**✅ Fix:**
+Add normalization:
+`const extract = (data) => Array.isArray(data) ? data : data.results || [];`
+`setLayouts([...extract(d1Layouts), ...extract(astroLayouts)]);`
+
+---
+
+**✅ Step 4. Verify Data Mapping to UI**
+
+Find in render section:
+```jsx
+{layouts.map((layout) => (
+  <LayoutCard key={layout.id || layout.path} layout={layout} />
+))}
+```
+
+**Check:**
+- Each layout has a unique `id` or `path`.
+- `LayoutCard` displays something (not hidden by a conditional like `layout.source === 'd1'`).
+
+**🧩 Debug Tip:**
+Add a quick check: `console.log("Layouts loaded:", layouts);`
+If this logs data but nothing shows visually, you’re dealing with a render condition or CSS hiding, not missing data.
+
+---
+
+### 🔹 Phase 3 – Verify CraftJS Canvas Hydration
+
+**✅ Step 5. Check Deserialization in `LayoutEditorPage.jsx`**
+
+Locate something like:
+```jsx
+useEffect(() => {
+  if (layout && layout.json_content) {
+    actions.deserialize(JSON.parse(layout.json_content));
+  }
+}, [layout]);
+```
+
+**✅ Test:**
+Insert a temporary log: `console.log("Deserializing:", layout?.json_content);`
+- If you see a JSON string → check if it’s valid CraftJS format.
+- If it’s empty → D1 record was found, but column `json_content` was null or misnamed.
+
+---
+
+**✅ Step 6. Confirm Component Registration**
+
+In the editor setup (usually near the top of `LayoutEditorPage.jsx`):
+`<Editor resolver={{ Container, Section, Hero, TextBlock }}>`
+
+Compare this list with the component names used inside your stored JSON (`layout.json_content`).
+If they don’t match, CraftJS silently refuses to render.
+
+**✅ Test:**
+Manually deserialize a minimal layout:
+`actions.deserialize({ ROOT: { type: "div", props: {}, nodes: [] } });`
+If that renders a blank div → good.
+If not, deserialization is blocked or the editor instance didn’t initialize.
+
+---
+
+### 🔹 Phase 4 – Cross-Verification
+
+**✅ Step 7. Compare D1 JSON with Working Example**
+
+Take any saved layout JSON and paste it into a test sandbox:
+`const testJson = JSON.parse(layout.json_content);`
+`console.log(Object.keys(testJson.ROOT));`
+
+**✅ Should show at least:** `["type", "props", "nodes"]`
+
+**❌ If it shows something like:** `["editorState", "data", "id"]`
+→ you’re storing the wrong CraftJS state shape (likely the entire `editor.query.getSerializedNodes()` object instead of the `ROOT` tree).
+Fixing the serialization format will make existing layouts visible again.
+
+---
+
+### 🔹 Phase 5 – Optional: Sync Logic Between D1 and Astro
+
+If both APIs work but neither renders, you may need to check the “open layout” routing logic.
+
+**✅ Step 8. File Type Routing**
+
+In `FileExplorer.jsx` or wherever you call `navigate("/editor" | "/layout-editor")`, find:
+```jsx
+if (file.path.startsWith("src/layouts")) {
+  navigate("/layout-editor?id=" + file.path);
+} else {
+  navigate("/editor?id=" + file.path);
+}
+```
+If this condition is missing or inverted, `.astro` layouts open in the wrong editor.

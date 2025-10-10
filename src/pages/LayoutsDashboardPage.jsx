@@ -12,39 +12,29 @@ const LayoutsDashboardPage = () => {
 
   useEffect(() => {
     async function loadLayouts() {
-      setLoading(true);
-      setError(null);
       try {
-        const selectedRepo = localStorage.getItem('selectedRepo');
-        if (!selectedRepo) {
-          throw new Error("No repository selected. Please select a repository first.");
-        }
-
         const [d1Res, astroRes] = await Promise.all([
-          fetch("/api/layout-templates", { credentials: 'include' }),
-          fetch(`/api/astro-layouts?repo=${selectedRepo}`, { credentials: 'include' })
+          fetch("/api/layout-templates"),
+          fetch("/api/astro-layouts")
         ]);
-
-        if (!d1Res.ok) throw new Error(`Failed to fetch D1 templates: ${d1Res.statusText}`);
-        if (!astroRes.ok) throw new Error(`Failed to fetch Astro layouts: ${astroRes.statusText}`);
 
         const [d1Raw, astroRaw] = await Promise.all([d1Res.json(), astroRes.json()]);
 
         // --- Normalization Logic ---
         const normalizeD1 = (item) => ({
-          id: item.id?.toString() || `d1-${crypto.randomUUID()}`,
-          name: item.name || "Untitled D1 Layout",
+          id: item.id?.toString() || crypto.randomUUID(),
+          name: item.name || "Untitled Layout",
           source: "d1",
-          path: `/layout-editor?template_id=${item.id}`,
-          json_content: item.json_content || null, // Will be null for list view
-          created_at: item.updated_at || item.created_at || null
+          path: `/layout/${item.id || "unknown"}`,
+          json_content: item.json_content || null,
+          created_at: item.created_at || null
         });
 
         const normalizeAstro = (item) => ({
-          id: item.path || `astro-${crypto.randomUUID()}`,
+          id: item.path || crypto.randomUUID(),
           name: item.name?.replace(".astro", "") || "Unnamed Astro Layout",
           source: "astro",
-          path: `/layout-editor?repo=${selectedRepo}&path=${encodeURIComponent(item.path)}`,
+          path: item.path || "src/layouts/unknown.astro",
           json_content: null,
           created_at: null
         });
@@ -57,9 +47,7 @@ const LayoutsDashboardPage = () => {
             : [];
 
         const d1Layouts = extractArray(d1Raw).map(normalizeD1);
-        const astroLayouts = extractArray(astroRaw)
-          .filter(item => item.name && item.name.endsWith('.astro'))
-          .map(normalizeAstro);
+        const astroLayouts = extractArray(astroRaw).map(normalizeAstro);
 
         const allLayouts = [...d1Layouts, ...astroLayouts];
 
@@ -97,72 +85,136 @@ const LayoutsDashboardPage = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Layouts</h1>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-600 transition-all flex items-center space-x-2"
-        >
-          <Icon name="plus" className="h-5 w-5" />
-          <span>Create New Template</span>
-        </button>
-      </div>
-
-      {/* Patched Layout Rendering Block */}
-      {layouts.length === 0 && !loading ? (
-        <div className="text-center p-10 bg-white rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold text-gray-700">🕵️‍♂️ No layouts found.</h3>
-          <p className="text-gray-500 mt-2">This space is ready for your designs. Click "Create New Template" to start.</p>
+        <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-800">Layouts</h1>
+            <button
+                onClick={() => setModalOpen(true)}
+                className="bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-600 transition-all flex items-center space-x-2"
+            >
+                <Icon name="plus" className="h-5 w-5" />
+                <span>Create New Template</span>
+            </button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {layouts.map((layout) => {
-            const hasContent = !!layout.json_content;
-            const isAstro = layout.source === "astro";
 
-            return (
-              <div
-                key={layout.id}
-                className={`bg-white rounded-lg shadow-md overflow-hidden border-2 transition-all hover:shadow-xl hover:-translate-y-1 ${isAstro ? "border-blue-300" : "border-purple-300"}`}
-              >
-                <div className="p-4">
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-bold text-gray-800 truncate pr-2">{layout.name}</h3>
-                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${isAstro ? "bg-blue-100 text-blue-800" : "bg-purple-100 text-purple-800"}`}>
-                      {layout.source.toUpperCase()}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1 truncate" title={layout.path}>
-                    <code>{layout.path}</code>
-                  </p>
+        {layouts.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px", color: "#999" }}>
+                <p>🕵️‍♂️ No layouts found yet.</p>
+                <p>Try checking your /api/layout-templates or /api/astro-layouts endpoints.</p>
+            </div>
+        ) : (
+            <div
+                style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+                    gap: "20px",
+                    marginTop: "20px"
+                }}
+            >
+                {layouts.map((layout) => {
+                    const hasContent = !!layout.json_content;
+                    const isAstro = layout.source === "astro";
 
-                  <div className="text-xs text-gray-400 mt-2">
-                    {layout.created_at ? `Updated: ${new Date(layout.created_at).toLocaleDateString()}` : "No date"}
-                  </div>
+                    return (
+                        <div
+                            key={layout.id || layout.path}
+                            style={{
+                                border: `2px solid ${isAstro ? "#a8dadc" : "#457b9d"}`,
+                                borderRadius: "8px",
+                                background: hasContent ? "#f8f9fa" : "#fff4e6",
+                                padding: "16px",
+                                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                                position: "relative"
+                            }}
+                        >
+                            <h3 style={{ margin: "0 0 8px 0", fontSize: "1.1em" }}>
+                                {layout.name}
+                            </h3>
+                            <p style={{ margin: 0, fontSize: "0.9em", color: "#555" }}>
+                                Source:{" "}
+                                <strong
+                                    style={{
+                                        color: isAstro ? "#1d3557" : "#e76f51",
+                                        textTransform: "uppercase"
+                                    }}
+                                >
+                                    {layout.source}
+                                </strong>
+                            </p>
+                            <p style={{ margin: "4px 0", fontSize: "0.85em", color: "#777" }}>
+                                Path: <code>{layout.path}</code>
+                            </p>
 
-                  <div className={`mt-3 text-sm font-semibold flex items-center ${hasContent ? "text-green-600" : "text-amber-600"}`}>
-                    {hasContent ? '✅' : '⚠️'}
-                    <span className="ml-1.5">{hasContent ? "Content Ready" : "Missing Content"}</span>
-                  </div>
-                </div>
+                            {layout.created_at && (
+                                <p style={{ fontSize: "0.8em", color: "#888" }}>
+                                    Created: {new Date(layout.created_at).toLocaleString()}
+                                </p>
+                            )}
 
-                <div className="bg-gray-50 p-3">
-                  <Link
-                    to={layout.path}
-                    className="w-full text-center block bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
-                  >
-                    Open
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                            <div
+                                style={{
+                                    position: "absolute",
+                                    top: "10px",
+                                    right: "10px",
+                                    fontSize: "0.75em",
+                                    color: hasContent ? "#2a9d8f" : "#e76f51"
+                                }}
+                            >
+                                {hasContent ? "✅ Content Found" : "⚠️ Missing Content"}
+                            </div>
 
-      {isModalOpen && <NewTemplateModal onClose={() => setModalOpen(false)} onSubmit={handleCreateNewTemplate} />}
+                            <button
+                                style={{
+                                    marginTop: "12px",
+                                    width: "100%",
+                                    background: "#457b9d",
+                                    color: "white",
+                                    padding: "8px 0",
+                                    borderRadius: "4px",
+                                    border: "none",
+                                    cursor: "pointer"
+                                }}
+                                onClick={() =>
+                                    navigate(`/layout-editor?id=${encodeURIComponent(layout.path || layout.id)}`)
+                                }
+                            >
+                                Open Layout
+                            </button>
+                        </div>
+                    );
+                })}
+                {layouts.length > 0 && (
+                    <div
+                        style={{
+                            border: "2px dashed #ccc",
+                            borderRadius: "8px",
+                            padding: "16px",
+                            textAlign: "center",
+                            color: "#777",
+                            background: "#fafafa"
+                        }}
+                    >
+                        <p>🪄 Need a new layout?</p>
+                        <button
+                            style={{
+                                background: "#1d3557",
+                                color: "white",
+                                border: "none",
+                                padding: "8px 16px",
+                                borderRadius: "4px",
+                                cursor: "pointer"
+                            }}
+                            onClick={() => navigate("/layout-editor?new=true")}
+                        >
+                            + Create New Layout
+                        </button>
+                    </div>
+                )}
+            </div>
+        )}
+
+        {isModalOpen && <NewTemplateModal onClose={() => setModalOpen(false)} onSubmit={handleCreateNewTemplate} />}
     </div>
-  );
+);
 };
 
 export default LayoutsDashboardPage;
