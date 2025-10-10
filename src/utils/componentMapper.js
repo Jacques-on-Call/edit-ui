@@ -1,57 +1,57 @@
-import { Parser } from 'acorn';
-import jsx from 'acorn-jsx';
+import { parse } from '@astrojs/compiler';
 
 /**
  * @file Component Mapper
- * @description Utilities for parsing and mapping components from Astro layouts.
+ * @description Utilities for parsing and mapping components from Astro layouts using the official Astro compiler.
  */
 
 /**
- * Parses an Astro file's body to extract the names of all used components.
- * @param {string} astroBody - The body content of the .astro file (after the frontmatter).
- * @returns {{components: string[], error: string|null}} An object containing a list of component names, or an error message.
+ * Parses an Astro file's content to extract the names of all used components and islands.
+ * This function uses the official `@astrojs/compiler` to walk the AST, ensuring an
+ * accurate and robust parsing of Astro-specific syntax.
+ *
+ * @param {string} fileContent - The full content of the .astro file.
+ * @returns {{components: string[], islands: string[], error: string|null}} An object containing lists of component and island names, or an error message.
  */
-export function extractComponentsFromAstro(astroBody) {
-  const JsxParser = Parser.extend(jsx());
+export async function parseAstroComponents(fileContent) {
   const components = new Set();
+  const islands = new Set();
 
   try {
-    const ast = JsxParser.parse(astroBody, {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-    });
+    const { ast } = await parse(fileContent);
 
-    // Simple recursive traversal to find JSXOpeningElement nodes
+    // The walk function recursively traverses the AST.
     function walk(node) {
       if (!node) return;
 
-      if (node.type === 'JSXOpeningElement') {
-        if (node.name && node.name.name) {
-          // Add component name to the set (e.g., 'Header', 'Footer', 'slot')
-          components.add(node.name.name);
+      // Check if the node is a component, identifiable by a capital letter start.
+      if (node.type === 'Component' && node.name) {
+        components.add(node.name);
+
+        // Check for client directives to identify islands.
+        const hasClientDirective = node.attributes?.some(
+          attr => attr.type === 'attribute' && attr.name.startsWith('client:')
+        );
+
+        if (hasClientDirective) {
+          islands.add(node.name);
         }
       }
 
-      // Recurse into children
-      for (const key in node) {
-        if (Object.prototype.hasOwnProperty.call(node, key)) {
-          const child = node[key];
-          if (typeof child === 'object' && child !== null) {
-            if (Array.isArray(child)) {
-              child.forEach(walk);
-            } else {
-              walk(child);
-            }
-          }
+      // Recurse into children. The AST structure can have children in various properties.
+      if (node.children && Array.isArray(node.children)) {
+        for (const child of node.children) {
+          walk(child);
         }
       }
     }
 
     walk(ast);
 
-    return { components: [...components], error: null };
+    return { components: [...components], islands: [...islands], error: null };
   } catch (err) {
-    return { components: [], error: `Failed to parse Astro body: ${err.message}` };
+    // The compiler provides detailed error messages.
+    return { components: [], islands: [], error: `Failed to parse Astro file: ${err.message}` };
   }
 }
 
@@ -66,24 +66,3 @@ export const componentRegistry = {
   // Example entry:
   // Header: () => import('../components/Header.astro'),
 };
-
-/**
- * Detects and extracts the names of all Astro islands (components with client:* directives).
- * @param {string} fileContent - The full content of the .astro file.
- * @returns {{islands: string[], error: string|null}} An object containing a list of island component names.
- */
-export function detectIslands(fileContent) {
-  try {
-    // This regex looks for JSX-like tags that have a `client:` directive.
-    // It captures the component name (e.g., "MyComponent") from the opening tag.
-    const islandRegex = /<([A-Z][a-zA-Z0-9_.]*)\s+[^>]*client:[a-zA-Z]+[^>]*>/g;
-    const matches = fileContent.matchAll(islandRegex);
-    const islands = new Set();
-    for (const match of matches) {
-      islands.add(match[1]);
-    }
-    return { islands: [...islands], error: null };
-  } catch (err) {
-    return { islands: [], error: `Failed to detect islands: ${err.message}` };
-  }
-}

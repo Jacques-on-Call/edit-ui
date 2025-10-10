@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { normalizeFrontmatter, validateLayoutSchema } from '../../../utils/layoutInterpreter';
-import { extractComponentsFromAstro, detectIslands } from '../../../utils/componentMapper';
+import { parseAstroComponents } from '../../../utils/componentMapper';
 import { generateAstroPreviewHtml, generateFallbackHtml } from '../../../utils/layoutRenderer';
 import { normalizeLayoutData } from '../../../utils/normalizationPatch';
-import matter from 'gray-matter';
 
 /**
  * A component that orchestrates the parsing and rendering of an Astro layout file preview.
@@ -28,7 +27,7 @@ const VisualRenderer = ({ fileContent, filePath, onError }) => {
       };
 
       // 1. Separate frontmatter from body
-      const { content: bodyContent } = matter(fileContent);
+      // const { content: bodyContent } = matter(fileContent); // No longer needed as the compiler handles the full file.
 
       // 2. Normalize and Validate Frontmatter
       let rawFrontmatter = await normalizeFrontmatter(fileContent, filePath);
@@ -43,23 +42,16 @@ const VisualRenderer = ({ fileContent, filePath, onError }) => {
         }
       }
 
-      // 3. Extract Components from Body
-      const { components: extractedComponents, error: componentError } = extractComponentsFromAstro(bodyContent);
-      if (componentError) {
-        report.errors.push(componentError);
+      // 3. Parse Components and Islands using the new compiler
+      const { components, islands, error: parseError } = await parseAstroComponents(fileContent);
+      if (parseError) {
+        report.errors.push(parseError);
       } else {
-        report.components = extractedComponents;
+        report.components = components;
+        report.islands = islands;
       }
 
-      // 4. Detect Islands
-      const { islands: detectedIslands, error: islandError } = detectIslands(fileContent);
-      if (islandError) {
-        report.errors.push(islandError);
-      } else {
-        report.islands = detectedIslands;
-      }
-
-      // 5. Generate appropriate HTML and report errors
+      // 4. Generate appropriate HTML and report errors
       if (report.errors.length > 0) {
         onError(report);
         setPreviewHtml(generateFallbackHtml(report));
