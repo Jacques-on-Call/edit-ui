@@ -310,7 +310,7 @@ Below is a developer-ready implementation plan designed to make the layout edito
 
 ---
 
-**⚙️ Phase 1 – Core Layout Interpreter (In Progress)**
+**⚙️ Phase 1 – Core Layout Interpreter (Completed)**
 
 **1. File Parsing Layer**
 Create a parser that can detect and classify layouts automatically.
@@ -351,7 +351,7 @@ const layoutSchema = {
 
 ---
 
-**🧩 Phase 2 – Component Mapper**
+**🧩 Phase 2 – Component Mapper (In Progress)**
 
 **1. AST (Abstract Syntax Tree) Reader**
 Use `@babel/parser` or `astro-compiler` to map `<Header />`, `<Footer />`, and `<slot />` as layout nodes.
