@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { normalizeFrontmatter, validateLayoutSchema } from '../../../utils/layoutInterpreter';
-import { extractComponentsFromAstro } from '../../../utils/componentMapper';
+import { extractComponentsFromAstro, detectIslands } from '../../../utils/componentMapper';
 import { generateAstroPreviewHtml, generateFallbackHtml } from '../../../utils/layoutRenderer';
 import matter from 'gray-matter';
 
@@ -22,6 +22,7 @@ const VisualRenderer = ({ fileContent, filePath, onError }) => {
           errors: [],
           frontmatter: {},
           components: [],
+          islands: [],
           filePath,
       };
 
@@ -47,7 +48,15 @@ const VisualRenderer = ({ fileContent, filePath, onError }) => {
         report.components = extractedComponents;
       }
 
-      // 4. Generate appropriate HTML and report errors
+      // 4. Detect Islands
+      const { islands: detectedIslands, error: islandError } = detectIslands(fileContent);
+      if (islandError) {
+        report.errors.push(islandError);
+      } else {
+        report.islands = detectedIslands;
+      }
+
+      // 5. Generate appropriate HTML and report errors
       if (report.errors.length > 0) {
         onError(report);
         setPreviewHtml(generateFallbackHtml(report));

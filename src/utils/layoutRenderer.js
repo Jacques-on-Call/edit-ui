@@ -54,9 +54,10 @@ export function generateAstroPreviewHtml(fileContent, frontmatter, components) {
  * @param {string[]} details.errors - A list of specific error messages.
  * @param {object} details.frontmatter - The parsed frontmatter, which may contain an error key.
  * @param {string[]} details.components - The list of components that were detected before the failure.
+ * @param {string[]} details.islands - The list of Astro islands detected.
  * @returns {string} A complete HTML document as a string.
  */
-export function generateFallbackHtml({ filePath, errors, frontmatter, components }) {
+export function generateFallbackHtml({ filePath, errors, frontmatter, components, islands }) {
   const frontmatterString = JSON.stringify(frontmatter, null, 2);
 
   return `
@@ -130,6 +131,17 @@ export function generateFallbackHtml({ filePath, errors, frontmatter, components
               }
             </div>
           </div>
+        </div>
+
+        <div class="card">
+            <h2 class="text-xl font-semibold text-gray-800">Detected Islands</h2>
+            <p class="text-xs text-gray-500 mt-1">These components have a <code class="text-sm bg-gray-200 p-1 rounded">client:</code> directive.</p>
+            <div class="mt-3 space-y-2">
+                ${islands && islands.length > 0
+                    ? islands.map(i => `<div class="flex items-center space-x-3"><span class="tag tag-error">${i}</span></div>`).join('')
+                    : '<p class="text-sm text-gray-500">No client-side islands were detected.</p>'
+                }
+            </div>
         </div>
 
       </div>

@@ -10,7 +10,7 @@ import React from 'react';
 const DebugSidebar = ({ report, onClose }) => {
   if (!report) return null;
 
-  const { errors, frontmatter, components, filePath } = report;
+  const { errors, frontmatter, components, islands, filePath } = report;
 
   return (
     // Overlay container for mobile-first design
@@ -60,6 +60,19 @@ const DebugSidebar = ({ report, onClose }) => {
               ))
             ) : (
               <p className="text-sm text-gray-500 italic">None detected.</p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-semibold text-yellow-600 mb-2">Detected Islands ({islands.length})</h3>
+          <div className="space-y-2">
+            {islands.length > 0 ? (
+              islands.map((island, index) => (
+                <p key={index} className="text-sm text-yellow-800 bg-yellow-50 p-2 rounded">{island}</p>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 italic">No client-side islands detected.</p>
             )}
           </div>
         </div>

@@ -66,3 +66,24 @@ export const componentRegistry = {
   // Example entry:
   // Header: () => import('../components/Header.astro'),
 };
+
+/**
+ * Detects and extracts the names of all Astro islands (components with client:* directives).
+ * @param {string} fileContent - The full content of the .astro file.
+ * @returns {{islands: string[], error: string|null}} An object containing a list of island component names.
+ */
+export function detectIslands(fileContent) {
+  try {
+    // This regex looks for JSX-like tags that have a `client:` directive.
+    // It captures the component name (e.g., "MyComponent") from the opening tag.
+    const islandRegex = /<([A-Z][a-zA-Z0-9_.]*)\s+[^>]*client:[a-zA-Z]+[^>]*>/g;
+    const matches = fileContent.matchAll(islandRegex);
+    const islands = new Set();
+    for (const match of matches) {
+      islands.add(match[1]);
+    }
+    return { islands: [...islands], error: null };
+  } catch (err) {
+    return { islands: [], error: `Failed to detect islands: ${err.message}` };
+  }
+}
