@@ -22,11 +22,16 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
 
   useEffect(() => {
     if (initialJson) {
-      try {
-        actions.deserialize(initialJson);
-      } catch (e) {
-        console.error("Error deserializing layout JSON:", e);
-      }
+      // Use a timeout to ensure the editor is fully initialized before deserializing.
+      // This prevents a race condition on the initial render.
+      const timer = setTimeout(() => {
+        try {
+          actions.deserialize(initialJson);
+        } catch (e) {
+          console.error("Error deserializing layout JSON:", e);
+        }
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [initialJson, actions]);
 
