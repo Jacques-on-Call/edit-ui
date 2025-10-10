@@ -13,6 +13,7 @@ import { EditorCTA } from './blocks/CTA.editor';
 import { EditorFooter } from './blocks/Footer.editor';
 import { checkLayoutIntegrity } from '../../utils/layoutIntegrityLogger';
 import VisualRenderer from './visual-renderer/VisualRenderer';
+import DebugSidebar from './visual-renderer/DebugSidebar';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -95,6 +96,7 @@ export const LayoutEditor = () => {
   const [currentTemplateName, setCurrentTemplateName] = useState(templateName || starterName);
   const [isAstroLayout, setIsAstroLayout] = useState(!!astroLayoutPath);
   const [astroFileContent, setAstroFileContent] = useState(null);
+  const [debugReport, setDebugReport] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -168,7 +170,23 @@ export const LayoutEditor = () => {
     if (!astroFileContent) {
       return <div className="p-8 text-center text-red-500">Could not load Astro layout file.</div>;
     }
-    return <VisualRenderer fileContent={astroFileContent} filePath={astroLayoutPath} />;
+    return (
+      <div className="flex w-full h-screen">
+        <div className="flex-1">
+          <VisualRenderer
+            fileContent={astroFileContent}
+            filePath={astroLayoutPath}
+            onError={setDebugReport}
+          />
+        </div>
+        {debugReport && (
+          <DebugSidebar
+            report={debugReport}
+            onClose={() => setDebugReport(null)}
+          />
+        )}
+      </div>
+    );
   }
 
   if (!initialJson) {

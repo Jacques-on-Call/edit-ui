@@ -9,58 +9,58 @@ import matter from 'gray-matter';
  * It uses the layout utilities to process the file and then renders the result
  * into a sandboxed iframe. It handles both successful renders and detailed error fallbacks.
  *
- * @param {{ fileContent: string; filePath: string; }} props
+ * @param {{ fileContent: string; filePath: string; onError: (details: object) => void; }} props
  */
-const VisualRenderer = ({ fileContent, filePath }) => {
+const VisualRenderer = ({ fileContent, filePath, onError }) => {
   const [previewHtml, setPreviewHtml] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const processLayout = async () => {
       setIsLoading(true);
-      const errors = [];
-      let frontmatter = {};
-      let components = [];
+      const report = {
+          errors: [],
+          frontmatter: {},
+          components: [],
+          filePath,
+      };
 
       // 1. Separate frontmatter from body
       const { content: bodyContent } = matter(fileContent);
 
       // 2. Normalize and Validate Frontmatter
-      frontmatter = await normalizeFrontmatter(fileContent, filePath);
-      if (frontmatter.error) {
-        errors.push(frontmatter.error);
+      report.frontmatter = await normalizeFrontmatter(fileContent, filePath);
+      if (report.frontmatter.error) {
+        report.errors.push(report.frontmatter.error);
       } else {
-        const { isValid, errors: validationErrors } = validateLayoutSchema(frontmatter);
+        const { isValid, errors: validationErrors } = validateLayoutSchema(report.frontmatter);
         if (!isValid) {
-          errors.push(...validationErrors);
+          report.errors.push(...validationErrors);
         }
       }
 
       // 3. Extract Components from Body
       const { components: extractedComponents, error: componentError } = extractComponentsFromAstro(bodyContent);
       if (componentError) {
-        errors.push(componentError);
+        report.errors.push(componentError);
       } else {
-        components = extractedComponents;
+        report.components = extractedComponents;
       }
 
-      // 4. Generate appropriate HTML
-      if (errors.length > 0) {
-        setPreviewHtml(generateFallbackHtml({
-          filePath,
-          errors,
-          frontmatter,
-          components,
-        }));
+      // 4. Generate appropriate HTML and report errors
+      if (report.errors.length > 0) {
+        onError(report);
+        setPreviewHtml(generateFallbackHtml(report));
       } else {
-        setPreviewHtml(generateAstroPreviewHtml(fileContent, frontmatter, components));
+        onError(null); // Clear errors on success
+        setPreviewHtml(generateAstroPreviewHtml(fileContent, report.frontmatter, report.components));
       }
 
       setIsLoading(false);
     };
 
     processLayout();
-  }, [fileContent, filePath]);
+  }, [fileContent, filePath, onError]);
 
   if (isLoading) {
     return (
