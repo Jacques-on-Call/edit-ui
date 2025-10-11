@@ -83,42 +83,64 @@ The Cloudflare Worker exposes a series of API endpoints under the `/api/` path. 
 | `GET`  | `/api/repos`                | Fetches the list of repositories for the authenticated user.                                                                                                                          | `RepoSelector.jsx`                                     |
 | `GET`  | `/api/files`                | Fetches the contents of a directory in the selected repository.                                                                                                                       | `FileExplorer.jsx`                                     |
 | `GET`  | `/api/file`                 | Fetches the raw content and SHA of a single file.                                                                                                                                     | `EditorPage.jsx`, `FileExplorer.jsx` (for README)      |
-| `POST` | `/api/file`                 | Creates or updates a file in the repository. The file content must be Base64 encoded.                                                                                                 | `EditorPage.jsx` (on Publish)                          |
+| `POST` | `/api/file`                 | Creates or updates a file in the repository. The file content must be Base64 encoded.                                                                                                 | `EditorPage.jsx` (on Publish), `CreateModal.jsx`       |
+| `DELETE`| `/api/files`               | Deletes a file from the repository. Requires the file's `path` and `sha`.                                                                                                             | `FileExplorer.jsx`                                     |
+| `POST` | `/api/rename-file`          | Renames a file by creating a new file with the new name and deleting the old one.                                                                                                     | `FileExplorer.jsx`                                     |
+| `POST` | `/api/duplicate-file`       | Duplicates a file by creating a copy with a "-copy" suffix.                                                                                                                           | `FileExplorer.jsx`                                     |
 | `GET`  | `/api/metadata`             | Fetches the commit history for a file to get metadata like the last author and modification date.                                                                                     | `FileExplorer.jsx`                                     |
 | `GET`  | `/api/search`               | Performs a search for files within the `src/pages` directory of the repository using the GitHub Search API.                                                                           | `SearchBar.jsx` (within `FileExplorer`)                |
 | `GET`  | `/api/layout-templates`     | Fetches a list of all graphical layout templates from the D1 database.                                                                                                                | `LayoutsDashboardPage.jsx`                             |
 | `POST` | `/api/layout-templates`     | Creates or updates a graphical layout template in the D1 database.                                                                                                                    | `LayoutEditorPage.jsx`                                 |
 | `GET`  | `/api/astro-layouts`        | A specialized version of `/api/files` that specifically lists files in the `src/layouts` directory of the user's repository.                                                            | `LayoutsDashboardPage.jsx`                             |
 | `GET`  | `/api/get-file-content`     | Fetches the raw, decoded content of a single file from the repository.                                                                                                                | `LayoutEditorPage.jsx` (for Astro layouts)             |
+| `POST` | `/api/assign-layout`        | Assigns a layout to a file by modifying its frontmatter `layout` property.                                                                                                            | `FileExplorer.jsx`, `EditorPage.jsx`                   |
+| `GET`  | `/api/render-layout/:id`    | Fetches the raw JSON content for a single graphical layout from the D1 database. This is used by the `GraphicalRenderer.astro` layout.                                                  | `GraphicalRenderer.astro`                              |
 | `POST` | `/api/trigger-build`        | Triggers a GitHub Actions workflow (`build-preview.yml`) to generate a site preview. Requires a `GITHUB_TOKEN` secret on the worker.                                                  | *(Currently Unused, for future preview functionality)* |
 | `GET`  | `/api/build-status`         | Checks the status of the latest run of the `build-preview.yml` workflow.                                                                                                              | **(Currently Unused, for future preview functionality)*** |
 
 ---
 
-## 4. The Universal Layout Interpreter
+## 4. Core Architectural Patterns
 
-A key feature of the `easy-seo` application is the **Universal Layout Interpreter**, which is responsible for analyzing `.astro` layout files. This system allows the application to provide a visual preview and a rich debugging experience without needing to fully render the Astro file.
+This section describes the key architectural patterns that enable the application's advanced features.
 
-### 4.1. Core Components
+### 4.1. The "Layout Bridge" Pattern
 
-| Component                   | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VisualRenderer.jsx`        | **[Orchestrator]** This component is rendered in place of the graphical editor when an `.astro` file is opened. It orchestrates the entire process: it fetches the file content, calls the necessary parsers and normalizers, and then renders the final HTML preview or fallback view into a sandboxed `<iframe>`.                                                                                                                      |
-| `DebugSidebar.jsx`          | **[UI for Debugging]** A responsive, mobile-first sidebar component that displays a live feed of diagnostic information when a layout fails to parse or render. It shows a list of errors, the extracted frontmatter, detected components, and any client-side islands.                                                                                                                                                               |
+A fundamental challenge is enabling code-based Astro pages (e.g., `src/pages/about.md`) to use layouts created in the graphical, data-driven editor. The "Layout Bridge" pattern solves this by decoupling the page from the graphical layout definition.
 
-### 4.2. Utility Pipeline
+**How it Works:**
 
-The `VisualRenderer` uses a pipeline of utility functions to process the file content:
+1.  **Assignment (`/api/assign-layout`):** When a user assigns a graphical layout (e.g., with ID `123`) to a page, the backend worker modifies that page's frontmatter. It does two things:
+    *   Sets the `layout` property to point to a special Astro component: `layout: '/src/layouts/GraphicalRenderer.astro'`.
+    *   Adds a new property to store the graphical layout's ID: `graphical_layout_id: 123`.
 
-1.  **`normalizeFrontmatter()` (`layoutInterpreter.js`)**: Extracts the frontmatter from the file.
-2.  **`normalizeLayoutData()` (`normalizationPatch.js`)**: Ensures the extracted frontmatter conforms to a safe, base schema by providing default values for missing or invalid properties. This enhances long-term stability.
-3.  **`validateLayoutSchema()` (`layoutInterpreter.js`)**: Validates the normalized frontmatter against a defined schema.
-4.  **`parseAstroComponents()` (`componentMapper.js`)**: This is the core of the parser. It uses the official **`@astrojs/compiler`** to parse the entire `.astro` file into an Abstract Syntax Tree (AST). It then traverses the AST to accurately identify all components and client-side islands. This replaced a previous, less robust implementation that used a generic JSX parser.
-5.  **`generateFallbackHtml()` (`layoutRenderer.js`)**: If any step in the pipeline produces an error, this function generates a detailed HTML error report that is displayed in the `iframe` and the `DebugSidebar`.
+2.  **Build Time Rendering (`GraphicalRenderer.astro`):** During the Astro site build, when a page with this frontmatter is processed, Astro uses `GraphicalRenderer.astro` as its layout. This component then executes its server-side script:
+    *   It reads the `graphical_layout_id` from the page's frontmatter.
+    *   It makes a `fetch` call to the public `/api/render-layout/:id` endpoint on the Cloudflare Worker.
+    *   The worker fetches the corresponding layout's JSON from the D1 database and returns it.
+    *   `GraphicalRenderer.astro` receives the JSON and contains a server-side renderer that converts the Craft.js JSON structure into HTML, which is then injected into the page.
 
-### 4.3. Initialization
+This pattern allows the worker to "give instructions" to the Astro build process without the two environments needing to directly interact, providing a robust and scalable way to mix static and dynamic layouts.
 
-The `@astrojs/compiler` is a WebAssembly (WASM) based module. As such, it must be initialized before it can be used. This is handled by calling the `initialize()` function from the compiler in the application's main entry point (`src/main.jsx`) to ensure it's ready before any parsing is attempted.
+### 4.2. "One-Way Import" for Astro Layouts
+
+To improve the user experience when editing `.astro` files, the application uses a "one-way import" pattern instead of attempting to create a live, two-way-synced visual editor for code.
+
+**How it Works:**
+
+1.  **Conversion (`astroLayoutConverter.js`):** A utility module was created to act as a converter.
+    *   It takes the raw string content of an `.astro` file.
+    *   It uses the official **`@astrojs/compiler`** to parse the file into an Abstract Syntax Tree (AST).
+    *   It traverses the AST, focusing on the `<body>` of the HTML structure, and maps the HTML tags and their hierarchy to a **Craft.js-compatible JSON object**.
+    *   It uses `uuid` to generate unique IDs for each new node in the JSON structure.
+
+2.  **Editor Integration (`LayoutEditorPage.jsx`):**
+    *   When a user opens an `.astro` file in the Layout Editor, the component calls the `convertAstroToCraft` utility.
+    *   If the conversion is successful, the resulting JSON is deserialized and loaded onto the editor's canvas.
+    *   The user can now manipulate the imported structure as a standard graphical layout.
+    *   When saved, this is stored as a **new, independent graphical layout** in the D1 database. The original `.astro` file is never modified.
+
+This pattern provides a safe and powerful way for users to leverage their existing code as a starting point for new visual designs without the risk of corrupting the original file.
 
 ---
 
