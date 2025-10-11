@@ -75,12 +75,12 @@ export function validateLayoutSchema(frontmatter) {
     return { isValid: false, errors: ['Invalid or null frontmatter object.'], warnings: [] };
   }
 
-  // CRITICAL: Check required fields. Their absence is an error.
+  // NON-CRITICAL: Check for standard fields. A missing field is a warning.
   if (typeof frontmatter.title !== layoutSchema.title) {
-    errors.push(`'title' is missing or not a string. Found: ${typeof frontmatter.title}`);
+    warnings.push(`'title' is missing or not a string. Found: ${typeof frontmatter.title}`);
   }
   if (typeof frontmatter.description !== layoutSchema.description) {
-    errors.push(`'description' is missing or not a string. Found: ${typeof frontmatter.description}`);
+    warnings.push(`'description' is missing or not a string. Found: ${typeof frontmatter.description}`);
   }
 
   // NON-CRITICAL: Check optional fields. Their absence is fine, but wrong type is a warning.
