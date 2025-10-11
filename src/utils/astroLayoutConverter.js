@@ -1,14 +1,22 @@
 import { parse } from '@astrojs/compiler';
 import { v4 as uuidv4 } from 'uuid';
+import matter from 'gray-matter';
 
 /**
  * Converts the HTML body of an Astro file into a Craft.js compatible JSON node structure.
+ * It prioritizes HTML content found in the `body` property of the frontmatter.
  * @param {string} astroContent - The full string content of an .astro file.
  * @returns {Promise<{nodes: object, rootNodeId: string}|null>} - An object containing the nodes and the ID of the root node, or null on failure.
  */
 export async function convertAstroToCraft(astroContent) {
   try {
-    const { ast } = await parse(astroContent);
+    const { data: frontmatter, content: fileBody } = matter(astroContent);
+
+    // Determine the primary HTML content to parse.
+    // If frontmatter has a 'body', it's likely an MDX-style layout where content is injected.
+    const htmlToParse = frontmatter.body || fileBody;
+
+    const { ast } = await parse(htmlToParse);
     const craftNodes = {};
     let rootNodeId = null;
 
