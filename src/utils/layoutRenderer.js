@@ -1,3 +1,5 @@
+import { stylePacks } from './stylePacks.js';
+
 /**
  * @file Visual Render Engine
  * @description Generates HTML for rendering safe previews and detailed fallbacks for Astro layouts.
@@ -50,6 +52,12 @@ export function generateFallbackHtml(details, isPlaceholder = false, isSuccess =
     ? "This placeholder appears only until visual rendering is fully integrated."
     : `The layout at <code class="text-sm bg-gray-200 p-1 rounded">${filePath}</code> could not be rendered. Here's a summary of what we found.`;
 
+  const themeName = frontmatter.layout?.theme || 'base';
+  const activeTheme = stylePacks[themeName] || stylePacks['base'];
+  const themeVariables = Object.entries(activeTheme.variables)
+    .map(([key, value]) => `${key}: ${value};`)
+    .join('\n');
+
   const statusBadge = `
     <div class="fixed top-4 right-4 text-xs font-bold py-1 px-3 rounded-full shadow-md ${isSuccess ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}">
       ${isSuccess ? '🟢 Visual Renderer Active' : '🟠 Placeholder Mode'}
@@ -65,8 +73,16 @@ export function generateFallbackHtml(details, isPlaceholder = false, isSuccess =
       <title>${pageTitle}</title>
       <script src="https://cdn.tailwindcss.com"></script>
       <style>
+        :root {
+          ${themeVariables}
+        }
+        body {
+            background-color: var(--theme-bg);
+            color: var(--theme-text);
+        }
         .card {
-          background-color: #ffffff;
+          background-color: var(--theme-card-bg);
+          border: 1px solid var(--theme-card-border);
           border-radius: 12px;
           box-shadow: 0 8px 30px rgba(0,0,0,0.12);
           padding: 24px;
@@ -140,7 +156,7 @@ export function generateFallbackHtml(details, isPlaceholder = false, isSuccess =
           ${frontmatter.layout && Object.keys(frontmatter.layout).length > 0 ? `
           <div class="card">
             <h2 class="text-xl font-semibold text-gray-800">Design Tokens</h2>
-            <p class="text-xs text-gray-500 mt-1">Modern design tokens from the 'layout' object.</p>
+            <p class="text-xs text-gray-500 mt-1">Active Theme: <span class="font-bold text-blue-600">${activeTheme.name}</span></p>
             <div class="mt-3 bg-gray-900 text-white p-4 rounded-lg text-sm overflow-x-auto">
               <pre><code>${JSON.stringify(frontmatter.layout, null, 2)}</code></pre>
             </div>
