@@ -97,22 +97,24 @@ export async function convertAstroToCraft(astroContent) {
         return null; // No body tag found
     }
 
+    // The root node of the Craft.js canvas
+    craftNodes[rootNodeId].parent = 'ROOT';
+
     const finalJson = {
-        "ROOT": {
-            "type": "div",
-            "isCanvas": true,
-            "props": {
-                "className": "craftjs-root"
-            },
-            "displayName": "Root",
-            "nodes": [rootNodeId],
-            "hidden": false,
-            "custom": {}
-        },
-        ...craftNodes
+      ...craftNodes,
+      ROOT: {
+        type: { resolvedName: 'Page' },
+        isCanvas: true,
+        props: {},
+        displayName: 'Page',
+        custom: {},
+        hidden: false,
+        nodes: [rootNodeId], // The main page container is the direct child of ROOT
+        linkedNodes: {},
+      },
     };
 
-
+    // The data structure expected by `actions.deserialize()` is just the node map.
     return { nodes: finalJson, rootNodeId: 'ROOT' };
 
   } catch (error) {

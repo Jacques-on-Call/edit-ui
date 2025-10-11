@@ -46,9 +46,17 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
   useEffect(() => {
     if (ready && initialJson) {
       try {
-        actions.deserialize(initialJson);
+        // The `initialJson` might be a string that needs parsing,
+        // especially if it comes from the D1 database which might have
+        // double-encoded JSON.
+        const content = typeof initialJson === 'string' ? JSON.parse(initialJson) : initialJson;
+        actions.deserialize(content);
       } catch (e) {
         console.error("Error deserializing layout JSON:", e);
+        // If deserialization fails, load a blank canvas to prevent a crash.
+        actions.deserialize({
+          "ROOT": { "type": { "resolvedName": "Page" }, "isCanvas": true, "props": {}, "displayName": "Page", "custom": {}, "hidden": false, "nodes": [], "linkedNodes": {} }
+        });
       }
     }
   }, [ready, initialJson, actions]);
