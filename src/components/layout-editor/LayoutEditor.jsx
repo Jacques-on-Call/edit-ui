@@ -39,13 +39,13 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJson, setDeserializationError }) => {
+const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJson, deserializationError, setDeserializationError }) => {
   const { actions, query, ready, editorState } = useEditor((state) => ({
     ready: state.events.ready,
     editorState: state.nodes,
   }));
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [isDebugVisible, setDebugVisible] = useState(true); // Keep debug visible by default
+  const [isDebugVisible, setDebugVisible] = useState(false); // Keep debug hidden by default
 
   useEffect(() => {
     if (ready && initialJson) {
@@ -268,7 +268,7 @@ export const LayoutEditor = () => {
           key={astroLayoutPath} // Use path as key to force re-render
           resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter, Text: EditorSection }} // Map Text to a simple container
         >
-          <LayoutEditorInner templateId={null} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} setDeserializationError={setDeserializationError} />
+          <LayoutEditorInner templateId={null} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} deserializationError={deserializationError} setDeserializationError={setDeserializationError} />
         </Editor>
     );
   }
@@ -283,7 +283,7 @@ export const LayoutEditor = () => {
       key={templateId || templateName}
       resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter }}
     >
-      <LayoutEditorInner templateId={templateId} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} setDeserializationError={setDeserializationError} />
+      <LayoutEditorInner templateId={templateId} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} deserializationError={deserializationError} setDeserializationError={setDeserializationError} />
     </Editor>
   );
 };
