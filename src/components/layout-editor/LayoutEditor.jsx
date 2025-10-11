@@ -41,37 +41,57 @@ function useQuery() {
 }
 
 const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJson, deserializationError, setDeserializationError }) => {
-  const { actions, query, ready, editorState } = useEditor((state) => ({
+  const { actions, query, ready, editorState, internalState } = useEditor((state) => ({
     ready: state.events.ready,
     editorState: state.nodes,
+    internalState: state, // Get the whole internal state for comparison
   }));
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isDebugVisible, setDebugVisible] = useState(false); // Keep debug hidden by default
+  const [processedJson, setProcessedJson] = useState(null);
 
   useEffect(() => {
     if (ready && initialJson) {
-      setDeserializationError(null); // Reset error on new data
+      setDeserializationError(null);
+      let content;
       try {
-        let content = initialJson;
-        // Handle potential double-encoding by repeatedly parsing until it's an object.
+        content = initialJson;
         while (typeof content === 'string') {
-            content = JSON.parse(content);
+          content = JSON.parse(content);
         }
+        setProcessedJson(content); // Store the fully parsed JSON for the debugger
 
         if (!content || !content.ROOT) {
           throw new Error("Invalid layout data: 'ROOT' node is missing.");
         }
+
+        const a = internalState;
         actions.deserialize(content);
+
+        // Post-load verification
+        setTimeout(() => {
+            const b = query.getNodes();
+            const nodesLoaded = Object.keys(b).length;
+            const nodesExpected = Object.keys(content).length;
+
+            if (nodesLoaded <= 1 && nodesExpected > 1) { // Only ROOT node vs expected nodes
+                 setDeserializationError(
+                    `Silent failure: Editor rejected the layout. Expected ${nodesExpected} nodes, but only ${nodesLoaded} were loaded. This usually means a component is not registered in the resolver.`
+                 );
+            }
+        }, 100);
+
+
       } catch (e) {
         console.error("Error deserializing layout JSON:", e);
         setDeserializationError(e.message);
-        // Load a blank canvas to prevent a crash
+        setProcessedJson(content || { error: 'Parsing failed before processing' });
         actions.deserialize({
           "ROOT": { "type": { "resolvedName": "Page" }, "isCanvas": true, "props": {}, "displayName": "Page", "custom": {}, "hidden": false, "nodes": [], "linkedNodes": {} }
         });
       }
     }
-  }, [ready, initialJson, actions, setDeserializationError]);
+  }, [ready, initialJson, actions, setDeserializationError, query, internalState]);
 
   const handleSave = async () => {
     const json = query.serialize();
@@ -126,6 +146,7 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
             report={null} // report is for astro-specific analysis, can be enhanced later
             onClose={() => setDebugVisible(false)}
             initialJson={initialJson}
+            processedJson={processedJson}
             deserializationError={deserializationError}
             liveEditorState={editorState}
           />

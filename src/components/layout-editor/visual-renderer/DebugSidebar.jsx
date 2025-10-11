@@ -11,9 +11,10 @@ import React from 'react';
  *   initialJson: string | object | null;
  *   deserializationError: string | null;
  *   liveEditorState: object | null;
+ *   processedJson: object | null;
  * }} props
  */
-const DebugSidebar = ({ report, onClose, initialJson, deserializationError, liveEditorState }) => {
+const DebugSidebar = ({ report, onClose, initialJson, processedJson, deserializationError, liveEditorState }) => {
   const { errors = [], frontmatter = {}, components = [], islands = [], filePath = 'N/A' } = report || {};
 
   return (
@@ -98,19 +99,9 @@ const DebugSidebar = ({ report, onClose, initialJson, deserializationError, live
 
         {/* New Debugging Sections */}
         <div>
-          <h3 className="font-semibold text-blue-600 mb-2">Raw Initial JSON</h3>
+          <h3 className="font-semibold text-blue-600 mb-2">Processed JSON (Passed to Editor)</h3>
           <div className="bg-gray-800 text-white p-3 rounded-lg text-xs overflow-x-auto">
-            <pre><code>{(() => {
-              try {
-                let content = initialJson;
-                while (typeof content === 'string') {
-                  content = JSON.parse(content);
-                }
-                return JSON.stringify(content, null, 2);
-              } catch (e) {
-                return `Error parsing JSON: ${e.message}\n\nRaw data:\n${initialJson}`;
-              }
-            })()}</code></pre>
+            <pre><code>{JSON.stringify(processedJson, null, 2)}</code></pre>
           </div>
         </div>
 
