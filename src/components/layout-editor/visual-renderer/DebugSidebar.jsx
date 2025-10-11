@@ -2,15 +2,19 @@ import React from 'react';
 
 /**
  * A responsive, mobile-first sidebar that displays a live feed of errors
- * and diagnostic information for an Astro layout. It appears as a full-screen
+ * and diagnostic information for the layout editor. It appears as a full-screen
  * overlay on mobile and a side panel on larger screens.
  *
- * @param {{ report: object; onClose: () => void; }} props
+ * @param {{
+ *   report: object;
+ *   onClose: () => void;
+ *   initialJson: string | object | null;
+ *   deserializationError: string | null;
+ *   liveEditorState: object | null;
+ * }} props
  */
-const DebugSidebar = ({ report, onClose }) => {
-  if (!report) return null;
-
-  const { errors, frontmatter, components, islands, filePath } = report;
+const DebugSidebar = ({ report, onClose, initialJson, deserializationError, liveEditorState }) => {
+  const { errors = [], frontmatter = {}, components = [], islands = [], filePath = 'N/A' } = report || {};
 
   return (
     // Overlay container for mobile-first design
@@ -76,6 +80,31 @@ const DebugSidebar = ({ report, onClose }) => {
             )}
           </div>
         </div>
+
+        {/* New Debugging Sections */}
+        <div>
+          <h3 className="font-semibold text-blue-600 mb-2">Raw Initial JSON</h3>
+          <div className="bg-gray-800 text-white p-3 rounded-lg text-xs overflow-x-auto">
+            <pre><code>{typeof initialJson === 'string' ? initialJson : JSON.stringify(initialJson, null, 2)}</code></pre>
+          </div>
+        </div>
+
+        {deserializationError && (
+          <div>
+            <h3 className="font-semibold text-red-600 mb-2">Deserialization Error</h3>
+            <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
+              <p className="text-sm text-red-700">{deserializationError}</p>
+            </div>
+          </div>
+        )}
+
+        <div>
+          <h3 className="font-semibold text-green-600 mb-2">Live Editor State</h3>
+          <div className="bg-gray-800 text-white p-3 rounded-lg text-xs overflow-x-auto">
+            <pre><code>{JSON.stringify(liveEditorState, null, 2)}</code></pre>
+          </div>
+        </div>
+
         </div>
       </div>
     </div>
