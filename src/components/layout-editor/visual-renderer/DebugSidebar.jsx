@@ -32,10 +32,25 @@ const DebugSidebar = ({ report, onClose, initialJson, deserializationError, live
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {/* Layout Loading Status */}
+          <div>
+            <h3 className="font-semibold text-gray-700 mb-2">Layout Loading Status</h3>
+            {deserializationError ? (
+              <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
+                <p className="text-sm font-bold text-red-700">Failed to load layout</p>
+                <p className="text-xs text-red-600 mt-1">{deserializationError}</p>
+              </div>
+            ) : (
+              <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+                <p className="text-sm font-bold text-green-700">Layout Loaded Successfully</p>
+              </div>
+            )}
+          </div>
+
           <div>
             <h3 className="font-semibold text-gray-700 mb-2">File Path</h3>
-          <p className="text-sm text-gray-600 bg-gray-100 p-2 rounded break-all">{filePath}</p>
-        </div>
+            <p className="text-sm text-gray-600 bg-gray-100 p-2 rounded break-all">{filePath}</p>
+          </div>
 
         <div>
           <h3 className="font-semibold text-red-600 mb-2">Errors ({errors.length})</h3>

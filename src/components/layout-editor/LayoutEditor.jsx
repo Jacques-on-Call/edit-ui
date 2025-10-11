@@ -11,6 +11,7 @@ import { EditorFeatureGrid } from './blocks/FeatureGrid.editor';
 import { EditorTestimonial } from './blocks/Testimonial.editor';
 import { EditorCTA } from './blocks/CTA.editor';
 import { EditorFooter } from './blocks/Footer.editor';
+import { Text } from './blocks/Text.editor';
 import { checkLayoutIntegrity } from '../../utils/layoutIntegrityLogger';
 import DebugSidebar from './visual-renderer/DebugSidebar';
 import { normalizeFrontmatter, validateLayoutSchema } from '../../utils/layoutInterpreter';
@@ -271,7 +272,7 @@ export const LayoutEditor = () => {
     return (
         <Editor
           key={astroLayoutPath} // Use path as key to force re-render
-          resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter, Text: EditorSection }} // Map Text to a simple container
+          resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter, Text }}
         >
           <LayoutEditorInner templateId={null} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} deserializationError={deserializationError} setDeserializationError={setDeserializationError} />
         </Editor>
@@ -286,7 +287,7 @@ export const LayoutEditor = () => {
   return (
     <Editor
       key={templateId || templateName}
-      resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter }}
+      resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter, Text }}
     >
       <LayoutEditorInner templateId={templateId} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} deserializationError={deserializationError} setDeserializationError={setDeserializationError} />
     </Editor>
