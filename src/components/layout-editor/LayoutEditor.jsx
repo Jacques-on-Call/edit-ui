@@ -12,6 +12,7 @@ import { EditorTestimonial } from './blocks/Testimonial.editor';
 import { EditorCTA } from './blocks/CTA.editor';
 import { EditorFooter } from './blocks/Footer.editor';
 import { checkLayoutIntegrity } from '../../utils/layoutIntegrityLogger';
+import DebugSidebar from './visual-renderer/DebugSidebar';
 import { normalizeFrontmatter, validateLayoutSchema } from '../../utils/layoutInterpreter';
 import { parseAstroComponents } from '../../utils/componentMapper';
 import { generateFallbackHtml } from '../../utils/layoutRenderer';
@@ -38,24 +39,33 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJson }) => {
-  const { actions, query, ready } = useEditor((state) => ({ ready: state.events.ready }));
+const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJson, deserializationError, setDeserializationError }) => {
+  const { actions, query, ready, editorState } = useEditor((state) => ({
+    ready: state.events.ready,
+    editorState: state.nodes,
+  }));
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [isDebugVisible, setDebugVisible] = useState(false); // Keep debug hidden by default
 
   useEffect(() => {
     if (ready && initialJson) {
+      setDeserializationError(null); // Reset error on new data
       try {
         const content = typeof initialJson === 'string' ? JSON.parse(initialJson) : initialJson;
+        if (!content || !content.ROOT) {
+          throw new Error("Invalid layout data: 'ROOT' node is missing.");
+        }
         actions.deserialize(content);
       } catch (e) {
         console.error("Error deserializing layout JSON:", e);
-        // If deserialization fails, load a blank canvas to prevent a crash.
+        setDeserializationError(e.message);
+        // Load a blank canvas to prevent a crash
         actions.deserialize({
           "ROOT": { "type": { "resolvedName": "Page" }, "isCanvas": true, "props": {}, "displayName": "Page", "custom": {}, "hidden": false, "nodes": [], "linkedNodes": {} }
         });
       }
     }
-  }, [ready, initialJson, actions]);
+  }, [ready, initialJson, actions, setDeserializationError]);
 
   const handleSave = async () => {
     const json = query.serialize();
@@ -79,7 +89,12 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
 
   return (
     <div className="flex flex-col h-screen w-full bg-gray-100">
-      <LayoutEditorHeader onSave={handleSave} onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
+      <LayoutEditorHeader
+        onSave={handleSave}
+        onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+        onToggleDebug={() => setDebugVisible(!isDebugVisible)}
+        isDebugVisible={isDebugVisible}
+      />
       <div className="flex flex-1 overflow-hidden">
         <div className="craftjs-renderer flex-1 overflow-auto">
           <Frame />
@@ -99,6 +114,15 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
               <Sidebar />
             </div>
           </div>
+        )}
+        {isDebugVisible && (
+          <DebugSidebar
+            report={null} // report is for astro-specific analysis, can be enhanced later
+            onClose={() => setDebugVisible(false)}
+            initialJson={initialJson}
+            deserializationError={deserializationError}
+            liveEditorState={editorState}
+          />
         )}
       </div>
     </div>
@@ -120,6 +144,7 @@ export const LayoutEditor = () => {
   const [currentTemplateName, setCurrentTemplateName] = useState(templateName || starterName);
 
   const [isAstroLayout, setIsAstroLayout] = useState(!!astroLayoutPath);
+  const [deserializationError, setDeserializationError] = useState(null);
   const [astroAnalysis, setAstroAnalysis] = useState({
     report: null,
     errorHtml: null,
@@ -243,7 +268,7 @@ export const LayoutEditor = () => {
           key={astroLayoutPath} // Use path as key to force re-render
           resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter, Text: EditorSection }} // Map Text to a simple container
         >
-          <LayoutEditorInner templateId={null} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} />
+          <LayoutEditorInner templateId={null} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} deserializationError={deserializationError} setDeserializationError={setDeserializationError} />
         </Editor>
     );
   }
@@ -258,7 +283,7 @@ export const LayoutEditor = () => {
       key={templateId || templateName}
       resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter }}
     >
-      <LayoutEditorInner templateId={templateId} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} />
+      <LayoutEditorInner templateId={templateId} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} deserializationError={deserializationError} setDeserializationError={setDeserializationError} />
     </Editor>
   );
 };
