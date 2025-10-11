@@ -51,7 +51,12 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
     if (ready && initialJson) {
       setDeserializationError(null); // Reset error on new data
       try {
-        const content = typeof initialJson === 'string' ? JSON.parse(initialJson) : initialJson;
+        let content = initialJson;
+        // Handle potential double-encoding by repeatedly parsing until it's an object.
+        while (typeof content === 'string') {
+            content = JSON.parse(content);
+        }
+
         if (!content || !content.ROOT) {
           throw new Error("Invalid layout data: 'ROOT' node is missing.");
         }

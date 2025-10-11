@@ -85,7 +85,17 @@ const DebugSidebar = ({ report, onClose, initialJson, deserializationError, live
         <div>
           <h3 className="font-semibold text-blue-600 mb-2">Raw Initial JSON</h3>
           <div className="bg-gray-800 text-white p-3 rounded-lg text-xs overflow-x-auto">
-            <pre><code>{typeof initialJson === 'string' ? initialJson : JSON.stringify(initialJson, null, 2)}</code></pre>
+            <pre><code>{(() => {
+              try {
+                let content = initialJson;
+                while (typeof content === 'string') {
+                  content = JSON.parse(content);
+                }
+                return JSON.stringify(content, null, 2);
+              } catch (e) {
+                return `Error parsing JSON: ${e.message}\n\nRaw data:\n${initialJson}`;
+              }
+            })()}</code></pre>
           </div>
         </div>
 
