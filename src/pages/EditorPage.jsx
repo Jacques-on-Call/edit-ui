@@ -8,6 +8,7 @@ import TurndownService from 'turndown';
 
 import TopToolbar from '../components/TopToolbar';
 import BottomToolbar from '../components/BottomToolbar';
+import AssignLayoutModal from '../components/AssignLayoutModal';
 import { unifiedParser } from '../utils/unifiedParser';
 import { stringifyAstroFile } from '../utils/astroFileParser';
 import { sectionsToEditableHTML, editableHTMLToSections } from '../utils/sectionContentMapper';
@@ -52,8 +53,39 @@ function EditorPage() {
   const [rawContentOnError, setRawContentOnError] = useState('');
   const [activeTab, setActiveTab] = useState('editor');
   const [previewHtml, setPreviewHtml] = useState('');
+  const [isAssignLayoutModalOpen, setAssignLayoutModalOpen] = useState(false);
   
   const draftKey = `draft_${repo}_${filePath}`;
+
+  const handleAssignLayoutConfirm = async (layoutIdentifier) => {
+    try {
+      const response = await fetch('/api/assign-layout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'credentials': 'include' },
+        body: JSON.stringify({
+          repo,
+          path: filePath,
+          layout: layoutIdentifier,
+        }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to assign layout.');
+      }
+      // Update local state to reflect the change immediately
+      const newFrontmatter = { ...frontmatter, layout: layoutIdentifier };
+      setFrontmatter(newFrontmatter);
+      // Trigger a preview refresh with the new layout info
+      const newPreviewHtml = generatePreviewHtml(newFrontmatter, content, repo);
+      setPreviewHtml(newPreviewHtml);
+      console.log('Layout assigned successfully and preview updated!');
+    } catch (err) {
+      console.error(err);
+      setError(err.message); // Show error to the user
+    } finally {
+      setAssignLayoutModalOpen(false);
+    }
+  };
 
   const handlePublish = async () => {
     if (!filePath || !repo) {
@@ -226,7 +258,14 @@ function EditorPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      <TopToolbar onPublish={handlePublish} isPublishing={isPublishing} />
+      <TopToolbar onPublish={handlePublish} isPublishing={isPublishing} onChangeLayout={() => setAssignLayoutModalOpen(true)} />
+      {isAssignLayoutModalOpen && (
+        <AssignLayoutModal
+          onClose={() => setAssignLayoutModalOpen(false)}
+          onAssign={handleAssignLayoutConfirm}
+          currentPath={filePath}
+        />
+      )}
       {parsingError && <ErrorDisplay error={parsingError} rawContent={rawContentOnError} />}
 
       <div className="flex border-b border-gray-200 bg-white shadow-sm">

@@ -7,6 +7,7 @@ import ContextMenu from './ContextMenu';
 import ConfirmDialog from './ConfirmDialog';
 import RenameModal from './RenameModal';
 import ReadmeDisplay from './ReadmeDisplay';
+import AssignLayoutModal from './AssignLayoutModal';
 import * as cache from '../utils/cache';
 
 function FileExplorer({ repo }) {
@@ -19,6 +20,7 @@ function FileExplorer({ repo }) {
   const [contextMenu, setContextMenu] = useState(null);
   const [fileToDelete, setFileToDelete] = useState(null);
   const [fileToRename, setFileToRename] = useState(null);
+  const [fileToAssignLayout, setFileToAssignLayout] = useState(null);
   const [metadataCache, setMetadataCache] = useState({});
   const [readmeContent, setReadmeContent] = useState(null);
   const [isReadmeLoading, setReadmeLoading] = useState(false);
@@ -116,24 +118,134 @@ function FileExplorer({ repo }) {
     if (!file) return;
     if (file.type === 'dir') {
       setPath(file.path);
+    } else if (file.path.startsWith('src/layouts/')) {
+      navigate(`/layout-editor?path=${file.path}`);
     } else {
       navigate(`/editor?path=${file.path}`);
     }
   };
 
   const handleGoHome = () => setPath('src/pages');
-  // eslint-disable-next-line no-unused-vars
-  const handleDuplicate = async (fileToDuplicate) => { /* ... logic ... */ };
+
+  const handleDuplicate = async (file) => {
+    handleCloseContextMenu();
+    const parts = file.name.split('.');
+    const extension = parts.pop();
+    const baseName = parts.join('.');
+    const newName = `${baseName}-copy.${extension}`;
+    const newPath = file.path.replace(file.name, newName);
+
+    try {
+      const response = await fetch('/api/duplicate-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'credentials': 'include' },
+        body: JSON.stringify({ repo, path: file.path, newPath }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to duplicate file.');
+      }
+      fetchFiles(); // Refresh
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleLongPress = (file, event) => setContextMenu({ x: event.clientX, y: event.clientY, file });
   const handleCloseContextMenu = () => setContextMenu(null);
-  const handleDeleteRequest = (file) => setFileToDelete(file);
-  const handleDeleteConfirm = async () => { /* ... logic ... */ };
+  const handleDeleteRequest = (file) => {
+    setFileToDelete(file);
+    handleCloseContextMenu();
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!fileToDelete) return;
+    try {
+      const response = await fetch('/api/files', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'credentials': 'include' },
+        body: JSON.stringify({ repo, path: fileToDelete.path, sha: fileToDelete.sha }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to delete file.');
+      }
+      setFileToDelete(null);
+      fetchFiles(); // Refresh file list
+      cache.remove(fileToDelete.sha);
+    } catch (err) {
+      console.error(err);
+      // Here you might want to show an error message to the user
+    }
+  };
+
   // eslint-disable-next-line no-unused-vars
   const handleShare = (file) => { /* ... logic ... */ };
-  const handleRenameRequest = (file) => setFileToRename(file);
+
+  const handleAssignLayoutRequest = (file) => {
+    setFileToAssignLayout(file);
+    handleCloseContextMenu();
+  };
+
+  const handleAssignLayoutConfirm = async (layoutIdentifier) => {
+    if (!fileToAssignLayout) return;
+    try {
+      const response = await fetch('/api/assign-layout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'credentials': 'include' },
+        body: JSON.stringify({
+          repo,
+          path: fileToAssignLayout.path,
+          layout: layoutIdentifier,
+        }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to assign layout.');
+      }
+      console.log('Layout assigned successfully!');
+      fetchFiles(); // Refresh to show any potential changes
+    } catch (err) {
+      console.error(err);
+      // Optionally show an error message to the user
+    } finally {
+      setFileToAssignLayout(null);
+    }
+  };
+
+  const handleRenameRequest = (file) => {
+    setFileToRename(file);
+    handleCloseContextMenu();
+  };
+
   const handleToggleReadme = () => setReadmeVisible(prev => !prev);
-  // eslint-disable-next-line no-unused-vars
-  const handleRenameConfirm = async (file, newName) => { /* ... logic ... */ };
+
+  const handleRenameConfirm = async (file, newName) => {
+    if (!file || !newName || newName === file.name) {
+      setFileToRename(null);
+      return;
+    }
+    const oldPath = file.path;
+    const newPath = oldPath.substring(0, oldPath.lastIndexOf('/') + 1) + newName;
+
+    try {
+      const response = await fetch('/api/rename-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'credentials': 'include' },
+        body: JSON.stringify({ repo, oldPath, newPath, sha: file.sha }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to rename file.');
+      }
+      setFileToRename(null);
+      fetchFiles(); // Refresh file list
+      cache.remove(file.sha);
+    } catch (err) {
+      console.error(err);
+      // Here you might want to show an error message to the user
+    }
+  };
 
   if (loading) return <div className="text-center p-8 text-gray-500 animate-pulse">Loading files...</div>;
   if (error) return <div className="text-center p-8 text-red-600 bg-red-50 rounded-lg">{error}</div>;
@@ -197,9 +309,10 @@ function FileExplorer({ repo }) {
         </div>
       </div>
       {isCreateModalOpen && <CreateModal path={path} repo={repo} onClose={() => setCreateModalOpen(false)} onCreate={fetchFiles} />}
-      {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} file={contextMenu.file} onClose={handleCloseContextMenu} onRename={handleRenameRequest} onDelete={handleDeleteRequest} onDuplicate={handleDuplicate} onShare={handleShare} />}
+      {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} file={contextMenu.file} onClose={handleCloseContextMenu} onRename={handleRenameRequest} onDelete={handleDeleteRequest} onDuplicate={handleDuplicate} onShare={handleShare} onAssignLayout={handleAssignLayoutRequest} />}
       {fileToDelete && <ConfirmDialog message={`Are you sure you want to delete "${fileToDelete.name}"?`} onConfirm={handleDeleteConfirm} onCancel={() => setFileToDelete(null)} />}
       {fileToRename && <RenameModal file={fileToRename} onClose={() => setFileToRename(null)} onRename={handleRenameConfirm} />}
+      {fileToAssignLayout && <AssignLayoutModal onClose={() => setFileToAssignLayout(null)} onAssign={handleAssignLayoutConfirm} currentPath={fileToAssignLayout.path} />}
     </div>
   );
 }
