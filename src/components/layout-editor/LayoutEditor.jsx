@@ -12,8 +12,27 @@ import { EditorTestimonial } from './blocks/Testimonial.editor';
 import { EditorCTA } from './blocks/CTA.editor';
 import { EditorFooter } from './blocks/Footer.editor';
 import { checkLayoutIntegrity } from '../../utils/layoutIntegrityLogger';
-import VisualRenderer from './visual-renderer/VisualRenderer';
 import DebugSidebar from './visual-renderer/DebugSidebar';
+import { normalizeFrontmatter, validateLayoutSchema } from '../../utils/layoutInterpreter';
+import { parseAstroComponents } from '../../utils/componentMapper';
+import { generateFallbackHtml } from '../../utils/layoutRenderer';
+import { normalizeLayoutData } from '../../utils/normalizationPatch';
+
+const AstroFileNotice = ({ fileName, onClose }) => (
+  <div className="absolute top-4 right-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md shadow-lg z-50 max-w-sm">
+    <div className="flex">
+      <div className="py-1">
+        <svg className="fill-current h-6 w-6 text-blue-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zM9 11v4h2v-4H9zm0-6h2v2H9V5z"/></svg>
+      </div>
+      <div>
+        <p className="font-bold">Astro Layout Opened (Read-Only)</p>
+        <p className="text-sm">You are viewing a blank canvas. The content of <strong>{fileName}</strong> has been analyzed, but it cannot be edited directly.</p>
+        <p className="text-sm mt-2">You can use this canvas to create a new graphical layout template.</p>
+      </div>
+       <button onClick={onClose} className="ml-4 text-blue-500 hover:text-blue-800 text-2xl font-bold">&times;</button>
+    </div>
+  </div>
+);
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -94,33 +113,73 @@ export const LayoutEditor = () => {
   const [initialJson, setInitialJson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentTemplateName, setCurrentTemplateName] = useState(templateName || starterName);
+
   const [isAstroLayout, setIsAstroLayout] = useState(!!astroLayoutPath);
-  const [astroFileContent, setAstroFileContent] = useState(null);
-  const [debugReport, setDebugReport] = useState(null);
+  const [astroAnalysis, setAstroAnalysis] = useState({
+    report: null,
+    errorHtml: null,
+    isLoading: true,
+    showNotice: false,
+  });
 
   useEffect(() => {
-    setLoading(true);
     const defaultState = JSON.stringify({
       "ROOT": { "type": { "resolvedName": "Page" }, "isCanvas": true, "props": {}, "displayName": "Page", "custom": {}, "hidden": false, "nodes": [], "linkedNodes": {} }
     });
 
+    const analyzeAstroFile = async (filePath, fileContent) => {
+      const report = {
+        errors: [], warnings: [], frontmatter: {}, components: [], islands: [], filePath
+      };
+
+      let rawFrontmatter = await normalizeFrontmatter(fileContent, filePath);
+      if (rawFrontmatter.error) {
+        report.errors.push(rawFrontmatter.error);
+      }
+      report.frontmatter = normalizeLayoutData(rawFrontmatter);
+
+      const { isValid, errors: validationErrors, warnings } = validateLayoutSchema(report.frontmatter);
+      if (!isValid) report.errors.push(...validationErrors);
+      report.warnings.push(...warnings);
+
+      const { components, islands, error: parseError } = await parseAstroComponents(fileContent);
+      if (parseError) report.errors.push(parseError);
+      else {
+        report.components = components;
+        report.islands = islands;
+      }
+
+      if (report.errors.length > 0) {
+        setAstroAnalysis({
+          report,
+          errorHtml: generateFallbackHtml(report),
+          isLoading: false,
+          showNotice: false,
+        });
+      } else {
+        setAstroAnalysis({ report, errorHtml: null, isLoading: false, showNotice: true });
+        // Load blank canvas for graphical editing
+        setInitialJson(defaultState);
+        setCurrentTemplateName(`New Layout (from ${filePath.split('/').pop()})`);
+      }
+    };
+
+    setLoading(true);
     if (astroLayoutPath) {
       setIsAstroLayout(true);
       fetch(`/api/get-file-content?path=${encodeURIComponent(astroLayoutPath)}`, { credentials: 'include' })
         .then(res => {
-          if (!res.ok) throw new Error(`Failed to fetch file content: ${res.statusText}`);
+          if (!res.ok) throw new Error(`Failed to fetch file: ${res.statusText}`);
           return res.text();
         })
-        .then(content => {
-          setAstroFileContent(content);
-        })
+        .then(content => analyzeAstroFile(astroLayoutPath, content))
         .catch(err => {
-          console.error(err);
-          setAstroFileContent(null); // Explicitly set to null on error
-        })
-        .finally(() => setLoading(false));
+          const report = { errors: [err.message], filePath: astroLayoutPath };
+          setAstroAnalysis({ report, errorHtml: generateFallbackHtml(report), isLoading: false, showNotice: false });
+        });
 
     } else if (starterJson) {
+      setIsAstroLayout(false);
       try {
         JSON.parse(starterJson);
         setInitialJson(starterJson);
@@ -131,24 +190,10 @@ export const LayoutEditor = () => {
       }
       setLoading(false);
     } else if (templateId) {
+      setIsAstroLayout(false);
       fetch(`/api/layout-templates?template_id=${templateId}`, { credentials: 'include' })
-        .then(res => {
-          if (!res.ok) throw new Error(res.statusText);
-          return res.json();
-        })
+        .then(res => res.ok ? res.json() : Promise.reject(new Error(res.statusText)))
         .then(data => {
-          console.group(`[Layout Integrity Report] for Template ID: ${templateId}`);
-          const report = checkLayoutIntegrity(data.json_content);
-          if (report.isValid) {
-            console.log("✅ Layout data is valid.");
-          } else {
-            console.error("❌ Layout data is invalid. Errors:", report.errors);
-          }
-          if (report.warnings.length > 0) {
-            console.warn("⚠️ Warnings:", report.warnings);
-          }
-          console.groupEnd();
-
           setInitialJson(data.json_content);
           setCurrentTemplateName(data.name);
         })
@@ -158,60 +203,56 @@ export const LayoutEditor = () => {
         })
         .finally(() => setLoading(false));
     } else {
+      setIsAstroLayout(false);
       setInitialJson(defaultState);
       setCurrentTemplateName(templateName || "New Layout");
       setLoading(false);
     }
   }, [templateId, starterJson, starterName, templateName, astroLayoutPath]);
 
-  if (loading) return <div className="p-8 animate-pulse">Loading Editor...</div>;
+  // Combined loading state
+  const isPageLoading = isAstroLayout ? astroAnalysis.isLoading : loading;
+  if (isPageLoading) return <div className="p-8 animate-pulse">Loading Editor...</div>;
 
+  // Render logic for Astro Layouts
   if (isAstroLayout) {
-    if (!astroFileContent) {
-      return <div className="p-8 text-center text-red-500">Could not load Astro layout file.</div>;
-    }
-    return (
-      <div className="flex w-full h-screen">
-        <div className="flex-1">
-          <VisualRenderer
-            fileContent={astroFileContent}
-            filePath={astroLayoutPath}
-            onError={setDebugReport}
-          />
+    if (astroAnalysis.errorHtml) {
+      return (
+        <div className="flex w-full h-screen">
+          <div className="flex-1 relative">
+            <iframe srcDoc={astroAnalysis.errorHtml} title={`Error preview for ${astroLayoutPath}`} className="w-full h-full border-none" sandbox="allow-scripts"/>
+          </div>
+          <DebugSidebar report={astroAnalysis.report} onClose={() => setAstroAnalysis(prev => ({ ...prev, errorHtml: null }))} />
         </div>
-        {debugReport && !debugReport.ready && debugReport.errors && debugReport.errors.length > 0 && (
-          <DebugSidebar
-            report={debugReport}
-            onClose={() => setDebugReport(null)}
-          />
+      );
+    }
+    // Render the editor with a blank canvas for valid Astro files
+    return (
+      <div className="relative w-full h-screen">
+        {astroAnalysis.showNotice && (
+            <AstroFileNotice fileName={astroLayoutPath.split('/').pop()} onClose={() => setAstroAnalysis(prev => ({...prev, showNotice: false}))} />
         )}
+        <Editor
+          key={astroLayoutPath} // Use path as key to force re-render
+          resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter }}
+        >
+          <LayoutEditorInner templateId={null} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} />
+        </Editor>
       </div>
     );
   }
 
+  // Render logic for D1/Starter Templates
   if (!initialJson) {
-     return <div className="p-8 text-center text-red-500">Could not load template data.</div>;
+    return <div className="p-8 text-center text-red-500">Could not load template data.</div>;
   }
 
   return (
     <Editor
       key={templateId || templateName}
-      resolver={{
-        Page,
-        EditorSection,
-        EditorHero,
-        EditorFeatureGrid,
-        EditorTestimonial,
-        EditorCTA,
-        EditorFooter,
-      }}
+      resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter }}
     >
-      <LayoutEditorInner
-        templateId={templateId}
-        currentTemplateName={currentTemplateName}
-        navigate={navigate}
-        initialJson={initialJson}
-      />
+      <LayoutEditorInner templateId={templateId} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} />
     </Editor>
   );
 };
