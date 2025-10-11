@@ -2,35 +2,42 @@ import { parse } from '@astrojs/compiler';
 import { v4 as uuidv4 } from 'uuid';
 import matter from 'gray-matter';
 
+// A more detailed mapping that includes whether a component is a container.
+const componentMap = {
+  'h1': { name: 'EditorHero', isCanvas: false },
+  'h2': { name: 'Text', isCanvas: false },
+  'h3': { name: 'Text', isCanvas: false },
+  'p': { name: 'Text', isCanvas: false },
+  'div': { name: 'EditorSection', isCanvas: true },
+  'header': { name: 'EditorHero', isCanvas: false },
+  'footer': { name: 'EditorFooter', isCanvas: true },
+  'article': { name: 'EditorSection', isCanvas: true },
+  'main': { name: 'EditorSection', isCanvas: true },
+  'nav': { name: 'EditorSection', isCanvas: true },
+  'a': { name: 'Text', isCanvas: false },
+  'span': { name: 'Text', isCanvas: false },
+  'img': { name: 'EditorHero', isCanvas: false },
+  'button': { name: 'EditorCTA', isCanvas: false },
+  'default': { name: 'EditorSection', isCanvas: true }
+};
+
 /**
- * Maps HTML tag names to their corresponding Craft.js component names.
+ * Maps an HTML tag to a Craft.js component definition.
  * @param {string} tagName - The HTML tag name.
- * @returns {string} The name of the Craft.js component.
+ * @returns {{name: string, isCanvas: boolean}} The component definition.
  */
 function mapTagToComponent(tagName) {
-  const mapping = {
-    'h1': 'EditorHero',
-    'h2': 'Text',
-    'h3': 'Text',
-    'p': 'Text',
-    'div': 'EditorSection',
-    'header': 'EditorHero',
-    'footer': 'EditorFooter',
-    'article': 'EditorSection',
-    'main': 'EditorSection',
-    'nav': 'EditorSection',
-    'a': 'Text',
-    'span': 'Text',
-    'img': 'EditorHero',
-    'button': 'EditorCTA',
-  };
-  return mapping[tagName] || 'EditorSection'; // Default to a generic container
+  const componentDef = componentMap[tagName];
+  // The 'footer' is a string in the map, handle this case.
+  if (typeof componentDef === 'string') {
+    return { name: componentDef, isCanvas: true };
+  }
+  return componentDef || componentMap['default'];
 }
 
 /**
- * Converts the HTML content of an Astro file into a Craft.js compatible JSON node structure.
- * This function intelligently traverses the AST, ignoring whitespace and creating a valid,
- * flat node map with a proper ROOT node.
+ * Converts the HTML content of an Astro file into a semantically correct
+ * Craft.js compatible JSON node structure.
  *
  * @param {string} astroContent - The full string content of an .astro file.
  * @returns {Promise<{nodes: object, rootNodeId: string}|null>} A valid Craft.js node map or null on failure.
@@ -38,12 +45,9 @@ function mapTagToComponent(tagName) {
 export async function convertAstroToCraft(astroContent) {
   try {
     const { data: frontmatter, content: fileBody } = matter(astroContent);
-    // Prioritize content from frontmatter.body if it exists, otherwise use the file body.
     const htmlToParse = frontmatter.body || fileBody;
 
-    // It's possible there's no content to parse after extracting frontmatter.
     if (!htmlToParse.trim()) {
-      console.warn("No content found in Astro file to convert.");
       return null;
     }
 
@@ -56,35 +60,60 @@ export async function convertAstroToCraft(astroContent) {
      * @returns {{id: string}|null} An object with the new node's ID, or null if the node should be ignored.
      */
     function traverse(astNode) {
-      // **CRITICAL FIX**: Ignore nodes that are just whitespace.
       if (astNode.type === 'text' && astNode.value.trim() === '') {
         return null;
       }
-      // Also ignore comments and other non-element/text nodes.
-      if (!['element', 'text'].includes(astNode.type)) {
+      if (!['element', 'text', 'comment', 'doctype', 'fragment'].includes(astNode.type)) {
         return null;
       }
 
+      // If it's a fragment (like the root of the AST), just traverse its children.
+      if (astNode.type === 'fragment') {
+          return (astNode.children || []).map(traverse).filter(Boolean);
+      }
+
       const nodeId = uuidv4();
-      const children = (astNode.children || []).map(traverse).filter(Boolean);
       let nodeData;
+      let children = [];
 
       if (astNode.type === 'element') {
-        nodeData = {
-          type: { resolvedName: mapTagToComponent(astNode.name) },
-          isCanvas: true, // Optimistically allow dropping components inside most elements.
-          props: {}, // Props would be populated from attributes in a more advanced version.
-          displayName: mapTagToComponent(astNode.name),
-          custom: {},
-          hidden: false,
-          nodes: children.map(c => c.id),
-          linkedNodes: {},
-        };
+        const componentDef = mapTagToComponent(astNode.name);
+
+        if (!componentDef.isCanvas) {
+            const innerText = (astNode.children || [])
+                .filter(c => c.type === 'text')
+                .map(c => c.value)
+                .join(' ')
+                .trim();
+
+            nodeData = {
+                type: { resolvedName: componentDef.name },
+                isCanvas: false,
+                props: { text: innerText || astNode.name },
+                displayName: componentDef.name,
+                custom: {},
+                hidden: false,
+                nodes: [],
+                linkedNodes: {},
+            };
+        } else {
+            children = (astNode.children || []).flatMap(traverse).filter(Boolean);
+            nodeData = {
+                type: { resolvedName: componentDef.name },
+                isCanvas: true,
+                props: {},
+                displayName: componentDef.name,
+                custom: {},
+                hidden: false,
+                nodes: children.map(c => c.id),
+                linkedNodes: {},
+            };
+        }
       } else { // astNode.type === 'text'
         nodeData = {
           type: { resolvedName: 'Text' },
           isCanvas: false,
-          props: { text: astNode.value },
+          props: { text: astNode.value.trim() },
           displayName: 'Text',
           custom: {},
           hidden: false,
@@ -93,41 +122,38 @@ export async function convertAstroToCraft(astroContent) {
         };
       }
 
-      craftNodes[nodeId] = nodeData;
+      if (nodeData) {
+        craftNodes[nodeId] = nodeData;
 
-      // Assign the parent to each of the child nodes.
-      children.forEach(child => {
-        if (craftNodes[child.id]) {
-          craftNodes[child.id].parent = nodeId;
-        }
-      });
-
-      return { id: nodeId };
+        children.forEach(child => {
+            if (craftNodes[child.id]) {
+            craftNodes[child.id].parent = nodeId;
+            }
+        });
+        return { id: nodeId };
+      }
+      return null;
     }
 
-    // The Astro compiler returns a root fragment, so we traverse its children.
-    const topLevelChildren = ast.children.map(traverse).filter(Boolean);
+    const topLevelNodes = (ast.children || []).flatMap(traverse).filter(Boolean);
 
-    // **CRITICAL FIX**: Create a single, valid ROOT node for Craft.js.
     craftNodes['ROOT'] = {
       type: { resolvedName: 'Page' },
       isCanvas: true,
-      props: { style: { minHeight: '100vh' } },
+      props: {},
       displayName: 'Page',
       custom: {},
       hidden: false,
-      nodes: topLevelChildren.map(c => c.id),
+      nodes: topLevelNodes.map(n => n.id),
       linkedNodes: {},
     };
 
-    // Assign ROOT as the parent for all top-level nodes.
-    topLevelChildren.forEach(child => {
-      if (craftNodes[child.id]) {
-        craftNodes[child.id].parent = 'ROOT';
+    topLevelNodes.forEach(node => {
+      if (craftNodes[node.id]) {
+        craftNodes[node.id].parent = 'ROOT';
       }
     });
 
-    // The entire object is the node map that `deserialize` expects.
     return { nodes: craftNodes, rootNodeId: 'ROOT' };
 
   } catch (error) {
