@@ -17,6 +17,7 @@ import { normalizeFrontmatter, validateLayoutSchema } from '../../utils/layoutIn
 import { parseAstroComponents } from '../../utils/componentMapper';
 import { generateFallbackHtml } from '../../utils/layoutRenderer';
 import { normalizeLayoutData } from '../../utils/normalizationPatch';
+import { convertAstroToCraft } from '../../utils/astroLayoutConverter';
 
 const AstroFileNotice = ({ fileName, onClose }) => (
   <div className="absolute top-4 right-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md shadow-lg z-50 max-w-sm">
@@ -157,10 +158,16 @@ export const LayoutEditor = () => {
           showNotice: false,
         });
       } else {
-        setAstroAnalysis({ report, errorHtml: null, isLoading: false, showNotice: true });
-        // Load blank canvas for graphical editing
-        setInitialJson(defaultState);
-        setCurrentTemplateName(`New Layout (from ${filePath.split('/').pop()})`);
+        const craftData = await convertAstroToCraft(fileContent);
+        if (craftData && craftData.nodes) {
+          setInitialJson(JSON.stringify(craftData.nodes));
+          setAstroAnalysis({ report, errorHtml: null, isLoading: false, showNotice: false });
+        } else {
+           // Fallback to blank canvas if conversion fails
+          setAstroAnalysis({ report, errorHtml: null, isLoading: false, showNotice: true });
+          setInitialJson(defaultState);
+        }
+        setCurrentTemplateName(`New Layout (imported from ${filePath.split('/').pop()})`);
       }
     };
 
@@ -226,19 +233,14 @@ export const LayoutEditor = () => {
         </div>
       );
     }
-    // Render the editor with a blank canvas for valid Astro files
+    // Render the editor with the imported Astro layout
     return (
-      <div className="relative w-full h-screen">
-        {astroAnalysis.showNotice && (
-            <AstroFileNotice fileName={astroLayoutPath.split('/').pop()} onClose={() => setAstroAnalysis(prev => ({...prev, showNotice: false}))} />
-        )}
         <Editor
           key={astroLayoutPath} // Use path as key to force re-render
-          resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter }}
+          resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter, Text: EditorSection }} // Map Text to a simple container
         >
           <LayoutEditorInner templateId={null} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} />
         </Editor>
-      </div>
     );
   }
 
