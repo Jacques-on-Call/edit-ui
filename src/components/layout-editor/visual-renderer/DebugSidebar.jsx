@@ -11,10 +11,9 @@ import React from 'react';
  *   initialJson: string | object | null;
  *   deserializationError: string | null;
  *   liveEditorState: object | null;
- *   processedJson: object | null;
  * }} props
  */
-const DebugSidebar = ({ report, onClose, initialJson, processedJson, deserializationError, liveEditorState }) => {
+const DebugSidebar = ({ report, onClose, initialJson, deserializationError, liveEditorState }) => {
   const { errors = [], frontmatter = {}, components = [], islands = [], filePath = 'N/A' } = report || {};
 
   return (
@@ -33,25 +32,10 @@ const DebugSidebar = ({ report, onClose, initialJson, processedJson, deserializa
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Layout Loading Status */}
-          <div>
-            <h3 className="font-semibold text-gray-700 mb-2">Layout Loading Status</h3>
-            {deserializationError ? (
-              <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
-                <p className="text-sm font-bold text-red-700">Failed to load layout</p>
-                <p className="text-xs text-red-600 mt-1">{deserializationError}</p>
-              </div>
-            ) : (
-              <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
-                <p className="text-sm font-bold text-green-700">Layout Loaded Successfully</p>
-              </div>
-            )}
-          </div>
-
           <div>
             <h3 className="font-semibold text-gray-700 mb-2">File Path</h3>
-            <p className="text-sm text-gray-600 bg-gray-100 p-2 rounded break-all">{filePath}</p>
-          </div>
+          <p className="text-sm text-gray-600 bg-gray-100 p-2 rounded break-all">{filePath}</p>
+        </div>
 
         <div>
           <h3 className="font-semibold text-red-600 mb-2">Errors ({errors.length})</h3>
@@ -99,9 +83,9 @@ const DebugSidebar = ({ report, onClose, initialJson, processedJson, deserializa
 
         {/* New Debugging Sections */}
         <div>
-          <h3 className="font-semibold text-blue-600 mb-2">Processed JSON (Passed to Editor)</h3>
+          <h3 className="font-semibold text-blue-600 mb-2">Raw Initial JSON</h3>
           <div className="bg-gray-800 text-white p-3 rounded-lg text-xs overflow-x-auto">
-            <pre><code>{JSON.stringify(processedJson, null, 2)}</code></pre>
+            <pre><code>{typeof initialJson === 'string' ? initialJson : JSON.stringify(initialJson, null, 2)}</code></pre>
           </div>
         </div>
 
