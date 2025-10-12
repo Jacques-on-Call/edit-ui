@@ -1,11 +1,27 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>easy-seo</title>
-    <script src="https://cdn.tiny.cloud/1/w01ntc48o7kxzwys5kxk0gibj7s4lysx998e1rdgb1tjhm6y/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+# OAuth Flow Visual Debugger (Cloudflare Worker Edition)
+
+This debugger is designed to provide a real-time visual trace of a complex OAuth 2.0 flow, especially one that involves popup windows and a Cloudflare Worker backend.
+
+## How to Use
+
+1.  **Inject into HTML:** Copy the entire `<!DOCTYPE html>...</html>` block below and temporarily paste it into the main `index.html` of the frontend application you need to debug.
+2.  **Deploy & Run:** Deploy the application. When you load the page, the debugger panel will appear in the top-right corner.
+3.  **Trigger OAuth Flow:** Initiate the login process.
+4.  **Observe Logs:** Watch the debugger trace the entire flow in real-time. Pay close attention to the color-coded events:
+    *   **Purple:** Popup window events (opening, closing).
+    *   **Cyan:** Cloudflare Worker requests and responses.
+    *   **Green:** Successful operations (e.g., receiving an OAuth code).
+    *   **Red:** Errors. This is often the most important log entry.
+    *   **Yellow:** Warnings or non-critical events.
+5.  **Remove After Debugging:** Once the issue is resolved, remember to remove the debugger code from your `index.html` file.
+
+## Full Debugger Code
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GitHub OAuth Flow Debugger</title>
     <style>
         .debug-container {
             position: fixed;
@@ -44,8 +60,8 @@
             margin-bottom: 10px;
         }
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <!-- Debug Panel -->
     <div class="debug-container" id="debugPanel">
         <button class="debug-toggle" onclick="toggleDebug()">Hide Debugger</button>
@@ -219,7 +235,6 @@
             clearLogs: () => { document.getElementById('debugLog').innerHTML = ''; }
         };
     </script>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+</body>
 </html>
+```
