@@ -202,16 +202,34 @@ export const LayoutEditor = () => {
 
     setLoading(true);
     if (astroLayoutPath) {
+      const repo = localStorage.getItem('selectedRepo');
+      if (!repo) {
+        const report = { errors: ["No repository selected. Please return to the file explorer."], filePath: astroLayoutPath };
+        setAstroAnalysis({ report, errorHtml: generateFallbackHtml(report), isLoading: false, showNotice: false });
+        setLoading(false);
+        return;
+      }
+
       setIsAstroLayout(true);
-      fetch(`/api/get-file-content?path=${encodeURIComponent(astroLayoutPath)}`, { credentials: 'include' })
-        .then(res => {
-          if (!res.ok) throw new Error(`Failed to fetch file: ${res.statusText}`);
-          return res.text();
+      fetch(`/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(astroLayoutPath)}`, { credentials: 'include' })
+        .then(async res => {
+            if (!res.ok) {
+                // Clone the response to allow reading the body twice if needed.
+                const resClone = res.clone();
+                try {
+                    const errorData = await res.json();
+                    throw new Error(errorData.message || `Server returned status ${res.status}`);
+                } catch (e) {
+                    const errorText = await resClone.text();
+                    throw new Error(errorText || `Failed to fetch file: ${res.statusText}`);
+                }
+            }
+            return res.text();
         })
         .then(content => analyzeAstroFile(astroLayoutPath, content))
         .catch(err => {
-          const report = { errors: [err.message], filePath: astroLayoutPath };
-          setAstroAnalysis({ report, errorHtml: generateFallbackHtml(report), isLoading: false, showNotice: false });
+            const report = { errors: [err.message], filePath: astroLayoutPath };
+            setAstroAnalysis({ report, errorHtml: generateFallbackHtml(report), isLoading: false, showNotice: false });
         });
 
     } else if (starterJson) {
