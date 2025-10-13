@@ -27,12 +27,7 @@ const componentMap = {
  * @returns {{name: string, isCanvas: boolean}} The component definition.
  */
 function mapTagToComponent(tagName) {
-  const componentDef = componentMap[tagName];
-  // The 'footer' is a string in the map, handle this case.
-  if (typeof componentDef === 'string') {
-    return { name: componentDef, isCanvas: true };
-  }
-  return componentDef || componentMap['default'];
+  return componentMap[tagName] || componentMap['default'];
 }
 
 /**
