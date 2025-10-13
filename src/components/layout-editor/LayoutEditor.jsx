@@ -11,6 +11,7 @@ import { EditorFeatureGrid } from './blocks/FeatureGrid.editor';
 import { EditorTestimonial } from './blocks/Testimonial.editor';
 import { EditorCTA } from './blocks/CTA.editor';
 import { EditorFooter } from './blocks/Footer.editor';
+import { Text } from './blocks/Text.editor';
 import { checkLayoutIntegrity } from '../../utils/layoutIntegrityLogger';
 import DebugSidebar from './visual-renderer/DebugSidebar';
 import { normalizeFrontmatter, validateLayoutSchema } from '../../utils/layoutInterpreter';
@@ -40,32 +41,57 @@ function useQuery() {
 }
 
 const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJson, deserializationError, setDeserializationError }) => {
-  const { actions, query, ready, editorState } = useEditor((state) => ({
+  const { actions, query, ready, editorState, internalState } = useEditor((state) => ({
     ready: state.events.ready,
     editorState: state.nodes,
+    internalState: state, // Get the whole internal state for comparison
   }));
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isDebugVisible, setDebugVisible] = useState(false); // Keep debug hidden by default
+  const [processedJson, setProcessedJson] = useState(null);
 
   useEffect(() => {
     if (ready && initialJson) {
-      setDeserializationError(null); // Reset error on new data
+      setDeserializationError(null);
+      let content;
       try {
-        const content = typeof initialJson === 'string' ? JSON.parse(initialJson) : initialJson;
+        content = initialJson;
+        while (typeof content === 'string') {
+          content = JSON.parse(content);
+        }
+        setProcessedJson(content); // Store the fully parsed JSON for the debugger
+
         if (!content || !content.ROOT) {
           throw new Error("Invalid layout data: 'ROOT' node is missing.");
         }
+
+        const a = internalState;
         actions.deserialize(content);
+
+        // Post-load verification
+        setTimeout(() => {
+            const b = query.getNodes();
+            const nodesLoaded = Object.keys(b).length;
+            const nodesExpected = Object.keys(content).length;
+
+            if (nodesLoaded <= 1 && nodesExpected > 1) { // Only ROOT node vs expected nodes
+                 setDeserializationError(
+                    `Silent failure: Editor rejected the layout. Expected ${nodesExpected} nodes, but only ${nodesLoaded} were loaded. This usually means a component is not registered in the resolver.`
+                 );
+            }
+        }, 100);
+
+
       } catch (e) {
         console.error("Error deserializing layout JSON:", e);
         setDeserializationError(e.message);
-        // Load a blank canvas to prevent a crash
+        setProcessedJson(content || { error: 'Parsing failed before processing' });
         actions.deserialize({
           "ROOT": { "type": { "resolvedName": "Page" }, "isCanvas": true, "props": {}, "displayName": "Page", "custom": {}, "hidden": false, "nodes": [], "linkedNodes": {} }
         });
       }
     }
-  }, [ready, initialJson, actions, setDeserializationError]);
+  }, [ready, initialJson, actions, setDeserializationError, query, internalState]);
 
   const handleSave = async () => {
     const json = query.serialize();
@@ -120,6 +146,7 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
             report={null} // report is for astro-specific analysis, can be enhanced later
             onClose={() => setDebugVisible(false)}
             initialJson={initialJson}
+            processedJson={processedJson}
             deserializationError={deserializationError}
             liveEditorState={editorState}
           />
@@ -202,34 +229,16 @@ export const LayoutEditor = () => {
 
     setLoading(true);
     if (astroLayoutPath) {
-      const repo = localStorage.getItem('selectedRepo');
-      if (!repo) {
-        const report = { errors: ["No repository selected. Please return to the file explorer."], filePath: astroLayoutPath };
-        setAstroAnalysis({ report, errorHtml: generateFallbackHtml(report), isLoading: false, showNotice: false });
-        setLoading(false);
-        return;
-      }
-
       setIsAstroLayout(true);
-      fetch(`/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(astroLayoutPath)}`, { credentials: 'include' })
-        .then(async res => {
-            if (!res.ok) {
-                // Clone the response to allow reading the body twice if needed.
-                const resClone = res.clone();
-                try {
-                    const errorData = await res.json();
-                    throw new Error(errorData.message || `Server returned status ${res.status}`);
-                } catch (e) {
-                    const errorText = await resClone.text();
-                    throw new Error(errorText || `Failed to fetch file: ${res.statusText}`);
-                }
-            }
-            return res.text();
+      fetch(`/api/get-file-content?path=${encodeURIComponent(astroLayoutPath)}`, { credentials: 'include' })
+        .then(res => {
+          if (!res.ok) throw new Error(`Failed to fetch file: ${res.statusText}`);
+          return res.text();
         })
         .then(content => analyzeAstroFile(astroLayoutPath, content))
         .catch(err => {
-            const report = { errors: [err.message], filePath: astroLayoutPath };
-            setAstroAnalysis({ report, errorHtml: generateFallbackHtml(report), isLoading: false, showNotice: false });
+          const report = { errors: [err.message], filePath: astroLayoutPath };
+          setAstroAnalysis({ report, errorHtml: generateFallbackHtml(report), isLoading: false, showNotice: false });
         });
 
     } else if (starterJson) {
@@ -284,7 +293,7 @@ export const LayoutEditor = () => {
     return (
         <Editor
           key={astroLayoutPath} // Use path as key to force re-render
-          resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter, Text: EditorSection }} // Map Text to a simple container
+          resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter, Text }}
         >
           <LayoutEditorInner templateId={null} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} deserializationError={deserializationError} setDeserializationError={setDeserializationError} />
         </Editor>
@@ -299,7 +308,7 @@ export const LayoutEditor = () => {
   return (
     <Editor
       key={templateId || templateName}
-      resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter }}
+      resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter, Text }}
     >
       <LayoutEditorInner templateId={templateId} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} deserializationError={deserializationError} setDeserializationError={setDeserializationError} />
     </Editor>
