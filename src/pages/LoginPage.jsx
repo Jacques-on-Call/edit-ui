@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 
 // The Client ID and Redirect URI are now read from Vite environment variables
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
-const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
+// This now points to our backend worker's API endpoint
+const REDIRECT_URI = 'https://edit.strategycontent.agency/api/callback';
 
 function LoginPage() {
   // Trivial change to force a new build hash and bypass CDN cache.
@@ -11,6 +12,15 @@ function LoginPage() {
 
   // Check for an existing session on component mount
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('login') === 'success') {
+      // If we've just logged in, reload the page without the query param
+      // to ensure a clean state before proceeding.
+      window.history.replaceState({}, document.title, "/");
+      window.location.reload();
+      return;
+    }
+
     fetch('/api/me', {
       credentials: 'include',
     })

@@ -14,8 +14,6 @@ function App() {
     <Routes>
       {/* Standalone routes without the AppLayout */}
       <Route path="/" element={<LoginPage />} />
-      <Route path="/callback" element={<CallbackPage />} />
-
       <Route path="/repository-selection" element={<RepositorySelectionPage />} />
 
       {/* Routes that use the AppLayout */}
