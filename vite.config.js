@@ -8,7 +8,7 @@ export default defineConfig({
     proxy: {
       // The general proxy for all other API calls to the Wrangler server
       '/api': {
-        target: 'https://edit.strategycontent.agency',
+        target: 'https://auth-edit-easy-seo.jacquesoncall.workers.dev',
         changeOrigin: true,
       },
     },
