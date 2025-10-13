@@ -85,6 +85,12 @@ export async function convertAstroToCraft(astroContent) {
       }
 
       if (astNode.type === 'element') {
+        // Special handling for the root <html> tag
+        if (astNode.name === 'html') {
+            (astNode.children || []).forEach(child => traverse(child, parentId));
+            return;
+        }
+
         const componentDef = mapTagToComponent(astNode.name);
         const nodeData = {
           type: { resolvedName: componentDef.name },
