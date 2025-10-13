@@ -11,7 +11,6 @@ import { EditorFeatureGrid } from './blocks/FeatureGrid.editor';
 import { EditorTestimonial } from './blocks/Testimonial.editor';
 import { EditorCTA } from './blocks/CTA.editor';
 import { EditorFooter } from './blocks/Footer.editor';
-// eslint-disable-next-line no-unused-vars
 import { checkLayoutIntegrity } from '../../utils/layoutIntegrityLogger';
 import DebugSidebar from './visual-renderer/DebugSidebar';
 import { normalizeFrontmatter, validateLayoutSchema } from '../../utils/layoutInterpreter';
@@ -220,7 +219,7 @@ export const LayoutEditor = () => {
                 try {
                     const errorData = await res.json();
                     throw new Error(errorData.message || `Server returned status ${res.status}`);
-                } catch (e) { // eslint-disable-line no-unused-vars
+                } catch (e) {
                     const errorText = await resClone.text();
                     throw new Error(errorText || `Failed to fetch file: ${res.statusText}`);
                 }

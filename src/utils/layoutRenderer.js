@@ -44,7 +44,7 @@ export function generateAstroPreviewHtml(fileContent, frontmatter, components) {
  * @returns {string} A complete HTML document as a string.
  */
 export function generateFallbackHtml(details, isPlaceholder = false, isSuccess = false) {
-  const { filePath, errors = [], warnings = [], frontmatter = {}, components = [], islands = [] } = details; // eslint-disable-line no-unused-vars
+  const { filePath, errors = [], warnings = [], frontmatter = {}, components = [], islands = [] } = details;
   const frontmatterString = JSON.stringify(frontmatter, null, 2);
   const pageTitle = isPlaceholder ? 'Layout Preview' : 'Layout Preview Failed';
   const mainTitle = isPlaceholder ? 'Render Successful (Placeholder)' : 'Layout Preview Failed';

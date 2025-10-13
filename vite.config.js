@@ -8,7 +8,7 @@ export default defineConfig({
     proxy: {
       // The general proxy for all other API calls to the Wrangler server
       '/api': {
-        target: 'http://localhost:8787',
+        target: 'https://edit.strategycontent.agency',
         changeOrigin: true,
       },
     },
