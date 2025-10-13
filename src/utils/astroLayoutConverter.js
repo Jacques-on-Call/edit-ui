@@ -49,7 +49,6 @@ export async function convertAstroToCraft(astroContent) {
       const nodeId = uuidv4();
       craftNodes[nodeId] = { ...nodeData, parent: parentId };
       if (parentId) {
-        // Initialize parent's nodes array if it doesn't exist
         if (!craftNodes[parentId].nodes) {
           craftNodes[parentId].nodes = [];
         }
@@ -85,8 +84,7 @@ export async function convertAstroToCraft(astroContent) {
       }
 
       if (astNode.type === 'element') {
-        // Special handling for the root <html> tag
-        if (astNode.name === 'html') {
+        if (astNode.name === 'html' || astNode.name === 'head' || astNode.name === 'body') {
             (astNode.children || []).forEach(child => traverse(child, parentId));
             return;
         }
