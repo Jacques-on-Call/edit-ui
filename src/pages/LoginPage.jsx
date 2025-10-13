@@ -85,9 +85,17 @@ function LoginPage() {
             Login with GitHub
           </button>
         </div>
-        <div className="mt-8 text-xs text-gray-400">
-          <p>DEBUG: Redirect URI</p>
-          <p className="font-mono bg-gray-700 p-2 rounded">{REDIRECT_URI}</p>
+        <div className="mt-12 p-4 border-2 border-dashed border-yellow-300 rounded-lg bg-yellow-900 bg-opacity-30">
+          <h3 className="text-lg font-bold text-yellow-300">Admin Action Required</h3>
+          <p className="mt-2 text-sm text-yellow-200">
+            To fix the login, the URL below **must exactly match** the "Authorization callback URL" in your GitHub OAuth App settings.
+          </p>
+          <div className="mt-4 p-3 bg-gray-900 rounded-md text-white font-mono text-center text-lg break-all">
+            {REDIRECT_URI}
+          </div>
+           <p className="mt-2 text-xs text-yellow-400">
+            This value is set by the `VITE_REDIRECT_URI` environment variable in the Cloudflare Pages deployment.
+          </p>
         </div>
       </div>
     </div>
