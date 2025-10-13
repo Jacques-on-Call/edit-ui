@@ -39,73 +39,40 @@ function mapTagToComponent(tagName) {
  */
 export async function convertAstroToCraft(astroContent) {
   try {
-    const { data: frontmatter, content: fileBody } = matter(astroContent);
-    const htmlToParse = frontmatter.body || fileBody;
+    const { content: fileBody } = matter(astroContent);
+    if (!fileBody.trim()) return null;
 
-    if (!htmlToParse.trim()) {
-      return null;
-    }
-
-    const { ast } = await parse(htmlToParse);
+    const { ast } = await parse(fileBody);
     const craftNodes = {};
 
-    /**
-     * Recursively traverses the AST and converts nodes to the Craft.js format.
-     * @param {object} astNode - The current node in the Astro AST.
-     * @returns {{id: string}|null} An object with the new node's ID, or null if the node should be ignored.
-     */
-    function traverse(astNode) {
-      if (astNode.type === 'text' && astNode.value.trim() === '') {
-        return null;
-      }
-      if (!['element', 'text', 'comment', 'doctype', 'fragment'].includes(astNode.type)) {
-        return null;
-      }
-
-      // If it's a fragment (like the root of the AST), just traverse its children.
-      if (astNode.type === 'fragment') {
-          return (astNode.children || []).map(traverse).filter(Boolean);
-      }
-
+    function addNode(nodeData, parentId) {
       const nodeId = uuidv4();
-      let nodeData;
-      let children = [];
-
-      if (astNode.type === 'element') {
-        const componentDef = mapTagToComponent(astNode.name);
-
-        if (!componentDef.isCanvas) {
-            const innerText = (astNode.children || [])
-                .filter(c => c.type === 'text')
-                .map(c => c.value)
-                .join(' ')
-                .trim();
-
-            nodeData = {
-                type: { resolvedName: componentDef.name },
-                isCanvas: false,
-                props: { text: innerText || astNode.name },
-                displayName: componentDef.name,
-                custom: {},
-                hidden: false,
-                nodes: [],
-                linkedNodes: {},
-            };
-        } else {
-            children = (astNode.children || []).flatMap(traverse).filter(Boolean);
-            nodeData = {
-                type: { resolvedName: componentDef.name },
-                isCanvas: true,
-                props: {},
-                displayName: componentDef.name,
-                custom: {},
-                hidden: false,
-                nodes: children.map(c => c.id),
-                linkedNodes: {},
-            };
+      craftNodes[nodeId] = { ...nodeData, parent: parentId };
+      if (parentId) {
+        // Initialize parent's nodes array if it doesn't exist
+        if (!craftNodes[parentId].nodes) {
+          craftNodes[parentId].nodes = [];
         }
-      } else { // astNode.type === 'text'
-        nodeData = {
+        craftNodes[parentId].nodes.push(nodeId);
+      }
+      return nodeId;
+    }
+
+    function traverse(astNode, parentId) {
+      if (astNode.type === 'text' && astNode.value.trim() === '') {
+        return;
+      }
+      if (!['element', 'text', 'fragment'].includes(astNode.type)) {
+        return;
+      }
+
+      if (astNode.type === 'fragment') {
+        (astNode.children || []).forEach(child => traverse(child, parentId));
+        return;
+      }
+
+      if (astNode.type === 'text') {
+        addNode({
           type: { resolvedName: 'Text' },
           isCanvas: false,
           props: { text: astNode.value.trim() },
@@ -113,24 +80,36 @@ export async function convertAstroToCraft(astroContent) {
           custom: {},
           hidden: false,
           nodes: [],
-          linkedNodes: {},
+        }, parentId);
+        return;
+      }
+
+      if (astNode.type === 'element') {
+        const componentDef = mapTagToComponent(astNode.name);
+        const nodeData = {
+          type: { resolvedName: componentDef.name },
+          isCanvas: componentDef.isCanvas,
+          props: {},
+          displayName: componentDef.name,
+          custom: {},
+          hidden: false,
+          nodes: [], // Initialize nodes array
         };
-      }
 
-      if (nodeData) {
-        craftNodes[nodeId] = nodeData;
-
-        children.forEach(child => {
-            if (craftNodes[child.id]) {
-            craftNodes[child.id].parent = nodeId;
-            }
-        });
-        return { id: nodeId };
+        if (!componentDef.isCanvas) {
+          const innerText = (astNode.children || [])
+            .filter(c => c.type === 'text')
+            .map(c => c.value)
+            .join(' ')
+            .trim();
+          nodeData.props.text = innerText || astNode.name;
+          addNode(nodeData, parentId);
+        } else {
+          const newParentId = addNode(nodeData, parentId);
+          (astNode.children || []).forEach(child => traverse(child, newParentId));
+        }
       }
-      return null;
     }
-
-    const topLevelNodes = (ast.children || []).flatMap(traverse).filter(Boolean);
 
     craftNodes['ROOT'] = {
       type: { resolvedName: 'Page' },
@@ -139,15 +118,11 @@ export async function convertAstroToCraft(astroContent) {
       displayName: 'Page',
       custom: {},
       hidden: false,
-      nodes: topLevelNodes.map(n => n.id),
+      nodes: [],
       linkedNodes: {},
     };
 
-    topLevelNodes.forEach(node => {
-      if (craftNodes[node.id]) {
-        craftNodes[node.id].parent = 'ROOT';
-      }
-    });
+    traverse(ast, 'ROOT');
 
     return { nodes: craftNodes, rootNodeId: 'ROOT' };
 
