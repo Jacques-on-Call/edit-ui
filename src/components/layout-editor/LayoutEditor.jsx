@@ -12,7 +12,6 @@ import { EditorTestimonial } from './blocks/Testimonial.editor';
 import { EditorCTA } from './blocks/CTA.editor';
 import { EditorFooter } from './blocks/Footer.editor';
 import { Text } from './blocks/Text.editor';
-import { checkLayoutIntegrity } from '../../utils/layoutIntegrityLogger';
 import DebugSidebar from './visual-renderer/DebugSidebar';
 import { normalizeFrontmatter, validateLayoutSchema } from '../../utils/layoutInterpreter';
 import { parseAstroComponents } from '../../utils/componentMapper';
@@ -65,7 +64,6 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
           throw new Error("Invalid layout data: 'ROOT' node is missing.");
         }
 
-        const a = internalState;
         actions.deserialize(content);
 
         // Post-load verification

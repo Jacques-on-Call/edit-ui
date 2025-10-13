@@ -16,8 +16,6 @@ import { stylePacks } from './stylePacks.js';
  * @returns {string} A complete HTML document as a string.
  */
 export function generateAstroPreviewHtml(fileContent, frontmatter, components) {
-  const title = frontmatter.title || 'Astro Layout Preview';
-
   // NOTE: This function is now effectively a specific case of the fallback renderer.
   // It's kept separate for clarity, but the logic is similar.
   // The key difference is the "Visual Renderer Active" status.

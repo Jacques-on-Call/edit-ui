@@ -7,7 +7,7 @@
     "dev:frontend": "vite",
     "dev:api": "wrangler dev",
     "dev:build-trigger": "node build-trigger-server.js",
-    "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:api\" \"npm:dev:build-trigger\"",
+    "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:api\"",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
