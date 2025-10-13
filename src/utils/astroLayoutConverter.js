@@ -1,8 +1,7 @@
-import { parse } from '@astrojs/compiler';
+import { parse } from 'node-html-parser';
 import { v4 as uuidv4 } from 'uuid';
 import matter from 'gray-matter';
 
-// A more detailed mapping that includes whether a component is a container.
 const componentMap = {
   'h1': { name: 'EditorHero', isCanvas: false },
   'h2': { name: 'Text', isCanvas: false },
@@ -21,28 +20,16 @@ const componentMap = {
   'default': { name: 'EditorSection', isCanvas: true }
 };
 
-/**
- * Maps an HTML tag to a Craft.js component definition.
- * @param {string} tagName - The HTML tag name.
- * @returns {{name: string, isCanvas: boolean}} The component definition.
- */
 function mapTagToComponent(tagName) {
-  return componentMap[tagName] || componentMap['default'];
+  return componentMap[tagName.toLowerCase()] || componentMap['default'];
 }
 
-/**
- * Converts the HTML content of an Astro file into a semantically correct
- * Craft.js compatible JSON node structure.
- *
- * @param {string} astroContent - The full string content of an .astro file.
- * @returns {Promise<{nodes: object, rootNodeId: string}|null>} A valid Craft.js node map or null on failure.
- */
 export async function convertAstroToCraft(astroContent) {
   try {
     const { content: fileBody } = matter(astroContent);
     if (!fileBody.trim()) return null;
 
-    const { ast } = await parse(fileBody);
+    const root = parse(fileBody);
     const craftNodes = {};
 
     function addNode(nodeData, parentId) {
@@ -57,24 +44,16 @@ export async function convertAstroToCraft(astroContent) {
       return nodeId;
     }
 
-    function traverse(astNode, parentId) {
-      if (astNode.type === 'text' && astNode.value.trim() === '') {
-        return;
-      }
-      if (!['element', 'text', 'fragment'].includes(astNode.type)) {
+    function traverse(htmlNode, parentId) {
+      if (htmlNode.nodeType === 3 && htmlNode.text.trim() === '') { // Node.TEXT_NODE
         return;
       }
 
-      if (astNode.type === 'fragment') {
-        (astNode.children || []).forEach(child => traverse(child, parentId));
-        return;
-      }
-
-      if (astNode.type === 'text') {
+      if (htmlNode.nodeType === 3) { // Text node
         addNode({
           type: { resolvedName: 'Text' },
           isCanvas: false,
-          props: { text: astNode.value.trim() },
+          props: { text: htmlNode.text.trim() },
           displayName: 'Text',
           custom: {},
           hidden: false,
@@ -83,13 +62,11 @@ export async function convertAstroToCraft(astroContent) {
         return;
       }
 
-      if (astNode.type === 'element') {
-        if (astNode.name === 'html' || astNode.name === 'head' || astNode.name === 'body') {
-            (astNode.children || []).forEach(child => traverse(child, parentId));
-            return;
-        }
+      if (htmlNode.nodeType === 1) { // Node.ELEMENT_NODE
+        const tagName = htmlNode.tagName;
+        if (!tagName) return; // Skip comments or other non-element nodes
 
-        const componentDef = mapTagToComponent(astNode.name);
+        const componentDef = mapTagToComponent(tagName);
         const nodeData = {
           type: { resolvedName: componentDef.name },
           isCanvas: componentDef.isCanvas,
@@ -97,20 +74,15 @@ export async function convertAstroToCraft(astroContent) {
           displayName: componentDef.name,
           custom: {},
           hidden: false,
-          nodes: [], // Initialize nodes array
+          nodes: [],
         };
 
         if (!componentDef.isCanvas) {
-          const innerText = (astNode.children || [])
-            .filter(c => c.type === 'text')
-            .map(c => c.value)
-            .join(' ')
-            .trim();
-          nodeData.props.text = innerText || astNode.name;
+          nodeData.props.text = htmlNode.text.trim() || tagName;
           addNode(nodeData, parentId);
         } else {
           const newParentId = addNode(nodeData, parentId);
-          (astNode.children || []).forEach(child => traverse(child, newParentId));
+          (htmlNode.childNodes || []).forEach(child => traverse(child, newParentId));
         }
       }
     }
@@ -126,7 +98,7 @@ export async function convertAstroToCraft(astroContent) {
       linkedNodes: {},
     };
 
-    traverse(ast, 'ROOT');
+    traverse(root, 'ROOT');
 
     return { nodes: craftNodes, rootNodeId: 'ROOT' };
 
