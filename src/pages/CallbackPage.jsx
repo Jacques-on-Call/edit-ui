@@ -11,12 +11,18 @@ export default function CallbackPage() {
         const state = params.get('state');
         const savedState = document.cookie.match(/oauth_state=([^;]+)/)?.[1];
 
+        console.log('[DEBUG] URL State:', state);
+        console.log('[DEBUG] Cookie State:', savedState);
+        console.log('[DEBUG] Raw Cookie:', document.cookie);
+
         // Clear the state cookie once it's been used
         document.cookie = 'oauth_state=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure';
 
         if (!code || !state || !savedState || state !== savedState) {
-          throw new Error('Invalid state or code. Authentication failed. Please try again.');
+          throw new Error(`State validation failed. URL state: ${state}, Cookie state: ${savedState}. Authentication failed. Please try again.`);
         }
+
+        console.log('[DEBUG] State validation successful. Exchanging code for token...');
 
         const response = await fetch('/api/token', {
           method: 'POST',
