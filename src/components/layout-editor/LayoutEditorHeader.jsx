@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../Icon';
 
-export const LayoutEditorHeader = ({ onSave, onToggleSidebar, onToggleDebug, isDebugVisible }) => {
+export const LayoutEditorHeader = ({ onSave, onToggleSidebar, onGenerateCode, onToggleDebug, isDebugVisible }) => {
   const navigate = useNavigate();
 
   return (
@@ -18,6 +18,13 @@ export const LayoutEditorHeader = ({ onSave, onToggleSidebar, onToggleDebug, isD
       <h1 className="text-lg font-semibold text-gray-800">Layout Editor</h1>
 
       <div className="flex items-center space-x-2">
+        <button
+          onClick={onGenerateCode}
+          className="p-2 rounded-md bg-green-500 text-white hover:bg-green-600"
+          title="Generate Astro Code"
+        >
+          Generate Code
+        </button>
         <button
           onClick={onToggleDebug}
           className={`p-2 rounded-md ${isDebugVisible ? 'bg-red-100 text-red-700' : 'hover:bg-gray-200'}`}
