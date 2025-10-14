@@ -7,7 +7,7 @@
     "dev:frontend": "vite",
     "dev:api": "wrangler dev",
     "dev:build-trigger": "node build-trigger-server.js",
-    "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:api\"",
+    "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:api\" \"npm:dev:build-trigger\"",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -33,7 +33,6 @@
     "remark-gfm": "^4.0.1",
     "turndown": "^7.2.0",
     "uuid": "^13.0.0",
-    "vconsole": "^3.15.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {

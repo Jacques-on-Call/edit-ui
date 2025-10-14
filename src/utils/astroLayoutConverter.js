@@ -1,7 +1,8 @@
-import { parse } from 'node-html-parser';
+import { parse } from '@astrojs/compiler';
 import { v4 as uuidv4 } from 'uuid';
 import matter from 'gray-matter';
 
+// A more detailed mapping that includes whether a component is a container.
 const componentMap = {
   'h1': { name: 'EditorHero', isCanvas: false },
   'h2': { name: 'Text', isCanvas: false },
@@ -20,72 +21,121 @@ const componentMap = {
   'default': { name: 'EditorSection', isCanvas: true }
 };
 
+/**
+ * Maps an HTML tag to a Craft.js component definition.
+ * @param {string} tagName - The HTML tag name.
+ * @returns {{name: string, isCanvas: boolean}} The component definition.
+ */
 function mapTagToComponent(tagName) {
-  return componentMap[tagName.toLowerCase()] || componentMap['default'];
+  const componentDef = componentMap[tagName];
+  // The 'footer' is a string in the map, handle this case.
+  if (typeof componentDef === 'string') {
+    return { name: componentDef, isCanvas: true };
+  }
+  return componentDef || componentMap['default'];
 }
 
+/**
+ * Converts the HTML content of an Astro file into a semantically correct
+ * Craft.js compatible JSON node structure.
+ *
+ * @param {string} astroContent - The full string content of an .astro file.
+ * @returns {Promise<{nodes: object, rootNodeId: string}|null>} A valid Craft.js node map or null on failure.
+ */
 export async function convertAstroToCraft(astroContent) {
   try {
-    const { content: fileBody } = matter(astroContent);
-    if (!fileBody.trim()) return null;
+    const { data: frontmatter, content: fileBody } = matter(astroContent);
+    const htmlToParse = frontmatter.body || fileBody;
 
-    const root = parse(fileBody);
-    const craftNodes = {};
-
-    function addNode(nodeData, parentId) {
-      const nodeId = uuidv4();
-      craftNodes[nodeId] = { ...nodeData, parent: parentId };
-      if (parentId) {
-        if (!craftNodes[parentId].nodes) {
-          craftNodes[parentId].nodes = [];
-        }
-        craftNodes[parentId].nodes.push(nodeId);
-      }
-      return nodeId;
+    if (!htmlToParse.trim()) {
+      return null;
     }
 
-    function traverse(htmlNode, parentId) {
-      if (htmlNode.nodeType === 3 && htmlNode.text.trim() === '') { // Node.TEXT_NODE
-        return;
+    const { ast } = await parse(htmlToParse);
+    const craftNodes = {};
+
+    /**
+     * Recursively traverses the AST and converts nodes to the Craft.js format.
+     * @param {object} astNode - The current node in the Astro AST.
+     * @returns {{id: string}|null} An object with the new node's ID, or null if the node should be ignored.
+     */
+    function traverse(astNode) {
+      if (astNode.type === 'text' && astNode.value.trim() === '') {
+        return null;
+      }
+      if (!['element', 'text', 'comment', 'doctype', 'fragment'].includes(astNode.type)) {
+        return null;
       }
 
-      if (htmlNode.nodeType === 3) { // Text node
-        addNode({
+      // If it's a fragment (like the root of the AST), just traverse its children.
+      if (astNode.type === 'fragment') {
+          return (astNode.children || []).map(traverse).filter(Boolean);
+      }
+
+      const nodeId = uuidv4();
+      let nodeData;
+      let children = [];
+
+      if (astNode.type === 'element') {
+        const componentDef = mapTagToComponent(astNode.name);
+
+        if (!componentDef.isCanvas) {
+            const innerText = (astNode.children || [])
+                .filter(c => c.type === 'text')
+                .map(c => c.value)
+                .join(' ')
+                .trim();
+
+            nodeData = {
+                type: { resolvedName: componentDef.name },
+                isCanvas: false,
+                props: { text: innerText || astNode.name },
+                displayName: componentDef.name,
+                custom: {},
+                hidden: false,
+                nodes: [],
+                linkedNodes: {},
+            };
+        } else {
+            children = (astNode.children || []).flatMap(traverse).filter(Boolean);
+            nodeData = {
+                type: { resolvedName: componentDef.name },
+                isCanvas: true,
+                props: {},
+                displayName: componentDef.name,
+                custom: {},
+                hidden: false,
+                nodes: children.map(c => c.id),
+                linkedNodes: {},
+            };
+        }
+      } else { // astNode.type === 'text'
+        nodeData = {
           type: { resolvedName: 'Text' },
           isCanvas: false,
-          props: { text: htmlNode.text.trim() },
+          props: { text: astNode.value.trim() },
           displayName: 'Text',
           custom: {},
           hidden: false,
           nodes: [],
-        }, parentId);
-        return;
-      }
-
-      if (htmlNode.nodeType === 1) { // Node.ELEMENT_NODE
-        const tagName = htmlNode.tagName;
-        if (!tagName) return; // Skip comments or other non-element nodes
-
-        const componentDef = mapTagToComponent(tagName);
-        const nodeData = {
-          type: { resolvedName: componentDef.name },
-          isCanvas: componentDef.isCanvas,
-          props: {},
-          displayName: componentDef.name,
-          custom: {},
-          hidden: false,
-          nodes: [],
+          linkedNodes: {},
         };
-
-        if (!componentDef.isCanvas) {
-          nodeData.props.text = htmlNode.text.trim() || tagName;
-          addNode(nodeData, parentId);
-        } else {
-          const newParentId = addNode(nodeData, parentId);
-          (htmlNode.childNodes || []).forEach(child => traverse(child, newParentId));
-        }
       }
+
+      if (nodeData) {
+        craftNodes[nodeId] = nodeData;
+
+        children.forEach(child => {
+            if (craftNodes[child.id]) {
+            craftNodes[child.id].parent = nodeId;
+            }
+        });
+        return { id: nodeId };
+      }
+      return null;
     }
+
+    const topLevelNodes = (ast.children || []).flatMap(traverse).filter(Boolean);
 
     craftNodes['ROOT'] = {
       type: { resolvedName: 'Page' },
@@ -94,11 +144,15 @@ export async function convertAstroToCraft(astroContent) {
       displayName: 'Page',
       custom: {},
       hidden: false,
-      nodes: [],
+      nodes: topLevelNodes.map(n => n.id),
       linkedNodes: {},
     };
 
-    traverse(root, 'ROOT');
+    topLevelNodes.forEach(node => {
+      if (craftNodes[node.id]) {
+        craftNodes[node.id].parent = 'ROOT';
+      }
+    });
 
     return { nodes: craftNodes, rootNodeId: 'ROOT' };
 

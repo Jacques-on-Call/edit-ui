@@ -7,6 +7,7 @@ import ExplorerPage from './pages/ExplorerPage';
 import EditorPage from './pages/EditorPage';
 import LayoutsDashboardPage from './pages/LayoutsDashboardPage';
 import LayoutEditorPage from './pages/LayoutEditorPage';
+import SemanticLayoutEditor from './pages/SemanticLayoutEditor';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
       {/* Standalone routes without the AppLayout */}
       <Route path="/" element={<LoginPage />} />
       <Route path="/repository-selection" element={<RepositorySelectionPage />} />
+      <Route path="/semantic-editor" element={<SemanticLayoutEditor />} />
 
       {/* Routes that use the AppLayout */}
       <Route element={<AppLayout />}>

@@ -85,6 +85,10 @@ function LoginPage() {
             Login with GitHub
           </button>
         </div>
+        <div className="mt-8 text-xs text-gray-400">
+          <p>DEBUG: Redirect URI</p>
+          <p className="font-mono bg-gray-700 p-2 rounded">{REDIRECT_URI}</p>
+        </div>
       </div>
     </div>
   );
