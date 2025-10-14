@@ -122,35 +122,25 @@ A fundamental challenge is enabling code-based Astro pages (e.g., `src/pages/abo
 
 This pattern allows the worker to "give instructions" to the Astro build process without the two environments needing to directly interact, providing a robust and scalable way to mix static and dynamic layouts.
 
-### 4.2. AST-Based Bidirectional Layout Editing
+### 4.2. "One-Way Import" for Astro Layouts
 
-To provide a flexible and robust editing experience for `.astro` layout files, the application now uses a bidirectional, Abstract Syntax Tree (AST)-based system. This replaces the previous, more rigid "one-way import" pattern.
+To improve the user experience when editing `.astro` files, the application uses a "one-way import" pattern instead of attempting to create a live, two-way-synced visual editor for code.
 
 **How it Works:**
 
-1.  **Parsing (`astroAstParser.js` -> `parseAstroToCraftJson`):**
-    *   When an `.astro` layout is opened, its raw content is fed into the `@astrojs/compiler` to generate a complete Abstract Syntax Tree (AST).
-    *   A recursive `traverse` function walks this AST. It identifies different node types (Element, Text, Slot, etc.) and their hierarchy.
-    *   Each AST node is mapped to a corresponding node in a Craft.js-compatible JSON structure. This process is flexible and does not rely on specific component names or rigid templates.
+1.  **Conversion (`astroLayoutConverter.js`):** A utility module was created to act as a converter.
+    *   It takes the raw string content of an `.astro` file.
+    *   It uses the official **`@astrojs/compiler`** to parse the file into an Abstract Syntax Tree (AST).
+    *   It traverses the AST, focusing on the `<body>` of the HTML structure, and maps the HTML tags and their hierarchy to a **Craft.js-compatible JSON object**.
+    *   It uses `uuid` to generate unique IDs for each new node in the JSON structure.
 
-2.  **Generic Rendering (`GenericElement.jsx`, `TextNode.jsx`):**
-    *   Instead of having a unique React component for each possible HTML tag, the editor uses a small set of generic components.
-    *   `GenericElement`: A versatile component that can render any HTML tag (e.g., `<header>`, `<div>`, `<p>`) and act as a container for other components.
-    *   `TextNode`: A simple component for rendering and editing text content.
-    *   The Craft.js editor's resolver is configured to use these generic components, allowing it to render any structure produced by the AST parser.
+2.  **Editor Integration (`LayoutEditorPage.jsx`):**
+    *   When a user opens an `.astro` file in the Layout Editor, the component calls the `convertAstroToCraft` utility.
+    *   If the conversion is successful, the resulting JSON is deserialized and loaded onto the editor's canvas.
+    *   The user can now manipulate the imported structure as a standard graphical layout.
+    *   When saved, this is stored as a **new, independent graphical layout** in the D1 database. The original `.astro` file is never modified.
 
-3.  **Code Generation (`astroAstParser.js` -> `generateAstroFromCraftJson`):**
-    *   When the user edits the layout, the `onNodesChange` event fires.
-    *   A recursive `renderNode` function traverses the *Craft.js* JSON tree from the editor's state.
-    *   It generates a clean, indented `.astro` file string by converting `GenericElement` nodes back into their respective HTML tags and `TextNode` nodes back into text.
-    *   This provides a real-time, bidirectional link between the visual editor and the code representation.
-
-4.  **Debugging (`LayoutAstDebugger.jsx`):**
-    *   A powerful debugger is integrated into the layout editor page.
-    *   It provides a real-time view of the entire pipeline: (1) Raw Astro Input -> (2) Generated AST -> (3) Craft.js JSON -> (4) Generated Astro Code.
-    *   This transparency is crucial for development, debugging, and understanding the system's behavior.
-
-This AST-based approach ensures that any valid `.astro` layout can be loaded, edited visually, and regenerated back into clean code, providing a truly flexible and powerful editing experience.
+This pattern provides a safe and powerful way for users to leverage their existing code as a starting point for new visual designs without the risk of corrupting the original file.
 
 ---
 
