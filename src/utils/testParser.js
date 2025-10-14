@@ -13,7 +13,7 @@ export function parseTestComponent(astroContent) {
 
     return {
       [rootId]: {
-        type: { resolvedName: 'div' },
+        type: { resolvedName: 'Page' },
         isCanvas: true,
         props: { style: { padding: '20px' } },
         displayName: 'Root',

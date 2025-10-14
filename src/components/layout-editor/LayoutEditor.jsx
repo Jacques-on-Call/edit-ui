@@ -115,12 +115,6 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
         onToggleDebug={() => setDebugVisible(!isDebugVisible)}
         isDebugVisible={isDebugVisible}
       />
-       <button
-        onClick={() => console.log('Generated Code:', generatedCode)}
-        className="bg-green-500 text-white p-2 m-2 rounded"
-      >
-        Generate Code (Log to Console)
-      </button>
       <div className="flex flex-1 overflow-hidden">
         <div className="craftjs-renderer flex-1 overflow-auto">
           <Frame />
