@@ -252,12 +252,9 @@ export const LayoutEditor = () => {
       setLoading(false);
     } else if (templateId) {
       setIsAstroLayout(false);
-      fetch(`/api/render-layout/${templateId}`, { credentials: 'include' })
+      fetch(`/api/layout-templates?template_id=${templateId}`, { credentials: 'include' })
         .then(res => res.ok ? res.json() : Promise.reject(new Error(res.statusText)))
         .then(data => {
-          if (!data || !data.json_content) {
-             throw new Error("Invalid response from server. `json_content` is missing.");
-          }
           setInitialJson(data.json_content);
           setCurrentTemplateName(data.name);
         })
