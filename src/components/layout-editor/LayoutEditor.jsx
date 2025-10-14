@@ -303,7 +303,7 @@ export const LayoutEditor = () => {
   return (
     <Editor
       key={templateId || templateName}
-      resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter, Text }}
+      resolver={{ Page, EditorSection, EditorHero, EditorTestimonial, Text }}
     >
       <LayoutEditorInner templateId={templateId} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} deserializationError={deserializationError} setDeserializationError={setDeserializationError} />
     </Editor>
