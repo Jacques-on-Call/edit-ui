@@ -12,7 +12,7 @@ const DebuggerPanel = ({ title, content, language = 'json' }) => (
       borderRadius: '4px',
       whiteSpace: 'pre-wrap',
       wordBreak: 'break-all',
-      maxHeight: '350px',
+      maxHeight: '250px',
       overflowY: 'auto',
       fontFamily: 'Menlo, Monaco, Consolas, "Courier New", monospace',
       fontSize: '12px',
@@ -25,7 +25,11 @@ const DebuggerPanel = ({ title, content, language = 'json' }) => (
   </div>
 );
 
-export const LayoutAstDebugger = ({ astroInput, ast, craftJson, generatedAstro }) => {
+export const LayoutAstDebugger = ({ astroInput, ast, craftJson, generatedAstro, isVisible }) => {
+  if (!isVisible) {
+    return null;
+  }
+
   return (
     <div style={{
       position: 'fixed',
@@ -38,7 +42,7 @@ export const LayoutAstDebugger = ({ astroInput, ast, craftJson, generatedAstro }
       zIndex: 100,
       boxShadow: '0 -4px 12px rgba(0,0,0,0.08)',
       display: 'flex',
-      justifyContent: 'space-around',
+      overflowX: 'auto', // Enable horizontal scrolling on small screens
       alignItems: 'flex-start'
     }}>
       <h2 style={{ position: 'absolute', top: '-50px', left: '20px', backgroundColor: '#63b3ed', color: 'white', padding: '5px 15px', borderRadius: '5px 5px 0 0', margin: 0, fontSize: '18px', fontWeight: '600' }}>

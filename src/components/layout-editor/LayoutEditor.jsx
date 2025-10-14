@@ -15,8 +15,7 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-// The inner component remains mostly the same, focusing on rendering and saving.
-const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJson }) => {
+const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJson, onGenerateCode, onToggleDebug, isDebugVisible }) => {
   const { actions, query, ready } = useEditor((state) => ({
     ready: state.events.ready,
   }));
@@ -67,8 +66,9 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
       <LayoutEditorHeader
         onSave={handleSave}
         onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
-        onToggleDebug={() => {}} // Debugger will be added later
-        isDebugVisible={false}
+        onGenerateCode={onGenerateCode}
+        onToggleDebug={onToggleDebug}
+        isDebugVisible={isDebugVisible}
       />
       <div className="flex flex-1 overflow-hidden">
         <div className="craftjs-renderer flex-1 overflow-auto">
@@ -99,6 +99,7 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
 import { parse } from '@astrojs/compiler'; // Import parse to generate AST for the debugger
 import { LayoutAstDebugger } from './LayoutAstDebugger';
 import { generateAstroFromCraftJson } from '../../utils/astroAstParser';
+import { GenerateCodeModal } from './GenerateCodeModal';
 
 
 export const LayoutEditor = () => {
@@ -118,7 +119,10 @@ export const LayoutEditor = () => {
   const [astroInput, setAstroInput] = useState('');
   const [ast, setAst] = useState(null);
   const [craftJson, setCraftJson] = useState(null);
-  const [generatedAstro, setGeneratedAstro] = useState(''); // For later
+  const [generatedAstro, setGeneratedAstro] = useState('');
+  const [isDebugVisible, setDebugVisible] = useState(false);
+  const [frontmatter, setFrontmatter] = useState('');
+  const [isModalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -131,15 +135,23 @@ export const LayoutEditor = () => {
           if (!res.ok) throw new Error(`Failed to fetch file: ${res.statusText}`);
           const content = await res.text();
 
-          setAstroInput(content); // 1. Set input for debugger
+          setAstroInput(content);
 
           const { ast: parsedAst } = await parse(content);
-          setAst(parsedAst); // 2. Set AST for debugger
+          setAst(parsedAst);
 
-          const parsedData = await parseAstroToCraftJson(content);
-          setCraftJson(parsedData); // 3. Set Craft JSON for debugger
+          const { nodes: parsedNodes, frontmatter: parsedFrontmatter } = await parseAstroToCraftJson(content);
+          setCraftJson(parsedNodes);
+          setFrontmatter(parsedFrontmatter);
 
-          setInitialJson(JSON.stringify(parsedData));
+          // Auto-hide debugger if parsing is successful and yields content
+          if (parsedNodes.ROOT && parsedNodes.ROOT.nodes.length > 0) {
+            setDebugVisible(false);
+          } else {
+            setDebugVisible(true);
+          }
+
+          setInitialJson(JSON.stringify(parsedNodes));
           setCurrentTemplateName(`Editing: ${astroLayoutPath.split('/').pop()}`);
         } catch (err) {
           console.error("Error processing Astro file:", err);
@@ -147,25 +159,32 @@ export const LayoutEditor = () => {
           setAst({ error: err.message });
           setCraftJson({ error: 'See AST for details' });
           setInitialJson(JSON.stringify(defaultState));
+          setDebugVisible(true); // Show debugger on error
         }
 
       } else if (starterJson) {
         setInitialJson(starterJson);
         setCurrentTemplateName(starterName);
+        setDebugVisible(false); // No debugger for D1 templates
       } else if (templateId) {
         try {
           const res = await fetch(`/api/render-layout/${templateId}`, { credentials: 'include' });
+          if (!res.ok) throw new Error(`Failed to fetch template: ${res.statusText}`);
           const data = await res.json();
-          if (!data || !data.json_content) throw new Error("Invalid response from server.");
+          if (!data || !data.json_content) throw new Error("Invalid template data from server.");
           setInitialJson(data.json_content);
           setCurrentTemplateName(data.name);
+          setFrontmatter('---\n---\n'); // Reset frontmatter for DB templates
+          setDebugVisible(false); // No debugger for D1 templates
         } catch (err) {
           console.error("Error fetching layout:", err);
           setInitialJson(JSON.stringify(defaultState));
+          setDebugVisible(true); // Show debugger on error
         }
       } else {
         setInitialJson(JSON.stringify(defaultState));
         setCurrentTemplateName("New Blank Layout");
+        setDebugVisible(false);
       }
       setLoading(false);
     };
@@ -186,7 +205,7 @@ export const LayoutEditor = () => {
           onNodesChange={(q) => {
             const newCraftJson = q.getNodes();
             setCraftJson(newCraftJson);
-            const newAstro = generateAstroFromCraftJson(newCraftJson);
+            const newAstro = generateAstroFromCraftJson(newCraftJson, frontmatter);
             setGeneratedAstro(newAstro);
           }}
         >
@@ -195,10 +214,9 @@ export const LayoutEditor = () => {
             currentTemplateName={currentTemplateName}
             navigate={navigate}
             initialJson={initialJson}
-            onGenerateCode={() => {
-              // A simple way to show the generated code for now
-              alert("Generated Astro Code:\n\n" + generatedAstro);
-            }}
+            onGenerateCode={() => setModalOpen(true)}
+            isDebugVisible={isDebugVisible}
+            onToggleDebug={() => setDebugVisible(!isDebugVisible)}
           />
         </Editor>
       </div>
@@ -208,8 +226,10 @@ export const LayoutEditor = () => {
           ast={ast}
           craftJson={craftJson}
           generatedAstro={generatedAstro}
+          isVisible={isDebugVisible}
         />
       </div>
+      <GenerateCodeModal code={generatedAstro} onClose={() => setModalOpen(false)} />
     </div>
   );
 };

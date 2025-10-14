@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
  */
 export async function parseAstroToCraftJson(astroContent) {
   if (!astroContent) {
-    return { ROOT: createNode('div', true) };
+    return { nodes: { ROOT: createNode('div', true) }, frontmatter: '' };
   }
 
   try {
@@ -17,13 +17,17 @@ export async function parseAstroToCraftJson(astroContent) {
     const rootId = 'ROOT';
     nodes[rootId] = createNode('div', true, { displayName: 'Root' });
 
+    // Extract frontmatter
+    const frontmatterNode = ast.children.find(node => node.type === 'Frontmatter');
+    const frontmatter = frontmatterNode ? `---${frontmatterNode.value}---\n` : '---\n---\n';
+
     // The body of an Astro file is a "Fragment" node with children
     const body = ast.children.find(node => node.type === 'Fragment');
     if (body && body.children) {
       traverse(body.children, rootId, nodes);
     }
 
-    return nodes;
+    return { nodes, frontmatter };
 
   } catch (error) {
     console.error("Failed to parse Astro content:", error);
@@ -116,7 +120,7 @@ function createNode(type, isCanvas, overrides = {}) {
  * @param {object} craftJson The Craft.js JSON object from the editor state.
  * @returns {string} A string representing the .astro file content.
  */
-export function generateAstroFromCraftJson(craftJson) {
+export function generateAstroFromCraftJson(craftJson, frontmatter = '---\n---\n') {
   if (!craftJson || !craftJson.ROOT) {
     return "<!-- Invalid Craft.js JSON data -->";
   }
@@ -153,6 +157,5 @@ export function generateAstroFromCraftJson(craftJson) {
 
   const body = craftJson.ROOT.nodes.map(nodeId => renderNode(nodeId, craftJson, 0)).join('\n');
 
-  // For now, we'll return just the body. Frontmatter generation can be added later.
-  return body;
+  return `${frontmatter}\n${body}`;
 }
