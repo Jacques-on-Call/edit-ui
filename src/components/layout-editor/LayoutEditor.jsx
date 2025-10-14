@@ -60,18 +60,38 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
 
         actions.deserialize(content);
 
-        // Post-load verification
+        // Post-load verification to find which components are missing
         setTimeout(() => {
-            const b = query.getNodes();
-            const nodesLoaded = Object.keys(b).length;
-            const nodesExpected = Object.keys(content).length;
+            const loadedNodes = query.getNodes();
+            const loadedNodeIds = Object.keys(loadedNodes);
 
-            if (nodesLoaded <= 1 && nodesExpected > 1) { // Only ROOT node vs expected nodes
-                 setDeserializationError(
-                    `Silent failure: Editor rejected the layout. Expected ${nodesExpected} nodes, but only ${nodesLoaded} were loaded. This usually means a component is not registered in the resolver.`
-                 );
+            if (loadedNodeIds.length <= 1 && Object.keys(content).length > 1) { // Only ROOT node vs expected nodes
+                const loadedNodeTypes = new Set(Object.values(loadedNodes).map(node => node.data.type.resolvedName));
+                const missingComponents = [];
+
+                for (const nodeId in content) {
+                    if (nodeId !== 'ROOT') {
+                        const expectedComponentType = content[nodeId].type.resolvedName;
+                        if (!loadedNodeTypes.has(expectedComponentType)) {
+                            missingComponents.push(expectedComponentType);
+                        }
+                    }
+                }
+
+                if (missingComponents.length > 0) {
+                    const uniqueMissing = [...new Set(missingComponents)];
+                    setDeserializationError(
+                        `Silent failure: The editor could not render the layout. The following components might not be registered in the resolver: ${uniqueMissing.join(', ')}.`
+                    );
+                } else {
+                    const nodesExpected = Object.keys(content).length;
+                    const nodesLoaded = loadedNodeIds.length;
+                     setDeserializationError(
+                        `Silent failure: Editor rejected the layout. Expected ${nodesExpected} nodes, but only ${nodesLoaded} were loaded. All components appear to be registered, but something else went wrong during rendering.`
+                     );
+                }
             }
-        }, 100);
+        }, 150); // Increased timeout slightly for more reliability
 
 
       } catch (e) {
