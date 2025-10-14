@@ -2,92 +2,56 @@ import React, { useState, useEffect } from 'react';
 import { Editor, Frame, useEditor } from '@craftjs/core';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+// --- New Imports ---
 import { Sidebar } from './Sidebar';
 import { LayoutEditorHeader } from './LayoutEditorHeader';
-import { Page } from './render/Page';
-import { EditorSection } from './Section.editor';
-import { EditorHero } from './blocks/Hero.editor';
-import { EditorTestimonial } from './blocks/Testimonial.editor';
-import { Text } from './blocks/Text.editor';
-import DebugSidebar from './visual-renderer/DebugSidebar';
-import { normalizeFrontmatter, validateLayoutSchema } from '../../utils/layoutInterpreter';
-import { parseAstroComponents } from '../../utils/componentMapper';
-import { generateFallbackHtml } from '../../utils/layoutRenderer';
-import { normalizeLayoutData } from '../../utils/normalizationPatch';
-import { convertAstroToCraft } from '../../utils/astroLayoutConverter';
+import { LayoutDebugger } from './LayoutDebugger';
+import { parseAstroToCraft, generateAstroFromCraft } from '../../utils/layoutComponentParser';
 
-const AstroFileNotice = ({ fileName, onClose }) => (
-  <div className="absolute top-4 right-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md shadow-lg z-50 max-w-sm">
-    <div className="flex">
-      <div className="py-1">
-        <svg className="fill-current h-6 w-6 text-blue-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zM9 11v4h2v-4H9zm0-6h2v2H9V5z"/></svg>
-      </div>
-      <div>
-        <p className="font-bold">Astro Layout Opened (Read-Only)</p>
-        <p className="text-sm">You are viewing a blank canvas. The content of <strong>{fileName}</strong> has been analyzed, but it cannot be edited directly.</p>
-        <p className="text-sm mt-2">You can use this canvas to create a new graphical layout template.</p>
-      </div>
-       <button onClick={onClose} className="ml-4 text-blue-500 hover:text-blue-800 text-2xl font-bold">&times;</button>
-    </div>
-  </div>
-);
+// --- Foundational User Components ---
+import { Page } from './render/Page'; // Keep Page as it's a good root container
+import { Header } from './user-components/Header';
+import { Footer } from './user-components/Footer';
+import { MainContent } from './user-components/MainContent';
+import { Text } from './user-components/Text';
+
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJson, deserializationError, setDeserializationError }) => {
-  const { actions, query, ready, editorState, internalState } = useEditor((state) => ({
+// This inner component now focuses purely on rendering and saving.
+const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJson }) => {
+  const { actions, query, ready } = useEditor((state) => ({
     ready: state.events.ready,
-    editorState: state.nodes,
-    internalState: state, // Get the whole internal state for comparison
   }));
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [isDebugVisible, setDebugVisible] = useState(false); // Keep debug hidden by default
-  const [processedJson, setProcessedJson] = useState(null);
 
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+
+  // Effect to load the initial layout data into the editor
   useEffect(() => {
     if (ready && initialJson) {
-      setDeserializationError(null);
-      let content;
       try {
-        content = initialJson;
+        let content = initialJson;
+        // Handle double-encoded JSON
         while (typeof content === 'string') {
           content = JSON.parse(content);
         }
-        setProcessedJson(content); // Store the fully parsed JSON for the debugger
-
         if (!content || !content.ROOT) {
           throw new Error("Invalid layout data: 'ROOT' node is missing.");
         }
-
         actions.deserialize(content);
-
-        // Post-load verification
-        setTimeout(() => {
-            const b = query.getNodes();
-            const nodesLoaded = Object.keys(b).length;
-            const nodesExpected = Object.keys(content).length;
-
-            if (nodesLoaded <= 1 && nodesExpected > 1) { // Only ROOT node vs expected nodes
-                 setDeserializationError(
-                    `Silent failure: Editor rejected the layout. Expected ${nodesExpected} nodes, but only ${nodesLoaded} were loaded. This usually means a component is not registered in the resolver.`
-                 );
-            }
-        }, 100);
-
-
       } catch (e) {
         console.error("Error deserializing layout JSON:", e);
-        setDeserializationError(e.message);
-        setProcessedJson(content || { error: 'Parsing failed before processing' });
+        // On error, load a blank canvas
         actions.deserialize({
-          "ROOT": { "type": { "resolvedName": "Page" }, "isCanvas": true, "props": {}, "displayName": "Page", "custom": {}, "hidden": false, "nodes": [], "linkedNodes": {} }
+          "ROOT": { "type": { "resolvedName": "Page" }, "isCanvas": true, "props": {}, "displayName": "Page", "nodes": [] }
         });
       }
     }
-  }, [ready, initialJson, actions, setDeserializationError, query, internalState]);
+  }, [ready, initialJson, actions]);
 
+  // Handler for saving D1 templates (graphical layouts)
   const handleSave = async () => {
     const json = query.serialize();
     try {
@@ -100,6 +64,7 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
       const data = await response.json();
       if (!data.success) throw new Error(data.error || 'Failed to save.');
       console.log(`Template '${currentTemplateName}' saved successfully!`);
+      // If it's a new template, update URL to reflect its new ID
       if (!templateId && data.template_id) {
         navigate(`/layout-editor?template_id=${data.template_id}`, { replace: true });
       }
@@ -110,205 +75,154 @@ const LayoutEditorInner = ({ templateId, currentTemplateName, navigate, initialJ
 
   return (
     <div className="flex flex-col h-screen w-full bg-gray-100">
-      <LayoutEditorHeader
-        onSave={handleSave}
-        onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
-        onToggleDebug={() => setDebugVisible(!isDebugVisible)}
-        isDebugVisible={isDebugVisible}
-      />
-      <div className="flex flex-1 overflow-hidden">
-        <div className="craftjs-renderer flex-1 overflow-auto">
-          <Frame />
-        </div>
-        <div className="hidden md:block">
-          <Sidebar />
-        </div>
-        {isSidebarOpen && (
-          <div
-            className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-20"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <div
-              className="absolute right-0 top-0 h-full w-4/5 max-w-sm bg-white shadow-lg"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Sidebar />
-            </div>
+      {/* The debugger will be rendered outside, so we reduce the main view height */}
+      <div className="flex-grow flex flex-col">
+        <LayoutEditorHeader
+          onSave={handleSave}
+          onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+          onToggleDebug={() => {}} // Debugger is always visible now
+          isDebugVisible={true}
+        />
+        <div className="flex flex-1 overflow-hidden">
+          <div className="craftjs-renderer flex-1 overflow-auto">
+            {/* The main editor canvas */}
+            <Frame />
           </div>
-        )}
-        {isDebugVisible && (
-          <DebugSidebar
-            report={null} // report is for astro-specific analysis, can be enhanced later
-            onClose={() => setDebugVisible(false)}
-            initialJson={initialJson}
-            processedJson={processedJson}
-            deserializationError={deserializationError}
-            liveEditorState={editorState}
-          />
-        )}
+          {/* Sidebar for components */}
+          <div className="hidden md:block">
+            <Sidebar />
+          </div>
+          {isSidebarOpen && (
+            <div
+              className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-20"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <div
+                className="absolute right-0 top-0 h-full w-4/5 max-w-sm bg-white shadow-lg"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Sidebar />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
+
 export const LayoutEditor = () => {
-  const query = useQuery();
+  const queryParams = useQuery();
   const navigate = useNavigate();
   const location = useLocation();
-  const templateId = query.get('template_id');
-  const templateName = query.get('template_name');
-  const astroLayoutPath = query.get('path');
 
+  // Get identifiers from URL or state
+  const templateId = queryParams.get('template_id');
+  const astroLayoutPath = queryParams.get('path');
   const { templateJson: starterJson, templateName: starterName } = location.state || {};
 
-  const [initialJson, setInitialJson] = useState(null);
+  // State for the debugger and editor flow
   const [loading, setLoading] = useState(true);
-  const [currentTemplateName, setCurrentTemplateName] = useState(templateName || starterName);
+  const [currentTemplateName, setCurrentTemplateName] = useState(starterName || "New Layout");
+  const [initialJson, setInitialJson] = useState(null); // The JSON to load into the editor
 
-  const [isAstroLayout, setIsAstroLayout] = useState(!!astroLayoutPath);
-  const [deserializationError, setDeserializationError] = useState(null);
-  const [astroAnalysis, setAstroAnalysis] = useState({
-    report: null,
-    errorHtml: null,
-    isLoading: true,
-    showNotice: false,
-  });
+  // --- New State for the Debugger ---
+  const [astroInput, setAstroInput] = useState(''); // Raw .astro file content
+  const [craftJson, setCraftJson] = useState(null); // Parsed Craft.js JSON
+  const [generatedAstro, setGeneratedAstro] = useState(''); // Output from the generator
 
+  // Main effect to load data from different sources
   useEffect(() => {
-    const defaultState = JSON.stringify({
-      "ROOT": { "type": { "resolvedName": "Page" }, "isCanvas": true, "props": {}, "displayName": "Page", "custom": {}, "hidden": false, "nodes": [], "linkedNodes": {} }
-    });
+    const loadData = async () => {
+      setLoading(true);
+      const defaultState = { "ROOT": { "type": { "resolvedName": "Page" }, "isCanvas": true, "props": {}, "displayName": "Page", "nodes": [] } };
 
-    const analyzeAstroFile = async (filePath, fileContent) => {
-      const report = {
-        errors: [], warnings: [], frontmatter: {}, components: [], islands: [], filePath
-      };
-
-      let rawFrontmatter = await normalizeFrontmatter(fileContent, filePath);
-      if (rawFrontmatter.error) {
-        report.errors.push(rawFrontmatter.error);
-      }
-      report.frontmatter = normalizeLayoutData(rawFrontmatter);
-
-      const { isValid, errors: validationErrors, warnings } = validateLayoutSchema(report.frontmatter);
-      if (!isValid) report.errors.push(...validationErrors);
-      report.warnings.push(...warnings);
-
-      const { components, islands, error: parseError } = await parseAstroComponents(fileContent);
-      if (parseError) report.errors.push(parseError);
-      else {
-        report.components = components;
-        report.islands = islands;
-      }
-
-      if (report.errors.length > 0) {
-        setAstroAnalysis({
-          report,
-          errorHtml: generateFallbackHtml(report),
-          isLoading: false,
-          showNotice: false,
-        });
-      } else {
-        const craftData = await convertAstroToCraft(fileContent);
-        if (craftData && craftData.nodes) {
-          setInitialJson(JSON.stringify(craftData.nodes));
-          setAstroAnalysis({ report, errorHtml: null, isLoading: false, showNotice: false });
-        } else {
-           // Fallback to blank canvas if conversion fails
-          setAstroAnalysis({ report, errorHtml: null, isLoading: false, showNotice: true });
-          setInitialJson(defaultState);
-        }
-        setCurrentTemplateName(`New Layout (imported from ${filePath.split('/').pop()})`);
-      }
-    };
-
-    setLoading(true);
-    if (astroLayoutPath) {
-      setIsAstroLayout(true);
-      fetch(`/api/get-file-content?path=${encodeURIComponent(astroLayoutPath)}`, { credentials: 'include' })
-        .then(res => {
+      if (astroLayoutPath) {
+        // --- NEW ASTRO PARSING FLOW ---
+        try {
+          const res = await fetch(`/api/get-file-content?path=${encodeURIComponent(astroLayoutPath)}`, { credentials: 'include' });
           if (!res.ok) throw new Error(`Failed to fetch file: ${res.statusText}`);
-          return res.text();
-        })
-        .then(content => analyzeAstroFile(astroLayoutPath, content))
-        .catch(err => {
-          const report = { errors: [err.message], filePath: astroLayoutPath };
-          setAstroAnalysis({ report, errorHtml: generateFallbackHtml(report), isLoading: false, showNotice: false });
-        });
+          const content = await res.text();
 
-    } else if (starterJson) {
-      setIsAstroLayout(false);
-      try {
-        JSON.parse(starterJson);
+          setAstroInput(content); // 1. Set input for debugger
+
+          const parsedData = parseAstroToCraft(content); // 2. Parse the content
+          setCraftJson(parsedData); // 3. Set parsed JSON for debugger
+
+          setInitialJson(JSON.stringify(parsedData)); // 4. Load editor with the new data
+          setCurrentTemplateName(`Editing: ${astroLayoutPath.split('/').pop()}`);
+        } catch (err) {
+          console.error("Error processing Astro file:", err);
+          setAstroInput(`// Error loading file: ${astroLayoutPath}\n\n${err.message}`);
+          setCraftJson({ error: err.message });
+          setInitialJson(JSON.stringify(defaultState)); // Load blank canvas on error
+        }
+
+      } else if (starterJson) {
+        // --- D1/Starter Template Flow (unchanged) ---
         setInitialJson(starterJson);
         setCurrentTemplateName(starterName);
-      } catch (e) {
-        console.error("Invalid starter template JSON:", e);
-        setInitialJson(null);
-      }
-      setLoading(false);
-    } else if (templateId) {
-      setIsAstroLayout(false);
-      fetch(`/api/render-layout/${templateId}`, { credentials: 'include' })
-        .then(res => res.ok ? res.json() : Promise.reject(new Error(res.statusText)))
-        .then(data => {
-          if (!data || !data.json_content) {
-             throw new Error("Invalid response from server. `json_content` is missing.");
-          }
+      } else if (templateId) {
+        try {
+          const res = await fetch(`/api/render-layout/${templateId}`, { credentials: 'include' });
+          const data = await res.json();
+          if (!data || !data.json_content) throw new Error("Invalid response from server.");
           setInitialJson(data.json_content);
           setCurrentTemplateName(data.name);
-        })
-        .catch(err => {
+        } catch (err) {
           console.error("Error fetching layout:", err);
-          setInitialJson(null);
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setIsAstroLayout(false);
-      setInitialJson(defaultState);
-      setCurrentTemplateName(templateName || "New Layout");
+          setInitialJson(JSON.stringify(defaultState));
+        }
+      } else {
+        // --- Blank Canvas Flow ---
+        setInitialJson(JSON.stringify(defaultState));
+        setCurrentTemplateName("New Blank Layout");
+      }
       setLoading(false);
-    }
-  }, [templateId, starterJson, starterName, templateName, astroLayoutPath]);
+    };
 
-  // Combined loading state
-  const isPageLoading = isAstroLayout ? astroAnalysis.isLoading : loading;
-  if (isPageLoading) return <div className="p-8 animate-pulse">Loading Editor...</div>;
+    loadData();
+  }, [templateId, astroLayoutPath, starterJson, starterName]);
 
-  // Render logic for Astro Layouts
-  if (isAstroLayout) {
-    if (astroAnalysis.errorHtml) {
-      return (
-        <div className="flex w-full h-screen">
-          <div className="flex-1 relative">
-            <iframe srcDoc={astroAnalysis.errorHtml} title={`Error preview for ${astroLayoutPath}`} className="w-full h-full border-none" sandbox="allow-scripts"/>
-          </div>
-          <DebugSidebar report={astroAnalysis.report} onClose={() => setAstroAnalysis(prev => ({ ...prev, errorHtml: null }))} />
-        </div>
-      );
-    }
-    // Render the editor with the imported Astro layout
-    return (
-        <Editor
-          key={astroLayoutPath} // Use path as key to force re-render
-          resolver={{ Page, EditorSection, EditorHero, EditorFeatureGrid, EditorTestimonial, EditorCTA, EditorFooter, Text }}
-        >
-          <LayoutEditorInner templateId={null} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} deserializationError={deserializationError} setDeserializationError={setDeserializationError} />
-        </Editor>
-    );
-  }
-
-  // Render logic for D1/Starter Templates
-  if (!initialJson) {
-    return <div className="p-8 text-center text-red-500">Could not load template data.</div>;
+  if (loading) {
+    return <div className="p-8 animate-pulse text-center">Loading Layout Editor...</div>;
   }
 
   return (
-    <Editor
-      key={templateId || templateName}
-      resolver={{ Page, EditorSection, EditorHero, EditorTestimonial, Text }}
-    >
-      <LayoutEditorInner templateId={templateId} currentTemplateName={currentTemplateName} navigate={navigate} initialJson={initialJson} deserializationError={deserializationError} setDeserializationError={setDeserializationError} />
-    </Editor>
+    <div className="h-screen w-screen flex flex-col">
+       {/* The Editor itself takes up the top part of the screen */}
+      <div className="flex-grow">
+        <Editor
+            // Use a key to force re-initialization when the source changes
+            key={templateId || astroLayoutPath || 'new'}
+            // --- UPDATED RESOLVER ---
+            resolver={{ Page, Header, Footer, MainContent, Text }}
+            onNodesChange={(q) => {
+                // Real-time generation for the debugger
+                const newJson = q.getNodes();
+                const newAstro = generateAstroFromCraft(newJson);
+                setCraftJson(newJson); // Update the live JSON view
+                setGeneratedAstro(newAstro); // Update the generated output view
+            }}
+        >
+            <LayoutEditorInner
+                templateId={templateId}
+                currentTemplateName={currentTemplateName}
+                navigate={navigate}
+                initialJson={initialJson}
+            />
+        </Editor>
+      </div>
+
+      {/* The Debugger is fixed to the bottom */}
+      <div className="flex-shrink-0">
+          <LayoutDebugger
+            astroInput={astroInput}
+            craftJson={craftJson}
+            generatedAstro={generatedAstro}
+          />
+      </div>
+    </div>
   );
 };
