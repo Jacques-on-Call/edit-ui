@@ -46,60 +46,66 @@ function FileExplorer({ repo }) {
     }
   }, [repo]);
 
-  const fetchFiles = useCallback(() => {
+  const fetchFiles = useCallback(async () => {
     setLoading(true);
+    setError(null);
     setSelectedFile(null);
     setMetadataCache({});
     setReadmeContent(null);
     setReadmeLoading(false);
 
-    fetch(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' })
-      .then(res => {
-        if (res.ok) return res.json();
-        throw new Error('Failed to fetch files');
-      })
-      .then(data => {
-        const sortedData = data.sort((a, b) => {
-          if (a.type === 'dir' && b.type !== 'dir') return -1;
-          if (a.type !== 'dir' && b.type === 'dir') return 1;
-          return a.name.localeCompare(b.name);
-        });
-        setFiles(sortedData);
-        setLoading(false);
+    try {
+      const response = await fetch(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Network response was not ok: ${response.statusText} - ${errorText}`);
+      }
+      let data = await response.json();
 
-        const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');
-        if (readmeFile) {
-          setReadmeLoading(true);
-          fetch(`/api/file?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' })
-            .then(res => {
-              if (!res.ok) throw new Error('Could not fetch README content.');
-              return res.json();
-            })
-            .then(readmeData => {
-              const decodedContent = atob(readmeData.content);
-              setReadmeContent(decodedContent);
-              setReadmeLoading(false);
-            })
-            .catch(err => {
-              console.error(err);
-              setReadmeLoading(false);
-            });
-        }
-
-        data.forEach(file => {
-          const cachedData = cache.get(file.sha);
-          if (cachedData) {
-            setMetadataCache(prev => ({ ...prev, [file.sha]: cachedData }));
-          } else {
-            fetchMetadata(file);
-          }
-        });
-      })
-      .catch(err => {
-        console.error("Error fetching files:", err); // Enhanced logging
-        setError(`Failed to load repository contents. Please check the console for details and try again. Error: ${err.message}`);
-        setLoading(false);
+      const sortedData = data.sort((a, b) => {
+        if (a.type === 'dir' && b.type !== 'dir') return -1;
+        if (a.type !== 'dir' && b.type === 'dir') return 1;
+        return a.name.localeCompare(b.name);
       });
+      setFiles(sortedData);
+
+      // Fetch README content
+      const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');
+      if (readmeFile) {
+        setReadmeLoading(true);
+        try {
+          const readmeRes = await fetch(`/api/file?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' });
+          if (!readmeRes.ok) throw new Error('Could not fetch README content.');
+          const readmeData = await readmeRes.json();
+          // The content from GitHub API is base64 encoded and may contain newlines.
+          const sanitizedContent = readmeData.content.replace(/\s/g, '');
+          const decodedContent = atob(sanitizedContent);
+          setReadmeContent(decodedContent);
+        } catch (readmeErr) {
+          console.error("Failed to fetch or decode README:", readmeErr);
+          // Non-critical error, so we don't set the main error state
+          setReadmeContent('Could not load README.');
+        } finally {
+          setReadmeLoading(false);
+        }
+      }
+
+      // Fetch metadata for each file
+      sortedData.forEach(file => {
+        const cachedData = cache.get(file.sha);
+        if (cachedData) {
+          setMetadataCache(prev => ({ ...prev, [file.sha]: cachedData }));
+        } else {
+          fetchMetadata(file);
+        }
+      });
+
+    } catch (err) {
+      console.error("Error fetching files:", err);
+      setError(`Failed to load repository contents. Please check your connection and repository permissions. Details: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   }, [repo, path, fetchMetadata]);
 
   useEffect(() => {

@@ -4,69 +4,37 @@ export default function CallbackPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // --- vConsole DEBUG BLOCK ---
-    // Initialize vConsole in the popup as well
-    const initVConsole = async () => {
-      // Only load if ?debug=true is in the popup's URL
-      if (new URLSearchParams(window.location.search).has('debug')) {
-        const { default: VConsole } = await import('vconsole');
-        new VConsole();
-        console.log('vConsole enabled in popup. Debugging token exchange...');
-
-        // Log crucial info immediately
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const state = urlParams.get('state');
-        console.log("URL Code param:", code);
-        console.log("URL State param:", state);
-        console.log("Document Cookies:", document.cookie);
-      }
-    };
-    initVConsole();
-    // --- END DEBUG BLOCK ---
-
     const exchangeCodeForToken = async () => {
       try {
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
         const state = params.get('state');
-        const savedState = document.cookie.match(/oauth_state=([^;]+)/)?.[1];
+        // Note: The cookie is HttpOnly and cannot be accessed by document.cookie on the client.
+        // The state is validated on the server side now.
 
-        document.cookie = 'oauth_state=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure';
-
-        if (!code || !state || !savedState || state !== savedState) {
-          console.error("State validation failed!", { state, savedState });
+        if (!code || !state) {
           throw new Error('Invalid state or code. Authentication failed.');
         }
-        console.log("State validation successful.");
 
-        console.log("Starting token exchange...");
         const response = await fetch('/api/token', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            code,
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, state }), // Pass state to server for validation
         });
-
-        console.log("Token exchange response status:", response.status);
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error("Token exchange failed. Full response:", response, "Body:", errorText);
-          throw new Error(`Token exchange failed. Server said: ${errorText}`);
+          throw new Error(`Token exchange failed: ${errorText}`);
         }
 
-        console.log("Token exchange successful!");
-        window.opener.postMessage({ type: 'github-auth', success: true }, window.location.origin);
+        // The main window's poller will detect the successful login.
+        // We just need to close the popup.
         window.close();
 
       } catch (err) {
-        console.error('Full authentication error:', err);
+        console.error('Authentication callback error:', err);
         setError(err.message);
-        window.opener.postMessage({ type: 'github-auth', success: false, error: err.message }, window.location.origin);
+        // Do not close the window if there's an error, so the user can see it.
       }
     };
 
@@ -75,13 +43,14 @@ export default function CallbackPage() {
 
   if (error) {
     return (
-      <div>
+      <div style={{ padding: '20px', fontFamily: 'sans-serif', textAlign: 'center' }}>
         <h1>Authentication Failed</h1>
-        <p>{error}</p>
-        <button onClick={() => window.close()}>Close</button>
+        <p style={{ color: 'red' }}>{error}</p>
+        <p>You can close this window and try again.</p>
+        <button onClick={() => window.close()} style={{ marginTop: '20px' }}>Close</button>
       </div>
     );
   }
 
-  return <div>Processing login...</div>;
+  return <div>Processing login, please wait...</div>;
 }

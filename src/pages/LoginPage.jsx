@@ -25,7 +25,8 @@ function LoginPage() {
 
   const handleLogin = () => {
     const state = Math.random().toString(36).substring(2, 15);
-    document.cookie = `oauth_state=${state}; path=/; max-age=600; SameSite=None; Secure`;
+    // Use SameSite=Lax for the state cookie as it's a first-party context.
+    document.cookie = `oauth_state=${state}; path=/; max-age=600; SameSite=Lax; Secure`;
 
     const authUrl = new URL('https://github.com/login/oauth/authorize');
     authUrl.searchParams.set('client_id', GITHUB_CLIENT_ID);
@@ -36,30 +37,33 @@ function LoginPage() {
     const popup = window.open(authUrl.toString(), 'github-login', 'width=600,height=700');
     if (!popup) {
       alert('Popup blocked! Please allow popups for this site.');
+      return;
     }
+
+    // Polling mechanism to check if the popup is closed
+    const timer = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(timer);
+        // After popup is closed, check authentication status
+        fetch('/api/me', { credentials: 'include' })
+          .then(res => {
+            if (res.ok) return res.json();
+            throw new Error('Not authenticated');
+          })
+          .then(userData => {
+            if (userData && userData.login) {
+              navigate('/repository-selection');
+            }
+          })
+          .catch(err => {
+            console.log("Authentication check failed after popup close:", err.message);
+            // Optional: Show a message to the user that login was not completed.
+          });
+      }
+    }, 500);
   };
 
-  useEffect(() => {
-    const handleMessage = (event) => {
-      if (event.origin !== window.location.origin) {
-        return;
-      }
-      if (event.data.type === 'github-auth') {
-        if (event.data.success) {
-          // On successful auth, navigate directly to the repository selection page.
-          navigate('/repository-selection');
-        } else if (event.data.error) {
-          console.error("Login failed:", event.data.error);
-          alert("GitHub login failed: " + event.data.error);
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [navigate]);
+  // Removed the useEffect for message handling as it's replaced by the polling mechanism.
 
   return (
     <div className="bg-bark-blue min-h-screen flex flex-col items-center justify-center text-center">
