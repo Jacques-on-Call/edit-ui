@@ -16,14 +16,19 @@ function RepoSelector({ onRepoSelect }) {
       throw new Error('Failed to fetch repositories. Please try logging out and back in.');
     })
     .then(data => {
-      setRepos(data);
-      setLoading(false);
+      // If there's only one repository, select it automatically.
+      if (data && data.length === 1) {
+        onRepoSelect(data[0].full_name);
+      } else {
+        setRepos(data);
+        setLoading(false);
+      }
     })
     .catch(err => {
       setError(err.message);
       setLoading(false);
     });
-  }, []);
+  }, [onRepoSelect]);
 
   if (loading) {
     return <div className="text-center text-white/70 animate-pulse">Loading repositories...</div>;

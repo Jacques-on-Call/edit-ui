@@ -1,8 +1,10 @@
 import FileExplorer from '../components/FileExplorer';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 function ExplorerPage() {
-  const selectedRepo = localStorage.getItem('selectedRepo');
+  const location = useLocation();
+  // Prioritize repo from navigation state, fall back to localStorage.
+  const selectedRepo = location.state?.selectedRepo || localStorage.getItem('selectedRepo');
 
   if (!selectedRepo) {
     // This can happen if the user navigates here directly without selecting a repo

@@ -55,9 +55,10 @@ function LoginPage() {
       }
       if (event.data.type === 'github-auth') {
         if (event.data.success) {
-          // On successful auth, reload the page.
-          // The useEffect hook at the top will then redirect to the repo selection page.
-          window.location.reload();
+          // On successful auth, navigate directly to the repository selection page.
+          // This avoids a full page reload which can break the popup's `window.opener` context
+          // and cause race conditions with the router.
+          navigate('/repository-selection');
         } else if (event.data.error) {
           console.error("Login failed:", event.data.error);
           alert("GitHub login failed: " + event.data.error);

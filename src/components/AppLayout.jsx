@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import ExplorerHeader from './ExplorerHeader';
 
 const DefaultHeader = () => (
@@ -20,22 +19,6 @@ const DefaultHeader = () => (
 
 function AppLayout() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(null);
-
-  useEffect(() => {
-    fetch('/api/me', { credentials: 'include' })
-      .then(res => res.ok ? res.json() : null)
-      .then(userData => {
-        if (userData && userData.login) {
-          setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
-          navigate('/login');
-        }
-      });
-  }, [navigate]);
-
   const isExplorerPage = location.pathname.startsWith('/explorer');
   const isEditorPage = location.pathname.startsWith('/editor');
 
@@ -45,19 +28,7 @@ function AppLayout() {
     return <DefaultHeader />;
   };
 
-  // While checking authentication, show a loading state
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <p className="text-lg font-semibold text-gray-700 animate-pulse">Authenticating...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If authenticated, render the layout
-  return isAuthenticated && (
+  return (
     <div className="min-h-screen flex flex-col">
       {renderHeader()}
 
