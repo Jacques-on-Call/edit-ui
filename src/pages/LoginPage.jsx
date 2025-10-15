@@ -77,7 +77,7 @@ function LoginPage() {
       <div className="max-w-md w-full p-8">
         <img src="/logo.webp" className="h-24 w-auto mx-auto mb-8" alt="logo" />
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Welcome to Easy SEO</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Welcome to Easy SEO v2 - Cache Test</h1>
           <p className="text-gray-300 mb-8">Please login with GitHub to continue.</p>
           <button
             onClick={handleLogin}
