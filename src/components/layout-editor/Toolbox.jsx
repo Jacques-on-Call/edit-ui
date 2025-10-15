@@ -3,26 +3,27 @@ import { useEditor, Element } from '@craftjs/core';
 import { EditorHero } from './blocks/Hero.editor';
 
 export const Toolbox = () => {
-  const { actions, query } = useEditor();
-
-  const addHeroToCanvas = () => {
-    const rootNodeId = query.getNodesByCanvasId('ROOT-CANVAS')[0];
-    if (!rootNodeId) {
-        console.error("Could not find the root canvas node. Cannot add component.");
-        return;
-    }
-    const newHeroNode = <Element is={EditorHero} canvas />;
-    actions.add(newHeroNode, rootNodeId);
-  };
+  const { connectors } = useEditor();
 
   return (
     <div className="bg-white border-t border-gray-200 p-2 flex justify-center items-center shadow-top">
-      <button
-        onClick={addHeroToCanvas}
-        className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-all"
+      {/*
+        This is now a draggable element.
+        - `connectors.create` makes this a drag source.
+        - `Element` specifies what component to create on drop.
+        - `style` includes mobile-specific CSS to ensure it works on iPhone.
+      */}
+      <div
+        ref={ref => connectors.create(ref, <Element is={EditorHero} canvas />)}
+        className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md cursor-grab active:cursor-grabbing"
+        style={{
+          userSelect: 'none', // Prevents text selection on mobile
+          WebkitUserSelect: 'none', // Safari
+          touchAction: 'none' // Prevents scrolling while dragging on mobile
+        }}
       >
         Add Hero
-      </button>
+      </div>
     </div>
   );
 };
