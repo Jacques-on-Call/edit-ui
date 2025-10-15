@@ -30,11 +30,12 @@ export const LayoutEditor = () => {
           {/* The Frame is the canvas where components are rendered. */}
           <Frame>
             {/*
-              We start with a Page element containing a single, hardcoded Hero component.
-              This is not editable, just for display, per the "scorched earth" plan.
+              FIX: The Hero component must also be wrapped in an <Element> tag.
+              This was the cause of the "Invariant failed" error.
             */}
             <Element is={Page} canvas>
-                <EditorHero
+                <Element
+                    is={EditorHero}
                     title="Proof of Concept"
                     subtitle="This Hero component is rendered on the canvas."
                 />
