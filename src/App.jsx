@@ -1,4 +1,8 @@
+import React from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { DndProvider } from 'react-dnd';
+import { TouchBackend } from 'react-dnd-touch-backend';
+
 import AppLayout from './components/AppLayout';
 import LoginPage from './pages/LoginPage';
 import CallbackPage from './pages/CallbackPage';
@@ -7,24 +11,29 @@ import ExplorerPage from './pages/ExplorerPage';
 import EditorPage from './pages/EditorPage';
 import LayoutsDashboardPage from './pages/LayoutsDashboardPage';
 import LayoutEditorPage from './pages/LayoutEditorPage';
-import ErrorBoundary from './components/ErrorBoundary';
+import SemanticLayoutEditor from './pages/SemanticLayoutEditor';
+
+// Options for the TouchBackend, enabling mouse events for desktop compatibility.
+const dndOptions = {
+  enableMouseEvents: true,
+};
 
 function App() {
   return (
-    <Routes>
-      {/* Standalone routes without the AppLayout */}
-      <Route path="/" element={<LoginPage />} />
-      <Route path="/callback" element={<CallbackPage />} />
-      <Route path="/repository-selection" element={<RepositorySelectionPage />} />
-
-      {/* Routes that use the AppLayout */}
-      <Route element={<AppLayout />}>
-        <Route path="/explorer" element={<ExplorerPage />} />
-        <Route path="/layouts" element={<ErrorBoundary><LayoutsDashboardPage /></ErrorBoundary>} />
-        <Route path="/layout-editor" element={<ErrorBoundary><LayoutEditorPage /></ErrorBoundary>} />
-        <Route path="/editor" element={<ErrorBoundary><EditorPage /></ErrorBoundary>} />
-      </Route>
-    </Routes>
+    <DndProvider backend={TouchBackend} options={dndOptions}>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/callback" element={<CallbackPage />} />
+        <Route path="/repository-selection" element={<RepositorySelectionPage />} />
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<ExplorerPage />} />
+          <Route path="/editor" element={<EditorPage />} />
+          <Route path="/layouts" element={<LayoutsDashboardPage />} />
+          <Route path="/layout-editor" element={<LayoutEditorPage />} />
+          <Route path="/semantic-layout-editor" element={<SemanticLayoutEditor />} />
+        </Route>
+      </Routes>
+    </DndProvider>
   );
 }
 

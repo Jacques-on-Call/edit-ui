@@ -28,6 +28,8 @@
     "nanoid": "^5.1.6",
     "node-html-parser": "^7.0.1",
     "react": "^19.1.1",
+    "react-dnd": "^16.0.1",
+    "react-dnd-touch-backend": "^16.0.1",
     "react-dom": "^19.1.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.9.3",
