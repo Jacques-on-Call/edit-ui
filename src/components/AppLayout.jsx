@@ -25,21 +25,30 @@ function AppLayout() {
 
   useEffect(() => {
     fetch('/api/me', { credentials: 'include' })
-      .then(res => res.ok ? res.json() : null)
+      .then(res => {
+        if (res.ok) {
+          return res.json();
+        }
+        // If the session is invalid (e.g., 401 Unauthorized), redirect to login
+        setIsAuthenticated(false);
+        navigate('/login');
+        return null;
+      })
       .then(userData => {
         if (userData && userData.login) {
           setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
-          navigate('/login');
+          // NEW: Check for repository selection *after* confirming authentication
+          const selectedRepo = localStorage.getItem('selectedRepo');
+          if (!selectedRepo && location.pathname !== '/repository-selection') {
+            navigate('/repository-selection');
+          }
         }
       })
       .catch(() => {
-        // If the API call fails (e.g., network error), assume not authenticated
         setIsAuthenticated(false);
         navigate('/login');
       });
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   const isExplorerPage = location.pathname.startsWith('/explorer');
   const isEditorPage = location.pathname.startsWith('/editor');

@@ -6,7 +6,7 @@ const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
 
 function LoginPage() {
-  // Force cache bust with a new comment.
+  // Force cache bust with a new comment at 2025-10-15 12:18
   const navigate = useNavigate();
 
   // Check for an existing session on component mount
