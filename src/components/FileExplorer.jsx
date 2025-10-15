@@ -138,7 +138,8 @@ function FileExplorer({ repo }) {
     try {
       const response = await fetch('/api/duplicate-file', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'credentials': 'include' },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ repo, path: file.path, newPath }),
       });
       const data = await response.json();
@@ -163,7 +164,8 @@ function FileExplorer({ repo }) {
     try {
       const response = await fetch('/api/files', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', 'credentials': 'include' },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ repo, path: fileToDelete.path, sha: fileToDelete.sha }),
       });
       const data = await response.json();
@@ -192,7 +194,8 @@ function FileExplorer({ repo }) {
     try {
       const response = await fetch('/api/assign-layout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'credentials': 'include' },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           repo,
           path: fileToAssignLayout.path,
@@ -231,7 +234,8 @@ function FileExplorer({ repo }) {
     try {
       const response = await fetch('/api/rename-file', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'credentials': 'include' },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ repo, oldPath, newPath, sha: file.sha }),
       });
       const data = await response.json();

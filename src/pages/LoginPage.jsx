@@ -55,10 +55,9 @@ function LoginPage() {
       }
       if (event.data.type === 'github-auth') {
         if (event.data.success) {
-          // On successful auth, navigate directly to the repository selection page.
-          // This avoids a full page reload which can break the popup's `window.opener` context
-          // and cause race conditions with the router.
-          navigate('/repository-selection');
+          // On successful auth, reload the page.
+          // The useEffect hook at the top will then redirect to the repo selection page.
+          window.location.reload();
         } else if (event.data.error) {
           console.error("Login failed:", event.data.error);
           alert("GitHub login failed: " + event.data.error);
@@ -77,7 +76,7 @@ function LoginPage() {
       <div className="max-w-md w-full p-8">
         <img src="/logo.webp" className="h-24 w-auto mx-auto mb-8" alt="logo" />
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Welcome to Easy SEO v2 - Cache Test</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Welcome to Easy SEO</h1>
           <p className="text-gray-300 mb-8">Please login with GitHub to continue.</p>
           <button
             onClick={handleLogin}

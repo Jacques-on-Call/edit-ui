@@ -33,6 +33,11 @@ function AppLayout() {
           setIsAuthenticated(false);
           navigate('/login');
         }
+      })
+      .catch(() => {
+        // If the API call fails (e.g., network error), assume not authenticated
+        setIsAuthenticated(false);
+        navigate('/login');
       });
   }, [navigate]);
 
