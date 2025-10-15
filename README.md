@@ -294,6 +294,59 @@ If this condition is missing or inverted, `.astro` layouts open in the wrong edi
 
 ---
 
+## Layout Editor Dehydration Fix: Development Roadmap (Oct 2025)
+
+This section documents the active, incremental plan to build a new, robust, mobile-first layout editor to solve the "layout dehydration" issue. The work is being done by Jules #98.
+
+**Core Methodology:** Start with a "scorched earth" minimal proof-of-concept and build confidence with each subsequent milestone. The primary target device for testing and usability is an iPhone.
+
+---
+
+### **Milestone 1: Single Component on Canvas (Complete)**
+
+*   **Goal:** Prove that a single component could be rendered on a blank canvas.
+*   **Outcome:** A minimal editor now successfully renders a single, non-interactive `Hero` component.
+*   **Key Learnings:**
+    *   Solved a critical Craft.js `Invariant failed` error by ensuring a component marked `isCanvas: true` does not also render a `<Canvas>` tag. The component should render its `children` directly.
+    *   Confirmed that `<Element is={Component} />` is required to wrap all components placed on the canvas.
+
+---
+
+### **Milestone 2: Toolbox & Mobile Drag-and-Drop (In Progress)**
+
+*   **Goal:** Implement a mobile-first toolbox that allows a user to drag a `Hero` component onto the canvas.
+*   **Current Status:**
+    *   A mobile-friendly bottom toolbar has been implemented.
+    *   The toolbox contains a `Hero` component that is configured to be draggable.
+*   **Active Challenge:** Standard HTML5 drag-and-drop does not work on mobile (iPhone). The current effort is focused on solving this by integrating `react-dnd` with the `react-dnd-touch-backend`. This library will translate mobile touch events into the drag-and-drop commands that Craft.js expects.
+*   **Key Learnings (from regressions):**
+    *   The Drag-and-Drop Provider (`DndProvider`) must be scoped carefully to only wrap the parts of the application that need it, to avoid breaking standalone pages like the login flow.
+
+---
+
+### **Milestone 3: Property Editing (Next)**
+
+*   **Goal:** Introduce a settings panel (sidebar) that appears when a component is selected on the canvas.
+*   **Functionality:** This panel will contain controls (e.g., text inputs) to edit the properties of the selected component (e.g., the title and subtitle of a `Hero`) and see the changes reflected live on the canvas.
+
+---
+
+### **Milestone 4: Code Generation & Persistence (Future)**
+
+*   **Goal:** Implement the "save" part of the load/save cycle.
+*   **Functionality:**
+    *   Generate `.astro` file content from the current state of the components on the canvas.
+    *   Persist this generated layout, likely back to a file in the user's GitHub repository or to the D1 database as a template.
+
+---
+
+### **Milestone 5: Loading from Astro File (Future)**
+
+*   **Goal:** Complete the full, bidirectional editing workflow.
+*   **Functionality:** Parse an existing `.astro` file from the user's repository, translate its content into the Craft.js editor state, and load it onto the canvas for visual editing.
+
+---
+
 ## Universal Layout Interpreter - Implementation Plan
 
 Below is a developer-ready implementation plan designed to make the layout editor resilient, debuggable, and forward-compatible.
