@@ -1,18 +1,21 @@
 import React from 'react';
-import { useNode, Canvas } from '@craftjs/core';
+import { useNode } from '@craftjs/core';
 
 export const Page = ({ children, style }) => {
   const {
     connectors: { connect, drag },
   } = useNode();
 
+  // FIX: A component with `isCanvas: true` should not render another <Canvas> component.
+  // It should just render its children directly. The framework handles the canvas context.
+  // This was the source of the "Invariant failed" error.
   return (
     <div
       ref={(ref) => connect(drag(ref))}
       style={style}
       className="bg-white shadow-lg p-4 m-8"
     >
-      <Canvas id="page-canvas">{children}</Canvas>
+      {children}
     </div>
   );
 };
