@@ -11,15 +11,6 @@ function LoginPage() {
 
   // Check for an existing session on component mount
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('login') === 'success') {
-      // If we've just logged in, reload the page without the query param
-      // to ensure a clean state before proceeding.
-      window.history.replaceState({}, document.title, "/");
-      window.location.reload();
-      return;
-    }
-
     fetch('/api/me', {
       credentials: 'include',
     })
@@ -55,9 +46,8 @@ function LoginPage() {
       }
       if (event.data.type === 'github-auth') {
         if (event.data.success) {
-          // On successful auth, reload the page.
-          // The useEffect hook at the top will then redirect to the repo selection page.
-          window.location.reload();
+          // On successful auth, navigate directly to the repository selection page.
+          navigate('/repository-selection');
         } else if (event.data.error) {
           console.error("Login failed:", event.data.error);
           alert("GitHub login failed: " + event.data.error);
