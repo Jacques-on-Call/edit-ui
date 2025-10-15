@@ -96,7 +96,8 @@ function FileExplorer({ repo }) {
         });
       })
       .catch(err => {
-        setError(err.message);
+        console.error("Error fetching files:", err); // Enhanced logging
+        setError(`Failed to load repository contents. Please check the console for details and try again. Error: ${err.message}`);
         setLoading(false);
       });
   }, [repo, path, fetchMetadata]);
@@ -252,7 +253,20 @@ function FileExplorer({ repo }) {
   };
 
   if (loading) return <div className="text-center p-8 text-gray-500 animate-pulse">Loading files...</div>;
-  if (error) return <div className="text-center p-8 text-red-600 bg-red-50 rounded-lg">{error}</div>;
+  if (error) {
+    return (
+      <div className="container mx-auto mt-12 p-8 border-4 border-dashed border-red-300 bg-red-50 rounded-lg text-center">
+        <h2 className="text-2xl font-bold text-red-700 mb-4">An Error Occurred</h2>
+        <p className="text-red-600 mb-6">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-red-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   const isAtRoot = path === 'src/pages';
   const getCurrentFolderName = () => isAtRoot ? 'Home' : path.split('/').pop();
