@@ -28,15 +28,17 @@ const DndWrapper = ({ children }) => (
 function App() {
   return (
     <Routes>
-      {/* Routes outside the main layout do not get the DndProvider */}
+      {/*
+        FIX: Standalone routes that should NOT have the main AppLayout or DndProvider.
+        This includes the login flow and the repository selection page.
+      */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/callback" element={<CallbackPage />} />
       <Route path="/repository-selection" element={<RepositorySelectionPage />} />
 
       {/*
-        FIX: The DndProvider now wraps only the main AppLayout.
-        This provides drag-and-drop context to the editor without interfering
-        with the login page or other standalone routes.
+        All routes that ARE part of the main application experience are nested here.
+        They will all render inside the AppLayout and have access to the DndProvider.
       */}
       <Route
         element={
