@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 export default function CallbackPage() {
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     const exchangeCodeForToken = async () => {
@@ -9,8 +10,6 @@ export default function CallbackPage() {
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
         const state = params.get('state');
-        // Note: The cookie is HttpOnly and cannot be accessed by document.cookie on the client.
-        // The state is validated on the server side now.
 
         if (!code || !state) {
           throw new Error('Invalid state or code. Authentication failed.');
@@ -19,7 +18,7 @@ export default function CallbackPage() {
         const response = await fetch('/api/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code, state }), // Pass state to server for validation
+          body: JSON.stringify({ code, state }),
         });
 
         if (!response.ok) {
@@ -27,19 +26,25 @@ export default function CallbackPage() {
           throw new Error(`Token exchange failed: ${errorText}`);
         }
 
-        // The main window's poller will detect the successful login.
-        // We just need to close the popup.
-        window.close();
+        // On success, update the state. This will trigger the next useEffect.
+        setSuccess(true);
 
       } catch (err) {
         console.error('Authentication callback error:', err);
         setError(err.message);
-        // Do not close the window if there's an error, so the user can see it.
       }
     };
 
     exchangeCodeForToken();
   }, []);
+
+  // This effect will run when `success` becomes true, closing the window.
+  useEffect(() => {
+    if (success) {
+      // A small delay gives the user feedback before the window vanishes.
+      setTimeout(() => window.close(), 500);
+    }
+  }, [success]);
 
   if (error) {
     return (
@@ -61,5 +66,22 @@ export default function CallbackPage() {
     );
   }
 
-  return <div>Processing login, please wait...</div>;
+  if (success) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-green-50 p-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-green-700">Success!</h1>
+          <p className="text-gray-600">You are now authenticated. This window will close automatically.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-gray-50 p-4">
+        <div className="text-center">
+          <p className="text-lg font-semibold text-gray-700 animate-pulse">Processing login, please wait...</p>
+        </div>
+      </div>
+  );
 }
