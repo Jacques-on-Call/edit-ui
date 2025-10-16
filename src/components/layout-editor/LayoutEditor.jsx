@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { Box, Type, Image, Layout } from 'lucide-react';
 import MobileToolbar from './MobileToolbar';
 import Toolbox from './Toolbox';
+import { stateToAstro } from '../../utils/stateToAstro';
 
 // Component Registry
 const COMPONENT_TYPES = {
@@ -217,11 +218,50 @@ const LayoutEditor = () => {
     setToolboxOpen(false);
   }
 
+  const handleSave = async () => {
+    const astroCode = stateToAstro(components, COMPONENT_TYPES);
+    const repo = localStorage.getItem('selectedRepo');
+    if (!repo) {
+      alert('No repository selected. Please select a repository first.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/save-layout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          repo: repo,
+          path: 'src/layouts/temp-layout.astro',
+          content: astroCode,
+          // We don't pass a SHA, so this will create a new file or overwrite an existing one.
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save layout.');
+      }
+
+      alert('Layout saved successfully as temp-layout.astro!');
+    } catch (error) {
+      console.error('Save error:', error);
+      alert(`Error saving layout: ${error.message}`);
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       <header className="bg-white border-b px-4 py-3 flex items-center justify-between">
         <h1 className="text-lg font-bold">Mobile Layout Editor</h1>
-        {/* Placeholder for future actions like Save */}
+        <button
+          onClick={handleSave}
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+        >
+          Save Layout
+        </button>
       </header>
 
       <main

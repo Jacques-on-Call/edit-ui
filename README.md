@@ -331,7 +331,14 @@ This section documents the active, incremental plan to build a new, robust, mobi
 
 ---
 
-### **Milestone 4: Code Generation & Persistence (Future)**
+### **Milestone 4: Advanced Mobile UX (Future)**
+
+*   **Goal:** Implement a more intuitive, touch-based drag-and-drop system for reordering components.
+*   **Functionality:** Users will be able to long-press and drag components directly with their finger, providing a more fluid and direct editing experience on mobile devices.
+
+---
+
+### **Milestone 5: Code Generation & Persistence (Future)**
 
 *   **Goal:** Implement the "save" part of the load/save cycle.
 *   **Functionality:**
