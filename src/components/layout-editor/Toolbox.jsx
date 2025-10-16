@@ -3,28 +3,29 @@ import { useEditor, Element } from '@craftjs/core';
 import { EditorHero } from './blocks/Hero.editor';
 
 export const Toolbox = () => {
-  const { connectors } = useEditor();
+  const { connectors, actions, query } = useEditor();
+
+  const handleTapAdd = () => {
+    // Get the ROOT canvas node
+    const rootNodeId = query.node('ROOT').get().id;
+    // Add the Hero component directly to it
+    actions.add(<Element is={EditorHero} />, rootNodeId);
+  };
 
   return (
     <div className="bg-white border-t border-gray-200 p-2 flex justify-center items-center shadow-top">
-      {/*
-        This is now a draggable element.
-        - `connectors.create` makes this a drag source.
-        - `Element` specifies what component to create on drop.
-        - `style` includes mobile-specific CSS to ensure it works on iPhone.
-      */}
       <div
         ref={ref => connectors.create(ref, <Element is={EditorHero} />)}
-        className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md cursor-grab active:cursor-grabbing"
+        onClick={handleTapAdd} // This makes it work on mobile with a tap
+        className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md cursor-pointer active:bg-blue-600"
         style={{
           userSelect: 'none',
           WebkitUserSelect: 'none',
-          WebkitTouchCallout: 'none', // Prevent iOS callout
-          touchAction: 'none',
-          msTouchAction: 'none'
+          WebkitTouchCallout: 'none',
+          touchAction: 'manipulation' // Changed from 'none' to allow tap
         }}
       >
-        Add Hero
+        + Add Hero Section
       </div>
     </div>
   );
