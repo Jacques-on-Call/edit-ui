@@ -17,12 +17,13 @@ export const Toolbox = () => {
         ref={ref => connectors.create(ref, <Element is={EditorHero} canvas />)}
         className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md cursor-grab active:cursor-grabbing"
         style={{
-          userSelect: 'none', // Prevents text selection on mobile
-          WebkitUserSelect: 'none', // Safari
-          touchAction: 'none' // Prevents scrolling while dragging on mobile
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          WebkitTouchCallout: 'none', // Prevent iOS callout menu
+          touchAction: 'none' // Prevents scrolling while dragging
         }}
       >
-        Add Hero
+        + Add Hero Section
       </div>
     </div>
   );
