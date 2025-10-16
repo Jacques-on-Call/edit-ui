@@ -9,6 +9,17 @@ function LoginPage() {
   const navigate = useNavigate();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
+  // This useEffect handles the OAuth callback.
+  // It checks for a query parameter and closes the popup if it's present.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('close_popup') === 'true' && window.opener) {
+      // Notify the opener window that login was successful, then close.
+      window.opener.postMessage('login-success', window.location.origin);
+      window.close();
+    }
+  }, []);
+
   // Check for an existing session on component mount, but only if the user hasn't initiated the login flow.
   useEffect(() => {
     if (isLoggingIn) return;
@@ -22,8 +33,29 @@ function LoginPage() {
       });
   }, [navigate, isLoggingIn]);
 
+  // This useEffect sets up a listener to hear from the OAuth popup.
+  // When the popup sends a 'login-success' message, we navigate to the next page.
+  useEffect(() => {
+    const handleAuthMessage = (event) => {
+      // Important: Check the origin of the message for security
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+      if (event.data === 'login-success') {
+        navigate('/repository-selection');
+      }
+    };
+
+    window.addEventListener('message', handleAuthMessage);
+
+    // Cleanup: remove the event listener when the component unmounts
+    return () => {
+      window.removeEventListener('message', handleAuthMessage);
+    };
+  }, [navigate]);
+
   const handleLogin = () => {
-    setIsLoggingIn(true); // Prevent the useEffect from running while we're in the popup flow
+    setIsLoggingIn(true); // Prevent the session check from running while we're in the popup flow
 
     const state = Math.random().toString(36).substring(2, 15);
     document.cookie = `oauth_state=${state}; path=/; max-age=600; SameSite=Lax; Secure`;
@@ -38,32 +70,7 @@ function LoginPage() {
     if (!popup) {
       alert('Popup blocked! Please allow popups for this site.');
       setIsLoggingIn(false); // Reset state if popup fails
-      return;
     }
-
-    const timer = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(timer);
-        // After popup is closed, verify authentication and navigate.
-        fetch('/api/me', { credentials: 'include' })
-          .then(res => {
-            if (res.ok) return res.json();
-            throw new Error('Not authenticated');
-          })
-          .then(userData => {
-            if (userData && userData.login) {
-              navigate('/repository-selection');
-            } else {
-              // If login failed, allow useEffect to run again.
-              setIsLoggingIn(false);
-            }
-          })
-          .catch(err => {
-            console.error("Authentication check failed after popup close:", err);
-            setIsLoggingIn(false); // Reset state on error
-          });
-      }
-    }, 500);
   };
 
   // Removed the useEffect for message handling as it's replaced by the polling mechanism.
