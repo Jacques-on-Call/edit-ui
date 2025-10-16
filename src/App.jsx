@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 
@@ -28,10 +28,7 @@ const DndWrapper = ({ children }) => (
 function App() {
   return (
     <Routes>
-      {/*
-        FIX: Standalone routes that should NOT have the main AppLayout or DndProvider.
-        This includes the login flow and the repository selection page.
-      */}
+      {/* Standalone routes that should NOT have the main AppLayout or DndProvider. */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/callback" element={<CallbackPage />} />
       <Route path="/repository-selection" element={<RepositorySelectionPage />} />
@@ -41,17 +38,24 @@ function App() {
         They will all render inside the AppLayout and have access to the DndProvider.
       */}
       <Route
+        path="/"
         element={
           <DndWrapper>
             <AppLayout />
           </DndWrapper>
         }
       >
-        <Route path="/" element={<ExplorerPage />} />
-        <Route path="/editor" element={<EditorPage />} />
-        <Route path="/layouts" element={<LayoutsDashboardPage />} />
-        <Route path="/layout-editor" element={<LayoutEditorPage />} />
-        <Route path="/semantic-layout-editor" element={<SemanticLayoutEditor />} />
+        {/*
+          FIX: Add a root-level redirect. If the user is authenticated and lands at "/",
+          this will automatically send them to the explorer, preventing a blank page.
+        */}
+        <Route index element={<Navigate to="/explorer" replace />} />
+
+        <Route path="explorer" element={<ExplorerPage />} />
+        <Route path="editor" element={<EditorPage />} />
+        <Route path="layouts" element={<LayoutsDashboardPage />} />
+        <Route path="layout-editor" element={<LayoutEditorPage />} />
+        <Route path="semantic-layout-editor" element={<SemanticLayoutEditor />} />
       </Route>
     </Routes>
   );

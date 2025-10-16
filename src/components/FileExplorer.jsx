@@ -77,9 +77,14 @@ function FileExplorer({ repo }) {
           const readmeRes = await fetch(`/api/file?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' });
           if (!readmeRes.ok) throw new Error('Could not fetch README content.');
           const readmeData = await readmeRes.json();
-          // The content from GitHub API is base64 encoded and may contain newlines.
-          const sanitizedContent = readmeData.content.replace(/\s/g, '');
-          const decodedContent = atob(sanitizedContent);
+          // The content from GitHub API is base64 encoded.
+          // Use TextDecoder for robust UTF-8 decoding.
+          const binaryString = atob(readmeData.content);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const decodedContent = new TextDecoder('utf-8').decode(bytes);
           setReadmeContent(decodedContent);
         } catch (readmeErr) {
           console.error("Failed to fetch or decode README:", readmeErr);
@@ -258,18 +263,32 @@ function FileExplorer({ repo }) {
     }
   };
 
-  if (loading) return <div className="text-center p-8 text-gray-500 animate-pulse">Loading files...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center p-8 text-gray-500 animate-pulse">Loading files...</div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
-      <div className="container mx-auto mt-12 p-8 border-4 border-dashed border-red-300 bg-red-50 rounded-lg text-center">
-        <h2 className="text-2xl font-bold text-red-700 mb-4">An Error Occurred</h2>
-        <p className="text-red-600 mb-6">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="bg-red-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-        >
-          Try Again
-        </button>
+      <div className="flex items-center justify-center h-full p-4">
+        <div className="container max-w-2xl mx-auto mt-12 p-8 border-2 border-red-200 bg-red-50 rounded-lg text-center shadow-md">
+          <h2 className="text-2xl font-bold text-red-700 mb-4">An Error Occurred</h2>
+          <p className="text-red-600 mb-6 break-words">{error}</p>
+          <div className="flex justify-center space-x-4">
+            <button
+              onClick={fetchFiles}
+              className="bg-red-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              Try Again
+            </button>
+            <Link to="/repository-selection" className="bg-gray-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+              Change Repository
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
