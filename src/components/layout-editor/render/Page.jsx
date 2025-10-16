@@ -3,17 +3,14 @@ import { useNode } from '@craftjs/core';
 
 export const Page = ({ children, style }) => {
   const {
-    connectors: { connect, drag },
+    connectors: { connect }, // REMOVED 'drag' - canvas shouldn't be draggable
   } = useNode();
 
-  // FIX: A component with `isCanvas: true` should not render another <Canvas> component.
-  // It should just render its children directly. The framework handles the canvas context.
-  // This was the source of the "Invariant failed" error.
   return (
     <div
-      ref={(ref) => connect(drag(ref))}
+      ref={(ref) => connect(ref)} // ONLY connect, NO drag
       style={style}
-      className="bg-white shadow-lg p-4 m-8"
+      className="bg-white shadow-lg p-4 m-8 min-h-[500px]" // Added min-height for better drop target
     >
       {children}
     </div>
@@ -22,7 +19,7 @@ export const Page = ({ children, style }) => {
 
 Page.craft = {
   displayName: 'Page',
-  isCanvas: true, // This makes it a droppable container
+  isCanvas: true,
   props: {
     style: {
       backgroundColor: '#ffffff',
@@ -30,6 +27,7 @@ Page.craft = {
       margin: '40px',
       borderRadius: '4px',
       boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+      minHeight: '500px', // Make the drop zone bigger
     },
   },
   related: {},
