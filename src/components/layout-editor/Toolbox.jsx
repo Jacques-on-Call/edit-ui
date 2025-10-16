@@ -14,24 +14,15 @@ export const Toolbox = () => {
         - `style` includes mobile-specific CSS to ensure it works on iPhone.
       */}
       <div
-        ref={ref => {
-          if (ref) {
-            connectors.create(ref, <Element is={EditorHero} canvas />);
-            // Add touch event listeners
-            ref.addEventListener('touchstart', (e) => {
-              e.stopPropagation();
-            }, { passive: false });
-          }
-        }}
+        ref={ref => connectors.create(ref, <Element is={EditorHero} canvas />)}
         className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md cursor-grab active:cursor-grabbing"
         style={{
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          WebkitTouchCallout: 'none', // Add this for iOS
-          touchAction: 'none'
+          userSelect: 'none', // Prevents text selection on mobile
+          WebkitUserSelect: 'none', // Safari
+          touchAction: 'none' // Prevents scrolling while dragging on mobile
         }}
       >
-        + Add Hero Section
+        Add Hero
       </div>
     </div>
   );
