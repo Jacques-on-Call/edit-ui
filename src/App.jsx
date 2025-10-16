@@ -1,7 +1,5 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { DndProvider } from 'react-dnd';
-import { TouchBackend } from 'react-dnd-touch-backend';
 
 import AppLayout from './components/AppLayout';
 import LoginPage from './pages/LoginPage';
@@ -12,18 +10,6 @@ import EditorPage from './pages/EditorPage';
 import LayoutsDashboardPage from './pages/LayoutsDashboardPage';
 import LayoutEditorPage from './pages/LayoutEditorPage';
 import SemanticLayoutEditor from './pages/SemanticLayoutEditor';
-
-// Options for the TouchBackend, enabling mouse events for desktop compatibility.
-const dndOptions = {
-  enableMouseEvents: true,
-};
-
-// A new wrapper component to apply the DndProvider only to routes that need it.
-const DndWrapper = ({ children }) => (
-  <DndProvider backend={TouchBackend} options={dndOptions}>
-    {children}
-  </DndProvider>
-);
 
 function App() {
   return (
@@ -44,18 +30,9 @@ function App() {
         */}
         <Route index element={<Navigate to="/explorer" replace />} />
 
-        {/* The ExplorerPage is the only one that needs react-dnd, so we wrap it here. */}
-        <Route
-          path="explorer"
-          element={
-            <DndWrapper>
-              <ExplorerPage />
-            </DndWrapper>
-          }
-        />
+        <Route path="explorer" element={<ExplorerPage />} />
         <Route path="editor" element={<EditorPage />} />
         <Route path="layouts" element={<LayoutsDashboardPage />} />
-        {/* LayoutEditorPage now correctly does NOT have the DndProvider from react-dnd */}
         <Route path="layout-editor" element={<LayoutEditorPage />} />
         <Route path="semantic-layout-editor" element={<SemanticLayoutEditor />} />
       </Route>

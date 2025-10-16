@@ -14,15 +14,6 @@ export const LayoutEditor = () => {
     <Editor
       resolver={{ EditorHero, Page, Text, EditorSection }}
       enabled={true}
-      handlers={(store) => ({
-        ...store.handlers,
-        onDragStart: (e) => {
-          // Prevent default touch behavior
-          if (e.touches) {
-            e.preventDefault();
-          }
-        }
-      })}
     >
       <div className="flex flex-col h-screen w-full bg-gray-100">
         <header className="bg-white shadow-md p-4 z-10 flex-shrink-0">
