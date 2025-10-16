@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutEditor } from '../components/layout-editor/LayoutEditor';
+import LayoutEditor from '../components/layout-editor/LayoutEditor';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 const LayoutEditorPage = () => {
