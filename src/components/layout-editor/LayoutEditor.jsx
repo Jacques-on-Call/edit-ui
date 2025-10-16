@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Box, Type, Image, Layout } from 'lucide-react';
 import MobileToolbar from './MobileToolbar';
 import Toolbox from './Toolbox';
@@ -55,24 +55,21 @@ const COMPONENT_TYPES = {
   }
 };
 
-const LayoutEditor = () => {
-  const [components, setComponents] = useState({
+const LayoutEditor = ({ initialState }) => {
+  const [components, setComponents] = useState(initialState || {
     'root': {
       type: 'root',
-      children: ['comp-1'],
-      props: {}
-    },
-    'comp-1': {
-      type: 'Section',
-      children: ['comp-2'],
-      props: { bg: 'bg-blue-50' }
-    },
-    'comp-2': {
-      type: 'Hero',
       children: [],
-      props: { title: 'Welcome!', subtitle: 'Tap a component to see its controls.' }
+      props: {}
     }
   });
+
+  // If the initial state changes (e.g., after loading), update the editor's state.
+  useEffect(() => {
+    if (initialState) {
+      setComponents(initialState);
+    }
+  }, [initialState]);
 
   const [selectedId, setSelectedId] = useState(null);
   const [nextId, setNextId] = useState(3);
