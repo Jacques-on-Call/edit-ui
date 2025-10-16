@@ -14,7 +14,7 @@ export const Toolbox = () => {
         - `style` includes mobile-specific CSS to ensure it works on iPhone.
       */}
       <div
-        ref={ref => connectors.create(ref, <Element is={EditorHero} canvas />)}
+        ref={ref => connectors.create(ref, <Element is={EditorHero} />)}
         className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md cursor-grab active:cursor-grabbing"
         style={{
           userSelect: 'none',
