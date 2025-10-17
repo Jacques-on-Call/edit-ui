@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import NewTemplateModal from '../components/NewTemplateModal';
 import Icon from '../components/Icon';
+import LayoutContextMenu from '../components/LayoutContextMenu';
 
 const LayoutsDashboardPage = () => {
   const [d1Layouts, setD1Layouts] = useState([]);
@@ -9,6 +10,7 @@ const LayoutsDashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setModalOpen] = useState(false);
+  const [contextMenu, setContextMenu] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,10 +44,10 @@ const LayoutsDashboardPage = () => {
         });
 
         const normalizeAstro = (item) => ({
-          id: item.path || `astro-${crypto.randomUUID()}`,
+          id: item.sha || item.path, // Use SHA if available, fallback to path
           name: item.name?.replace(".astro", "") || "Unnamed Astro Layout",
           source: "astro",
-          path: `/layout-editor?repo=${selectedRepo}&path=${encodeURIComponent(item.path)}`,
+          path: item.path, // The actual file path
           json_content: null,
           created_at: null
         });
@@ -79,27 +81,147 @@ const LayoutsDashboardPage = () => {
     loadLayouts();
   }, []);
 
-  const handleCreateNewTemplate = (template) => {
+  const handleCreateNewTemplate = async (template) => {
     setModalOpen(false);
-    if (template.json) {
-      navigate('/layout-editor', {
-        state: {
-          templateJson: template.json,
-          templateName: template.name,
-          isStarter: true
-        }
+    const repo = localStorage.getItem('selectedRepo');
+    if (!repo) {
+      setError("No repository selected.");
+      return;
+    }
+
+    const fileName = template.name.endsWith('.astro') ? template.name : `${template.name}.astro`;
+    const fullPath = `src/layouts/${fileName}`;
+    const content = `---
+# Frontmatter for ${fileName}
+layout: ../../layouts/MainLayout.astro
+title: "${template.name}"
+description: "A new layout."
+---
+
+<h1>${template.name}</h1>
+<p>This is a new layout file. Add your components here.</p>
+<slot />
+`;
+
+    try {
+      const response = await fetch('/api/file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          repo,
+          path: fullPath,
+          content: btoa(unescape(encodeURIComponent(content))),
+          message: `feat: create new layout ${fileName}`
+        }),
       });
-    } else {
-      const encodedName = encodeURIComponent(template.name);
-      navigate(`/layout-editor?template_name=${encodedName}`);
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed to create new layout file.');
+      }
+
+      // Navigate to the new layout in the editor
+      navigate(`/semantic-layout-editor?path=${fullPath}`);
+    } catch (err) {
+      setError(err.message);
     }
   };
 
   if (loading) return <div className="p-8 text-center animate-pulse">Loading Layouts...</div>;
   if (error) return <div className="p-8 text-center text-red-500 bg-red-50 rounded-lg">{error}</div>;
 
+  const handleLongPress = (layout, event) => {
+    event.preventDefault();
+    setContextMenu({ x: event.clientX, y: event.clientY, layout });
+  };
+
+  const handleCloseContextMenu = () => setContextMenu(null);
+
+  const handleDelete = async (layout) => {
+    if (!window.confirm(`Are you sure you want to delete "${layout.name}"?`)) return;
+
+    try {
+      if (layout.source === 'd1') {
+        const res = await fetch(`/api/layout-templates/${layout.id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Failed to delete D1 layout.');
+      } else {
+        // Handle file-based layout deletion
+        const res = await fetch(`/api/file`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            repo: localStorage.getItem('selectedRepo'),
+            path: layout.path,
+            sha: layout.id
+          }),
+        });
+        if (!res.ok) throw new Error('Failed to delete file-based layout.');
+      }
+      // Refresh the list
+      setD1Layouts(prev => prev.filter(l => l.id !== layout.id));
+      setAstroLayouts(prev => prev.filter(l => l.id !== layout.id));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDuplicate = async (layout) => {
+    try {
+      const repo = localStorage.getItem('selectedRepo');
+      const res = await fetch('/api/duplicate-layout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          repo,
+          layout,
+        }),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || 'Failed to duplicate layout.');
+      }
+      // Refresh the list by re-fetching
+      loadLayouts();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleCreatePage = async (layout) => {
+    const pageName = window.prompt("Enter a name for the new page (e.g., 'about-us'):");
+    if (!pageName) return;
+
+    try {
+      const repo = localStorage.getItem('selectedRepo');
+      const res = await fetch('/api/create-page-from-layout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          repo,
+          pageName,
+          layoutPath: layout.path,
+        }),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || 'Failed to create page.');
+      }
+      const data = await res.json();
+      navigate(`/editor?path=${data.path}`);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8" onClick={handleCloseContextMenu}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Layouts</h1>
         <button
@@ -123,7 +245,7 @@ const LayoutsDashboardPage = () => {
             <h2 className="text-xl font-semibold text-gray-700 mt-8 mb-4 border-b pb-2">Graphical Templates</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {d1Layouts.map((layout) => (
-                <LayoutCard key={layout.id} layout={layout} />
+                <LayoutCard key={layout.id} layout={layout} onLongPress={handleLongPress} />
               ))}
               <div
                 onClick={() => setModalOpen(true)}
@@ -141,7 +263,7 @@ const LayoutsDashboardPage = () => {
               <h2 className="text-xl font-semibold text-gray-700 mt-8 mb-4 border-b pb-2">File-based Layouts (src/layouts)</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {astroLayouts.map((layout) => (
-                  <LayoutCard key={layout.id} layout={layout} />
+                  <LayoutCard key={layout.id} layout={layout} onLongPress={handleLongPress} />
                 ))}
               </div>
             </div>
@@ -150,18 +272,50 @@ const LayoutsDashboardPage = () => {
       )}
 
       {isModalOpen && <NewTemplateModal onClose={() => setModalOpen(false)} onSubmit={handleCreateNewTemplate} />}
+      {contextMenu && (
+        <LayoutContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          layout={contextMenu.layout}
+          onClose={handleCloseContextMenu}
+          onDelete={handleDelete}
+          onDuplicate={handleDuplicate}
+          onCreatePage={handleCreatePage}
+        />
+      )}
     </div>
   );
 };
 
-const LayoutCard = ({ layout }) => {
+const LayoutCard = ({ layout, onLongPress }) => {
+  const pressTimer = React.useRef(null);
   const isAstro = layout.source === "astro";
   const hasContent = !!layout.json_content;
+
+  const handlePointerDown = (e) => {
+    if (e.type === 'touchstart') e.preventDefault();
+    if (e.button === 2) return;
+    pressTimer.current = setTimeout(() => onLongPress(layout, e), 500);
+  };
+
+  const handlePointerUp = () => clearTimeout(pressTimer.current);
+
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    clearTimeout(pressTimer.current);
+    onLongPress(layout, e);
+  };
 
   return (
     <div
       key={layout.id}
       className={`bg-white rounded-lg shadow-md overflow-hidden border-2 transition-all hover:shadow-xl hover:-translate-y-1 ${isAstro ? "border-blue-300" : "border-purple-300"}`}
+      onMouseDown={handlePointerDown}
+      onMouseUp={handlePointerUp}
+      onMouseLeave={handlePointerUp}
+      onTouchStart={handlePointerDown}
+      onTouchEnd={handlePointerUp}
+      onContextMenu={handleContextMenu}
     >
       <div className="p-4">
         <div className="flex justify-between items-start">
@@ -188,7 +342,7 @@ const LayoutCard = ({ layout }) => {
 
       <div className="bg-gray-50 p-3">
         <Link
-          to={layout.path}
+          to={isAstro ? `/semantic-layout-editor?path=${layout.path}` : layout.path}
           className="w-full text-center block bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
         >
           Open

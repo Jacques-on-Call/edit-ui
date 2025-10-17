@@ -40,7 +40,11 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
   `;
 
   const handlePointerDown = (e) => {
-    if (e.button === 2) return;
+    // For touch events, prevent the default action (like text selection)
+    if (e.type === 'touchstart') {
+      e.preventDefault();
+    }
+    if (e.button === 2) return; // Ignore right-click down event
     pressTimer.current = setTimeout(() => {
       onLongPress(file, e);
     }, 500);

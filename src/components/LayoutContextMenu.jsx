@@ -1,0 +1,53 @@
+import { useEffect, useRef } from 'react';
+
+function LayoutContextMenu({ x, y, layout, onClose, onDelete, onDuplicate, onCreatePage }) {
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+
+  const handleAction = (action) => {
+    if (action) {
+      action(layout);
+    }
+    onClose();
+  };
+
+  return (
+    <div
+      ref={menuRef}
+      className="fixed bg-white shadow-2xl rounded-lg py-2 w-56 z-50 animate-fade-in-fast"
+      style={{ top: `${y}px`, left: `${x}px` }}
+    >
+      <ul>
+        <li>
+          <button onClick={() => handleAction(onCreatePage)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+            Create Page from Layout
+          </button>
+        </li>
+        <div className="border-t my-1"></div>
+        <li>
+          <button onClick={() => handleAction(onDuplicate)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+            Duplicate
+          </button>
+        </li>
+        <li>
+          <button onClick={() => handleAction(onDelete)} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700">
+            Delete
+          </button>
+        </li>
+      </ul>
+    </div>
+  );
+}
+
+export default LayoutContextMenu;

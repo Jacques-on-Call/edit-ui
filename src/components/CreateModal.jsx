@@ -30,15 +30,7 @@ function CreateModal({ path, repo, onClose, onCreate }) {
           throw new Error('Could not load template file.');
         }
         const templateData = await templateRes.json();
-
-        // Robustly decode the template content from base64 (UTF-8 safe)
-        const binaryString = atob(templateData.content.replace(/\s/g, ''));
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        content = new TextDecoder('utf-8').decode(bytes);
-
+        content = atob(templateData.content);
         const fileName = name.endsWith('.astro') ? name : `${name}.astro`;
         fullPath = path === '/' ? fileName : `${path}/${fileName}`;
       }
@@ -47,7 +39,7 @@ function CreateModal({ path, repo, onClose, onCreate }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ repo, path: fullPath, content: btoa(unescape(encodeURIComponent(content))) }),
+        body: JSON.stringify({ repo, path: fullPath, content }),
       });
 
       if (!response.ok) {
