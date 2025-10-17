@@ -354,6 +354,50 @@ This section documents the active, incremental plan to build a new, robust, mobi
 
 ---
 
+## 🚀 Development Roadmap: The "Create New Page" Experience (October 2025)
+
+This section documents the plan to fix and enhance the "Create New Page" workflow, ensuring a smooth, intuitive, and unbroken user journey from file creation to content editing.
+
+### **Phase 1: Critical Bug Fix (Immediate Priority)**
+
+*   **Goal:** Fix the bug where creating a new file redirects to a blank page.
+*   **Implementation:**
+    *   Modify `easy-seo/src/components/CreateModal.jsx`.
+    *   Correct the `navigate()` call to use the proper editor URL format: `navigate(\`/editor?path=${fullPath}\`)`.
+
+### **Phase 2: Introduce Layout Selection**
+
+*   **Goal:** After creating a new page, immediately prompt the user to select a layout.
+*   **Implementation:**
+    *   Create a new `ChooseLayoutModal.jsx` component. This modal will fetch and display a list of available layouts from `src/layouts`.
+    *   Modify `CreateModal.jsx` so that upon successful file creation, it calls a new `onFileCreated` prop instead of navigating directly.
+    *   In `FileExplorer.jsx`, implement the `onFileCreated` handler to open the new `ChooseLayoutModal`.
+
+### **Phase 3: Connect to Editors**
+
+*   **Goal:** Connect the layout selection choice to the appropriate editor.
+*   **Implementation:**
+    *   **"Choose Existing Layout":** When a user selects a layout from the modal, use the `/api/assign-layout` endpoint to update the new file's frontmatter, then redirect to the Content Editor (`/editor?path=...`).
+    *   **"Create New Layout":** When a user clicks this button, redirect them to the Layout Editor (`/layout-editor`).
+        *   **Critical Hand-off:** Pass the path of the newly created file as a query parameter (e.g., `/layout-editor?from=src/pages/new-page.astro`).
+        *   The `LayoutEditorPage.jsx` will be updated to read this `from` parameter. After the new layout is created and saved, it will use this path to assign the layout and redirect the user back to the Content Editor for the page they originally created.
+
+### **Phase 4: Component Settings UI**
+
+*   **Goal:** Allow users to edit the properties of components within the Layout Editor.
+*   **Implementation:**
+    *   When a component on the canvas is clicked, a settings modal will appear.
+    *   This modal will display input fields for the component's properties (e.g., text fields for a Hero's title, a URL field for a Button's link).
+    *   Changes made in the settings modal will be reflected live on the editor canvas.
+    *   The `stateToAstro.js` utility will be updated to save these settings as props on the Astro components in the final `.astro` file.
+
+### **Open Questions & Technical Notes**
+
+*   **Component Import Path:** The `stateToAstro.js` utility currently has a hardcoded, incorrect path for component imports (`../components/blocks/`). This needs to be corrected to point to the actual component directory, likely `src/components/`.
+*   **Component Library:** To build the target "About Page", the Layout Editor's component registry needs to be updated to include `Hero`, `TextBlock`, `Button`, and `Footer`, each with a comprehensive set of editable props.
+
+---
+
 ## Universal Layout Interpreter - Implementation Plan
 
 Below is a developer-ready implementation plan designed to make the layout editor resilient, debuggable, and forward-compatible.
