@@ -258,7 +258,12 @@ function EditorPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      <TopToolbar onPublish={handlePublish} isPublishing={isPublishing} onChangeLayout={() => setAssignLayoutModalOpen(true)} />
+      <TopToolbar
+        onPublish={handlePublish}
+        isPublishing={isPublishing}
+        onChangeLayout={() => setAssignLayoutModalOpen(true)}
+        layoutPath={frontmatter.layout}
+      />
       {isAssignLayoutModalOpen && (
         <AssignLayoutModal
           onClose={() => setAssignLayoutModalOpen(false)}

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 // ============================================================================
 // LAYOUT COMPONENT DEFINITIONS
 // ============================================================================
@@ -339,12 +339,86 @@ Remove
 // ============================================================================
 
 export default function App() {
-const [blocks, setBlocks] = useState([]);
-const [astroInput, setAstroInput] = useState('');
-const [generatedAstro, setGeneratedAstro] = useState('');
-const [activeTab, setActiveTab] = useState('builder');
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const filePath = searchParams.get('path');
+  const fromPath = searchParams.get('from');
+  const repo = localStorage.getItem('selectedRepo');
 
-const handleParseAstro = () => {
+  const [blocks, setBlocks] = useState([]);
+  const [astroInput, setAstroInput] = useState('');
+  const [generatedAstro, setGeneratedAstro] = useState('');
+  const [activeTab, setActiveTab] = useState('builder');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!filePath || !repo) {
+      setError('Cannot save without file path and repository information.');
+      return;
+    }
+    setIsSaving(true);
+    setError(null);
+    try {
+      const contentToSave = generatedAstro || astroInput;
+      const response = await fetch('/api/file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          repo,
+          path: filePath,
+          content: btoa(unescape(encodeURIComponent(contentToSave))),
+          message: `feat: update layout ${filePath}`
+        }),
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'An unknown error occurred during save.');
+      }
+      console.log('Save successful!');
+      if (fromPath) {
+        navigate(`/editor?path=${fromPath}`);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchLayoutContent = async () => {
+      if (!filePath || !repo) {
+        setError('Missing file path or repository information.');
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/file?repo=${repo}&path=${filePath}`, { credentials: 'include' });
+        if (!res.ok) throw new Error(`Failed to fetch file: ${res.statusText}`);
+        const data = await res.json();
+        const binaryString = atob(data.content.replace(/\s/g, ''));
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const decodedContent = new TextDecoder('utf-8').decode(bytes);
+        setAstroInput(decodedContent);
+        setActiveTab('input'); // Switch to the input tab to show the loaded code
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLayoutContent();
+  }, [repo, filePath]);
+
+  const handleParseAstro = () => {
 const parsed = parseAstroToBlocks(astroInput);
 setBlocks(parsed);
 setActiveTab('builder');
@@ -375,17 +449,25 @@ const handleRemoveBlock = (id) => {
 setBlocks(blocks.filter(b => b.id !== id));
 };
 
-return (
-<div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-<div className="max-w-7xl mx-auto p-6">
-<div className="mb-8">
-<h1 className="text-4xl font-bold mb-2">Astro ↔ Craft.js Converter</h1>
-<p className="text-gray-300">Design layouts with a layout component language</p>
-</div>
+  if (loading) {
+    return <div className="text-center p-12 text-white">Loading layout...</div>;
+  }
 
-    <div className="grid grid-cols-12 gap-6">
-      {/* SIDEBAR */}
-      <div className="col-span-3 bg-slate-800 rounded-lg p-6">
+  if (error) {
+    return <div className="text-center p-12 text-red-400 bg-slate-800">{error}</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2">Semantic Layout Editor</h1>
+          <p className="text-gray-300">Editing: <code className="bg-slate-700 p-1 rounded">{filePath}</code></p>
+        </div>
+
+        <div className="grid grid-cols-12 gap-6">
+          {/* SIDEBAR */}
+          <div className="col-span-3 bg-slate-800 rounded-lg p-6">
         <h2 className="text-xl font-bold mb-4">Components</h2>
         <div className="space-y-2">
           {Object.entries(layoutComponents).map(([key, comp]) => (
@@ -408,6 +490,13 @@ return (
           className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 rounded transition font-semibold mb-2"
         >
           Generate Astro
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 rounded transition font-semibold"
+        >
+          {isSaving ? 'Saving...' : 'Save & Return'}
         </button>
       </div>
 

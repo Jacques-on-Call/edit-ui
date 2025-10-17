@@ -1,8 +1,10 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Icon from './Icon';
 
-function TopToolbar({ onPublish, isPublishing, onChangeLayout }) {
+function TopToolbar({ onPublish, isPublishing, onChangeLayout, layoutPath }) {
+  const location = useLocation();
+  const currentPath = new URLSearchParams(location.search).get('path');
   const buttonClass = "p-2 rounded-md hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500";
 
   return (
@@ -12,13 +14,25 @@ function TopToolbar({ onPublish, isPublishing, onChangeLayout }) {
       </Link>
       <div className="flex-grow"></div>
       <div className="flex items-center space-x-2">
-        <button
-          onClick={onChangeLayout}
-          className={`${buttonClass} text-gray-600`}
-          aria-label="Change Layout"
-        >
-          <Icon name="layout" className="text-gray-600" />
-        </button>
+        {layoutPath ? (
+          <Link
+            to={`/semantic-layout-editor?path=${layoutPath}&from=${currentPath}`}
+            className={`${buttonClass} text-gray-600`}
+            aria-label="Edit Layout"
+            title="Edit Layout"
+          >
+            <Icon name="layout" className="text-gray-600" />
+          </Link>
+        ) : (
+          <button
+            onClick={onChangeLayout}
+            className={`${buttonClass} text-gray-600`}
+            aria-label="Change Layout"
+            title="Assign Layout"
+          >
+            <Icon name="layout" className="text-gray-600" />
+          </button>
+        )}
         <button
           onClick={onPublish}
           disabled={isPublishing}
