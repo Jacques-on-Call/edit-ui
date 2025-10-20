@@ -44,8 +44,11 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
     if (e.button === 2) return;
 
     pointerDownTime.current = Date.now();
+    const x = e.clientX;
+    const y = e.clientY;
+
     pressTimer.current = setTimeout(() => {
-      onLongPress(file, e);
+      onLongPress(file, { clientX: x, clientY: y });
       pressTimer.current = null; // Prevent click after long press
     }, 500);
   };
