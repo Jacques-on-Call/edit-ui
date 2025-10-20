@@ -353,6 +353,9 @@ export default function App() {
   const [error, setError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  // NEW: mobile drawer state
+  const [isDrawerOpen, setDrawerOpen] = useState(false);
+
   const handleSave = async () => {
     if (!filePath || !repo) {
       setError('Cannot save without file path and repository information.');
@@ -462,46 +465,51 @@ setBlocks(blocks.filter(b => b.id !== id));
       <div className="max-w-7xl mx-auto p-6">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Semantic Layout Editor</h1>
-          <p className="text-gray-300">Editing: <code className="bg-slate-700 p-1 rounded">{filePath}</code></p>
+          <p className="text-gray-300">
+            Editing: <code className="bg-slate-700 p-1 rounded">{filePath}</code>
+          </p>
         </div>
 
+        {/* GRID: Sidebar (hidden on mobile) + Main */}
         <div className="grid grid-cols-12 gap-6">
-          {/* SIDEBAR */}
-          <div className="col-span-3 bg-slate-800 rounded-lg p-6">
-        <h2 className="text-xl font-bold mb-4">Components</h2>
-        <div className="space-y-2">
-          {Object.entries(layoutComponents).map(([key, comp]) => (
+          {/* SIDEBAR (Desktop/Tablet only) */}
+          <div className="col-span-3 bg-slate-800 rounded-lg p-6 hidden md:block">
+            <h2 className="text-xl font-bold mb-4">Components</h2>
+            <div className="space-y-2">
+              {Object.entries(layoutComponents).map(([key, comp]) => (
+                <button
+                  key={key}
+                  onClick={() => setBlocks(b => [...b, { type: key, props: { ...comp.props }, id: `${key}-${Date.now()}` }])}
+                  className="w-full text-left px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition"
+                >
+                  + {comp.label}
+                </button>
+              ))}
+            </div>
+
+            <hr className="my-6 border-slate-700" />
+
+            <h2 className="text-lg font-bold mb-4">Actions</h2>
             <button
-              key={key}
-              onClick={() => handleAddBlock(key)}
-              className="w-full text-left px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition"
+              onClick={() => { setGeneratedAstro(generateAstroCode(blocks)); setActiveTab('output'); }}
+              disabled={blocks.length === 0}
+              className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 rounded transition font-semibold mb-2"
             >
-              + {comp.label}
+              Generate Astro
             </button>
-          ))}
-        </div>
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 rounded transition font-semibold"
+            >
+              {isSaving ? 'Saving...' : 'Save & Return'}
+            </button>
+          </div>
 
-        <hr className="my-6 border-slate-700" />
-
-        <h2 className="text-lg font-bold mb-4">Actions</h2>
-        <button
-          onClick={handleGenerateAstro}
-          disabled={blocks.length === 0}
-          className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 rounded transition font-semibold mb-2"
-        >
-          Generate Astro
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 rounded transition font-semibold"
-        >
-          {isSaving ? 'Saving...' : 'Save & Return'}
-        </button>
-      </div>
-
-      {/* MAIN CONTENT */}
-      <div className="col-span-9">
+          {/* MAIN CONTENT (spans full width on mobile) */}
+          <div className="col-span-12 md:col-span-9">
+            {/* existing tabs + content... */}
+            {/* keep your existing tab buttons and panes here */}
         <div className="flex gap-2 mb-6 border-b border-slate-700">
           <button
             onClick={() => setActiveTab('builder')}
@@ -599,9 +607,71 @@ setBlocks(blocks.filter(b => b.id !== id));
             )}
           </div>
         )}
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE COMPONENTS TOGGLE BUTTON */}
+      <button
+        type="button"
+        className="md:hidden fixed bottom-4 inset-x-0 mx-auto w-[90%] max-w-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-full shadow-xl"
+        onClick={() => setDrawerOpen(open => !open)}
+        aria-expanded={isDrawerOpen}
+        aria-controls="components-drawer"
+      >
+        {isDrawerOpen ? 'Close Components' : 'Components'}
+      </button>
+
+      {/* MOBILE BOTTOM DRAWER */}
+      <div
+        id="components-drawer"
+        data-testid="components-drawer"
+        aria-hidden={!isDrawerOpen}
+        className={`md:hidden fixed left-0 right-0 bottom-0 bg-slate-800 rounded-t-2xl shadow-2xl transform transition-transform duration-300 ease-out
+          ${isDrawerOpen ? 'translate-y-0' : 'translate-y-full'}
+        `}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+      >
+        {/* drag handle */}
+        <div className="w-12 h-1.5 bg-slate-600 rounded-full mx-auto mt-3 mb-2"></div>
+
+        <div className="px-4 pb-4">
+          <h2 className="text-lg font-bold mb-3">Components</h2>
+          <div className="grid grid-cols-2 gap-2">
+            {Object.entries(layoutComponents).map(([key, comp]) => (
+              <button
+                key={key}
+                onClick={() => {
+                  setBlocks(b => [...b, { type: key, props: { ...comp.props }, id: `${key}-${Date.now()}` }]);
+                  // keep drawer open so users can add multiple; change to close on add if preferred
+                }}
+                className="text-left px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded transition text-sm"
+              >
+                + {comp.label}
+              </button>
+            ))}
+          </div>
+
+          <hr className="my-4 border-slate-700" />
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => { setGeneratedAstro(generateAstroCode(blocks)); setActiveTab('output'); }}
+              disabled={blocks.length === 0}
+              className="px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 rounded transition font-semibold text-sm"
+            >
+              Generate Astro
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 rounded transition font-semibold text-sm"
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
-);
+  );
 }
