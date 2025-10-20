@@ -1,85 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import NewTemplateModal from '../components/NewTemplateModal';
 import Icon from '../components/Icon';
-import LayoutContextMenu from '../components/LayoutContextMenu';
+import ContextMenu from '../components/ContextMenu';
+import ConfirmDialog from '../components/ConfirmDialog';
+import RenameModal from '../components/RenameModal';
 
 const LayoutsDashboardPage = () => {
-  const [d1Layouts, setD1Layouts] = useState([]);
-  const [astroLayouts, setAstroLayouts] = useState([]);
+  const [layouts, setLayouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
+  const [fileToDelete, setFileToDelete] = useState(null);
+  const [fileToRename, setFileToRename] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    async function loadLayouts() {
-      setLoading(true);
-      setError(null);
-      try {
-        const selectedRepo = localStorage.getItem('selectedRepo');
-        if (!selectedRepo) {
-          throw new Error("No repository selected. Please select a repository first.");
-        }
-
-        const [d1Res, astroRes] = await Promise.all([
-          fetch("/api/layout-templates", { credentials: 'include' }),
-          fetch(`/api/astro-layouts?repo=${selectedRepo}`, { credentials: 'include' })
-        ]);
-
-        if (!d1Res.ok) throw new Error(`Failed to fetch D1 templates: ${d1Res.statusText}`);
-        if (!astroRes.ok) throw new Error(`Failed to fetch Astro layouts: ${astroRes.statusText}`);
-
-        const [d1Raw, astroRaw] = await Promise.all([d1Res.json(), astroRes.json()]);
-
-        // --- Normalization Logic ---
-        const normalizeD1 = (item) => ({
-          id: item.id?.toString() || `d1-${crypto.randomUUID()}`,
-          name: item.name || "Untitled D1 Layout",
-          source: "d1",
-          path: `/layout-editor?template_id=${item.id}`,
-          json_content: item.json_content || null, // Will be null for list view
-          created_at: item.updated_at || item.created_at || null
-        });
-
-        const normalizeAstro = (item) => ({
-          id: item.sha || item.path, // Use SHA if available, fallback to path
-          name: item.name?.replace(".astro", "") || "Unnamed Astro Layout",
-          source: "astro",
-          path: item.path, // The actual file path
-          json_content: null,
-          created_at: null
-        });
-
-        const extractArray = (data) =>
-          Array.isArray(data)
-            ? data
-            : Array.isArray(data.results)
-            ? data.results
-            : [];
-
-        const finalD1Layouts = extractArray(d1Raw).map(normalizeD1);
-        const finalAstroLayouts = extractArray(astroRaw)
-          .filter(item => item.name && item.name.endsWith('.astro'))
-          .map(normalizeAstro);
-
-        setD1Layouts(finalD1Layouts);
-        setAstroLayouts(finalAstroLayouts);
-
-        console.log("✅ D1 Layouts:", finalD1Layouts);
-        console.log("✅ Astro Layouts:", finalAstroLayouts);
-
-      } catch (err) {
-        console.error("❌ Failed to load layouts:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
+  const loadLayouts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const selectedRepo = localStorage.getItem('selectedRepo');
+      if (!selectedRepo) {
+        throw new Error("No repository selected. Please select a repository first.");
       }
-    }
 
-    loadLayouts();
+      const res = await fetch(`/api/astro-layouts?repo=${selectedRepo}`, { credentials: 'include' });
+      if (!res.ok) throw new Error(`Failed to fetch Astro layouts: ${res.statusText}`);
+      const rawLayouts = await res.json();
+
+      const normalize = (item) => ({
+        id: item.sha || item.path,
+        name: item.name?.replace(".astro", "") || "Unnamed Astro Layout",
+        source: "astro",
+        path: item.path,
+        sha: item.sha, // Ensure sha is present for operations
+        type: 'file', // for context menu compatibility
+      });
+
+      const finalLayouts = (Array.isArray(rawLayouts) ? rawLayouts : [])
+        .filter(item => item.name && item.name.endsWith('.astro'))
+        .map(normalize);
+
+      setLayouts(finalLayouts);
+    } catch (err) {
+      console.error("❌ Failed to load layouts:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadLayouts();
+  }, [loadLayouts]);
 
   const handleCreateNewTemplate = async (template) => {
     setModalOpen(false);
@@ -138,56 +112,83 @@ description: "A new layout."
 
   const handleCloseContextMenu = () => setContextMenu(null);
 
-  const handleDelete = async (layout) => {
-    if (!window.confirm(`Are you sure you want to delete "${layout.name}"?`)) return;
-
+  const handleDelete = async (file) => {
+    if (!file) return;
     try {
-      if (layout.source === 'd1') {
-        const res = await fetch(`/api/layout-templates/${layout.id}`, {
-          method: 'DELETE',
-          credentials: 'include'
-        });
-        if (!res.ok) throw new Error('Failed to delete D1 layout.');
-      } else {
-        // Handle file-based layout deletion
-        const res = await fetch(`/api/file`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            repo: localStorage.getItem('selectedRepo'),
-            path: layout.path,
-            sha: layout.id
-          }),
-        });
-        if (!res.ok) throw new Error('Failed to delete file-based layout.');
-      }
-      // Refresh the list
-      setD1Layouts(prev => prev.filter(l => l.id !== layout.id));
-      setAstroLayouts(prev => prev.filter(l => l.id !== layout.id));
+      const response = await fetch('/api/files', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          repo: localStorage.getItem('selectedRepo'),
+          path: file.path,
+          sha: file.sha
+        }),
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Failed to delete file.');
+      setFileToDelete(null);
+      loadLayouts(); // Refresh
     } catch (err) {
       setError(err.message);
     }
   };
 
-  const handleDuplicate = async (layout) => {
+  const handleDuplicate = async (file) => {
+    handleCloseContextMenu();
+    const parts = file.path.split('/');
+    const fileName = parts.pop();
+    const dir = parts.join('/');
+    const nameParts = fileName.split('.');
+    const extension = nameParts.pop();
+    const baseName = nameParts.join('.');
+    const newName = `${baseName}-copy.${extension}`;
+    const newPath = `${dir}/${newName}`;
+
     try {
-      const repo = localStorage.getItem('selectedRepo');
-      const res = await fetch('/api/duplicate-layout', {
+      const response = await fetch('/api/duplicate-file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          repo,
-          layout,
+          repo: localStorage.getItem('selectedRepo'),
+          path: file.path,
+          newPath
         }),
       });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || 'Failed to duplicate layout.');
-      }
-      // Refresh the list by re-fetching
-      loadLayouts();
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Failed to duplicate file.');
+      loadLayouts(); // Refresh
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleRenameConfirm = async (file, newName) => {
+    if (!file || !newName || newName === file.name) {
+      setFileToRename(null);
+      return;
+    }
+    const oldPath = file.path;
+    const newFileName = newName.endsWith('.astro') ? newName : `${newName}.astro`;
+    const newPath = oldPath.substring(0, oldPath.lastIndexOf('/') + 1) + newFileName;
+
+    try {
+      const response = await fetch('/api/rename-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          repo: localStorage.getItem('selectedRepo'),
+          oldPath,
+          newPath,
+          sha: file.sha
+        }),
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Failed to rename file.');
+      setFileToRename(null);
+      loadLayouts(); // Refresh
     } catch (err) {
       setError(err.message);
     }
@@ -223,66 +224,52 @@ description: "A new layout."
   return (
     <div className="p-4 sm:p-6 lg:p-8" onClick={handleCloseContextMenu}>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Layouts</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Astro Layouts</h1>
         <button
           onClick={() => setModalOpen(true)}
           className="bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-600 transition-all flex items-center space-x-2"
         >
           <Icon name="plus" className="h-5 w-5" />
-          <span>Create New Template</span>
+          <span>Create New Layout</span>
         </button>
       </div>
 
-      {d1Layouts.length === 0 && astroLayouts.length === 0 && !loading ? (
-         <div className="text-center p-10 bg-white rounded-lg shadow-md">
-           <h3 className="text-xl font-semibold text-gray-700">🕵️‍♂️ No layouts found.</h3>
-           <p className="text-gray-500 mt-2">This space is ready for your designs. Click "Create New Template" to start.</p>
-         </div>
+      {layouts.length === 0 && !loading ? (
+        <div className="text-center p-10 bg-white rounded-lg shadow-md">
+          <h3 className="text-xl font-semibold text-gray-700">No Astro layouts found.</h3>
+          <p className="text-gray-500 mt-2">Click "Create New Layout" to get started.</p>
+        </div>
       ) : (
-        <>
-          {/* D1 Graphical Templates */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-700 mt-8 mb-4 border-b pb-2">Graphical Templates</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {d1Layouts.map((layout) => (
-                <LayoutCard key={layout.id} layout={layout} onLongPress={handleLongPress} />
-              ))}
-              <div
-                onClick={() => setModalOpen(true)}
-                className="flex flex-col items-center justify-center p-4 bg-white rounded-lg shadow-md border-2 border-dashed border-gray-300 cursor-pointer text-gray-500 hover:border-blue-400 hover:text-blue-500 transition-all hover:shadow-xl hover:-translate-y-1"
-              >
-                <Icon name="plus" className="h-8 w-8 mb-2" />
-                <span className="font-bold text-center">Create New Template</span>
-              </div>
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {layouts.map((layout) => (
+            <LayoutCard key={layout.id} layout={layout} onLongPress={handleLongPress} />
+          ))}
+          <div
+            onClick={() => setModalOpen(true)}
+            className="flex flex-col items-center justify-center p-4 bg-white rounded-lg shadow-md border-2 border-dashed border-gray-300 cursor-pointer text-gray-500 hover:border-blue-400 hover:text-blue-500 transition-all hover:shadow-xl hover:-translate-y-1"
+          >
+            <Icon name="plus" className="h-8 w-8 mb-2" />
+            <span className="font-bold text-center">Create New Layout</span>
           </div>
-
-          {/* Astro File-based Layouts */}
-          {astroLayouts.length > 0 && (
-            <div>
-              <h2 className="text-xl font-semibold text-gray-700 mt-8 mb-4 border-b pb-2">File-based Layouts (src/layouts)</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {astroLayouts.map((layout) => (
-                  <LayoutCard key={layout.id} layout={layout} onLongPress={handleLongPress} />
-                ))}
-              </div>
-            </div>
-          )}
-        </>
+        </div>
       )}
 
       {isModalOpen && <NewTemplateModal onClose={() => setModalOpen(false)} onSubmit={handleCreateNewTemplate} />}
       {contextMenu && (
-        <LayoutContextMenu
+        <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          layout={contextMenu.layout}
+          file={contextMenu.layout}
           onClose={handleCloseContextMenu}
-          onDelete={handleDelete}
-          onDuplicate={handleDuplicate}
-          onCreatePage={handleCreatePage}
+          onRename={() => setFileToRename(contextMenu.layout)}
+          onDelete={() => setFileToDelete(contextMenu.layout)}
+          onDuplicate={() => handleDuplicate(contextMenu.layout)}
+          onShare={() => {}} // Not implemented for layouts
+          onAssignLayout={() => {}} // Not implemented for layouts
         />
       )}
+      {fileToDelete && <ConfirmDialog message={`Are you sure you want to delete "${fileToDelete.name}"?`} onConfirm={() => handleDelete(fileToDelete)} onCancel={() => setFileToDelete(null)} />}
+      {fileToRename && <RenameModal file={fileToRename} onClose={() => setFileToRename(null)} onRename={handleRenameConfirm} />}
     </div>
   );
 };
