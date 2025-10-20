@@ -164,7 +164,7 @@ function FileExplorer({ repo }) {
     }
   };
 
-  const handleLongPress = (file, event) => setContextMenu({ x: event.clientX, y: event.clientY, file });
+  const handleLongPress = (file, coords) => setContextMenu({ x: coords.clientX, y: coords.clientY, file });
   const handleCloseContextMenu = () => setContextMenu(null);
   const handleDeleteRequest = (file) => {
     setFileToDelete(file);
@@ -257,8 +257,7 @@ function FileExplorer({ repo }) {
       setFileToRename(null);
       fetchFiles(); // Refresh file list
       cache.remove(file.sha);
-    } catch (err) {
-      console.error(err);
+    } catch (err)      console.error(err);
       // Here you might want to show an error message to the user
     }
   };
@@ -306,7 +305,7 @@ function FileExplorer({ repo }) {
             isSelected={selectedFile && selectedFile.sha === file.sha}
             metadata={metadataCache[file.sha]}
             onClick={handleFileClick}
-            onLongPress={(e) => handleLongPress(file, e)}
+            onLongPress={(file, coords) => handleLongPress(file, coords)}
             onRename={() => handleRenameRequest(file)}
             onDelete={() => handleDeleteRequest(file)}
           />

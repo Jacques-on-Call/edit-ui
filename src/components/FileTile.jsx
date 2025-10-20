@@ -40,13 +40,21 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
   `;
 
   const handlePointerDown = (e) => {
-    // For touch events, prevent the default action (like text selection)
+    // For touch events, prevent default actions like text selection or page scrolling.
     if (e.type === 'touchstart') {
       e.preventDefault();
     }
-    if (e.button === 2) return; // Ignore right-click down event
+    // Ignore right-clicks for mouse events.
+    if (e.button === 2) return;
+
+    // Capture coordinates immediately because the event object is reused by React.
+    const coords = {
+      clientX: e.touches ? e.touches[0].clientX : e.clientX,
+      clientY: e.touches ? e.touches[0].clientY : e.clientY,
+    };
+
     pressTimer.current = setTimeout(() => {
-      onLongPress(file, e);
+      onLongPress(file, coords);
     }, 500);
   };
 
