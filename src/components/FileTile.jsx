@@ -4,96 +4,116 @@ import Icon from './Icon.jsx';
 function formatRelativeDate(dateString) {
   if (!dateString) return '';
   const date = new Date(dateString);
-  const now = new Date();
-  const seconds = Math.round((now - date) / 1000);
-  const minutes = Math.round(seconds / 60);
-  const hours = Math.round(minutes / 60);
-  const days = Math.round(hours / 24);
-
-  if (seconds < 60) return `${seconds}s ago`;
+  const diff = Date.now() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
   if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }
 
 function formatDisplayName(name) {
   if (!name) return '';
-  if (name.endsWith('.astro')) {
-    name = name.slice(0, -6);
-  }
-  return name.charAt(0).toUpperCase() + name.slice(1);
+  const noExt = name.replace(/\.(md|astro|jsx?|tsx?)$/i, '');
+  return noExt.charAt(0).toUpperCase() + noExt.slice(1);
 }
 
 function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
   const pressTimer = useRef(null);
+  const startPos = useRef({ x: 0, y: 0 });
 
   const isDir = file.type === 'dir';
   const iconName = isDir ? 'folder' : 'file';
-  // Set the icon color based on file type as per user request
   const iconClassName = isDir ? 'text-blue-500' : 'text-green-600';
 
+  // Added select-none, touch-none and [-webkit-touch-callout:none] to prevent iOS selection/callout
   const tileClassName = `
     p-2 rounded-lg cursor-pointer transition-all duration-200 text-center flex flex-col items-center justify-center h-32
     ${isSelected ? 'bg-blue-100 border-2 border-blue-500' : 'bg-gray-100 hover:bg-gray-200'}
+    select-none touch-none [-webkit-touch-callout:none]
   `;
 
+  const clearTimer = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+  };
+
   const handlePointerDown = (e) => {
-    // For touch events, prevent default actions like text selection or page scrolling.
+    // Prevent iOS from initiating text selection/callout
     if (e.type === 'touchstart') {
-      e.preventDefault();
+      e.preventDefault?.();
     }
     // Ignore right-clicks for mouse events.
     if (e.button === 2) return;
 
-    // Capture coordinates immediately because the event object is reused by React.
-    const coords = {
-      clientX: e.touches ? e.touches[0].clientX : e.clientX,
-      clientY: e.touches ? e.touches[0].clientY : e.clientY,
-    };
+    // Capture start position for movement threshold
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    startPos.current = { x: clientX, y: clientY };
+
+    // Capture coordinates immediately; event object is reused
+    const coords = { clientX, clientY };
 
     pressTimer.current = setTimeout(() => {
-      onLongPress(file, coords);
+      onLongPress?.(file, coords);
     }, 500);
   };
 
   const handlePointerUp = () => {
-    clearTimeout(pressTimer.current);
+    clearTimer();
+  };
+
+  // Cancel long-press if finger moves more than a small threshold
+  const handleTouchMove = (e) => {
+    if (!pressTimer.current || !e.touches || e.touches.length === 0) return;
+    const { clientX, clientY } = e.touches[0];
+    const dx = Math.abs(clientX - startPos.current.x);
+    const dy = Math.abs(clientY - startPos.current.y);
+    if (dx > 10 || dy > 10) {
+      clearTimer();
+    }
+  };
+
+  const handleTouchCancel = () => {
+    clearTimer();
   };
 
   const handleContextMenu = (e) => {
     e.preventDefault();
-    clearTimeout(pressTimer.current);
-    onLongPress(file, e);
+    clearTimer();
+    onLongPress?.(file, { clientX: e.clientX, clientY: e.clientY });
   };
 
   return (
     <div
       className={tileClassName}
-      onClick={() => onClick(file)}
+      onClick={() => onClick?.(file)}
       onMouseDown={handlePointerDown}
       onMouseUp={handlePointerUp}
       onMouseLeave={handlePointerUp}
       onTouchStart={handlePointerDown}
       onTouchEnd={handlePointerUp}
+      onTouchMove={handleTouchMove}
+      onTouchCancel={handleTouchCancel}
       onContextMenu={handleContextMenu}
     >
-      <div className="mb-2">
-        <Icon name={iconName} className={iconClassName} />
-      </div>
-      <div className="font-semibold text-sm text-gray-800 truncate w-full px-1">
-        {formatDisplayName(file.name)}
-      </div>
-      <div className="text-xs text-gray-500 mt-1 w-full px-1 truncate">
-        {metadata ? (
-          <div className="flex items-center justify-between w-full space-x-2">
-            <span>{metadata.author.split(' ')[0]}</span>
-            <span>{formatRelativeDate(metadata.date)}</span>
+      <div className="flex flex-col items-center justify-center text-center w-full">
+        <div className="mb-2">
+          <Icon name={iconName} className={`w-12 h-12 ${iconClassName}`} />
+        </div>
+        <div className="w-full">
+          <div className="font-semibold text-gray-800 truncate" title={file.name}>
+            {formatDisplayName(file.name)}
           </div>
-        ) : (
-          <span>--</span>
-        )}
+          {metadata?.lastModified && (
+            <div className="text-xs text-gray-500 mt-1">
+              {formatRelativeDate(metadata.lastModified)}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

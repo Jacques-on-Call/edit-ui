@@ -257,7 +257,8 @@ function FileExplorer({ repo }) {
       setFileToRename(null);
       fetchFiles(); // Refresh file list
       cache.remove(file.sha);
-    } catch (err)      console.error(err);
+    } catch (err) {
+      console.error(err);
       // Here you might want to show an error message to the user
     }
   };
