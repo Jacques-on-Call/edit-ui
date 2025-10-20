@@ -118,7 +118,7 @@ function FileExplorer({ repo }) {
   }, [fetchFiles]);
 
   const handleFileClick = (file) => {
-    if (selectedFile && selectedFile.path === file.path) {
+    if (selectedFile && selectedFile.sha === file.sha) {
       handleOpen(file);
     } else {
       setSelectedFile(file);
@@ -301,9 +301,9 @@ function FileExplorer({ repo }) {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-24">
         {Array.isArray(files) && files.filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md').map(file => (
           <FileTile
-            key={file.path}
+            key={file.sha}
             file={file}
-            isSelected={selectedFile && selectedFile.path === file.path}
+            isSelected={selectedFile && selectedFile.sha === file.sha}
             metadata={metadataCache[file.sha]}
             onClick={handleFileClick}
             onLongPress={(e) => handleLongPress(file, e)}
