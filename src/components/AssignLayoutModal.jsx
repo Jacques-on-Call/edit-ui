@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 
 const AssignLayoutModal = ({ onClose, onAssign, currentPath }) => {
   const [astroLayouts, setAstroLayouts] = useState([]);
-  const [d1Layouts, setD1Layouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedLayout, setSelectedLayout] = useState('');
 
@@ -10,18 +9,17 @@ const AssignLayoutModal = ({ onClose, onAssign, currentPath }) => {
     const fetchLayouts = async () => {
       setLoading(true);
       try {
-        // Fetch file-based .astro layouts
-        const astroRes = await fetch('/api/astro-layouts', { credentials: 'include' });
+        const selectedRepo = localStorage.getItem('selectedRepo');
+        const qs = selectedRepo ? `?repo=${encodeURIComponent(selectedRepo)}` : '';
+        // Fetch file-based .astro layouts only
+        const astroRes = await fetch(`/api/astro-layouts${qs}`, { credentials: 'include' });
         const astroData = await astroRes.json();
         if (astroRes.ok) {
-          setAstroLayouts(astroData.filter(f => f.name.endsWith('.astro')));
-        }
-
-        // Fetch database-driven graphical layouts
-        const d1Res = await fetch('/api/layout-templates', { credentials: 'include' });
-        const d1Data = await d1Res.json();
-        if (d1Res.ok) {
-          setD1Layouts(d1Data);
+          // Keep only .astro files and normalize fields we need
+          const onlyAstro = (Array.isArray(astroData) ? astroData : []).filter(f => f.name?.endsWith('.astro'));
+          setAstroLayouts(onlyAstro);
+        } else {
+          console.error('Failed to fetch astro layouts:', astroData?.error || astroRes.statusText);
         }
       } catch (error) {
         console.error("Failed to fetch layouts:", error);
@@ -49,28 +47,13 @@ const AssignLayoutModal = ({ onClose, onAssign, currentPath }) => {
           <div className="text-center p-8">Loading...</div>
         ) : (
           <div className="space-y-4 max-h-96 overflow-y-auto">
-            <h3 className="font-semibold text-lg border-b pb-2">Graphical Layouts</h3>
+            <h3 className="font-semibold text-lg border-b pb-2">File-based Layouts (src/layouts)</h3>
             <div className="space-y-2">
-              {d1Layouts.map(layout => (
-                <div key={`d1-${layout.id}`} className="p-2 border rounded-md hover:bg-gray-100">
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="layout"
-                      value={`db:${layout.id}`}
-                      checked={selectedLayout === `db:${layout.id}`}
-                      onChange={(e) => setSelectedLayout(e.target.value)}
-                    />
-                    <span>{layout.name} (Graphical)</span>
-                  </label>
-                </div>
-              ))}
-            </div>
-
-            <h3 className="font-semibold text-lg border-b pb-2 pt-4">File-based Layouts</h3>
-            <div className="space-y-2">
+              {astroLayouts.length === 0 && (
+                <div className="text-sm text-gray-500">No layouts found in src/layouts.</div>
+              )}
               {astroLayouts.map(layout => (
-                <div key={layout.path} className="p-2 border rounded-md hover:bg-gray-100">
+                <div key={layout.path || layout.sha || layout.name} className="p-2 border rounded-md hover:bg-gray-100">
                   <label className="flex items-center space-x-3">
                     <input
                       type="radio"
@@ -79,7 +62,7 @@ const AssignLayoutModal = ({ onClose, onAssign, currentPath }) => {
                       checked={selectedLayout === layout.path}
                       onChange={(e) => setSelectedLayout(e.target.value)}
                     />
-                    <span>{layout.name}</span>
+                    <span className="truncate" title={layout.path}>{layout.name}</span>
                   </label>
                 </div>
               ))}
