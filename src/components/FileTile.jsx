@@ -28,10 +28,10 @@ function formatDisplayName(name) {
 
 function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
   const pressTimer = useRef(null);
+  const pointerDownTime = useRef(0);
 
   const isDir = file.type === 'dir';
   const iconName = isDir ? 'folder' : 'file';
-  // Set the icon color based on file type as per user request
   const iconClassName = isDir ? 'text-blue-500' : 'text-green-600';
 
   const tileClassName = `
@@ -40,35 +40,41 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
   `;
 
   const handlePointerDown = (e) => {
-    // For touch events, prevent the default action (like text selection)
-    if (e.type === 'touchstart') {
-      e.preventDefault();
-    }
-    if (e.button === 2) return; // Ignore right-click down event
+    // Ignore right-clicks
+    if (e.button === 2) return;
+
+    pointerDownTime.current = Date.now();
     pressTimer.current = setTimeout(() => {
       onLongPress(file, e);
+      pressTimer.current = null; // Prevent click after long press
     }, 500);
   };
 
   const handlePointerUp = () => {
-    clearTimeout(pressTimer.current);
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      // This was a tap, not a long press
+      const pressDuration = Date.now() - pointerDownTime.current;
+      if (pressDuration < 500) {
+        onClick(file);
+      }
+    }
   };
 
   const handleContextMenu = (e) => {
     e.preventDefault();
-    clearTimeout(pressTimer.current);
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+    }
     onLongPress(file, e);
   };
 
   return (
     <div
       className={tileClassName}
-      onClick={() => onClick(file)}
-      onMouseDown={handlePointerDown}
-      onMouseUp={handlePointerUp}
-      onMouseLeave={handlePointerUp}
-      onTouchStart={handlePointerDown}
-      onTouchEnd={handlePointerUp}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp} // Cancel on drag away
       onContextMenu={handleContextMenu}
     >
       <div className="mb-2">
