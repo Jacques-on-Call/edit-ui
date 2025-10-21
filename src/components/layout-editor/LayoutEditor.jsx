@@ -1,8 +1,10 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Box, Type, Image, Layout } from 'lucide-react';
 import MobileToolbar from './MobileToolbar';
 import Toolbox from './Toolbox';
 import { stateToAstro } from '../../utils/stateToAstro';
+import Icon from '../Icon';
 
 // Component Registry
 const COMPONENT_TYPES = {
@@ -72,15 +74,9 @@ const LayoutEditor = ({ initialState, filePath }) => {
   }, [initialState]);
 
   const [selectedId, setSelectedId] = useState(null);
-  const [isSideDrawerOpen, setSideDrawerOpen] = useState(false);
   const [nextId, setNextId] = useState(3);
 
   const filename = filePath?.split('/').pop();
-
-  const handleExit = () => {
-    // A more robust navigation would use the `from` param if available
-    window.history.back();
-  };
 
   const getParent = useCallback((childId) => {
     const parentEntry = Object.entries(components).find(([, comp]) => comp.children?.includes(childId));
@@ -191,8 +187,21 @@ const LayoutEditor = ({ initialState, filePath }) => {
           e.stopPropagation();
           setSelectedId(id);
         }}
-        className={`component-wrapper m-2 p-2 border ${selectedId === id ? 'border-blue-500 ring-2 ring-blue-500' : 'border-transparent'}`}
+        className={`relative component-wrapper m-2 p-2 border ${selectedId === id ? 'border-blue-500 ring-2 ring-blue-500' : 'border-transparent'}`}
       >
+        {selectedId === id && (
+          <div className="absolute top-0 right-0 -mt-8 flex space-x-1 bg-slate-700 p-1 rounded-lg shadow-lg">
+            <button onClick={() => moveComponent(id, 'up')} disabled={!canMoveUp} className="p-1 hover:bg-slate-600 rounded disabled:opacity-50">
+              <Icon name="arrow-up" />
+            </button>
+            <button onClick={() => moveComponent(id, 'down')} disabled={!canMoveDown} className="p-1 hover:bg-slate-600 rounded disabled:opacity-50">
+              <Icon name="arrow-down" />
+            </button>
+            <button onClick={() => deleteComponent(id)} className="p-1 hover:bg-slate-600 rounded">
+              <Icon name="trash" />
+            </button>
+          </div>
+        )}
         <ComponentDef.render
           props={component.props}
           children={component.children.map(renderComponent)}
@@ -201,8 +210,6 @@ const LayoutEditor = ({ initialState, filePath }) => {
     );
   }, [components, selectedId]);
 
-
-  const [isToolboxOpen, setToolboxOpen] = useState(false);
 
   const { canMoveUp, canMoveDown } = useMemo(() => {
     if (!selectedId) return { canMoveUp: false, canMoveDown: false };
@@ -217,11 +224,6 @@ const LayoutEditor = ({ initialState, filePath }) => {
       canMoveDown: index < siblings.length - 1,
     };
   }, [selectedId, components, getParent]);
-
-  const handleAddComponent = (parentId, type) => {
-    addComponent(parentId, type);
-    setToolboxOpen(false);
-  }
 
   const handleSave = async () => {
     const astroCode = stateToAstro(components, COMPONENT_TYPES);
@@ -260,91 +262,43 @@ const LayoutEditor = ({ initialState, filePath }) => {
 
   return (
     <div className="h-screen flex flex-col bg-slate-900 text-white">
-      {/* NEW HEADER */}
       <header className="flex items-center justify-between p-3 border-b border-slate-700 bg-slate-800 shadow-md z-20">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleExit}
-            className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded transition font-semibold text-sm"
-          >
-            Exit
-          </button>
-          <button
-            onClick={() => setSideDrawerOpen(true)}
-            className="md:hidden px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded transition font-semibold text-sm"
-          >
-            Components
-          </button>
-        </div>
+        <Link to="/explorer" className="p-2 rounded-md hover:bg-slate-700 transition-colors">
+          <Icon name="home" className="text-white" />
+        </Link>
         <h1 className="font-semibold text-center truncate">{filename}</h1>
         <button
           onClick={handleSave}
-          className="px-4 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded transition font-semibold text-sm"
+          className="p-2 rounded-md hover:bg-slate-700 transition-colors"
         >
-          Save
+          <Icon name="publish" className="text-white" />
         </button>
       </header>
 
-      {/* Side Drawer (Mobile) */}
-      <div
-        className={`fixed inset-y-0 left-0 w-64 bg-slate-800 shadow-xl z-30 transform transition-transform duration-300 ease-in-out ${
-          isSideDrawerOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:hidden`}
+      <main
+        className="flex-1 overflow-y-auto p-4"
+        onClick={() => setSelectedId(null)}
       >
-        <div className="p-4">
-          <button onClick={() => setSideDrawerOpen(false)} className="text-white mb-4">
-            &times; Close
-          </button>
-          <h2 className="text-xl font-bold mb-4">Components</h2>
-          <div className="space-y-2">
-            {Object.entries(COMPONENT_TYPES).map(([key, comp]) => (
-              <button
-                key={key}
-                onClick={() => {
-                  const parentId = selectedId && COMPONENT_TYPES[components[selectedId]?.type]?.canHaveChildren ? selectedId : getParent(selectedId) || 'root';
-                  addComponent(parentId, key);
-                  setSideDrawerOpen(false); // Close drawer after adding
-                }}
-                className="w-full text-left px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition"
-              >
-                + {comp.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-      {isSideDrawerOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
-          onClick={() => setSideDrawerOpen(false)}
-        ></div>
-      )}
+        {renderComponent('root')}
+      </main>
 
-      {/* Main Content Area */}
-      <div className="flex flex-grow overflow-hidden">
-        {/* Desktop Sidebar */}
-        <div className="hidden md:block w-64 bg-slate-800 p-4 overflow-y-auto">
-          <h2 className="text-xl font-bold mb-4">Components</h2>
-          <div className="space-y-2">
-            {Object.entries(COMPONENT_TYPES).map(([key, comp]) => (
-              <button
-                key={key}
-                onClick={() => {
-                  const parentId = selectedId && COMPONENT_TYPES[components[selectedId]?.type]?.canHaveChildren ? selectedId : getParent(selectedId) || 'root';
-                  addComponent(parentId, key);
-                }}
-                className="w-full text-left px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition"
-              >
-                + {comp.name}
-              </button>
-            ))}
-          </div>
+      {/* Bottom Component Bar */}
+      <div className="bg-slate-800 border-t border-slate-700 p-2 shadow-lg">
+        <div className="flex space-x-2 overflow-x-auto">
+          {Object.entries(COMPONENT_TYPES).map(([type, { name, icon: IconComponent }]) => (
+            <button
+              key={type}
+              onClick={() => {
+                const parentId = selectedId && COMPONENT_TYPES[components[selectedId]?.type]?.canHaveChildren ? selectedId : getParent(selectedId) || 'root';
+                addComponent(parentId, type);
+              }}
+              className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-slate-700 transition-colors w-20 flex-shrink-0"
+            >
+              <IconComponent className="h-6 w-6 text-white mb-1" />
+              <span className="text-xs text-white">{name}</span>
+            </button>
+          ))}
         </div>
-
-        {/* Canvas */}
-        <main className="flex-1 overflow-y-auto p-4" onClick={() => setSelectedId(null)}>
-          {renderComponent('root')}
-        </main>
       </div>
     </div>
   );

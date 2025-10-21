@@ -17,6 +17,7 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/callback" element={<CallbackPage />} />
       <Route path="/repository-selection" element={<RepositorySelectionPage />} />
+      <Route path="/layout-editor" element={<LayoutEditorPage />} />
 
       {/*
         All routes that ARE part of the main application experience are nested here.
@@ -32,7 +33,6 @@ function App() {
         <Route path="explorer" element={<ExplorerPage />} />
         <Route path="editor" element={<EditorPage />} />
         <Route path="layouts" element={<LayoutsDashboardPage />} />
-        <Route path="layout-editor" element={<LayoutEditorPage />} />
       </Route>
     </Routes>
   );
