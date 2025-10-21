@@ -1,18 +1,29 @@
 import type { LayoutBlueprint, HeadNode, BodyNode, PropSpec } from "./types";
 
-const re = {
-  blockCapture: (name: string) => new RegExp(
-    name === "imports" || name === "props"
-      ? `/*\\s*editor:region\\s+name="${name}"\\s*\\*/([\\s\\S]*?)\\/\\*\\s*\\/editor:region\\s*\\*/`
-      : `<!--\\s*editor:region\\s+name="${name}"\\s*-->([\\s\\S]*?)<!--\\s*\\/editor:region\\s*-->`,
+const commentBlockTS = (name: string) =>
+  new RegExp(
+    String.raw`/\*\s*editor:region\s+name="${name}"\s*\*/([\s\S]*?)\/\*\s*\/editor:region\s*\*/`,
     "m"
-  ),
-  slot: /<!--\s*editor:content-slot[^>]*-->\s*<slot\s*\/>\s*<!--\s*\/editor:content-slot\s*-->/m,
-  htmlTag: /<html([^>]*)>/m,
-};
+  );
+
+const commentBlockHTML = (name: string) =>
+  new RegExp(
+    String.raw`<!--\s*editor:region\s+name="${name}"\s*-->([\s\S]*?)<!--\s*\/editor:region\s*-->`,
+    "m"
+  );
+
+// Allow attributes and whitespace on <slot ... />
+const contentSlotRe =
+  /<!--\s*editor:content-slot[^>]*-->\s*<slot(?:\s[^>]*)?\/>\s*<!--\s*\/editor:content-slot\s*-->/ms;
+
+// Capture attributes from <html ...>
+const htmlTagRe = /<html([^>]*)>/m;
+const htmlAttrRe = /([^\s=]+)=["']([^"']*)["']/g;
 
 function extract(content: string, name: string): string | null {
-  const m = content.match(re.blockCapture(name));
+  const isTS = name === "imports" || name === "props";
+  const rx = isTS ? new RegExp(String.raw`/\*\s*editor:region\s+name="${name}"\s*\*/([\s\S]*?)\/\*\s*\/editor:region\s*\*/`, "s") : commentBlockHTML(name);
+  const m = content.match(rx);
   return m ? m[1].trim() : null;
 }
 
@@ -20,34 +31,38 @@ function parseImports(importsBlock: string | null) {
   if (!importsBlock) return [];
   return importsBlock
     .split("\n")
-    .map(l => l.trim())
+    .map((l) => l.trim())
     .filter(Boolean)
-    .map(line => {
+    .map((line) => {
+      // import X from "path";
       const m = line.match(/^import\s+([A-Za-z0-9_]+)\s+from\s+["']([^"']+)["'];?$/);
       return m ? { as: m[1], from: m[2] } : null;
     })
-    .filter(Boolean) as {as: string; from: string}[];
+    .filter(Boolean) as { as: string; from: string }[];
 }
 
 function parsePropsJSON(propsBlock: string | null): Record<string, PropSpec> {
   if (!propsBlock) return {};
-  try { return JSON.parse(propsBlock.trim()); } catch { return {}; }
+  try {
+    return JSON.parse(propsBlock.trim());
+  } catch {
+    return {};
+  }
 }
 
-function parseHtmlAttrs(content: string): Record<string,string> {
-  const m = content.match(re.htmlTag);
+function parseHtmlAttrs(content: string): Record<string, string> {
+  const m = content.match(htmlTagRe);
   if (!m) return {};
-  const attrs = m[1] ?? "";
-  const out: Record<string,string> = {};
-  for (const attr of attrs.split(/\s+/).filter(Boolean)) {
-    const kv = attr.match(/^([^\s=]+)=["']?([^"']+)["']?$/);
-    if (kv) out[kv[1]] = kv[2];
+  const raw = m[1] ?? "";
+  const out: Record<string, string> = {};
+  for (const match of raw.matchAll(htmlAttrRe)) {
+    out[match[1]] = match[2];
   }
   return out;
 }
 
 export function parseAstroToBlueprint(content: string): LayoutBlueprint | null {
-  if (!re.slot.test(content)) return null;
+  if (!contentSlotRe.test(content)) return null;
 
   const imports = parseImports(extract(content, "imports"));
   const props = parsePropsJSON(extract(content, "props"));
@@ -62,7 +77,7 @@ export function parseAstroToBlueprint(content: string): LayoutBlueprint | null {
   const postContent: BodyNode[] = postRaw ? [{ type: "raw", html: postRaw }] : [];
 
   return {
-    name: "Unknown",
+    name: "Unknown", // derive from filename in UI if needed
     htmlAttrs,
     imports,
     props,

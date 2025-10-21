@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../Icon';
 import { compileAstro } from '../../lib/layouts/compileAstro';
+import { validateAstroLayout } from '../../lib/layouts/validateAstro';
 
 // A simple, empty blueprint to serve as the initial state for a new layout.
 const emptyBlueprint = {
@@ -80,15 +81,23 @@ const LayoutModeEditor = ({ initialBlueprint, filePath }) => {
 
   const handleSave = async () => {
     const astroCode = compileAstro(blueprint);
-    const repo = localStorage.getItem('selectedRepo');
 
+    // --- SAVE GUARDRAIL ---
+    const { ok, errors } = validateAstroLayout(astroCode);
+    if (!ok) {
+      alert(`Validation failed:\n- ${errors.join('\n- ')}`);
+      return;
+    }
+
+    const repo = localStorage.getItem('selectedRepo');
     if (!repo || !filePath) {
       alert('Missing repository or file path information.');
       return;
     }
 
     try {
-      const response = await fetch('/api/file', {
+      // Use the /api/save-layout endpoint for consistency
+      const response = await fetch('/api/save-layout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,7 +106,7 @@ const LayoutModeEditor = ({ initialBlueprint, filePath }) => {
         body: JSON.stringify({
           repo: repo,
           path: filePath,
-          content: btoa(unescape(encodeURIComponent(astroCode))),
+          content: astroCode, // Send raw content, worker will encode
           message: `feat: update layout ${filePath} via new editor`
         }),
       });
@@ -186,4 +195,4 @@ const LayoutModeEditor = ({ initialBlueprint, filePath }) => {
   );
 };
 
-export default LayoutEditor;
+export default LayoutModeEditor;
