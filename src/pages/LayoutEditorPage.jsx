@@ -36,6 +36,9 @@ const LayoutEditorPage = () => {
                 setInitialState(null); // New content file
                 setHasMarkers(false);
               }
+            } else if (response.status === 401) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || 'Unauthorized. Please check your GITHUB_TOKEN configuration.');
             } else {
               throw new Error(`Failed to fetch layout content (status: ${response.status}).`);
             }
