@@ -11,13 +11,14 @@ const LayoutEditorPage = () => {
   const [hasMarkers, setHasMarkers] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [fileSha, setFileSha] = useState(null); // To store the file's sha for updates
   const location = useLocation();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const filePath = searchParams.get('path');
     const repo = localStorage.getItem('selectedRepo');
-    const ref = localStorage.getItem('selectedBranch') || 'main'; // default if not set
+    const ref = localStorage.getItem('selectedBranch') || 'main';
     const isNew = searchParams.get('new') === '1';
 
     if (filePath && repo) {
@@ -25,6 +26,7 @@ const LayoutEditorPage = () => {
         try {
           setIsLoading(true);
           setError(null);
+          setFileSha(null);
 
           if (isNew) {
             setInitialBlueprint(null);
@@ -39,26 +41,28 @@ const LayoutEditorPage = () => {
           if (!response.ok) {
             if (response.status === 404) {
               if (filePath.endsWith('.astro')) {
-                setInitialBlueprint(null); // New layout file
+                setInitialBlueprint(null);
                 setHasMarkers(true);
               } else {
-                setInitialState(null); // New content file
+                setInitialState(null);
                 setHasMarkers(false);
               }
             } else if (response.status === 401) {
               const errorData = await response.json().catch(() => ({}));
-              throw new Error(errorData.message || 'Unauthorized. Please check your GITHUB_TOKEN configuration.');
+              throw new Error(errorData.message || 'Unauthorized. Check GITHUB_TOKEN.');
             } else {
-              throw new Error(`Failed to fetch layout content (status: ${response.status}).`);
+              throw new Error(`Failed to fetch layout (status: ${response.status}).`);
             }
           } else {
-            const astroContent = await response.text();
-            const blueprint = parseAstroToBlueprint(astroContent);
+            const { content, sha } = await response.json();
+            setFileSha(sha); // <-- Store the sha
+
+            const blueprint = parseAstroToBlueprint(content);
             if (blueprint) {
               setInitialBlueprint(blueprint);
               setHasMarkers(true);
             } else {
-              const state = await astroToState(astroContent);
+              const state = await astroToState(content);
               setInitialState(state);
               setHasMarkers(false);
             }
@@ -96,6 +100,7 @@ const LayoutEditorPage = () => {
         initialBlueprint={initialBlueprint}
         initialState={initialState}
         filePath={filePath}
+        fileSha={fileSha} // <-- Pass sha down
         hasMarkers={hasMarkers}
       />
     </ErrorBoundary>

@@ -44,7 +44,7 @@ const TextAreaInput = ({ label, value, onChange }) => (
   </div>
 );
 
-const LayoutModeEditor = ({ initialBlueprint, filePath }) => {
+const LayoutModeEditor = ({ initialBlueprint, filePath, fileSha }) => {
   const [blueprint, setBlueprint] = useState(initialBlueprint || emptyBlueprint);
 
   useEffect(() => {
@@ -110,6 +110,7 @@ const LayoutModeEditor = ({ initialBlueprint, filePath }) => {
           path: filePath,
           branch: localStorage.getItem('selectedBranch') || 'main',
           content: astroCode, // raw
+          sha: fileSha, // Pass the sha for updates
           message: `feat: update layout ${filePath} via new editor`
         }),
       });

@@ -57,7 +57,7 @@ const COMPONENT_TYPES = {
   }
 };
 
-const LayoutEditor = ({ initialState, filePath }) => {
+const LayoutEditor = ({ initialState, filePath, fileSha }) => {
   const [components, setComponents] = useState(initialState || {
     'root': {
       type: 'root',
@@ -244,6 +244,7 @@ const LayoutEditor = ({ initialState, filePath }) => {
           path: filePath,
           branch,       // optional: instruct GitHub PUT to commit to this branch
           content: astroCode, // raw content; worker encodes
+          sha: fileSha, // Pass the sha for updates
           message: `feat: create or update layout ${filePath}`
         }),
       });
