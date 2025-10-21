@@ -3,11 +3,65 @@ import { Link, useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon';
 import LayoutContextMenu from '../components/LayoutContextMenu';
 
+// A simple modal component for creating a new layout
+const CreateLayoutModal = ({ onClose, onSubmit }) => {
+  const [filename, setFilename] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (filename) {
+      // Ensure the filename ends with .astro
+      const finalFilename = filename.endsWith('.astro') ? filename : `${filename}.astro`;
+      onSubmit(finalFilename);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Create New Layout</h2>
+        <form onSubmit={handleSubmit}>
+          <label htmlFor="filename" className="block text-sm font-medium text-gray-700 mb-2">
+            Filename
+          </label>
+          <input
+            type="text"
+            id="filename"
+            value={filename}
+            onChange={(e) => setFilename(e.target.value)}
+            className="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            placeholder="e.g., landing-page.astro"
+            autoFocus
+          />
+          <div className="mt-6 flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              disabled={!filename}
+            >
+              Create
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+
 const LayoutsDashboardPage = () => {
   const [astroLayouts, setAstroLayouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [contextMenu, setContextMenu] = useState(null);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -139,6 +193,11 @@ const LayoutsDashboardPage = () => {
     }
   };
 
+  const handleCreateLayout = (filename) => {
+    setCreateModalOpen(false);
+    navigate(`/layout-editor?path=src/layouts/${filename}`);
+  };
+
   const LayoutCard = ({ layout, onLongPress }) => {
     const isAstro = layout.source === 'astro';
 
@@ -190,7 +249,21 @@ const LayoutsDashboardPage = () => {
     <div className="p-4 sm:p-6 lg:p-8" onClick={handleCloseContextMenu}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Layouts</h1>
+        <button
+          onClick={() => setCreateModalOpen(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center"
+        >
+          <Icon name="plus" className="mr-2" />
+          Create New Layout
+        </button>
       </div>
+
+      {isCreateModalOpen && (
+        <CreateLayoutModal
+          onClose={() => setCreateModalOpen(false)}
+          onSubmit={handleCreateLayout}
+        />
+      )}
 
       {astroLayouts.length === 0 && !loading ? (
         <div className="text-center p-10 bg-white rounded-lg shadow-md">

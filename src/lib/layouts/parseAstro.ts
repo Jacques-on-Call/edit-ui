@@ -22,9 +22,39 @@ const htmlAttrRe = /([^\s=]+)=["']([^"']*)["']/g;
 
 function extract(content: string, name: string): string | null {
   const isTS = name === "imports" || name === "props";
-  const rx = isTS ? new RegExp(String.raw`/\*\s*editor:region\s+name="${name}"\s*\*/([\s\S]*?)\/\*\s*\/editor:region\s*\*/`, "s") : commentBlockHTML(name);
+  const rx = isTS
+    ? new RegExp(
+        String.raw`/\*\s*editor:region\s+name="${name}"\s*\*/([\s\S]*?)\/\*\s*\/editor:region\s*\*/`,
+        "s"
+      )
+    : commentBlockHTML(name);
   const m = content.match(rx);
   return m ? m[1].trim() : null;
+}
+
+// Special extractor for props JSON: supports the current format where JSON is
+// embedded inside the opening /* editor:region name="props" ... */ comment.
+// Falls back to the generic "between comments" capture if needed.
+function extractPropsJSONText(content: string): string | null {
+  // 1) JSON inside the opening comment style:
+  // /* editor:region name="props"
+  // { ...json... }
+  // */
+  // /* /editor:region */
+  const insideOpenComment = content.match(
+    /\/\*\s*editor:region\s+name="props"[^\S\r\n]*\n([\s\S]*?)\*\/\s*\/\*\s*\/editor:region\s*\*\//m
+  );
+  if (insideOpenComment && insideOpenComment[1]?.trim()) {
+    return insideOpenComment[1].trim();
+  }
+
+  // 2) Fallback to "between two comments" style (older/alternate format)
+  const betweenTwoComments = extract(content, "props");
+  if (betweenTwoComments && betweenTwoComments.trim()) {
+    return betweenTwoComments.trim();
+  }
+
+  return null;
 }
 
 function parseImports(importsBlock: string | null) {
@@ -41,10 +71,10 @@ function parseImports(importsBlock: string | null) {
     .filter(Boolean) as { as: string; from: string }[];
 }
 
-function parsePropsJSON(propsBlock: string | null): Record<string, PropSpec> {
-  if (!propsBlock) return {};
+function parsePropsJSON(propsText: string | null): Record<string, PropSpec> {
+  if (!propsText) return {};
   try {
-    return JSON.parse(propsBlock.trim());
+    return JSON.parse(propsText.trim());
   } catch {
     return {};
   }
@@ -115,7 +145,7 @@ export function parseAstroToBlueprint(content: string): LayoutBlueprint | null {
   if (!contentSlotRe.test(content)) return null;
 
   const imports = parseImports(extract(content, "imports"));
-  const propsFromJSON = parsePropsJSON(extract(content, "props"));
+  const propsFromJSON = parsePropsJSON(extractPropsJSONText(content));
   const propsFromDestructure = parsePropsFromDestructure(content);
 
   // Merge: JSON marker is source of truth; fill missing keys from destructure
