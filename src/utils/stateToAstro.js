@@ -12,9 +12,8 @@ export function stateToAstro(components, componentTypes) {
   Object.values(components).forEach(comp => {
     if (comp.type !== 'root' && componentTypes[comp.type]) {
       imports.add(comp.type);
-      // Assuming component files are located at a path like `../components/blocks/${comp.type}.astro`
-      // This path will likely need to be adjusted based on the actual file structure.
-      componentMap.set(comp.type, `import ${comp.type} from '../components/blocks/${comp.type}.astro';`);
+      // Corrected path to match the component structure.
+      componentMap.set(comp.type, `import ${comp.type} from '../components/layout-editor/${comp.type}.astro';`);
     }
   });
 
