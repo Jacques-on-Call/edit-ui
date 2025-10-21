@@ -50,6 +50,56 @@ function parsePropsJSON(propsBlock: string | null): Record<string, PropSpec> {
   }
 }
 
+// Fallback: infer props from destructuring const { ... } = Astro.props;
+// Supports simple defaults: strings, numbers, booleans, null
+function parsePropsFromDestructure(content: string): Record<string, PropSpec> {
+  const out: Record<string, PropSpec> = {};
+  const m = content.match(/const\s*\{\s*([^}]*)\s*\}\s*=\s*Astro\.props\s*;/ms);
+  if (!m) return out;
+
+  const inner = m[1]; // "title = \"Site\", count = 0"
+  // Split on commas not inside quotes (simple heuristic)
+  const parts = inner
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  for (const part of parts) {
+    // name = default OR just name
+    const mm = part.match(/^([A-Za-z_$][\w$]*)\s*(?:=\s*([\s\S]+))?$/);
+    if (!mm) continue;
+
+    const name = mm[1];
+    const rawDefault = (mm[2] ?? "").trim();
+
+    if (!rawDefault) {
+      out[name] = { type: "string", default: null };
+      continue;
+    }
+
+    // Strip trailing commas if any (from multi-line destructure formats)
+    const val = rawDefault.replace(/,+\s*$/, "");
+
+    // Infer type
+    if (/^["'`](.*)["'`]$/.test(val)) {
+      // string literal
+      const str = val.slice(1, -1);
+      out[name] = { type: "string", default: str };
+    } else if (/^(true|false)$/i.test(val)) {
+      out[name] = { type: "boolean", default: /^true$/i.test(val) };
+    } else if (/^-?\d+(\.\d+)?$/.test(val)) {
+      out[name] = { type: "number", default: Number(val) };
+    } else if (/^null$/i.test(val)) {
+      out[name] = { type: "string", default: null };
+    } else {
+      // Unknown expression -> keep, but do not set an unserializable default
+      out[name] = { type: "string", default: null };
+    }
+  }
+
+  return out;
+}
+
 function parseHtmlAttrs(content: string): Record<string, string> {
   const m = content.match(htmlTagRe);
   if (!m) return {};
@@ -65,7 +115,12 @@ export function parseAstroToBlueprint(content: string): LayoutBlueprint | null {
   if (!contentSlotRe.test(content)) return null;
 
   const imports = parseImports(extract(content, "imports"));
-  const props = parsePropsJSON(extract(content, "props"));
+  const propsFromJSON = parsePropsJSON(extract(content, "props"));
+  const propsFromDestructure = parsePropsFromDestructure(content);
+
+  // Merge: JSON marker is source of truth; fill missing keys from destructure
+  const props: Record<string, PropSpec> = { ...propsFromDestructure, ...propsFromJSON };
+
   const htmlAttrs = parseHtmlAttrs(content);
 
   const headRaw = extract(content, "head") ?? "";
@@ -77,7 +132,7 @@ export function parseAstroToBlueprint(content: string): LayoutBlueprint | null {
   const postContent: BodyNode[] = postRaw ? [{ type: "raw", html: postRaw }] : [];
 
   return {
-    name: "Unknown", // derive from filename in UI if needed
+    name: "Unknown", // derive from filename in the UI
     htmlAttrs,
     imports,
     props,
