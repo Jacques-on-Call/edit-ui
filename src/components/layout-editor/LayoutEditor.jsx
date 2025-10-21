@@ -55,7 +55,7 @@ const COMPONENT_TYPES = {
   }
 };
 
-const LayoutEditor = ({ initialState }) => {
+const LayoutEditor = ({ initialState, filePath }) => {
   const [components, setComponents] = useState(initialState || {
     'root': {
       type: 'root',
@@ -72,7 +72,15 @@ const LayoutEditor = ({ initialState }) => {
   }, [initialState]);
 
   const [selectedId, setSelectedId] = useState(null);
+  const [isSideDrawerOpen, setSideDrawerOpen] = useState(false);
   const [nextId, setNextId] = useState(3);
+
+  const filename = filePath?.split('/').pop();
+
+  const handleExit = () => {
+    // A more robust navigation would use the `from` param if available
+    window.history.back();
+  };
 
   const getParent = useCallback((childId) => {
     const parentEntry = Object.entries(components).find(([, comp]) => comp.children?.includes(childId));
@@ -218,22 +226,23 @@ const LayoutEditor = ({ initialState }) => {
   const handleSave = async () => {
     const astroCode = stateToAstro(components, COMPONENT_TYPES);
     const repo = localStorage.getItem('selectedRepo');
-    if (!repo) {
-      alert('No repository selected. Please select a repository first.');
+    if (!repo || !filePath) {
+      alert('Missing repository or file path information.');
       return;
     }
 
     try {
-      const response = await fetch('/api/save-layout', {
+      const response = await fetch('/api/file', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Credentials': 'include'
         },
         body: JSON.stringify({
           repo: repo,
-          path: 'src/layouts/temp-layout.astro',
-          content: astroCode,
-          // We don't pass a SHA, so this will create a new file or overwrite an existing one.
+          path: filePath,
+          content: btoa(unescape(encodeURIComponent(astroCode))),
+          message: `feat: update layout ${filePath}`
         }),
       });
 
@@ -242,7 +251,7 @@ const LayoutEditor = ({ initialState }) => {
         throw new Error(errorData.message || 'Failed to save layout.');
       }
 
-      alert('Layout saved successfully as temp-layout.astro!');
+      alert('Layout saved successfully!');
     } catch (error) {
       console.error('Save error:', error);
       alert(`Error saving layout: ${error.message}`);
@@ -250,40 +259,93 @@ const LayoutEditor = ({ initialState }) => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100">
-      <header className="bg-white border-b px-4 py-3 flex items-center justify-between">
-        <h1 className="text-lg font-bold">Mobile Layout Editor</h1>
+    <div className="h-screen flex flex-col bg-slate-900 text-white">
+      {/* NEW HEADER */}
+      <header className="flex items-center justify-between p-3 border-b border-slate-700 bg-slate-800 shadow-md z-20">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExit}
+            className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded transition font-semibold text-sm"
+          >
+            Exit
+          </button>
+          <button
+            onClick={() => setSideDrawerOpen(true)}
+            className="md:hidden px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded transition font-semibold text-sm"
+          >
+            Components
+          </button>
+        </div>
+        <h1 className="font-semibold text-center truncate">{filename}</h1>
         <button
           onClick={handleSave}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+          className="px-4 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded transition font-semibold text-sm"
         >
-          Save Layout
+          Save
         </button>
       </header>
 
-      <main
-        className="flex-1 overflow-y-auto p-4 pb-24" // padding-bottom to avoid overlap with toolbar
-        onClick={() => setSelectedId(null)}
+      {/* Side Drawer (Mobile) */}
+      <div
+        className={`fixed inset-y-0 left-0 w-64 bg-slate-800 shadow-xl z-30 transform transition-transform duration-300 ease-in-out ${
+          isSideDrawerOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:hidden`}
       >
-        {renderComponent('root')}
-      </main>
+        <div className="p-4">
+          <button onClick={() => setSideDrawerOpen(false)} className="text-white mb-4">
+            &times; Close
+          </button>
+          <h2 className="text-xl font-bold mb-4">Components</h2>
+          <div className="space-y-2">
+            {Object.entries(COMPONENT_TYPES).map(([key, comp]) => (
+              <button
+                key={key}
+                onClick={() => {
+                  const parentId = selectedId && COMPONENT_TYPES[components[selectedId]?.type]?.canHaveChildren ? selectedId : getParent(selectedId) || 'root';
+                  addComponent(parentId, key);
+                  setSideDrawerOpen(false); // Close drawer after adding
+                }}
+                className="w-full text-left px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition"
+              >
+                + {comp.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      {isSideDrawerOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+          onClick={() => setSideDrawerOpen(false)}
+        ></div>
+      )}
 
-      <MobileToolbar
-        selectedId={selectedId}
-        onMove={(direction) => moveComponent(selectedId, direction)}
-        onDelete={() => deleteComponent(selectedId)}
-        onOpenToolbox={() => setToolboxOpen(true)}
-        canMoveUp={canMoveUp}
-        canMoveDown={canMoveDown}
-      />
+      {/* Main Content Area */}
+      <div className="flex flex-grow overflow-hidden">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block w-64 bg-slate-800 p-4 overflow-y-auto">
+          <h2 className="text-xl font-bold mb-4">Components</h2>
+          <div className="space-y-2">
+            {Object.entries(COMPONENT_TYPES).map(([key, comp]) => (
+              <button
+                key={key}
+                onClick={() => {
+                  const parentId = selectedId && COMPONENT_TYPES[components[selectedId]?.type]?.canHaveChildren ? selectedId : getParent(selectedId) || 'root';
+                  addComponent(parentId, key);
+                }}
+                className="w-full text-left px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition"
+              >
+                + {comp.name}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      <Toolbox
-        isOpen={isToolboxOpen}
-        onClose={() => setToolboxOpen(false)}
-        onAddComponent={handleAddComponent}
-        componentTypes={COMPONENT_TYPES}
-        targetParentId={selectedId && COMPONENT_TYPES[components[selectedId]?.type]?.canHaveChildren ? selectedId : getParent(selectedId) || 'root' }
-      />
+        {/* Canvas */}
+        <main className="flex-1 overflow-y-auto p-4" onClick={() => setSelectedId(null)}>
+          {renderComponent('root')}
+        </main>
+      </div>
     </div>
   );
 };

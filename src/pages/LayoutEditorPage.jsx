@@ -58,9 +58,12 @@ const LayoutEditorPage = () => {
     );
   }
 
+  const searchParams = new URLSearchParams(location.search);
+  const filePath = searchParams.get('path');
+
   return (
     <ErrorBoundary>
-      <LayoutEditor initialState={layoutState} />
+      <LayoutEditor initialState={layoutState} filePath={filePath} />
     </ErrorBoundary>
   );
 };
