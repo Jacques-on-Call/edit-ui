@@ -9,7 +9,6 @@ import ExplorerPage from './pages/ExplorerPage';
 import EditorPage from './pages/EditorPage';
 import LayoutsDashboardPage from './pages/LayoutsDashboardPage';
 import LayoutEditorPage from './pages/LayoutEditorPage';
-import SemanticLayoutEditor from './pages/SemanticLayoutEditor';
 
 function App() {
   return (
@@ -34,7 +33,6 @@ function App() {
         <Route path="editor" element={<EditorPage />} />
         <Route path="layouts" element={<LayoutsDashboardPage />} />
         <Route path="layout-editor" element={<LayoutEditorPage />} />
-        <Route path="semantic-layout-editor" element={<SemanticLayoutEditor />} />
       </Route>
     </Routes>
   );
