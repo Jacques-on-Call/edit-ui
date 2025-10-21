@@ -23,7 +23,7 @@ function parseImports(importsBlock: string | null) {
     .map(l => l.trim())
     .filter(Boolean)
     .map(line => {
-      const m = line.match(/^import\\s+([A-Za-z0-9_]+)\\s+from\\s+["']([^"']+)["'];?$/);
+      const m = line.match(/^import\s+([A-Za-z0-9_]+)\s+from\s+["']([^"']+)["'];?$/);
       return m ? { as: m[1], from: m[2] } : null;
     })
     .filter(Boolean) as {as: string; from: string}[];
@@ -39,8 +39,8 @@ function parseHtmlAttrs(content: string): Record<string,string> {
   if (!m) return {};
   const attrs = m[1] ?? "";
   const out: Record<string,string> = {};
-  for (const attr of attrs.split(/\\s+/).filter(Boolean)) {
-    const kv = attr.match(/^([^\\s=]+)=["']?([^"']+)["']?$/);
+  for (const attr of attrs.split(/\s+/).filter(Boolean)) {
+    const kv = attr.match(/^([^\s=]+)=["']?([^"']+)["']?$/);
     if (kv) out[kv[1]] = kv[2];
   }
   return out;

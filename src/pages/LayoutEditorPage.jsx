@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import LayoutEditor from '../components/layout-editor/LayoutEditor';
+import EditorRouter from '../components/layout-editor/EditorRouter';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { parseAstroToBlueprint } from '../lib/layouts/parseAstro';
 import { astroToState } from '../utils/astroToState';
 
 const LayoutEditorPage = () => {
-  const [layoutState, setLayoutState] = useState(null);
+  const [initialBlueprint, setInitialBlueprint] = useState(null);
+  const [initialState, setInitialState] = useState(null);
+  const [hasMarkers, setHasMarkers] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -18,16 +22,38 @@ const LayoutEditorPage = () => {
       const fetchAndParseLayout = async () => {
         try {
           setIsLoading(true);
+          setError(null);
+
           const response = await fetch(`/api/get-file-content?repo=${repo}&path=${filePath}`);
+
           if (!response.ok) {
-            throw new Error('Failed to fetch layout content.');
+            if (response.status === 404) {
+              // File doesn't exist, so determine editor based on file path
+              if (filePath.endsWith('.astro')) {
+                setInitialBlueprint(null); // New layout file
+                setHasMarkers(true);
+              } else {
+                setInitialState(null); // New content file
+                setHasMarkers(false);
+              }
+            } else {
+              throw new Error(`Failed to fetch layout content (status: ${response.status}).`);
+            }
+          } else {
+            const astroContent = await response.text();
+            const blueprint = parseAstroToBlueprint(astroContent);
+            if (blueprint) {
+              setInitialBlueprint(blueprint);
+              setHasMarkers(true);
+            } else {
+              const state = await astroToState(astroContent);
+              setInitialState(state);
+              setHasMarkers(false);
+            }
           }
-          const astroContent = await response.text();
-          const initialState = await astroToState(astroContent);
-          setLayoutState(initialState);
-        } catch (error) {
-          console.error('Error loading layout:', error);
-          // Set a default error state or handle it appropriately
+        } catch (err) {
+          console.error('Error loading layout:', err);
+          setError(err.message);
         } finally {
           setIsLoading(false);
         }
@@ -35,13 +61,19 @@ const LayoutEditorPage = () => {
 
       fetchAndParseLayout();
     } else {
-      // Handle case where there is no file path (e.g., new layout)
+      // No path, default to new content file
       setIsLoading(false);
+      setHasMarkers(false);
+      setInitialState(null);
     }
   }, [location.search]);
 
   if (isLoading) {
-    return <div>Loading layout...</div>;
+    return <div className="text-white text-center p-8">Loading layout...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center p-8">Error: {error}</div>;
   }
 
   const searchParams = new URLSearchParams(location.search);
@@ -49,7 +81,12 @@ const LayoutEditorPage = () => {
 
   return (
     <ErrorBoundary>
-      <LayoutEditor initialState={layoutState} filePath={filePath} />
+      <EditorRouter
+        initialBlueprint={initialBlueprint}
+        initialState={initialState}
+        filePath={filePath}
+        hasMarkers={hasMarkers}
+      />
     </ErrorBoundary>
   );
 };
