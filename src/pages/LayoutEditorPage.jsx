@@ -17,6 +17,8 @@ const LayoutEditorPage = () => {
     const searchParams = new URLSearchParams(location.search);
     const filePath = searchParams.get('path');
     const repo = localStorage.getItem('selectedRepo');
+    const ref = localStorage.getItem('selectedBranch') || 'main'; // default if not set
+    const isNew = searchParams.get('new') === '1';
 
     if (filePath && repo) {
       const fetchAndParseLayout = async () => {
@@ -24,11 +26,18 @@ const LayoutEditorPage = () => {
           setIsLoading(true);
           setError(null);
 
-          const response = await fetch(`/api/get-file-content?repo=${repo}&path=${filePath}`);
+          if (isNew) {
+            setInitialBlueprint(null);
+            setHasMarkers(true);
+            return;
+          }
+
+          const response = await fetch(`/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(filePath)}&ref=${encodeURIComponent(ref)}`, {
+            credentials: 'include',
+          });
 
           if (!response.ok) {
             if (response.status === 404) {
-              // File doesn't exist, so determine editor based on file path
               if (filePath.endsWith('.astro')) {
                 setInitialBlueprint(null); // New layout file
                 setHasMarkers(true);
@@ -37,7 +46,7 @@ const LayoutEditorPage = () => {
                 setHasMarkers(false);
               }
             } else if (response.status === 401) {
-              const errorData = await response.json();
+              const errorData = await response.json().catch(() => ({}));
               throw new Error(errorData.message || 'Unauthorized. Please check your GITHUB_TOKEN configuration.');
             } else {
               throw new Error(`Failed to fetch layout content (status: ${response.status}).`);
@@ -64,7 +73,6 @@ const LayoutEditorPage = () => {
 
       fetchAndParseLayout();
     } else {
-      // No path, default to new content file
       setIsLoading(false);
       setHasMarkers(false);
       setInitialState(null);

@@ -195,7 +195,7 @@ const LayoutsDashboardPage = () => {
 
   const handleCreateLayout = (filename) => {
     setCreateModalOpen(false);
-    navigate(`/layout-editor?path=src/layouts/${filename}`);
+    navigate(`/layout-editor?path=src/layouts/${filename}&new=1`);
   };
 
   const LayoutCard = ({ layout, onLongPress }) => {

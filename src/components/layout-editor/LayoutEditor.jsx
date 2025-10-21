@@ -228,29 +228,29 @@ const LayoutEditor = ({ initialState, filePath }) => {
   const handleSave = async () => {
     const astroCode = stateToAstro(components, COMPONENT_TYPES);
     const repo = localStorage.getItem('selectedRepo');
+    const branch = localStorage.getItem('selectedBranch') || 'main';
     if (!repo || !filePath) {
       alert('Missing repository or file path information.');
       return;
     }
 
     try {
-      const response = await fetch('/api/file', {
+      const response = await fetch('/api/save-layout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Credentials': 'include'
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          repo: repo,
+          repo,
           path: filePath,
-          content: btoa(unescape(encodeURIComponent(astroCode))),
-          message: `feat: update layout ${filePath}`
+          branch,       // optional: instruct GitHub PUT to commit to this branch
+          content: astroCode, // raw content; worker encodes
+          message: `feat: create or update layout ${filePath}`
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save layout.');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to save layout (status ${response.status}).`);
       }
 
       alert('Layout saved successfully!');

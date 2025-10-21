@@ -96,17 +96,15 @@ const LayoutModeEditor = ({ initialBlueprint, filePath }) => {
     }
 
     try {
-      // Use the /api/save-layout endpoint for consistency
       const response = await fetch('/api/save-layout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Credentials': 'include'
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          repo: repo,
+          repo,
           path: filePath,
-          content: astroCode, // Send raw content, worker will encode
+          branch: localStorage.getItem('selectedBranch') || 'main',
+          content: astroCode, // raw
           message: `feat: update layout ${filePath} via new editor`
         }),
       });
