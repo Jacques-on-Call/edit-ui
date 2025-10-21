@@ -16,7 +16,7 @@ function TopToolbar({ onPublish, isPublishing, onChangeLayout, layoutPath }) {
       <div className="flex items-center space-x-2">
         {layoutPath ? (
           <Link
-            to={`/semantic-layout-editor?path=${layoutPath}&from=${currentPath}`}
+            to={`/layout-editor?path=${layoutPath}&from=${currentPath}`}
             className={`${buttonClass} text-gray-600`}
             aria-label="Edit Layout"
             title="Edit Layout"

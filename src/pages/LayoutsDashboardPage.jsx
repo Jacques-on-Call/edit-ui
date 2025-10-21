@@ -176,7 +176,7 @@ const LayoutsDashboardPage = () => {
         </div>
         <div className="bg-gray-50 p-3">
           <Link
-            to={`/semantic-layout-editor?path=${layout.path}`}
+            to={`/layout-editor?path=${layout.path}`}
             className="w-full text-center block bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
           >
             Open
