@@ -4,19 +4,24 @@ import Icon from '../Icon';
 import { compileAstro } from '../../lib/layouts/compileAstro';
 import { validateAstroLayout } from '../../lib/layouts/validateAstro';
 
-// A simple, empty blueprint to serve as the initial state for a new layout.
+// A blueprint that replicates MainLayout.astro for new layouts.
 const emptyBlueprint = {
   name: "New Layout",
   htmlAttrs: { lang: "en" },
-  imports: [],
-  props: {},
+  imports: [
+    { as: "Header", from: "../components/Header.astro" },
+    { as: "Footer", from: "../components/Footer.astro" },
+  ],
+  props: {
+    title: { type: "string", default: "Site" },
+  },
   head: [
     { type: 'raw', html: '    <meta charset="utf-8" />\n    <meta name="viewport" content="width=device-width, initial-scale=1" />' },
     { type: 'title', contentFromProp: 'title' }
   ],
-  preContent: [],
+  preContent: [{ type: 'component', name: 'Header' }],
   contentSlot: { name: 'Content', single: true },
-  postContent: [],
+  postContent: [{ type: 'component', name: 'Footer' }],
 };
 
 // --- UI Components for different parts of the blueprint ---
