@@ -26,9 +26,7 @@ function CreateModal({ path, repo, onClose, onCreate }) {
     const fetchTemplates = async () => {
       try {
         const response = await fetch(`/api/files?repo=${repo}&path=src/templates/pages`, { credentials: 'include' });
-        if (!response.ok) {
-          throw new Error('Could not fetch page templates.');
-        }
+        if (!response.ok) throw new Error('Could not fetch page templates.');
         const files = await response.json();
         const templateOptions = files
           .filter(file => file.name.endsWith('.astro'))
@@ -57,22 +55,21 @@ function CreateModal({ path, repo, onClose, onCreate }) {
     setError(null);
 
     try {
-      // 1. Fetch the content of the selected template
+      // 1. Fetch template content
       const templateRes = await fetch(`/api/get-file-content?repo=${repo}&path=${designType}`, { credentials: 'include' });
-      if (!templateRes.ok) {
-        throw new Error('Could not load the selected template file.');
-      }
+      if (!templateRes.ok) throw new Error('Could not load template file.');
       const { content: templateContent } = await templateRes.json();
 
-      // 2. Replace the placeholder title in the template
+      // 2. Prepare new file content
       const pageTitle = name.replace(/"/g, '\\"');
       const finalContent = templateContent.replace(/title\s*=\s*".*?"/, `title="${pageTitle}"`);
 
-      // 3. Create the new file
+      // 3. Define new file path
       const slug = slugify(name) || 'new-page';
       const fileName = `${slug}.astro`;
       const fullPath = path.endsWith('/') ? `${path}${fileName}` : `${path}/${fileName}`;
 
+      // 4. Create the file via API
       const response = await fetch('/api/file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -88,7 +85,7 @@ function CreateModal({ path, repo, onClose, onCreate }) {
       onCreate?.();
       onClose?.();
 
-      // 4. Navigate to the new editor for the created file
+      // 5. Navigate to the new editor
       navigate(`/visual-editor?path=${fullPath}`);
 
     } catch (err) {

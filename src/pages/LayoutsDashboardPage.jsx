@@ -195,7 +195,7 @@ const LayoutsDashboardPage = () => {
 
   const handleCreateLayout = (filename) => {
     setCreateModalOpen(false);
-    navigate(`/layout-editor?path=src/layouts/${filename}&new=1`);
+    navigate(`/visual-editor?path=src/layouts/${filename}&new=1`);
   };
 
   const LayoutCard = ({ layout, onLongPress }) => {
@@ -235,7 +235,7 @@ const LayoutsDashboardPage = () => {
         </div>
         <div className="bg-gray-50 p-3">
           <Link
-            to={`/layout-editor?path=${layout.path}`}
+            to={`/visual-editor?path=${layout.path}`}
             className="w-full text-center block bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
           >
             Open
