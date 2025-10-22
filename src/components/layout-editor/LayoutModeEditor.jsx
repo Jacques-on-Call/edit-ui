@@ -1,154 +1,141 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../Icon';
+import Tabs from './ui/Tabs';
 import { compileAstro } from '../../lib/layouts/compileAstro';
 import { validateAstroLayout } from '../../lib/layouts/validateAstro';
+import HtmlAttrsEditor from './HtmlAttrsEditor';
 import ImportsEditor from './ImportsEditor';
 import PropsEditor from './PropsEditor';
-import HtmlAttrsEditor from './HtmlAttrsEditor';
 import HeadEditor from './HeadEditor';
 import RegionsEditor from './RegionsEditor';
-import PreviewPane from './PreviewPane';
 
-// A blueprint that replicates MainLayout.astro for new layouts.
-const emptyBlueprint = {
-  name: "New Layout",
-  htmlAttrs: { lang: "en" },
-  imports: [
-    { as: "Header", from: "src/components/Header.astro" },
-    { as: "Footer", from: "src/components/Footer.astro" },
-  ],
+const defaultBlueprint = {
+  name: 'New Layout',
+  htmlAttrs: { lang: 'en' },
+  imports: [],
   props: {
-    title: { type: "string", default: "Site Title" },
-    description: { type: "string", default: "" },
+    title: { type: 'string', default: 'Site Title' },
+    description: { type: 'string', default: '' },
   },
   head: [
-    { type: "meta", attrs: { charset: "utf-8" } },
-    { type: "meta", attrs: { name: "viewport", content: "width=device-width, initial-scale=1" } },
-    { type: "title", contentFromProp: "title" },
+    { type: 'meta', attrs: { charset: 'utf-8' } },
+    { type: 'meta', attrs: { name: 'viewport', content: 'width=device-width, initial-scale=1' } },
+    { type: 'title', contentFromProp: 'title' },
   ],
-  preContent: [
-    { type: "component", name: "Header" }
-  ],
-  contentSlot: { name: "Content", single: true },
-  postContent: [
-    { type: "component", name: "Footer" }
-  ],
+  preContent: [],
+  contentSlot: { name: 'Content', single: true },
+  postContent: [],
 };
 
-// --- UI Components for different parts of the blueprint ---
-
-const Section = ({ title, children }) => (
-  <div className="bg-slate-800 rounded-lg p-4 mb-4">
-    <h2 className="text-lg font-semibold text-slate-300 mb-3 border-b border-slate-700 pb-2">{title}</h2>
-    <div className="space-y-3">{children}</div>
-  </div>
-);
-
-const TextAreaInput = ({ label, value, onChange }) => (
-  <div>
-    <label className="block text-sm font-medium text-slate-400 mb-1">{label}</label>
-    <textarea
-      value={value}
-      onChange={onChange}
-      className="w-full h-24 bg-slate-900 border border-slate-600 rounded-md p-2 text-sm text-slate-200 focus:ring-blue-500 focus:border-blue-500 font-mono"
-    />
-  </div>
-);
-
-const LayoutModeEditor = ({ initialBlueprint, filePath, fileSha }) => {
-  const [blueprint, setBlueprint] = useState(initialBlueprint || emptyBlueprint);
-  const [currentSha, setCurrentSha] = useState(fileSha);
-
-  useEffect(() => {
-    if (initialBlueprint) {
-      setBlueprint(initialBlueprint);
-    }
-  }, [initialBlueprint]);
-
+export default function LayoutModeEditor({ initialBlueprint, initialSha, filePath }) {
+  const [bp, setBp] = useState(initialBlueprint || defaultBlueprint);
+  const [dirty, setDirty] = useState(false);
+  const repo = useMemo(() => localStorage.getItem('selectedRepo'), []);
+  const branch = useMemo(() => localStorage.getItem('selectedBranch') || 'main', []);
   const filename = filePath?.split('/').pop();
 
-  const handleBlueprintChange = (key, value) => {
-    setBlueprint(prev => ({ ...prev, [key]: value }));
-  };
+  useEffect(() => { if (initialBlueprint) setBp(initialBlueprint); }, [initialBlueprint]);
+  useEffect(() => {
+    const onBeforeUnload = (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [dirty]);
 
-  const handleSave = async () => {
-    const astroCode = compileAstro(blueprint);
+  function update(partKey, value) { setBp((prev) => { setDirty(true); return { ...prev, [partKey]: value }; }); }
 
-    // --- SAVE GUARDRAIL ---
-    const { ok, errors } = validateAstroLayout(astroCode);
-    if (!ok) {
-      alert(`Validation failed:\n- ${errors.join('\n- ')}`);
-      return;
-    }
+  const compiled = useMemo(() => compileAstro(bp), [bp]);
+  const validation = useMemo(() => validateAstroLayout(compiled), [compiled]);
 
-    const repo = localStorage.getItem('selectedRepo');
-    if (!repo || !filePath) {
-      alert('Missing repository or file path information.');
-      return;
-    }
+  async function doSave(sha) {
+    return fetch('/api/save-layout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        repo, path: filePath, content: compiled, branch, sha,
+        message: `feat: update layout ${filePath} via Layout Mode`,
+      }),
+    });
+  }
 
-    try {
-      const response = await fetch('/api/save-layout', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          repo,
-          path: filePath,
-          branch: localStorage.getItem('selectedBranch') || 'main',
-          content: astroCode, // raw
-          sha: fileSha, // Pass the sha for updates
-          message: `feat: update layout ${filePath} via new editor`
-        }),
-      });
-
-      if (!response.ok) {
-        if (response.status === 409) {
-          const latestFile = await response.json();
-          const userConfirmed = window.confirm(
-            "The file has been modified on the server since you opened it. Do you want to overwrite the remote changes with your own?"
-          );
-          if (userConfirmed) {
-            setCurrentSha(latestFile.content.sha);
-            // Re-call handleSave with the new sha.
-            // Note: This could be more robust by creating a separate function.
-            const astroCode = compileAstro(blueprint);
-            const retryResponse = await fetch('/api/save-layout', {
-              method: 'POST',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                repo,
-                path: filePath,
-                branch: localStorage.getItem('selectedBranch') || 'main',
-                content: astroCode,
-                sha: latestFile.content.sha,
-                message: `feat: update layout ${filePath} via new editor (overwrite conflict)`
-              }),
-            });
-            if (!retryResponse.ok) {
-              const errorData = await retryResponse.json();
-              throw new Error(errorData.message || 'Failed to save layout after conflict.');
-            }
-          } else {
-            return; // User cancelled the overwrite.
-          }
-        } else {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to save layout.');
-        }
+  async function handleSave() {
+    if (!repo || !filePath) { alert('Missing repository or file path.'); return; }
+    if (!validation.ok) { alert(`Validation failed:\n- ${validation.errors.join('\n- ')}`); return; }
+    let res = await doSave(initialSha || undefined);
+    if (res.status === 409) {
+      const latest = await fetch(
+        `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(filePath)}&ref=${encodeURIComponent(branch)}`,
+        { credentials: 'include' }
+      );
+      if (latest.ok) {
+        const { sha: newSha } = await latest.json();
+        if (!window.confirm('The file changed upstream. Overwrite with your changes?')) return;
+        res = await doSave(newSha);
       }
-
-      alert('Layout saved successfully!');
-    } catch (error) {
-      console.error('Save error:', error);
-      alert(`Error saving layout: ${error.message}`);
     }
-  };
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.message || `Failed to save (status ${res.status}).`);
+      return;
+    }
+    setDirty(false);
+    alert('Saved!');
+  }
 
-  const compiledCode = compileAstro(blueprint);
-  const { errors: validationErrors } = validateAstroLayout(compiledCode);
+  const LayoutTab = () => (
+    <div className="p-4">
+      <HtmlAttrsEditor value={bp.htmlAttrs || {}} onChange={(v) => update('htmlAttrs', v)} />
+    </div>
+  );
+
+  const FrontmatterTab = () => (
+    <div className="p-4 space-y-6">
+      <ImportsEditor value={bp.imports || []} onChange={(v) => update('imports', v)} />
+      <PropsEditor value={bp.props || {}} onChange={(v) => update('props', v)} />
+    </div>
+  );
+
+  const HeadTab = () => (
+    <div className="p-4">
+      <HeadEditor value={bp.head || []} onChange={(v) => update('head', v)} />
+    </div>
+  );
+
+  const BodyTab = () => (
+    <div className="p-4 space-y-4">
+      <RegionsEditor
+        preContent={bp.preContent || []}
+        postContent={bp.postContent || []}
+        onPreChange={(v) => update('preContent', v)}
+        onPostChange={(v) => update('postContent', v)}
+      />
+    </div>
+  );
+
+  const PreviewTab = () => (
+    <div className="p-4 h-full overflow-auto">
+      {!validation.ok && (
+        <div className="mb-3 rounded bg-red-900/40 border border-red-800 text-red-200 p-3 text-sm">
+          <div className="font-semibold mb-1">Validation errors</div>
+          <ul className="list-disc pl-5">
+            {validation.errors.map((e, i) => <li key={i}>{e}</li>)}
+          </ul>
+        </div>
+      )}
+      <pre className="bg-slate-950 text-slate-200 p-3 rounded text-xs whitespace-pre-wrap">
+        {compiled}
+      </pre>
+    </div>
+  );
+
+  const tabs = [
+    { key: 'layout', label: 'Layout', render: LayoutTab },
+    { key: 'frontmatter', label: 'Frontmatter', render: FrontmatterTab },
+    { key: 'head', label: 'Head', render: HeadTab },
+    { key: 'body', label: 'Body', render: BodyTab },
+    { key: 'preview', label: 'Preview', render: PreviewTab },
+  ];
 
   return (
     <div className="h-screen flex flex-col bg-slate-900 text-white">
@@ -157,58 +144,19 @@ const LayoutModeEditor = ({ initialBlueprint, filePath, fileSha }) => {
           <Icon name="home" className="text-white" />
         </Link>
         <h1 className="font-semibold text-center truncate">{filename}</h1>
-        <button
-          onClick={handleSave}
-          className="p-2 rounded-md hover:bg-slate-700 transition-colors"
-        >
+        <button onClick={handleSave} className="p-2 rounded-md hover:bg-slate-700 transition-colors">
           <Icon name="publish" className="text-white" />
         </button>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
-          {/* Left Side: Editors */}
-          <div className="space-y-6">
-            <Section title="Layout Configuration">
-              <HtmlAttrsEditor
-                value={blueprint.htmlAttrs}
-                onChange={(newAttrs) => handleBlueprintChange('htmlAttrs', newAttrs)}
-              />
-            </Section>
-            <Section title="Frontmatter">
-              <ImportsEditor
-                value={blueprint.imports}
-                onChange={(newImports) => handleBlueprintChange('imports', newImports)}
-              />
-              <PropsEditor
-                value={blueprint.props}
-                onChange={(newProps) => handleBlueprintChange('props', newProps)}
-              />
-            </Section>
-            <Section title="Head Content">
-              <HeadEditor
-                value={blueprint.head}
-                onChange={(newHead) => handleBlueprintChange('head', newHead)}
-              />
-            </Section>
-            <Section title="Body Content">
-              <RegionsEditor
-                preContent={blueprint.preContent}
-                postContent={blueprint.postContent}
-                onPreChange={(newPre) => handleBlueprintChange('preContent', newPre)}
-                onPostChange={(newPost) => handleBlueprintChange('postContent', newPost)}
-              />
-            </Section>
-          </div>
-
-          {/* Right Side: Preview */}
-          <div>
-            <PreviewPane compiledCode={compiledCode} validationErrors={validationErrors} />
-          </div>
+      <div className="flex flex-1 min-h-0">
+        <div className="flex-1 min-w-0">
+          <Tabs tabs={tabs} initial={0} />
         </div>
-      </main>
+        <div className="w-[40%] min-w-[380px] max-w-[680px] border-l border-slate-800 bg-slate-950">
+          <PreviewTab />
+        </div>
+      </div>
     </div>
   );
-};
-
-export default LayoutModeEditor;
+}
