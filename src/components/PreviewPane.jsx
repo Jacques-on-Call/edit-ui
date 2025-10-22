@@ -1,10 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getPreviewBase, pathToPreviewRoute } from '../utils/previewRoute';
+import { pathToPreviewRoute } from '../utils/previewRoute';
 
-export default function PreviewPane({ filePath, stale, onRebuild, building, builtAtISO, sameOriginHint, onClose }) {
+export default function PreviewPane({ filePath, stale, onRebuild, building, builtAtISO, lastRunId, sameOriginHint, onClose }) {
   const iframeRef = useRef(null);
   const [canNavigate, setCanNavigate] = useState(false);
-  const src = useMemo(() => pathToPreviewRoute(filePath), [filePath]);
+
+  // Base route derived from file path
+  const baseSrc = useMemo(() => pathToPreviewRoute(filePath), [filePath]);
+
+  // Cache-bust key: prefer the run id; fallback to timestamp
+  const cacheKey = lastRunId ? `build=${encodeURIComponent(lastRunId)}` : `t=${Date.now()}`;
+
+  // Compose final src with cache-busting
+  const src = useMemo(() => {
+    const u = new URL(baseSrc, window.location.origin);
+    u.searchParams.set('v', cacheKey);
+    return u.toString();
+  }, [baseSrc, cacheKey]);
 
   useEffect(() => {
     try {
@@ -20,8 +32,10 @@ export default function PreviewPane({ filePath, stale, onRebuild, building, buil
   const goForward = () => { if (canNavigate) iframeRef.current?.contentWindow?.history?.forward(); };
   const openNewTab = () => window.open(src, '_blank', 'noopener,noreferrer');
 
-  const lastBuiltText = builtAtISO ? new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
-    .format(Math.round((new Date(builtAtISO).getTime() - Date.now()) / 60000), 'minute') : '';
+  const lastBuiltText = builtAtISO
+    ? new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
+        .format(Math.round((new Date(builtAtISO).getTime() - Date.now()) / 60000), 'minute')
+    : '';
 
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex flex-col">

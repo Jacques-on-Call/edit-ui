@@ -4,23 +4,38 @@ import { parseAstroToBlueprint } from '../lib/layouts/parseAstro';
 import PreviewPane from '../components/PreviewPane';
 import { useSetting } from './SettingsPage';
 
-function useBuildStatus(repo, isPolling, onComplete) {
+function useBuildStatus(repo, isPolling, triggeredAt, onComplete) {
+  const [pollInterval, setPollInterval] = useState(2000); // Start at 2s
+
   useEffect(() => {
-    if (!isPolling) return;
-    const interval = setInterval(async () => {
+    if (!isPolling) {
+      setPollInterval(2000); // Reset on stop
+      return;
+    }
+
+    const timer = setTimeout(async () => {
       try {
         const res = await fetch(`/api/build-status?repo=${repo}`, { credentials: 'include' });
         const data = await res.json();
-        if (data.status === 'success' || data.status === 'failure') {
-          onComplete(data.status);
+
+        const relevantRun = data.workflow_runs?.find(run =>
+          run.event === 'workflow_dispatch' && new Date(run.created_at) >= triggeredAt
+        );
+
+        if (relevantRun && relevantRun.status === 'completed') {
+          onComplete(relevantRun.conclusion, relevantRun.id);
+        } else {
+          // Backoff strategy: 2s -> 4s -> 8s -> 10s (max)
+          setPollInterval(prev => Math.min(prev * 2, 10000));
         }
       } catch (err) {
         console.error('Failed to poll build status:', err);
-        onComplete('failure');
+        onComplete('failure', null);
       }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [isPolling, repo, onComplete]);
+    }, pollInterval);
+
+    return () => clearTimeout(timer);
+  }, [isPolling, repo, triggeredAt, onComplete, pollInterval]);
 }
 
 function useIdle(onIdle, idleTime) {
@@ -52,28 +67,37 @@ function VisualEditorPage() {
   const [isBuilding, setIsBuilding] = useState(false);
   const [isPreviewStale, setIsPreviewStale] = useState(false);
   const [lastBuilt, setLastBuilt] = useState(null);
+  const [lastRunId, setLastRunId] = useState(null);
+  const [buildTriggeredAt, setBuildTriggeredAt] = useState(null);
+  const [isThrottled, setIsThrottled] = useState(false);
 
   const [autoRebuildEnabled] = useSetting('smart-auto-rebuild', false);
   const repo = localStorage.getItem('selectedRepo');
   const searchParams = new URLSearchParams(location.search);
   const filePath = searchParams.get('path');
 
-  const handleBuildComplete = (status) => {
+  const handleBuildComplete = (conclusion, runId) => {
     setIsBuilding(false);
-    if (status === 'success') {
+    if (conclusion === 'success') {
       setIsPreviewStale(false);
       setLastBuilt(new Date().toISOString());
+      setLastRunId(runId);
     } else {
       setError('The preview build failed. Check GitHub Action logs.');
     }
   };
 
-  useBuildStatus(repo, isBuilding, handleBuildComplete);
+  useBuildStatus(repo, isBuilding, buildTriggeredAt, handleBuildComplete);
 
   const handleTriggerBuild = useCallback(async () => {
-    if (!repo || isBuilding) return;
+    if (!repo || isBuilding || isThrottled) return;
+
     setIsBuilding(true);
     setError(null);
+    setBuildTriggeredAt(new Date());
+    setIsThrottled(true);
+    setTimeout(() => setIsThrottled(false), 30000); // 30s throttle
+
     try {
       const res = await fetch('/api/trigger-build', {
         method: 'POST',
@@ -85,8 +109,9 @@ function VisualEditorPage() {
     } catch (err) {
       setError(err.message);
       setIsBuilding(false);
+      setIsThrottled(false); // Reset throttle on error
     }
-  }, [repo, isBuilding]);
+  }, [repo, isBuilding, isThrottled]);
 
   const resetIdleTimer = useIdle(() => {
       if (autoRebuildEnabled && isPreviewStale) {
@@ -136,6 +161,8 @@ function VisualEditorPage() {
     fetchAndParseFile();
   }, [location.search, repo, filePath]);
 
+  const isRebuildDisabled = isBuilding || isThrottled;
+
   return (
     <div className="bg-gray-100 min-h-screen">
       <div className="max-w-7xl mx-auto">
@@ -158,7 +185,7 @@ function VisualEditorPage() {
                  <p className="font-bold">Preview is out of date</p>
                  <p className="text-sm">Your recent changes haven't been rebuilt yet.</p>
                </div>
-               <button onClick={handleTriggerBuild} className="ml-auto px-4 py-2 rounded-md bg-yellow-500 text-white self-center">Rebuild Preview</button>
+               <button onClick={handleTriggerBuild} disabled={isRebuildDisabled} className="ml-auto px-4 py-2 rounded-md bg-yellow-500 text-white self-center disabled:bg-yellow-300 disabled:cursor-not-allowed">Rebuild Preview</button>
              </div>
            </div>
         )}
@@ -183,6 +210,7 @@ function VisualEditorPage() {
           stale={isPreviewStale}
           building={isBuilding}
           builtAtISO={lastBuilt}
+          lastRunId={lastRunId}
           onRebuild={handleTriggerBuild}
           onClose={() => setIsPreviewing(false)}
         />
