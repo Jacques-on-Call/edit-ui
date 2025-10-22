@@ -86,3 +86,36 @@ export function updateBlockProperties(tree, blockId, newProps) {
     return block;
   });
 }
+
+/**
+ * Deletes a block from the tree.
+ * @param {Array} tree The current content tree.
+ * @param {String} blockId The ID of the block to delete.
+ * @returns {Array} The new content tree without the deleted block.
+ */
+export function deleteBlock(tree, blockId) {
+  return tree.filter(block => block.id !== blockId);
+}
+
+/**
+ * Duplicates a block in the tree.
+ * @param {Array} tree The current content tree.
+ * @param {String} blockId The ID of the block to duplicate.
+ * @returns {Array} The new content tree with the duplicated block.
+ */
+export function duplicateBlock(tree, blockId) {
+  const blockIndex = tree.findIndex(block => block.id === blockId);
+  if (blockIndex === -1) {
+    return tree; // Block not found
+  }
+
+  const blockToDuplicate = tree[blockIndex];
+  const duplicatedBlock = {
+    ...blockToDuplicate,
+    id: nanoid(), // Assign a new unique ID
+  };
+
+  const newTree = [...tree];
+  newTree.splice(blockIndex + 1, 0, duplicatedBlock);
+  return newTree;
+}
