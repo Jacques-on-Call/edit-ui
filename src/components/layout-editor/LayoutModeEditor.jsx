@@ -9,19 +9,25 @@ const emptyBlueprint = {
   name: "New Layout",
   htmlAttrs: { lang: "en" },
   imports: [
-    { as: "Header", from: "../components/Header.astro" },
-    { as: "Footer", from: "../components/Footer.astro" },
+    { as: "Header", from: "src/components/Header.astro" },
+    { as: "Footer", from: "src/components/Footer.astro" },
   ],
   props: {
-    title: { type: "string", default: "Site" },
+    title: { type: "string", default: "Site Title" },
+    description: { type: "string", default: "" },
   },
   head: [
-    { type: 'raw', html: '    <meta charset="utf-8" />\n    <meta name="viewport" content="width=device-width, initial-scale=1" />' },
-    { type: 'title', contentFromProp: 'title' }
+    { type: "meta", attrs: { charset: "utf-8" } },
+    { type: "meta", attrs: { name: "viewport", content: "width=device-width, initial-scale=1" } },
+    { type: "title", contentFromProp: "title" },
   ],
-  preContent: [{ type: 'component', name: 'Header' }],
-  contentSlot: { name: 'Content', single: true },
-  postContent: [{ type: 'component', name: 'Footer' }],
+  preContent: [
+    { type: "component", name: "Header" }
+  ],
+  contentSlot: { name: "Content", single: true },
+  postContent: [
+    { type: "component", name: "Footer" }
+  ],
 };
 
 // --- UI Components for different parts of the blueprint ---
@@ -46,6 +52,7 @@ const TextAreaInput = ({ label, value, onChange }) => (
 
 const LayoutModeEditor = ({ initialBlueprint, filePath, fileSha }) => {
   const [blueprint, setBlueprint] = useState(initialBlueprint || emptyBlueprint);
+  const [currentSha, setCurrentSha] = useState(fileSha);
 
   useEffect(() => {
     if (initialBlueprint) {
@@ -116,8 +123,40 @@ const LayoutModeEditor = ({ initialBlueprint, filePath, fileSha }) => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save layout.');
+        if (response.status === 409) {
+          const latestFile = await response.json();
+          const userConfirmed = window.confirm(
+            "The file has been modified on the server since you opened it. Do you want to overwrite the remote changes with your own?"
+          );
+          if (userConfirmed) {
+            setCurrentSha(latestFile.content.sha);
+            // Re-call handleSave with the new sha.
+            // Note: This could be more robust by creating a separate function.
+            const astroCode = compileAstro(blueprint);
+            const retryResponse = await fetch('/api/save-layout', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                repo,
+                path: filePath,
+                branch: localStorage.getItem('selectedBranch') || 'main',
+                content: astroCode,
+                sha: latestFile.content.sha,
+                message: `feat: update layout ${filePath} via new editor (overwrite conflict)`
+              }),
+            });
+            if (!retryResponse.ok) {
+              const errorData = await retryResponse.json();
+              throw new Error(errorData.message || 'Failed to save layout after conflict.');
+            }
+          } else {
+            return; // User cancelled the overwrite.
+          }
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to save layout.');
+        }
       }
 
       alert('Layout saved successfully!');

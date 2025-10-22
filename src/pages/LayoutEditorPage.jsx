@@ -4,6 +4,8 @@ import EditorRouter from '../components/layout-editor/EditorRouter';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { parseAstroToBlueprint } from '../lib/layouts/parseAstro';
 import { astroToState } from '../utils/astroToState';
+import { markerizeAstro } from '../lib/layouts/markerizeAstro';
+import MarkerizeModal from '../components/layout-editor/MarkerizeModal';
 
 const LayoutEditorPage = () => {
   const [initialBlueprint, setInitialBlueprint] = useState(null);
@@ -12,6 +14,7 @@ const LayoutEditorPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [fileSha, setFileSha] = useState(null); // To store the file's sha for updates
+  const [pendingUnmarked, setPendingUnmarked] = useState(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -55,12 +58,14 @@ const LayoutEditorPage = () => {
             }
           } else {
             const { content, sha } = await response.json();
-            setFileSha(sha); // <-- Store the sha
+            setFileSha(sha);
 
             const blueprint = parseAstroToBlueprint(content);
             if (blueprint) {
               setInitialBlueprint(blueprint);
               setHasMarkers(true);
+            } else if (filePath.endsWith('.astro')) {
+              setPendingUnmarked({ path: filePath, content: content });
             } else {
               const state = await astroToState(content);
               setInitialState(state);
@@ -93,6 +98,36 @@ const LayoutEditorPage = () => {
 
   const searchParams = new URLSearchParams(location.search);
   const filePath = searchParams.get('path');
+
+  const handleProceedWithMarkers = () => {
+    if (!pendingUnmarked) return;
+
+    const { content: markerizedContent } = markerizeAstro(pendingUnmarked.content);
+    const blueprint = parseAstroToBlueprint(markerizedContent);
+
+    setInitialBlueprint(blueprint);
+    setHasMarkers(true);
+    setPendingUnmarked(null);
+  };
+
+  const handleCancelMarkerize = () => {
+    // Fallback to content mode if cancelled
+    const state = astroToState(pendingUnmarked.content);
+    setInitialState(state);
+    setHasMarkers(false);
+    setPendingUnmarked(null);
+  };
+
+  if (pendingUnmarked) {
+    return (
+      <MarkerizeModal
+        isOpen={!!pendingUnmarked}
+        onClose={handleCancelMarkerize}
+        onProceed={handleProceedWithMarkers}
+        originalContent={pendingUnmarked.content}
+      />
+    );
+  }
 
   return (
     <ErrorBoundary>
