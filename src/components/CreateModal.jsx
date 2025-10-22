@@ -1,57 +1,96 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+function slugify(input) {
+  return (input || '')
+    .toString()
+    .normalize('NFKD') // handle accents
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
 
 function CreateModal({ path, repo, onClose, onCreate }) {
   const navigate = useNavigate();
   const [name, setName] = useState('');
-  const [type, setType] = useState('file'); // 'file' or 'folder'
+  const [designType, setDesignType] = useState('');
+  const [templates, setTemplates] = useState([]);
   const [error, setError] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
 
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const response = await fetch(`/api/files?repo=${repo}&path=src/templates/pages`, { credentials: 'include' });
+        if (!response.ok) {
+          throw new Error('Could not fetch page templates.');
+        }
+        const files = await response.json();
+        const templateOptions = files
+          .filter(file => file.name.endsWith('.astro'))
+          .map(file => ({
+            name: file.name.replace('.astro', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            path: file.path
+          }));
+        setTemplates(templateOptions);
+        if (templateOptions.length > 0) {
+          setDesignType(templateOptions[0].path);
+        }
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+    fetchTemplates();
+  }, [repo]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name) {
-      setError('Name is required.');
+    if (!name || !designType) {
+      setError('Page name and design type are required.');
       return;
     }
     setIsCreating(true);
     setError(null);
 
-    let fullPath;
     try {
-      let content;
-
-      if (type === 'folder') {
-        fullPath = `${path}/${name}/.gitkeep`;
-        content = '';
-      } else {
-        const templateRes = await fetch(`/api/file?repo=${repo}&path=src/pages/_template.astro`, { credentials: 'include' });
-        if (!templateRes.ok) {
-          throw new Error('Could not load template file.');
-        }
-        const templateData = await templateRes.json();
-        content = atob(templateData.content);
-        const fileName = name.endsWith('.astro') ? name : `${name}.astro`;
-        fullPath = path === '/' ? fileName : `${path}/${fileName}`;
+      // 1. Fetch the content of the selected template
+      const templateRes = await fetch(`/api/get-file-content?repo=${repo}&path=${designType}`, { credentials: 'include' });
+      if (!templateRes.ok) {
+        throw new Error('Could not load the selected template file.');
       }
+      const { content: templateContent } = await templateRes.json();
+
+      // 2. Replace the placeholder title in the template
+      const pageTitle = name.replace(/"/g, '\\"');
+      const finalContent = templateContent.replace(/title\s*=\s*".*?"/, `title="${pageTitle}"`);
+
+      // 3. Create the new file
+      const slug = slugify(name) || 'new-page';
+      const fileName = `${slug}.astro`;
+      const fullPath = path.endsWith('/') ? `${path}${fileName}` : `${path}/${fileName}`;
 
       const response = await fetch('/api/file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ repo, path: fullPath, content }),
+        body: JSON.stringify({ repo, path: fullPath, content: finalContent }),
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || 'Failed to create item.');
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to create page.');
       }
 
-      onCreate();
-      onClose();
-      if (type === 'file') {
-        navigate(`/editor?path=${fullPath}`);
-      }
+      onCreate?.();
+      onClose?.();
+
+      // 4. Navigate to the new editor for the created file
+      navigate(`/visual-editor?path=${fullPath}`);
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -60,65 +99,44 @@ function CreateModal({ path, repo, onClose, onCreate }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-opacity duration-300" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md transform transition-all" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Create New</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Create New Page</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Page Name</label>
             <input
               type="text"
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter name..."
+              placeholder="e.g., About Our Company"
               autoFocus
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bark-blue focus:border-bark-blue"
             />
           </div>
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
-            <div className="flex items-center space-x-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="type"
-                  value="file"
-                  checked={type === 'file'}
-                  onChange={() => setType('file')}
-                  className="h-4 w-4 text-bark-blue focus:ring-bark-blue border-gray-300"
-                />
-                <span className="ml-2 text-gray-700">File</span>
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="type"
-                  value="folder"
-                  checked={type === 'folder'}
-                  onChange={() => setType('folder')}
-                  className="h-4 w-4 text-bark-blue focus:ring-bark-blue border-gray-300"
-                />
-                <span className="ml-2 text-gray-700">Folder</span>
-              </label>
-            </div>
-          </div>
-          {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
-          <div className="flex justify-end space-x-4">
-            <button
-              type="button"
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
-              onClick={onClose}
-              disabled={isCreating}
+            <label htmlFor="design" className="block text-sm font-medium text-gray-700 mb-1">Design Type</label>
+            <select
+              id="design"
+              value={designType}
+              onChange={(e) => setDesignType(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white"
+              disabled={templates.length === 0}
             >
+              {templates.length === 0 ? <option>Loading...</option> : templates.map((opt) => (
+                <option key={opt.path} value={opt.path}>{opt.name}</option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">Choose a starting point. You can customize everything later.</p>
+          </div>
+          {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+          <div className="flex justify-end gap-3">
+            <button type="button" className="px-4 py-2 rounded-md border border-gray-300" onClick={onClose} disabled={isCreating}>
               Cancel
             </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-bark-blue text-white rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bark-blue disabled:opacity-50"
-              disabled={isCreating}
-            >
-              {isCreating ? 'Creating...' : 'Create'}
+            <button type="submit" className="px-4 py-2 rounded-md bg-bark-blue text-white hover:bg-opacity-90 disabled:opacity-50" disabled={isCreating}>
+              {isCreating ? 'Creating...' : 'Create Page'}
             </button>
           </div>
         </form>

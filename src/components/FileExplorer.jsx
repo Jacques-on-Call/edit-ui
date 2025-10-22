@@ -130,9 +130,11 @@ function FileExplorer({ repo }) {
     if (!file) return;
     if (file.type === 'dir') {
       setPath(file.path);
-    } else if (file.path.startsWith('src/layouts/')) {
-      navigate(`/layout-editor?path=${file.path}`);
+    } else if (file.path.endsWith('.astro')) {
+      // All .astro files now open in the new visual editor
+      navigate(`/visual-editor?path=${file.path}`);
     } else {
+      // Non-astro files can still use the old editor for now
       navigate(`/editor?path=${file.path}`);
     }
   };
