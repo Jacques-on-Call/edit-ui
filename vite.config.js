@@ -1,13 +1,14 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import preact from '@preact/preset-vite'
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [preact()],
   test: {
     globals: true,
     environment: 'jsdom',
+    setupFiles: './test.setup.js', // We will create this file next
   },
   server: {
     proxy: {
@@ -23,6 +24,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      'react': 'preact/compat',
+      'react-dom/test-utils': 'preact/test-utils',
+      'react-dom': 'preact/compat',
+      'react/jsx-runtime': 'preact/jsx-runtime',
       buffer: 'buffer/',
     },
   },

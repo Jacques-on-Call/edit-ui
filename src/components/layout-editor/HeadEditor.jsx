@@ -133,7 +133,7 @@ const HeadEditor = ({ value, onChange }) => {
         </div>
       </div>
       <div className="space-y-2">
-        {value.map((node, index). => (
+        {value.map((node, index) => (
           <div key={index} className="bg-slate-800/50 p-2 rounded-md">
             <HeadNodeEditor
               node={node}

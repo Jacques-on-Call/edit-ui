@@ -1,4 +1,4 @@
-import { render, fireEvent, act } from '@testing-library/react';
+import { render, fireEvent, act } from '@testing-library/preact';
 import { vi } from 'vitest';
 import FileTile from '../FileTile';
 

@@ -1,14 +1,14 @@
 import React from 'react';
 import LayoutModeEditor from './LayoutModeEditor';
-import LayoutEditor from './LayoutEditor';
+import ContentModeEditor from '../content-editor/ContentModeEditor';
 
 const EditorRouter = ({ initialBlueprint, initialState, filePath, fileSha, hasMarkers }) => {
   if (hasMarkers) {
     return <LayoutModeEditor initialBlueprint={initialBlueprint} filePath={filePath} fileSha={fileSha} />;
   } else {
-    // For now, we'll assume that if there are no markers, it's a block-based layout.
-    // This can be refined later if needed.
-    return <LayoutEditor initialState={initialState} filePath={filePath} fileSha={fileSha} />;
+    // When no markers are present, we load the Content Mode Editor.
+    // The `initialState` from the old editor corresponds to the `initialContent` of the new one.
+    return <ContentModeEditor initialContent={initialState} initialSha={fileSha} />;
   }
 };
 
