@@ -13,9 +13,9 @@ The `easy-seo` application is a **headless CMS** built on a decoupled architectu
 
 *   **GitHub as a CMS**: The application treats a user's GitHub repository as the single source of truth for content. All file and content modifications are performed by making commits to the user's repository via the GitHub API.
 *   **Authentication Flow**: The application uses a standard **GitHub OAuth 2.0 flow** to authenticate users. The frontend initiates the flow, and the backend worker securely exchanges the authorization code for an access token, which is then stored in an `HttpOnly` cookie (`gh_session`).
-*   **Dual Editor System**:
-    *   **Content Editor (`EditorPage.jsx`)**: A WYSIWYG editor (TinyMCE) for modifying the content of Markdown (`.md`) and Astro (`.astro`) files. It features a draft-first workflow using `localStorage` and a live preview.
-    *   **Layout Editor (`LayoutEditorPage.jsx`)**: A graphical, drag-and-drop editor (@craftjs/core) for building and modifying page layouts. These layouts are saved as JSON structures in the Cloudflare D1 database.
+*   **Dual Mode Editor**: The editor operates in two distinct modes to separate page structure from page content.
+    *   **Layout Mode**: Used for editing `.astro` layout files. This mode provides a UI for managing the core structure of a page, including imports, props, and the placement of shared components like headers and footers around a central `<slot />`.
+    *   **Content Mode**: Used for editing content blocks that will be rendered inside a layout's `<slot />`. This mode provides a rich block-based editor for creating complex page content with components like sections, columns, images, and buttons.
 
 ---
 
@@ -41,7 +41,7 @@ This directory contains the complete source code for the React frontend.
 | File                  | Purpose                                                                                                                                                                                                                         |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `index.html`          | The main HTML entry point for the Vite application. It includes the root div (`<div id="root">`) and loads the main JavaScript module (`src/main.jsx`). It also loads the TinyMCE editor script from a CDN.                         |
-| `package.json`        | Manages the frontend application's dependencies (e.g., `react`, `vite`, `@tinymce/tinymce-react`, `@craftjs/core`) and scripts (`dev`, `build`, `lint`).                                                                           |
+| `package.json`        | Manages the frontend application's dependencies (e.g., `react`, `vite`, `@tinymce/tinymce-react`) and scripts (`dev`, `build`, `lint`).                                                                           |
 | `vite.config.js`      | The configuration file for Vite. Crucially, it sets up the **proxy** that forwards all `/api/*` requests from the frontend to the Cloudflare Worker backend running on `localhost:8787` during development.                     |
 | `tailwind.config.js`  | Configures Tailwind CSS, including custom color palettes (e.g., `bark-blue`) and plugins (`@tailwindcss/forms`, `@tailwindcss/typography`).                                                                                        |
 | `postcss.config.js`   | Configures PostCSS, primarily to integrate Tailwind CSS and Autoprefixer into the Vite build process.                                                                                                                             |
@@ -66,9 +66,10 @@ This directory contains the complete source code for the React frontend.
 | `CallbackPage.jsx`          | `/callback`              | Handles the redirect from GitHub after authentication. It extracts the `code` and `state`, calls the backend `/api/token` endpoint to get a session cookie, and then notifies the `LoginPage` via `postMessage` before closing itself.                                                      |
 | `RepositorySelectionPage.jsx` | `/repository-selection`  | Displays a list of the user's GitHub repositories using the `RepoSelector` component. When a repository is selected, its full name is saved to `localStorage` and the user is redirected to `/explorer`.                                                                                |
 | `ExplorerPage.jsx`          | `/explorer`              | The main file browsing interface. It retrieves the selected repository from `localStorage` and renders the `FileExplorer` component, which handles the logic for displaying files and folders.                                                                                             |
-| `EditorPage.jsx`            | `/editor`                | **[Content Editor]** The core content editing view. It fetches file content from `/api/file`, provides a TinyMCE editor, handles local drafts, generates a live preview, and publishes changes back to GitHub via a `POST` to `/api/file`. It uses various utilities for parsing and stringifying content. |
-| `LayoutEditorPage.jsx`      | `/layout-editor`         | **[Layout Editor]** The graphical layout editor. It uses `@craftjs/core` to provide a drag-and-drop interface for building page structures. It saves and loads layout templates from the backend via `/api/layout-templates`.                                                                   |
-| `LayoutsDashboardPage.jsx`  | `/layouts`               | A dashboard for managing both graphical layouts (from the D1 database via `/api/layout-templates`) and file-based Astro layouts (from the repository via `/api/astro-layouts`).                                                                                                              |
+| `EditorRouter.jsx`          | `/editor`                | **[Editor Router]** A top-level component that determines which editor mode to render—'Layout Mode' or 'Content Mode'—based on the file type (`.astro` vs. `.md`) and the presence of editor markers. |
+| `LayoutModeEditor.jsx`      | `/editor` (Layout Mode)  | **[Layout Mode UI]** The UI for editing the structure of `.astro` layout files. It provides controls for managing imports, props, and the arrangement of components in the `pre-content` and `post-content` regions. |
+| `ContentModeEditor.jsx`     | `/editor` (Content Mode) | **[Content Mode UI]** The UI for editing block-based content. It provides a rich palette of content blocks (e.g., `Section`, `Columns`, `Image`) that can be composed to build a page. |
+| `LayoutsDashboardPage.jsx`  | `/layouts`               | A dashboard for managing file-based Astro layouts from the user's repository, which are retrieved via the `/api/astro-layouts` endpoint.                                                               |
 
 ---
 
@@ -89,12 +90,9 @@ The Cloudflare Worker exposes a series of API endpoints under the `/api/` path. 
 | `POST` | `/api/duplicate-file`       | Duplicates a file by creating a copy with a "-copy" suffix.                                                                                                                           | `FileExplorer.jsx`                                     |
 | `GET`  | `/api/metadata`             | Fetches the commit history for a file to get metadata like the last author and modification date.                                                                                     | `FileExplorer.jsx`                                     |
 | `GET`  | `/api/search`               | Performs a search for files within the `src/pages` directory of the repository using the GitHub Search API.                                                                           | `SearchBar.jsx` (within `FileExplorer`)                |
-| `GET`  | `/api/layout-templates`     | Fetches a list of all graphical layout templates from the D1 database.                                                                                                                | `LayoutsDashboardPage.jsx`                             |
-| `POST` | `/api/layout-templates`     | Creates or updates a graphical layout template in the D1 database.                                                                                                                    | `LayoutEditorPage.jsx`                                 |
 | `GET`  | `/api/astro-layouts`        | A specialized version of `/api/files` that specifically lists files in the `src/layouts` directory of the user's repository.                                                            | `LayoutsDashboardPage.jsx`                             |
-| `GET`  | `/api/get-file-content`     | Fetches the raw, decoded content of a single file from the repository.                                                                                                                | `LayoutEditorPage.jsx` (for Astro layouts)             |
-| `POST` | `/api/assign-layout`        | Assigns a layout to a file by modifying its frontmatter `layout` property.                                                                                                            | `FileExplorer.jsx`, `EditorPage.jsx`                   |
-| `GET`  | `/api/render-layout/:id`    | Fetches the raw JSON content for a single graphical layout from the D1 database. This is used by the `GraphicalRenderer.astro` layout.                                                  | `GraphicalRenderer.astro`                              |
+| `GET`  | `/api/get-file-content`     | Fetches the raw, decoded content of a single file from the repository.                                                                                                                | `LayoutModeEditor.jsx`, `ContentModeEditor.jsx`         |
+| `POST` | `/api/save-layout`          | A unified endpoint for creating or updating `.astro` files. The worker handles Base64 encoding and commits the changes to the user's repository.                                     | `LayoutModeEditor.jsx`, `ContentModeEditor.jsx`         |
 | `POST` | `/api/trigger-build`        | Triggers a GitHub Actions workflow (`build-preview.yml`) to generate a site preview. Requires a `GITHUB_TOKEN` secret on the worker.                                                  | *(Currently Unused, for future preview functionality)* |
 | `GET`  | `/api/build-status`         | Checks the status of the latest run of the `build-preview.yml` workflow.                                                                                                              | **(Currently Unused, for future preview functionality)*** |
 
@@ -104,43 +102,35 @@ The Cloudflare Worker exposes a series of API endpoints under the `/api/` path. 
 
 This section describes the key architectural patterns that enable the application's advanced features.
 
-### 4.1. The "Layout Bridge" Pattern
+### 4.1. Marker-Based Round-Trip Editing
 
-A fundamental challenge is enabling code-based Astro pages (e.g., `src/pages/about.md`) to use layouts created in the graphical, data-driven editor. The "Layout Bridge" pattern solves this by decoupling the page from the graphical layout definition.
-
-**How it Works:**
-
-1.  **Assignment (`/api/assign-layout`):** When a user assigns a graphical layout (e.g., with ID `123`) to a page, the backend worker modifies that page's frontmatter. It does two things:
-    *   Sets the `layout` property to point to a special Astro component: `layout: '/src/layouts/GraphicalRenderer.astro'`.
-    *   Adds a new property to store the graphical layout's ID: `graphical_layout_id: 123`.
-
-2.  **Build Time Rendering (`GraphicalRenderer.astro`):** During the Astro site build, when a page with this frontmatter is processed, Astro uses `GraphicalRenderer.astro` as its layout. This component then executes its server-side script:
-    *   It reads the `graphical_layout_id` from the page's frontmatter.
-    *   It makes a `fetch` call to the public `/api/render-layout/:id` endpoint on the Cloudflare Worker.
-    *   The worker fetches the corresponding layout's JSON from the D1 database and returns it.
-    *   `GraphicalRenderer.astro` receives the JSON and contains a server-side renderer that converts the Craft.js JSON structure into HTML, which is then injected into the page.
-
-This pattern allows the worker to "give instructions" to the Astro build process without the two environments needing to directly interact, providing a robust and scalable way to mix static and dynamic layouts.
-
-### 4.2. "One-Way Import" for Astro Layouts
-
-To improve the user experience when editing `.astro` files, the application uses a "one-way import" pattern instead of attempting to create a live, two-way-synced visual editor for code.
+The core of the new editor is a "marker-based" system that allows for non-destructive, round-trip editing of `.astro` layout files. This ensures that the editor can read, modify, and write `.astro` files without breaking the underlying code or interfering with the Astro compiler.
 
 **How it Works:**
 
-1.  **Conversion (`astroLayoutConverter.js`):** A utility module was created to act as a converter.
-    *   It takes the raw string content of an `.astro` file.
-    *   It uses the official **`@astrojs/compiler`** to parse the file into an Abstract Syntax Tree (AST).
-    *   It traverses the AST, focusing on the `<body>` of the HTML structure, and maps the HTML tags and their hierarchy to a **Craft.js-compatible JSON object**.
-    *   It uses `uuid` to generate unique IDs for each new node in the JSON structure.
+1.  **Markers**: The system injects special HTML comments (e.g., `<!-- editor:region name="pre-content" -->`) and JavaScript comment blocks (e.g., `/* editor:region name="props" */`) into the `.astro` file. These markers define editable regions for different parts of the layout, such as imports, props, the head, and the body.
 
-2.  **Editor Integration (`LayoutEditorPage.jsx`):**
-    *   When a user opens an `.astro` file in the Layout Editor, the component calls the `convertAstroToCraft` utility.
-    *   If the conversion is successful, the resulting JSON is deserialized and loaded onto the editor's canvas.
-    *   The user can now manipulate the imported structure as a standard graphical layout.
-    *   When saved, this is stored as a **new, independent graphical layout** in the D1 database. The original `.astro` file is never modified.
+2.  **Parsing (`parseAstro.ts`)**: When an `.astro` file is opened in 'Layout Mode', a parser reads the content and uses regular expressions to find these markers. It extracts the content within each marked region and maps it to a structured JSON object called a `LayoutBlueprint`.
 
-This pattern provides a safe and powerful way for users to leverage their existing code as a starting point for new visual designs without the risk of corrupting the original file.
+3.  **Compilation (`compileAstro.ts`)**: After the user has modified the `LayoutBlueprint` in the editor UI, a compiler takes the JSON object and reconstructs the `.astro` file. It re-inserts the markers and formats the content correctly, producing a clean, valid `.astro` file.
+
+4.  **Validation (`validateAstro.ts`)**: Before saving, a validator runs a series of checks on the compiled output to ensure it's a valid Astro layout (e.g., it contains exactly one `<slot />` and no nested `<html>` or `<body>` tags within the editable regions).
+
+This marker-based approach provides a robust and reliable way to build a visual editor on top of a code-based file format like Astro.
+
+### 4.2. Block-Based Content Composition
+
+In 'Content Mode', the editor uses a block-based system to compose page content. This system is designed for flexibility and reusability.
+
+**How it Works:**
+
+1.  **Block Components (`/src/blocks/`)**: The system is built on a library of simple, self-contained `.astro` components located in the root `src/blocks/` directory. Each component represents a piece of content (e.g., `Section.astro`, `Image.astro`, `Button.astro`).
+
+2.  **Block Registry (`/easy-seo/src/blocks/registry.ts`)**: A central registry file defines the schema for each block, including its name, path, and the props it accepts. This registry allows the editor to dynamically generate a UI for editing the properties of each block.
+
+3.  **Content Compiler (`/easy-seo/src/lib/content/compileBlocksToAstro.ts`)**: When a user creates content in 'Content Mode', the editor builds a JSON-like tree of `BlockNode` objects. A content compiler then traverses this tree and transforms it into a renderable `.astro` string, correctly importing the required block components and passing the specified props.
+
+This architecture separates the content's structure (the JSON tree) from its presentation (the `.astro` components), making the content highly portable and easy to render.
 
 ---
 
@@ -168,9 +158,5 @@ This pattern provides a safe and powerful way for users to leverage their existi
 
 4.  **Preview Functionality**: The `handleTriggerBuildRequest` and `handleBuildStatusRequest` functions in the worker may be related to why some editor previews are not working as intended. This connection should be investigated when tackling preview-related bugs.
 
-5.  **Graphical Layout Editor (Active Priority)**: The Graphical Layout Editor (`LayoutEditorPage.jsx`) and its corresponding D1 database integration are **not deprecated**. They are the **primary focus of current development efforts**.
-    *   **Current Status**: The feature is not fully functional and has several known issues.
-    *   **Known Bugs**:
-        *   Layouts (both from D1 and `src/layouts`) are incorrectly opening in the content editor (`EditorPage.jsx`) instead of the graphical editor.
-        *   Drag-and-drop functionality is not working correctly on mobile devices (e.g., iPhone).
-        *   The editor does not visually render the structure of existing layouts when opened; it shows a blank canvas.
+5.  **Astro Layout Editor (Active Priority)**: The new marker-based Astro Layout Editor is the **primary focus of current development efforts**.
+    *   **Current Status**: The core libraries for the compiler, parser, and validator have been built, but the UI is still under active development.
