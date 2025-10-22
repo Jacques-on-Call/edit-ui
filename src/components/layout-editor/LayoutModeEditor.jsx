@@ -3,6 +3,12 @@ import { Link } from 'react-router-dom';
 import Icon from '../Icon';
 import { compileAstro } from '../../lib/layouts/compileAstro';
 import { validateAstroLayout } from '../../lib/layouts/validateAstro';
+import ImportsEditor from './ImportsEditor';
+import PropsEditor from './PropsEditor';
+import HtmlAttrsEditor from './HtmlAttrsEditor';
+import HeadEditor from './HeadEditor';
+import RegionsEditor from './RegionsEditor';
+import PreviewPane from './PreviewPane';
 
 // A blueprint that replicates MainLayout.astro for new layouts.
 const emptyBlueprint = {
@@ -65,31 +71,6 @@ const LayoutModeEditor = ({ initialBlueprint, filePath, fileSha }) => {
   const handleBlueprintChange = (key, value) => {
     setBlueprint(prev => ({ ...prev, [key]: value }));
   };
-
-  // Helper to handle raw text -> BodyNode[] conversion
-  const handleBodyNodeChange = (key, rawText) => {
-      const nodes = rawText.trim() ? [{ type: 'raw', html: rawText }] : [];
-      handleBlueprintChange(key, nodes);
-  }
-
-  // Helper to handle imports text -> ImportSpec[]
-  const handleImportsChange = (rawText) => {
-      const imports = rawText.split('\n').filter(Boolean).map(line => {
-          const match = line.match(/import\s+(.*)\s+from\s+['"](.*)['"]/);
-          return match ? { as: match[1], from: match[2] } : null;
-      }).filter(Boolean);
-      handleBlueprintChange('imports', imports);
-  }
-
-  // Helper to handle JSON props -> PropSpec
-  const handlePropsChange = (rawText) => {
-      try {
-          const props = JSON.parse(rawText);
-          handleBlueprintChange('props', props);
-      } catch (e) {
-          console.error("Invalid JSON for props");
-      }
-  }
 
   const handleSave = async () => {
     const astroCode = compileAstro(blueprint);
@@ -166,12 +147,8 @@ const LayoutModeEditor = ({ initialBlueprint, filePath, fileSha }) => {
     }
   };
 
-  // Convert blueprint parts to string for text areas
-  const importsText = blueprint.imports.map(i => `import ${i.as} from "${i.from}";`).join('\n');
-  const propsText = JSON.stringify(blueprint.props, null, 2);
-  const preContentText = blueprint.preContent.map(n => n.html || '').join('\n');
-  const postContentText = blueprint.postContent.map(n => n.html || '').join('\n');
-  const htmlAttrsText = JSON.stringify(blueprint.htmlAttrs, null, 2);
+  const compiledCode = compileAstro(blueprint);
+  const { errors: validationErrors } = validateAstroLayout(compiledCode);
 
   return (
     <div className="h-screen flex flex-col bg-slate-900 text-white">
@@ -189,49 +166,45 @@ const LayoutModeEditor = ({ initialBlueprint, filePath, fileSha }) => {
       </header>
 
       <main className="flex-1 overflow-y-auto p-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+          {/* Left Side: Editors */}
+          <div className="space-y-6">
             <Section title="Layout Configuration">
-               <TextAreaInput
-                    label="HTML Attributes (JSON)"
-                    value={htmlAttrsText}
-                    onChange={(e) => {
-                        try {
-                           handleBlueprintChange('htmlAttrs', JSON.parse(e.target.value))
-                        } catch {}
-                    }}
-                />
+              <HtmlAttrsEditor
+                value={blueprint.htmlAttrs}
+                onChange={(newAttrs) => handleBlueprintChange('htmlAttrs', newAttrs)}
+              />
             </Section>
-
             <Section title="Frontmatter">
-                <TextAreaInput
-                    label="Imports"
-                    value={importsText}
-                    onChange={(e) => handleImportsChange(e.target.value)}
-                />
-                <TextAreaInput
-                    label="Props (JSON)"
-                    value={propsText}
-                    onChange={(e) => handlePropsChange(e.target.value)}
-                />
+              <ImportsEditor
+                value={blueprint.imports}
+                onChange={(newImports) => handleBlueprintChange('imports', newImports)}
+              />
+              <PropsEditor
+                value={blueprint.props}
+                onChange={(newProps) => handleBlueprintChange('props', newProps)}
+              />
             </Section>
-
+            <Section title="Head Content">
+              <HeadEditor
+                value={blueprint.head}
+                onChange={(newHead) => handleBlueprintChange('head', newHead)}
+              />
+            </Section>
             <Section title="Body Content">
-                 <TextAreaInput
-                    label="Pre-Content Region (Before Slot)"
-                    value={preContentText}
-                    onChange={(e) => handleBodyNodeChange('preContent', e.target.value)}
-                />
-                <div className="text-center my-4 p-4 border border-dashed border-slate-600 rounded-md">
-                    <p className="text-slate-400 font-medium">&lt;slot /&gt;</p>
-                    <p className="text-xs text-slate-500">Content from pages will be injected here.</p>
-                </div>
-
-                 <TextAreaInput
-                    label="Post-Content Region (After Slot)"
-                    value={postContentText}
-                    onChange={(e) => handleBodyNodeChange('postContent', e.target.value)}
-                />
+              <RegionsEditor
+                preContent={blueprint.preContent}
+                postContent={blueprint.postContent}
+                onPreChange={(newPre) => handleBlueprintChange('preContent', newPre)}
+                onPostChange={(newPost) => handleBlueprintChange('postContent', newPost)}
+              />
             </Section>
+          </div>
+
+          {/* Right Side: Preview */}
+          <div>
+            <PreviewPane compiledCode={compiledCode} validationErrors={validationErrors} />
+          </div>
         </div>
       </main>
     </div>
