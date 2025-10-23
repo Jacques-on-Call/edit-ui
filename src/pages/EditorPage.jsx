@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Editor } from '@tinymce/tinymce-react';
 import { debounce } from 'lodash';
-import matter from 'gray-matter';
+import fm from 'front-matter';
+import yaml from 'js-yaml';
 import { marked } from 'marked';
 import TurndownService from 'turndown';
 
@@ -37,6 +38,23 @@ function EditorPage() {
   const [searchParams] = useSearchParams();
   const filePath = searchParams.get('path');
   const repo = localStorage.getItem('selectedRepo');
+
+  if (!repo) {
+    return (
+      <div className="bg-gray-100 min-h-screen p-4 sm:p-6 lg:p-8 flex items-center justify-center text-center">
+        <div className="bg-white p-8 rounded-lg shadow-md">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Repository Context Missing</h1>
+          <p className="text-gray-600 mb-6">This editor requires a selected repository to function. Please select a repository to continue.</p>
+          <Link
+            to="/repository-selection"
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+          >
+            Select a Repository
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // Core state
   const [frontmatter, setFrontmatter] = useState({});
@@ -102,7 +120,8 @@ function EditorPage() {
         fullContent = stringifyAstroFile(updatedFrontmatter, originalBody);
       } else {
         const markdownBody = turndownService.turndown(content);
-        fullContent = matter.stringify(markdownBody, frontmatter);
+        const frontmatterString = yaml.dump(frontmatter);
+        fullContent = `---\n${frontmatterString}---\n${markdownBody}`;
       }
 
       const response = await fetch('/api/file', {
@@ -143,7 +162,8 @@ function EditorPage() {
       } else {
         const markdownBody = turndownService.turndown(newContent);
         updatedFrontmatter = currentFrontmatter;
-        fullContentString = matter.stringify(markdownBody, updatedFrontmatter);
+        const frontmatterString = yaml.dump(updatedFrontmatter);
+        fullContentString = `---\n${frontmatterString}---\n${markdownBody}`;
       }
 
       localStorage.setItem(draftKey, fullContentString);

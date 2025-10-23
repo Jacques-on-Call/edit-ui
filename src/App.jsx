@@ -8,7 +8,7 @@ import RepositorySelectionPage from './pages/RepositorySelectionPage';
 import ExplorerPage from './pages/ExplorerPage';
 import EditorPage from './pages/EditorPage';
 import LayoutsDashboardPage from './pages/LayoutsDashboardPage';
-import LayoutEditorPage from './pages/LayoutEditorPage';
+import VisualEditorPage from './pages/VisualEditorPage';
 
 function App() {
   return (
@@ -17,7 +17,6 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/callback" element={<CallbackPage />} />
       <Route path="/repository-selection" element={<RepositorySelectionPage />} />
-      <Route path="/layout-editor" element={<LayoutEditorPage />} />
 
       {/*
         All routes that ARE part of the main application experience are nested here.
@@ -33,6 +32,8 @@ function App() {
         <Route path="explorer" element={<ExplorerPage />} />
         <Route path="editor" element={<EditorPage />} />
         <Route path="layouts" element={<LayoutsDashboardPage />} />
+        <Route path="visual-editor" element={<VisualEditorPage />} />
+        <Route path="layout-editor" element={<VisualEditorPage />} />
       </Route>
     </Routes>
   );

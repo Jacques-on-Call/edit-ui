@@ -1,4 +1,4 @@
-import matter from 'gray-matter';
+import fm from 'front-matter';
 import { parseAstroFile } from './astroFileParser';
 
 /**
@@ -24,20 +24,20 @@ export async function unifiedParser(fileContent, filePath) {
     return parseAstroFile(fileContent);
   }
 
-  // For all other files (especially .md), use the robust gray-matter library.
+  // For all other files (especially .md), use the robust front-matter library.
   try {
-    trace.detected = 'gray-matter';
-    const parsed = matter(fileContent);
+    trace.detected = 'front-matter';
+    const parsed = fm(fileContent);
 
     const model = {
-      frontmatter: parsed.data || {},
-      body: parsed.content || '',
+      frontmatter: parsed.attributes || {},
+      body: parsed.body || '',
       raw: fileContent,
-      rawType: parsed.language || 'yaml',
+      rawType: 'yaml', // front-matter only supports YAML
     };
 
-    trace.rawFrontmatter = parsed.data;
-    trace.body = parsed.content;
+    trace.rawFrontmatter = parsed.attributes;
+    trace.body = parsed.body;
     trace.parsed = parsed;
 
     return { model, trace };

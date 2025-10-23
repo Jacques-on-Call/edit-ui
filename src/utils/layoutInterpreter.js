@@ -1,4 +1,4 @@
-import matter from 'gray-matter';
+import fm from 'front-matter';
 import { parseAstroFile } from './astroFileParser.js';
 
 /**
@@ -48,8 +48,8 @@ export async function normalizeFrontmatter(fileContent, filePath) {
       }
       return model.frontmatter || {};
     } else {
-      const { data } = matter(fileContent);
-      return data || {};
+      const { attributes } = fm(fileContent);
+      return attributes || {};
     }
   } catch (err) {
     return { error: `Failed to parse frontmatter: ${err.message}` };

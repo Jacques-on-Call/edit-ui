@@ -1,6 +1,6 @@
 import { parse } from '@astrojs/compiler';
 import { v4 as uuidv4 } from 'uuid';
-import matter from 'gray-matter';
+import fm from 'front-matter';
 
 // A more detailed mapping that includes whether a component is a container.
 const componentMap = {
@@ -44,7 +44,7 @@ function mapTagToComponent(tagName) {
  */
 export async function convertAstroToCraft(astroContent) {
   try {
-    const { data: frontmatter, content: fileBody } = matter(astroContent);
+    const { attributes: frontmatter, body: fileBody } = fm(astroContent);
     const htmlToParse = frontmatter.body || fileBody;
 
     if (!htmlToParse.trim()) {

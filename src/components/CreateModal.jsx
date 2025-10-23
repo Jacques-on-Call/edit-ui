@@ -17,6 +17,7 @@ function slugify(input) {
 function CreateModal({ path, repo, onClose, onCreate }) {
   const navigate = useNavigate();
   const [name, setName] = useState('');
+  const [pageType, setPageType] = useState('astro'); // 'astro' or 'md'
   const [designType, setDesignType] = useState('');
   const [templates, setTemplates] = useState([]);
   const [error, setError] = useState(null);
@@ -47,29 +48,45 @@ function CreateModal({ path, repo, onClose, onCreate }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !designType) {
-      setError('Page name and design type are required.');
+    if (!name || (pageType === 'astro' && !designType)) {
+      setError('Page name and design type are required for Visual Pages.');
       return;
     }
     setIsCreating(true);
     setError(null);
 
     try {
-      // 1. Fetch template content
-      const templateRes = await fetch(`/api/get-file-content?repo=${repo}&path=${designType}`, { credentials: 'include' });
-      if (!templateRes.ok) throw new Error('Could not load template file.');
-      const { content: templateContent } = await templateRes.json();
-
-      // 2. Prepare new file content
-      const pageTitle = name.replace(/"/g, '\\"');
-      const finalContent = templateContent.replace(/title\s*=\s*".*?"/, `title="${pageTitle}"`);
-
-      // 3. Define new file path
       const slug = slugify(name) || 'new-page';
-      const fileName = `${slug}.astro`;
-      const fullPath = path.endsWith('/') ? `${path}${fileName}` : `${path}/${fileName}`;
+      let finalContent;
+      let fullPath;
+      let navigateTo;
 
-      // 4. Create the file via API
+      if (pageType === 'astro') {
+        const templateRes = await fetch(`/api/get-file-content?repo=${repo}&path=${designType}`, { credentials: 'include' });
+        if (!templateRes.ok) throw new Error('Could not load template file.');
+        const { content: templateContent } = await templateRes.json();
+        const pageTitle = name.replace(/"/g, '\\"');
+        finalContent = templateContent.replace(/title\s*=\s*".*?"/, `title="${pageTitle}"`);
+        const fileName = `${slug}.astro`;
+        fullPath = path.endsWith('/') ? `${path}${fileName}` : `${path}/${fileName}`;
+        navigateTo = `/visual-editor?path=${fullPath}`;
+      } else { // pageType is 'md'
+        const pageTitle = name.replace(/"/g, '\\"');
+        finalContent = `---
+title: "${pageTitle}"
+description: "A new content page."
+layout: ../../layouts/MainLayout.astro
+---
+
+# ${pageTitle}
+
+This is a new page. You can start writing content here.
+`;
+        const fileName = `${slug}.md`;
+        fullPath = path.endsWith('/') ? `${path}${fileName}` : `${path}/${fileName}`;
+        navigateTo = `/editor?path=${fullPath}`;
+      }
+
       const response = await fetch('/api/file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -84,9 +101,7 @@ function CreateModal({ path, repo, onClose, onCreate }) {
 
       onCreate?.();
       onClose?.();
-
-      // 5. Navigate to the new editor
-      navigate(`/visual-editor?path=${fullPath}`);
+      navigate(navigateTo);
 
     } catch (err) {
       setError(err.message);
@@ -112,21 +127,39 @@ function CreateModal({ path, repo, onClose, onCreate }) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bark-blue focus:border-bark-blue"
             />
           </div>
-          <div className="mb-6">
-            <label htmlFor="design" className="block text-sm font-medium text-gray-700 mb-1">Design Type</label>
-            <select
-              id="design"
-              value={designType}
-              onChange={(e) => setDesignType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white"
-              disabled={templates.length === 0}
-            >
-              {templates.length === 0 ? <option>Loading...</option> : templates.map((opt) => (
-                <option key={opt.path} value={opt.path}>{opt.name}</option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-500 mt-1">Choose a starting point. You can customize everything later.</p>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Page Type</label>
+            <div className="flex gap-4">
+              <label className="flex items-center">
+                <input type="radio" value="astro" checked={pageType === 'astro'} onChange={() => setPageType('astro')} className="form-radio" />
+                <span className="ml-2">Visual Page (.astro)</span>
+              </label>
+              <label className="flex items-center">
+                <input type="radio" value="md" checked={pageType === 'md'} onChange={() => setPageType('md')} className="form-radio" />
+                <span className="ml-2">Content Page (.md)</span>
+              </label>
+            </div>
           </div>
+
+          {pageType === 'astro' && (
+            <div className="mb-6">
+              <label htmlFor="design" className="block text-sm font-medium text-gray-700 mb-1">Design Type</label>
+              <select
+                id="design"
+                value={designType}
+                onChange={(e) => setDesignType(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white"
+                disabled={templates.length === 0}
+              >
+                {templates.length === 0 ? <option>Loading...</option> : templates.map((opt) => (
+                  <option key={opt.path} value={opt.path}>{opt.name}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">Choose a starting point. You can customize everything later.</p>
+            </div>
+          )}
+
           {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
           <div className="flex justify-end gap-3">
             <button type="button" className="px-4 py-2 rounded-md border border-gray-300" onClick={onClose} disabled={isCreating}>
