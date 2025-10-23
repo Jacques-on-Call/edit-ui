@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import { pathToPreviewRoute } from '../utils/previewRoute';
 
-export default function PreviewPane({ filePath, cacheKey }) {
-  const iframeRef = useRef(null);
+const PreviewPane = forwardRef(function PreviewPane({ filePath, cacheKey }, ref) {
   const [sameOrigin, setSameOrigin] = useState(false);
 
   const baseSrc = useMemo(() => pathToPreviewRoute(filePath), [filePath]);
@@ -21,9 +20,9 @@ export default function PreviewPane({ filePath, cacheKey }) {
     }
   }, [src]);
 
-  const reload = () => iframeRef.current?.contentWindow?.location?.reload();
-  const back = () => sameOrigin && iframeRef.current?.contentWindow?.history?.back();
-  const forward = () => sameOrigin && iframeRef.current?.contentWindow?.history?.forward();
+  const reload = () => ref.current?.contentWindow?.location?.reload();
+  const back = () => sameOrigin && ref.current?.contentWindow?.history?.back();
+  const forward = () => sameOrigin && ref.current?.contentWindow?.history?.forward();
   const openNew = () => window.open(src, '_blank', 'noopener,noreferrer');
 
   return (
@@ -43,7 +42,7 @@ export default function PreviewPane({ filePath, cacheKey }) {
         </div>
       </div>
       <iframe
-        ref={iframeRef}
+        ref={ref}
         src={src}
         title="Astro Preview"
         className="w-full flex-1 bg-white"
@@ -51,4 +50,6 @@ export default function PreviewPane({ filePath, cacheKey }) {
       />
     </div>
   );
-}
+});
+
+export default PreviewPane;

@@ -6,6 +6,8 @@ import { validateAstroLayout } from '../lib/layouts/validateAstro';
 import VisualSidebar from '../components/VisualSidebar';
 import PreviewPane from '../components/PreviewPane';
 import { usePreviewController } from '../hooks/usePreviewController';
+import { useAutosave } from '../hooks/useAutosave';
+import { ensureUniqueAstroPath } from '../utils/uniquePath';
 
 function VisualEditorPage() {
   const [blueprint, setBlueprint] = useState(null);
@@ -13,6 +15,7 @@ function VisualEditorPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const location = useLocation();
+  const previewIframeRef = useRef(null);
   const {
     stale,
     setStale,
@@ -22,6 +25,8 @@ function VisualEditorPage() {
     error: previewError,
     triggerBuild,
   } = usePreviewController();
+
+  useAutosave(blueprint, setBlueprint);
 
   const handleSave = async () => {
     if (!blueprint) return;
@@ -56,9 +61,54 @@ function VisualEditorPage() {
       const { sha } = await response.json();
       setFileSha(sha);
       setStale(true);
+
+      const draftKey = `draft_${repo}_${filePath}`;
+      localStorage.removeItem(draftKey);
+
       alert('File saved successfully!');
     } catch (err) {
       setError(err.message);
+    }
+  };
+
+  const applyLayoutToPage = async (layoutPath) => {
+    const repo = localStorage.getItem('selectedRepo');
+    const branch = localStorage.getItem('selectedBranch') || 'main';
+    const searchParams = new URLSearchParams(location.search);
+    const filePath = searchParams.get('path');
+
+    try {
+      // First, fetch the current page content
+      const response = await fetch(`/api/file?repo=${repo}&path=${filePath}&ref=${branch}`, { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch current page content.');
+      const data = await response.json();
+      const currentPageContent = atob(data.content);
+      const currentPageSha = data.sha;
+
+      // This is a simplified way to update frontmatter. A more robust solution
+      // would use a proper parser, but for now, we'll use a regex.
+      const newContent = currentPageContent.replace(/layout:\s*".*?"/, `layout: "${layoutPath}"`);
+
+      // Now, save the updated page content
+      const saveResponse = await fetch('/api/file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          repo,
+          path: filePath,
+          content: btoa(unescape(encodeURIComponent(newContent))),
+          message: `refactor: apply new layout ${layoutPath}`,
+          sha: currentPageSha,
+        }),
+      });
+
+      if (!saveResponse.ok) throw new Error('Failed to apply the new layout.');
+
+      alert('New layout applied successfully!');
+      setStale(true); // Mark the preview as stale
+    } catch (err) {
+      setError(`Failed to apply layout: ${err.message}`);
     }
   };
 
@@ -77,8 +127,12 @@ function VisualEditorPage() {
     }
 
     const repo = localStorage.getItem('selectedRepo');
-    const branch = localStorage.getItem('selectedBranch') || 'main';
-    const filePath = `src/layouts/custom/${layoutName}.astro`;
+    const desiredPath = `src/layouts/custom/${layoutName}.astro`;
+    const uniquePath = await ensureUniqueAstroPath(repo, desiredPath);
+
+    if (uniquePath !== desiredPath) {
+      alert(`A layout with that name already exists. Saving as ${uniquePath.split('/').pop()} instead.`);
+    }
 
     try {
       const response = await fetch('/api/file', {
@@ -87,13 +141,18 @@ function VisualEditorPage() {
         credentials: 'include',
         body: JSON.stringify({
           repo,
-          path: filePath,
+          path: uniquePath,
           content: btoa(unescape(encodeURIComponent(content))),
-          message: `feat: create custom layout ${layoutName}`,
+          message: `feat: create custom layout ${uniquePath.split('/').pop()}`,
         }),
       });
       if (!response.ok) throw new Error('Failed to save layout.');
+
       alert('Layout saved successfully!');
+
+      if (window.confirm('Would you like to apply this new layout to the current page?')) {
+        await applyLayoutToPage(uniquePath);
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -161,7 +220,6 @@ function VisualEditorPage() {
     fetchAndParseFile();
   }, [location.search]);
 
-  // ... (rest of the component, handlers, and JSX)
   return (
     <div className="bg-gray-100 min-h-screen flex">
       <div className="flex-grow p-4 sm:p-6 lg:p-8">
@@ -194,10 +252,16 @@ function VisualEditorPage() {
         )}
 
         {blueprint && (
-          <PreviewPane filePath={new URLSearchParams(location.search).get('path')} cacheKey={lastRunId || ''} />
+          <PreviewPane ref={previewIframeRef} filePath={new URLSearchParams(location.search).get('path')} cacheKey={lastRunId || ''} />
         )}
       </div>
-      <VisualSidebar blueprint={blueprint} setBlueprint={setBlueprint} onSave={handleSave} onSaveAsLayout={handleSaveAsLayout} />
+      <VisualSidebar
+        blueprint={blueprint}
+        setBlueprint={setBlueprint}
+        onSave={handleSave}
+        onSaveAsLayout={handleSaveAsLayout}
+        previewIframe={previewIframeRef.current}
+      />
     </div>
   );
 }
