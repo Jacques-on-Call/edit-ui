@@ -24,31 +24,33 @@ function AppLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
   useEffect(() => {
+    // 1. Check authentication status first
     fetch('/api/me', { credentials: 'include' })
       .then(res => {
         if (res.ok) {
-          return res.json();
-        }
-        // If the session is invalid (e.g., 401 Unauthorized), redirect to login
-        setIsAuthenticated(false);
-        navigate('/login');
-        return null;
-      })
-      .then(userData => {
-        if (userData && userData.login) {
           setIsAuthenticated(true);
-          // NEW: Check for repository selection *after* confirming authentication
-          const selectedRepo = localStorage.getItem('selectedRepo');
-          if (!selectedRepo && location.pathname !== '/repository-selection') {
-            navigate('/repository-selection');
-          }
+        } else {
+          setIsAuthenticated(false);
+          navigate('/login');
         }
       })
       .catch(() => {
         setIsAuthenticated(false);
         navigate('/login');
       });
-  }, [navigate, location.pathname]);
+  }, [navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      // 2. Once authenticated, check for repository selection
+      const publicRoutes = ['/login', '/callback', '/repository-selection'];
+      if (publicRoutes.some(p => location.pathname.startsWith(p))) return;
+      const repo = localStorage.getItem('selectedRepo');
+      if (!repo) {
+        navigate('/repository-selection', { replace: true });
+      }
+    }
+  }, [isAuthenticated, location, navigate]);
 
   const isExplorerPage = location.pathname.startsWith('/explorer');
   const isEditorPage = location.pathname.startsWith('/editor');

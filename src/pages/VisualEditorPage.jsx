@@ -1,275 +1,106 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { parseAstroToBlueprint } from '../lib/layouts/parseAstro';
+import { triggerPreviewBuild, pollLatestBuild } from '../utils/buildPreview';
 import PreviewPane from '../components/PreviewPane';
-import { compileAstro } from '../lib/layouts/compileAstro';
 
-function useBuildStatus(repo, onComplete) {
-  const [isBuilding, setIsBuilding] = useState(false);
-  const [builtAt, setBuiltAt] = useState(null);
-  const [lastRunId, setLastRunId] = useState(null);
-  const [error, setBuildError] = useState(null);
-  const pollTimeout = useRef(null);
-
-  const poll = useCallback(async (triggeredAt) => {
-    try {
-      const res = await fetch(`/api/build-status?repo=${repo}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Could not fetch build status.');
-      const { status, conclusion, run_id, completed_at } = await res.json();
-
-      if (status === 'completed') {
-        setIsBuilding(false);
-        setBuiltAt(completed_at);
-        setLastRunId(run_id);
-        if (conclusion === 'success') {
-          onComplete?.(run_id);
-        } else {
-          setBuildError(`Build failed with conclusion: ${conclusion}`);
-        }
-      } else {
-        pollTimeout.current = setTimeout(() => poll(triggeredAt), 2000); // Poll every 2s
-      }
-    } catch (err) {
-      setIsBuilding(false);
-      setBuildError(err.message);
-    }
-  }, [repo, onComplete]);
-
-  const triggerBuild = useCallback(async () => {
-    setIsBuilding(true);
-    setBuildError(null);
-    clearTimeout(pollTimeout.current);
-    const triggeredAt = new Date().toISOString();
-    try {
-      const res = await fetch('/api/trigger-build', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ repo }),
-      });
-      if (!res.ok) throw new Error('Failed to trigger build.');
-      // Start polling
-      poll(triggeredAt);
-    } catch (err) {
-      setIsBuilding(false);
-      setBuildError(err.message);
-    }
-  }, [repo, poll]);
-
-  useEffect(() => () => clearTimeout(pollTimeout.current), []);
-
-  return { isBuilding, builtAt, lastRunId, triggerBuild, error };
-}
-
-
-function VisualEditorPage() {
-  const [blueprint, setBlueprint] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isUnmarked, setIsUnmarked] = useState(false);
+export default function VisualEditorPage() {
   const location = useLocation();
-  const [repo, setRepo] = useState(localStorage.getItem('selectedRepo'));
-  const [filePath, setFilePath] = useState(null);
+  const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const filePath = qs.get('path') || '';
+  const repo = localStorage.getItem('selectedRepo');
+  const branch = localStorage.getItem('selectedBranch') || 'main';
 
-  const [isPreviewVisible, setPreviewVisible] = useState(false);
-  const [isStale, setStale] = useState(false);
-
-  const { isBuilding, builtAt, lastRunId, triggerBuild, error: buildError } = useBuildStatus(repo, () => {
-    setStale(false);
-  });
+  const [loading, setLoading] = useState(true);
+  const [loadErr, setLoadErr] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [stale, setStale] = useState(true);
+  const [building, setBuilding] = useState(false);
+  const [builtAt, setBuiltAt] = useState(null);
+  const [cacheKey, setCacheKey] = useState('');
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    setFilePath(searchParams.get('path'));
-  }, [location.search]);
+    const run = async () => {
+      if (!repo || !filePath) {
+        setLoadErr('Missing repository or file path. Please select a repository again.');
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        setLoadErr('');
+        const res = await fetch(`/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(filePath)}&ref=${encodeURIComponent(branch)}`, { credentials: 'include' });
+        if (!res.ok) throw new Error(`Failed to load file (${res.status}). ${await res.text()}`);
+        setFileName(filePath.split('/').pop() || filePath);
+        setStale(true);
+      } catch (e) {
+        setLoadErr(e.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    run();
+  }, [repo, branch, filePath]);
 
-  const handleSave = async () => {
-    if (!blueprint || !filePath || !repo) return;
+  const rebuild = async () => {
+    if (building) return;
+    setBuilding(true);
     try {
-      const content = compileAstro(blueprint);
-      const response = await fetch('/api/file', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          repo,
-          path: filePath,
-          content: btoa(unescape(encodeURIComponent(content))),
-          message: `feat: update ${filePath} from visual editor`,
-        }),
-      });
-      if (!response.ok) throw new Error('Failed to save file.');
-      setStale(true);
-    } catch (err) {
-      setError(err.message);
+      const ctx = await triggerPreviewBuild();
+      const { runId, finishedAt } = await pollLatestBuild(ctx);
+      setBuiltAt(finishedAt);
+      setCacheKey(runId || Date.now());
+      setStale(false);
+    } catch (e) {
+      setLoadErr(e.message || 'Preview build failed.');
+    } finally {
+      setBuilding(false);
     }
   };
 
+  if (loading) return <div className="p-8 text-gray-500">Loading editor…</div>;
 
-  useEffect(() => {
-    const branch = localStorage.getItem('selectedBranch') || 'main';
-    const searchParams = new URLSearchParams(location.search);
-    const path = searchParams.get('path');
-    const isNew = searchParams.get('new') === '1';
-    const templatePath = searchParams.get('template'); // For new files
-
-    if (!filePath || !repo) {
-      setError('File path and repository are required.');
-      setIsLoading(false);
-      return;
-    }
-
-    const fetchAndParseFile = async () => {
-      setIsLoading(true);
-      setError(null);
-      setIsUnmarked(false);
-      try {
-        let fileContent;
-        if (isNew && templatePath) {
-          // For a new file, fetch the TEMPLATE content
-          const response = await fetch(`/api/get-file-content?repo=${repo}&path=${templatePath}&ref=${branch}`, { credentials: 'include' });
-          if (!response.ok) throw new Error(`API Error: Failed to fetch template file (status: ${response.status})`);
-          const { content } = await response.json();
-          // Substitute the title
-          const pageTitle = filePath.split('/').pop().replace('.astro', '').replace(/-/g, ' ');
-          fileContent = content.replace(/title\s*=\s*".*?"/, `title="${pageTitle}"`);
-        } else {
-          // For an existing file, fetch its actual content
-          const response = await fetch(`/api/get-file-content?repo=${repo}&path=${filePath}&ref=${branch}`, { credentials: 'include' });
-          if (!response.ok) {
-             if (response.status === 404) {
-                 throw new Error("File not found. It may not have been saved yet.");
-             }
-             throw new Error(`API Error: Failed to fetch file (status: ${response.status})`);
-          }
-          const { content } = await response.json();
-          fileContent = content;
-        }
-
-        if (!fileContent) {
-          throw new Error("File content is empty.");
-        }
-
-        const parsedBlueprint = parseAstroToBlueprint(fileContent);
-        if (!parsedBlueprint) {
-          // This is not an error, but a state the user needs to see.
-          setIsUnmarked(true);
-          setBlueprint(null);
-        } else {
-          setBlueprint(parsedBlueprint);
-        }
-
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchAndParseFile();
-  }, [location.search]);
-
-  // ... (rest of the component, handlers, and JSX)
-
-  if (!repo) {
+  if (loadErr) {
     return (
-      <div className="bg-gray-100 min-h-screen p-4 sm:p-6 lg:p-8 flex items-center justify-center text-center">
-        <div className="bg-white p-8 rounded-lg shadow-md">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Repository Context Missing</h1>
-          <p className="text-gray-600 mb-6">This editor requires a selected repository to function. Please select a repository to continue.</p>
-          <Link
-            to="/repository-selection"
-            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-          >
-            Select a Repository
-          </Link>
+      <div className="max-w-xl mx-auto p-6 mt-8 bg-white border rounded-lg">
+        <h1 className="text-lg font-semibold mb-2">Can’t open Visual Editor</h1>
+        <p className="text-gray-700 mb-4">{loadErr}</p>
+        <div className="flex gap-2">
+          <Link className="px-3 py-2 rounded bg-gray-200" to="/repository-selection">Select Repository</Link>
+          <Link className="px-3 py-2 rounded bg-gray-200" to="/explorer">Back to Explorer</Link>
         </div>
       </div>
     );
   }
 
+  const lastBuiltText = builtAt
+    ? new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
+        .format(Math.round((new Date(builtAt).getTime() - Date.now()) / 60000), 'minute')
+    : null;
+
   return (
-    <>
-      {isPreviewVisible && (
-        <PreviewPane
-          filePath={filePath}
-          stale={isStale}
-          onRebuild={triggerBuild}
-          building={isBuilding}
-          builtAtISO={builtAt}
-          lastRunId={lastRunId}
-          onClose={() => setPreviewVisible(false)}
-        />
-      )}
-      <div className="bg-gray-100 min-h-screen p-4 sm:p-6 lg:p-8">
-        <div className="max-w-4xl mx-auto">
-          <header className="mb-6 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">Visual Editor</h1>
-              <p className="text-gray-600 mt-1">{filePath}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleSave}
-                className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => setPreviewVisible(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-              >
-                Preview
-              </button>
-            </div>
-          </header>
+    <div className="bg-gray-100 min-h-screen p-4 sm:p-6 lg:p-8">
+      <div className="max-w-6xl mx-auto space-y-4">
+        <header className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{fileName || 'Visual Editor'}</h1>
+            {lastBuiltText && <p className="text-gray-500 text-sm">Last built {lastBuiltText}</p>}
+          </div>
+          <div className="flex items-center gap-2">
+            {stale && !building && (
+              <button className="px-4 py-2 rounded bg-blue-600 text-white" onClick={rebuild}>Rebuild Preview</button>
+            )}
+            {building && <span className="text-amber-600">Building preview…</span>}
+          </div>
+        </header>
 
-          {isStale && (
-             <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
-                <p className="font-bold">Preview is out-of-date</p>
-                <p>You've saved changes. Rebuild the preview to see the latest version.</p>
-             </div>
-          )}
+        {stale && !building && (
+          <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-800 px-4 py-2">
+            Preview is out of date. Click “Rebuild Preview” to update.
+          </div>
+        )}
 
-          {buildError && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">
-                <strong className="font-bold">Build Error:</strong>
-                <p className="block sm:inline ml-2">{buildError}</p>
-              </div>
-          )}
-
-
-          {isLoading && <p>Loading file...</p>}
-
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">
-              <strong className="font-bold">An error occurred:</strong>
-              <p className="block sm:inline ml-2">{error}</p>
-            </div>
-          )}
-
-          {isUnmarked && !isLoading && (
-            <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded-md text-center">
-              <h2 className="text-xl font-bold mb-2">File Not Ready for Visual Editing</h2>
-              <p className="mb-4">This Astro file doesn’t contain the required editor markers. To use the visual editor, markers need to be added to define editable regions.</p>
-              <button
-                onClick={() => alert('Marker injection functionality coming soon!')}
-                className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded"
-              >
-                Add Markers
-              </button>
-            </div>
-          )}
-
-          {blueprint && !isUnmarked && (
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold mb-4 text-gray-700">Editor UI goes here</h2>
-              {/* This is where the visual editor controls will be added in a future step. */}
-            </div>
-          )}
-        </div>
+        <PreviewPane filePath={filePath} cacheKey={cacheKey} />
       </div>
-    </>
+    </div>
   );
 }
-
-export default VisualEditorPage;
