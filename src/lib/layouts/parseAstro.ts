@@ -12,63 +12,40 @@ const commentBlockHTML = (name: string) =>
     "m"
   );
 
-// Allow attributes and whitespace on <slot ... />
 const contentSlotRe =
   /<!--\s*editor:content-slot[^>]*-->\s*<slot(?:\s[^>]*)?\/>\s*<!--\s*\/editor:content-slot\s*-->/ms;
 
-// Capture attributes from <html ...>
 const htmlTagRe = /<html([^>]*)>/m;
 const htmlAttrRe = /([^\s=]+)=["']([^"']*)["']/g;
 
 function extract(content: string, name: string): string | null {
   const isTS = name === "imports" || name === "props";
-  const rx = isTS
-    ? new RegExp(
-        String.raw`/\*\s*editor:region\s+name="${name}"\s*\*/([\s\S]*?)\/\*\s*\/editor:region\s*\*/`,
-        "s"
-      )
-    : commentBlockHTML(name);
+  const rx = isTS ? commentBlockTS(name) : commentBlockHTML(name);
   const m = content.match(rx);
   return m ? m[1].trim() : null;
 }
 
-// Special extractor for props JSON: supports the current format where JSON is
-// embedded inside the opening /* editor:region name="props" ... */ comment.
-// Falls back to the generic "between comments" capture if needed.
 function extractPropsJSONText(content: string): string | null {
-  // 1) JSON inside the opening comment style:
-  // /* editor:region name="props"
-  // { ...json... }
-  // */
-  // /* /editor:region */
   const insideOpenComment = content.match(
     /\/\*\s*editor:region\s+name="props"[^\S\r\n]*\n([\s\S]*?)\*\/\s*\/\*\s*\/editor:region\s*\*\//m
   );
   if (insideOpenComment && insideOpenComment[1]?.trim()) {
     return insideOpenComment[1].trim();
   }
-
-  // 2) Fallback to "between two comments" style (older/alternate format)
-  const betweenTwoComments = extract(content, "props");
-  if (betweenTwoComments && betweenTwoComments.trim()) {
-    return betweenTwoComments.trim();
-  }
-
-  return null;
+  return extract(content, "props");
 }
 
-function parseImports(importsBlock: string | null) {
+function parseImports(importsBlock: string | null): { as: string; from: string }[] {
   if (!importsBlock) return [];
   return importsBlock
     .split("\n")
     .map((l) => l.trim())
     .filter(Boolean)
     .map((line) => {
-      // import X from "path";
       const m = line.match(/^import\s+([A-Za-z0-9_]+)\s+from\s+["']([^"']+)["'];?$/);
       return m ? { as: m[1], from: m[2] } : null;
     })
-    .filter(Boolean) as { as: string; from: string }[];
+    .filter((x): x is { as: string; from: string } => !!x);
 }
 
 function parsePropsJSON(propsText: string | null): Record<string, PropSpec> {
@@ -80,53 +57,31 @@ function parsePropsJSON(propsText: string | null): Record<string, PropSpec> {
   }
 }
 
-// Fallback: infer props from destructuring const { ... } = Astro.props;
-// Supports simple defaults: strings, numbers, booleans, null
 function parsePropsFromDestructure(content: string): Record<string, PropSpec> {
   const out: Record<string, PropSpec> = {};
   const m = content.match(/const\s*\{\s*([^}]*)\s*\}\s*=\s*Astro\.props\s*;/ms);
   if (!m) return out;
-
-  const inner = m[1]; // "title = \"Site\", count = 0"
-  // Split on commas not inside quotes (simple heuristic)
-  const parts = inner
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
-
+  const inner = m[1];
+  const parts = inner.split(",").map((p) => p.trim()).filter(Boolean);
   for (const part of parts) {
-    // name = default OR just name
     const mm = part.match(/^([A-Za-z_$][\w$]*)\s*(?:=\s*([\s\S]+))?$/);
     if (!mm) continue;
-
     const name = mm[1];
-    const rawDefault = (mm[2] ?? "").trim();
-
+    const rawDefault = (mm[2] ?? "").trim().replace(/,+\s*$/, "");
     if (!rawDefault) {
       out[name] = { type: "string", default: null };
       continue;
     }
-
-    // Strip trailing commas if any (from multi-line destructure formats)
-    const val = rawDefault.replace(/,+\s*$/, "");
-
-    // Infer type
-    if (/^["'`](.*)["'`]$/.test(val)) {
-      // string literal
-      const str = val.slice(1, -1);
-      out[name] = { type: "string", default: str };
-    } else if (/^(true|false)$/i.test(val)) {
-      out[name] = { type: "boolean", default: /^true$/i.test(val) };
-    } else if (/^-?\d+(\.\d+)?$/.test(val)) {
-      out[name] = { type: "number", default: Number(val) };
-    } else if (/^null$/i.test(val)) {
-      out[name] = { type: "string", default: null };
+    if (/^["'`](.*)["'`]$/.test(rawDefault)) {
+      out[name] = { type: "string", default: rawDefault.slice(1, -1) };
+    } else if (/^(true|false)$/i.test(rawDefault)) {
+      out[name] = { type: "boolean", default: /^true$/i.test(rawDefault) };
+    } else if (/^-?\d+(\.\d+)?$/.test(rawDefault)) {
+      out[name] = { type: "number", default: Number(rawDefault) };
     } else {
-      // Unknown expression -> keep, but do not set an unserializable default
       out[name] = { type: "string", default: null };
     }
   }
-
   return out;
 }
 
@@ -141,34 +96,61 @@ function parseHtmlAttrs(content: string): Record<string, string> {
   return out;
 }
 
+// Resiliently find regions, either by marker or by tag inference
+function findRegions(content: string): { head: HeadNode[], pre: BodyNode[], post: BodyNode[] } {
+  const headRaw = extract(content, "head");
+  const preRaw = extract(content, "pre-content");
+  const postRaw = extract(content, "post-content");
+
+  if (headRaw !== null && preRaw !== null && postRaw !== null) {
+    return {
+      head: [{ type: "raw", html: headRaw }],
+      pre: [{ type: "raw", html: preRaw }],
+      post: [{ type: "raw", html: postRaw }],
+    };
+  }
+
+  // Fallback: Infer from raw HTML structure
+  const headMatch = content.match(/<head>([\s\S]*?)<\/head>/m);
+  const bodyMatch = content.match(/<body>([\s\S]*?)<\/body>/m);
+  const slotMatch = bodyMatch ? bodyMatch[1].match(/<slot\s*\/>/m) : null;
+
+  const inferredHead = headMatch ? headMatch[1].trim() : "";
+  let inferredPre = "", inferredPost = "";
+  if (bodyMatch && slotMatch && typeof slotMatch.index === 'number') {
+    inferredPre = bodyMatch[1].slice(0, slotMatch.index).trim();
+    inferredPost = bodyMatch[1].slice(slotMatch.index + slotMatch[0].length).trim();
+  }
+
+  return {
+    head: [{ type: "raw", html: inferredHead }],
+    pre: [{ type: "raw", html: inferredPre }],
+    post: [{ type: "raw", html: inferredPost }],
+  };
+}
+
 export function parseAstroToBlueprint(content: string): LayoutBlueprint | null {
-  if (!contentSlotRe.test(content)) return null;
+  const hasSlotTag = /<slot\s*\/>/m.test(content);
+  if (!hasSlotTag) return null; // A layout must have a slot
+
+  const hasMarkers = contentSlotRe.test(content);
 
   const imports = parseImports(extract(content, "imports"));
   const propsFromJSON = parsePropsJSON(extractPropsJSONText(content));
   const propsFromDestructure = parsePropsFromDestructure(content);
-
-  // Merge: JSON marker is source of truth; fill missing keys from destructure
   const props: Record<string, PropSpec> = { ...propsFromDestructure, ...propsFromJSON };
 
   const htmlAttrs = parseHtmlAttrs(content);
-
-  const headRaw = extract(content, "head") ?? "";
-  const preRaw = extract(content, "pre-content") ?? "";
-  const postRaw = extract(content, "post-content") ?? "";
-
-  const head: HeadNode[] = headRaw ? [{ type: "raw", html: headRaw }] : [];
-  const preContent: BodyNode[] = preRaw ? [{ type: "raw", html: preRaw }] : [];
-  const postContent: BodyNode[] = postRaw ? [{ type: "raw", html: postRaw }] : [];
+  const { head, pre, post } = findRegions(content);
 
   return {
-    name: "Unknown", // derive from filename in the UI
+    name: "Unknown",
     htmlAttrs,
     imports,
     props,
-    head,
-    preContent,
+    head: head,
+    preContent: pre,
     contentSlot: { name: "Content", single: true },
-    postContent,
+    postContent: post,
   };
 }

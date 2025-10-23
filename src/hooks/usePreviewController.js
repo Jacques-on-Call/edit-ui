@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { triggerPreviewBuild, pollLatestBuild } from '../utils/buildPreview';
 
 const THROTTLE_MS = 45000; // 45 seconds
@@ -9,7 +9,17 @@ export function usePreviewController() {
   const [builtAtISO, setBuiltAtISO] = useState(null);
   const [lastRunId, setLastRunId] = useState(null);
   const [error, setError] = useState(null);
+  const [rebuildCountdown, setRebuildCountdown] = useState(0);
   const lastTriggered = useRef(0);
+
+  useEffect(() => {
+    if (rebuildCountdown > 0) {
+      const timer = setInterval(() => {
+        setRebuildCountdown((prev) => Math.max(0, prev - 1));
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [rebuildCountdown]);
 
   const triggerBuild = useCallback(async () => {
     const now = Date.now();
@@ -23,10 +33,10 @@ export function usePreviewController() {
     lastTriggered.current = now;
     setBuilding(true);
     setError(null);
+    setRebuildCountdown(Math.floor(THROTTLE_MS / 1000));
 
     try {
       const context = await triggerPreviewBuild();
-      // Start polling, passing the context which includes the trigger time
       const { runId, finishedAt } = await pollLatestBuild(context);
       setBuiltAtISO(finishedAt);
       setLastRunId(runId);
@@ -46,5 +56,7 @@ export function usePreviewController() {
     lastRunId,
     error,
     triggerBuild,
+    rebuildDisabled: rebuildCountdown > 0,
+    rebuildCountdown,
   };
 }

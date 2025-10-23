@@ -2,11 +2,11 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { debounce } from 'lodash';
 
-export function useAutosave(blueprint, setBlueprint) {
+export function useAutosave(blueprint, setBlueprint, sha) {
   const location = useLocation();
   const filePath = new URLSearchParams(location.search).get('path');
   const repo = localStorage.getItem('selectedRepo');
-  const draftKey = `draft_${repo}_${filePath}`;
+  const draftKey = `draft_${repo}_${filePath}_${sha}`;
 
   const saveDraft = useRef(debounce((bp) => {
     if (bp) {
