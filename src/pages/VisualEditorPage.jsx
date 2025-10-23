@@ -5,9 +5,7 @@ import { compileAstro } from '../lib/layouts/compileAstro';
 import { validateAstroLayout } from '../lib/layouts/validateAstro';
 import VisualSidebar from '../components/VisualSidebar';
 import PreviewPane from '../components/PreviewPane';
-import { triggerPreviewBuild, pollLatestBuild } from '../utils/buildPreview';
-
-// ... (hooks: useBuildStatus, useIdle)
+import { usePreviewController } from '../hooks/usePreviewController';
 
 function VisualEditorPage() {
   const [blueprint, setBlueprint] = useState(null);
@@ -15,10 +13,15 @@ function VisualEditorPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const location = useLocation();
-  const [stale, setStale] = useState(true);
-  const [building, setBuilding] = useState(false);
-  const [builtAt, setBuiltAt] = useState(null);
-  const [cacheKey, setCacheKey] = useState('');
+  const {
+    stale,
+    setStale,
+    building,
+    builtAtISO,
+    lastRunId,
+    error: previewError,
+    triggerBuild,
+  } = usePreviewController();
 
   const handleSave = async () => {
     if (!blueprint) return;
@@ -52,6 +55,7 @@ function VisualEditorPage() {
       if (!response.ok) throw new Error('Failed to save file.');
       const { sha } = await response.json();
       setFileSha(sha);
+      setStale(true);
       alert('File saved successfully!');
     } catch (err) {
       setError(err.message);
@@ -94,24 +98,6 @@ function VisualEditorPage() {
       setError(err.message);
     }
   };
-
-  const rebuild = async () => {
-    if (building) return;
-    setBuilding(true);
-    try {
-      const ctx = await triggerPreviewBuild();
-      const { runId, finishedAt } = await pollLatestBuild(ctx);
-      setBuiltAt(finishedAt);
-      setCacheKey(runId || Date.now());
-      setStale(false);
-    } catch (e) {
-      setError(e.message || 'Preview build failed.');
-    } finally {
-      setBuilding(false);
-    }
-  };
-
-  // ... (preview state)
 
   useEffect(() => {
     const branch = localStorage.getItem('selectedBranch') || 'main';
@@ -182,11 +168,11 @@ function VisualEditorPage() {
         <header className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Visual Editor</h1>
-            {builtAt && <p className="text-gray-500 text-sm">Last built {new Date(builtAt).toLocaleTimeString()}</p>}
+            {builtAtISO && <p className="text-gray-500 text-sm">Last built {new Date(builtAtISO).toLocaleTimeString()}</p>}
           </div>
           <div className="flex items-center gap-2">
             {stale && !building && (
-              <button className="px-4 py-2 rounded bg-blue-600 text-white" onClick={rebuild}>Rebuild Preview</button>
+              <button className="px-4 py-2 rounded bg-blue-600 text-white" onClick={triggerBuild}>Rebuild Preview</button>
             )}
             {building && <span className="text-amber-600">Building preview…</span>}
           </div>
@@ -194,10 +180,10 @@ function VisualEditorPage() {
 
         {isLoading && <p>Loading...</p>}
 
-        {error && (
+        {(error || previewError) && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">
             <strong className="font-bold">An error occurred:</strong>
-            <p className="block sm:inline ml-2">{error}</p>
+            <p className="block sm:inline ml-2">{error || previewError}</p>
           </div>
         )}
 
@@ -208,7 +194,7 @@ function VisualEditorPage() {
         )}
 
         {blueprint && (
-          <PreviewPane filePath={new URLSearchParams(location.search).get('path')} cacheKey={cacheKey} />
+          <PreviewPane filePath={new URLSearchParams(location.search).get('path')} cacheKey={lastRunId || ''} />
         )}
       </div>
       <VisualSidebar blueprint={blueprint} setBlueprint={setBlueprint} onSave={handleSave} onSaveAsLayout={handleSaveAsLayout} />

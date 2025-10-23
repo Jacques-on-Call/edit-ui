@@ -21,7 +21,7 @@ export function pathToPreviewRoute(filePath) {
   if (p.endsWith('/index')) {
     const dir = p.slice(0, -('/index'.length));
     const encodedDir = dir.split('/').map(encodeURIComponent).join('/');
-    return `${base}/${encodedDir}`.replace(/\/+$/, '/') || `${base}/`;
+    return `${base}/${encodedDir}/`.replace(/\/+$/, '/') || `${base}/`;
   }
 
   const encoded = p.split('/').map(encodeURIComponent).join('/');
