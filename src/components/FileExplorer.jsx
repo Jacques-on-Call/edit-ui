@@ -125,6 +125,11 @@ function FileExplorer({ repo }) {
     }
   };
 
+  const handleFileDoubleClick = (file) => {
+    // Double-click/double-tap always opens the file directly
+    handleOpen(file);
+  };
+
   const handleOpen = (fileToOpen) => {
     const file = fileToOpen || selectedFile;
     if (!file) return;
@@ -198,9 +203,6 @@ function FileExplorer({ repo }) {
       // Here you might want to show an error message to the user
     }
   };
-
-  // eslint-disable-next-line no-unused-vars
-  const handleShare = (file) => { /* ... logic ... */ };
 
   const handleAssignLayoutRequest = (file) => {
     setFileToAssignLayout(file);
@@ -312,6 +314,7 @@ function FileExplorer({ repo }) {
             isSelected={selectedFile && selectedFile.sha === file.sha}
             metadata={metadataCache[file.sha]}
             onClick={handleFileClick}
+            onDoubleClick={handleFileDoubleClick}
             onLongPress={(file, coords) => handleLongPress(file, coords)}
             onRename={() => handleRenameRequest(file)}
             onDelete={() => handleDeleteRequest(file)}
@@ -358,7 +361,7 @@ function FileExplorer({ repo }) {
         </div>
       </div>
       {isCreateModalOpen && <CreateModal path={path} repo={repo} onClose={() => setCreateModalOpen(false)} onCreate={fetchFiles} />}
-      {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} file={contextMenu.file} onClose={handleCloseContextMenu} onRename={handleRenameRequest} onDelete={handleDeleteRequest} onDuplicate={handleDuplicate} onShare={handleShare} onAssignLayout={handleAssignLayoutRequest} />}
+      {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} file={contextMenu.file} onClose={handleCloseContextMenu} onRename={handleRenameRequest} onDelete={handleDeleteRequest} onDuplicate={handleDuplicate} onAssignLayout={handleAssignLayoutRequest} />}
       {fileToDelete && <ConfirmDialog message={`Are you sure you want to delete "${fileToDelete.name}"?`} onConfirm={handleDeleteConfirm} onCancel={() => setFileToDelete(null)} />}
       {fileToRename && <RenameModal file={fileToRename} onClose={() => setFileToRename(null)} onRename={handleRenameConfirm} />}
       {fileToAssignLayout && <AssignLayoutModal onClose={() => setFileToAssignLayout(null)} onAssign={handleAssignLayoutConfirm} currentPath={fileToAssignLayout.path} />}

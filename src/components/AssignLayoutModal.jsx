@@ -1,5 +1,23 @@
 import React, { useState, useEffect } from 'react';
 
+// Helper function to format layout names - removes file extension
+const formatLayoutName = (name) => {
+  if (!name) return '';
+  return name.replace(/\.(astro|jsx?|tsx?)$/i, '');
+};
+
+// Helper function to format page names - extracts filename and capitalizes
+const formatPageName = (path) => {
+  if (!path) return '';
+  // Extract filename from path
+  const parts = path.split('/');
+  const filename = parts[parts.length - 1];
+  // Remove file extension
+  const nameWithoutExt = filename.replace(/\.(astro|md|mdx|jsx?|tsx?)$/i, '');
+  // Capitalize first letter
+  return nameWithoutExt.charAt(0).toUpperCase() + nameWithoutExt.slice(1);
+};
+
 const AssignLayoutModal = ({ onClose, onAssign, currentPath }) => {
   const [astroLayouts, setAstroLayouts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,8 +58,8 @@ const AssignLayoutModal = ({ onClose, onAssign, currentPath }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-4">Assign Layout</h2>
-        <p className="mb-4 text-gray-600">Choose a layout for <span className="font-semibold">{currentPath}</span>.</p>
+        <h2 className="text-2xl font-bold mb-4">Assign Page Design</h2>
+        <p className="mb-4 text-gray-600">Choose a design style for <span className="font-semibold">{formatPageName(currentPath)}</span>.</p>
 
         {loading ? (
           <div className="text-center p-8">Loading...</div>
@@ -62,7 +80,7 @@ const AssignLayoutModal = ({ onClose, onAssign, currentPath }) => {
                       checked={selectedLayout === layout.path}
                       onChange={(e) => setSelectedLayout(e.target.value)}
                     />
-                    <span className="truncate" title={layout.path}>{layout.name}</span>
+                    <span className="truncate" title={layout.path}>{formatLayoutName(layout.name)}</span>
                   </label>
                 </div>
               ))}

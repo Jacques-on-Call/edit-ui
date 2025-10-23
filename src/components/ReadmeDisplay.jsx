@@ -12,7 +12,6 @@ function ReadmeDisplay({ content, onToggle, isVisible }) {
       >
         <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
           <Icon name="book-open" />
-          <span>README.md</span>
         </h3>
         <button className="text-gray-500 hover:text-gray-800">
           <Icon name={isVisible ? 'chevron-up' : 'chevron-down'} />

@@ -19,9 +19,10 @@ function formatDisplayName(name) {
   return noExt.charAt(0).toUpperCase() + noExt.slice(1);
 }
 
-function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
+function FileTile({ file, isSelected, metadata, onClick, onLongPress, onDoubleClick }) {
   const pressTimer = useRef(null);
   const startPos = useRef({ x: 0, y: 0 });
+  const lastTapTime = useRef(0);
 
   const isDir = file.type === 'dir';
   const iconName = isDir ? 'folder' : 'file';
@@ -62,8 +63,31 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
     }, 500);
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (e) => {
     clearTimer();
+    
+    // Handle double-tap detection for touch events
+    if (e.type === 'touchend') {
+      const now = Date.now();
+      const timeSinceLastTap = now - lastTapTime.current;
+      
+      // If less than 300ms since last tap, it's a double-tap
+      if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+        // Trigger double-tap action (open file/folder directly)
+        e.preventDefault?.();
+        if (onDoubleClick) {
+          onDoubleClick(file);
+        } else {
+          // Fallback to onClick twice for opening
+          onClick?.(file);
+        }
+        // Reset tap tracking
+        lastTapTime.current = 0;
+      } else {
+        // Single tap - record the time
+        lastTapTime.current = now;
+      }
+    }
   };
 
   // Cancel long-press if finger moves more than a small threshold
@@ -91,6 +115,7 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress }) {
     <div
       className={tileClassName}
       onClick={() => onClick?.(file)}
+      onDoubleClick={() => onDoubleClick?.(file)}
       onMouseDown={handlePointerDown}
       onMouseUp={handlePointerUp}
       onMouseLeave={handlePointerUp}
