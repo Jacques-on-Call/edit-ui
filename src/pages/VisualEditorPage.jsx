@@ -144,7 +144,71 @@ function VisualEditorPage() {
 
   return (
     <div className="bg-gray-100 min-h-screen flex">
-      {/* ... same as before ... */}
+      <div className="flex-grow p-4 sm:p-6 lg:p-8">
+        <header className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Visual Editor</h1>
+            {builtAtISO && <p className="text-gray-500 text-sm">Last built {new Date(builtAtISO).toLocaleTimeString()}</p>}
+          </div>
+          <div className="flex items-center gap-2">
+            {stale && !building && (
+              <button className="px-4 py-2 rounded bg-blue-600 text-white" onClick={triggerBuild}>Rebuild Preview</button>
+            )}
+            {building && <span className="text-amber-600">Building preview…</span>}
+          </div>
+        </header>
+
+        {isLoading && <p>Loading...</p>}
+
+        {(error || previewError) && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">
+            <strong className="font-bold">An error occurred:</strong>
+            <p className="block sm:inline ml-2">{error || previewError}</p>
+          </div>
+        )}
+
+        {stale && !building && (
+          <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-800 px-4 py-2 mb-4">
+            Preview is out of date. Click “Rebuild Preview” to update.
+          </div>
+        )}
+
+        {blueprint && (
+          <PreviewPane ref={previewIframeRef} filePath={new URLSearchParams(location.search).get('path')} cacheKey={lastRunId || ''} />
+        )}
+      </div>
+      <div className="hidden lg:block">
+        <VisualSidebar
+          blueprint={blueprint}
+          setBlueprint={setBlueprint}
+          onSave={handleSave}
+          onSaveAsLayout={handleSaveAsLayout}
+          previewIframe={previewIframeRef.current}
+        />
+      </div>
+      <div className="lg:hidden">
+        <MobileQuickBar
+          onSave={handleSave}
+          onRebuild={triggerBuild}
+          rebuildDisabled={rebuildDisabled}
+          rebuildCountdown={rebuildCountdown}
+          onAddBlock={() => alert('Add block clicked')}
+          onOpenDesign={() => setIsDesignPanelOpen(true)}
+        />
+        {isDesignPanelOpen && (
+          <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setIsDesignPanelOpen(false)}>
+            <div className="fixed bottom-0 inset-x-0 bg-white p-4 rounded-t-lg" onClick={(e) => e.stopPropagation()}>
+              <VisualSidebar
+                blueprint={blueprint}
+                setBlueprint={setBlueprint}
+                onSave={handleSave}
+                onSaveAsLayout={handleSaveAsLayout}
+                previewIframe={previewIframeRef.current}
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
