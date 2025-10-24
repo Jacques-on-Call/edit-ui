@@ -116,7 +116,7 @@ function EditorPage() {
     const missing = [];
     if (!frontmatter.title) missing.push('Title');
     if (!frontmatter.description) missing.push('Description');
-    if (content && !/href="\/(?!/)/.test(content)) {
+    if (content && !/href="\/(?!\/)/.test(content)) {
       missing.push('At least one internal link');
     }
 
