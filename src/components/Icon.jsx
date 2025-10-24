@@ -1,5 +1,5 @@
 import {createElement} from 'react';
-import {icons} from 'lucide-preact';
+import {icons} from 'lucide';
 import {forwardRef} from "preact/compat";
 
 const Icon = forwardRef(
