@@ -111,6 +111,20 @@ function EditorPage() {
       setError('Cannot publish without file path and repository information.');
       return;
     }
+
+    // SEO Gate
+    const missing = [];
+    if (!frontmatter.title) missing.push('Title');
+    if (!frontmatter.description) missing.push('Description');
+    if (content && !/href="\/(?!/)/.test(content)) {
+      missing.push('At least one internal link');
+    }
+
+    if (missing.length > 0) {
+      alert(`Please add the following before publishing:\n- ${missing.join('\n- ')}`);
+      return;
+    }
+
     setIsPublishing(true);
     setError(null);
     try {

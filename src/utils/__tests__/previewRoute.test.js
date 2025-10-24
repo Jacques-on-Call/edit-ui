@@ -1,58 +1,45 @@
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { getPreviewBase, pathToPreviewRoute } from '../previewRoute';
-
-afterEach(() => {
-  vi.unstubAllEnvs();
-});
-
-describe('getPreviewBase', () => {
-  it('should return the default /preview when no environment variable is set', () => {
-    vi.stubEnv('VITE_PREVIEW_BASE_URL', '')
-    expect(getPreviewBase()).toBe('/preview');
-  });
-
-  it('should return the base URL from the environment variable when set', () => {
-    vi.stubEnv('VITE_PREVIEW_BASE_URL', 'https://example.com/previews');
-    expect(getPreviewBase()).toBe('https://example.com/previews');
-  });
-
-  it('should trim trailing slashes from the environment variable', () => {
-    vi.stubEnv('VITE_PREVIEW_BASE_URL', 'https://example.com/previews///');
-    expect(getPreviewBase()).toBe('https://example.com/previews');
-  });
-});
+import { describe, it, expect } from 'vitest';
+import { pathToPreviewRoute } from '../previewRoute';
 
 describe('pathToPreviewRoute', () => {
-  beforeEach(() => {
-    vi.stubEnv('VITE_PREVIEW_BASE_URL', '');
-  });
-
-  it('should return the base path for non-page files', () => {
-    expect(pathToPreviewRoute('src/components/Header.astro')).toBe('/preview/');
-  });
-
-  it('should handle the root index.astro file', () => {
+  it('should handle the root index page', () => {
     expect(pathToPreviewRoute('src/pages/index.astro')).toBe('/preview/');
   });
 
-  it('should handle a simple page file', () => {
+  it('should handle a simple page', () => {
     expect(pathToPreviewRoute('src/pages/about.astro')).toBe('/preview/about');
   });
 
-  it('should handle a nested index.md file', () => {
-    expect(pathToPreviewRoute('src/pages/blog/index.md')).toBe('/preview/blog/');
+  it('should handle a nested page', () => {
+    expect(pathToPreviewRoute('src/pages/blog/my-post.md')).toBe('/preview/blog/my-post');
   });
 
-  it('should preserve the case of the path', () => {
-    expect(pathToPreviewRoute('src/pages/Discover/Intro.md')).toBe('/preview/Discover/Intro');
+  it('should handle a nested index page', () => {
+    expect(pathToPreviewRoute('src/pages/blog/index.mdx')).toBe('/preview/blog/');
   });
 
-  it('should handle filenames with spaces', () => {
-    expect(pathToPreviewRoute('src/pages/My Page.astro')).toBe('/preview/My%20Page');
+  it('should handle paths with spaces', () => {
+    expect(pathToPreviewRoute('src/pages/my folder/my page.astro')).toBe('/preview/my%20folder/my%20page');
   });
 
-  it('should handle filenames with special characters', () => {
-    // Note: '!' is a valid URI character and is not encoded by encodeURIComponent
-    expect(pathToPreviewRoute('src/pages/posts/hello-world-1!.md')).toBe('/preview/posts/hello-world-1!');
+  it('should handle paths with special characters', () => {
+    expect(pathToPreviewRoute('src/pages/s!@#$/p^&*.astro')).toBe('/preview/s!%40%23%24/p%5E%26*');
+  });
+
+  it('should avoid double slashes', () => {
+    // This also tests that the base path is handled correctly
+    expect(pathToPreviewRoute('src/pages//about.astro')).toBe('/preview/about');
+  });
+
+  it('should handle an empty path', () => {
+    expect(pathToPreviewRoute('')).toBe('/preview/');
+  });
+
+  it('should handle a null path', () => {
+    expect(pathToPreviewRoute(null)).toBe('/preview/');
+  });
+
+  it('should handle a path that is not in src/pages', () => {
+    expect(pathToPreviewRoute('src/layouts/main.astro')).toBe('/preview/');
   });
 });
