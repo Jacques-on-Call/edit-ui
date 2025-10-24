@@ -259,7 +259,7 @@ Operations:
   - Duplicate `PreviewPane.jsx` exists under `components` and `components/layout-editor/visual-renderer/`. Audit and keep a single source.
 
 - Sync bloat risk
-  - Large marketing-site assets under `easy-seo/public` (images, js, preview HTML) are not used by the editor and get synced to `edit-ui`. Recommend excluding them from the sync.
+  - **RESOLVED (October 2025):** Marketing-site assets previously under `easy-seo/public/preview/` have been removed. The directory is now protected by `.gitignore` to prevent accidental re-addition.
 
 ---
 
@@ -303,3 +303,31 @@ Recommendation:
 5) Are both `PreviewPane.jsx` files intended? If not, I’ll consolidate to the one under `layout-editor/visual-renderer`.
 
 ---
+
+## Developer Notes & Clarifications
+
+### October 2025: Public Directory Cleanup
+**Context:** The `easy-seo/public/preview/` directory contained 268 files (24MB) of marketing and preview site assets that were not part of the Easy-SEO editor application. These files were bloating the repository, slowing down builds, and being unintentionally synced to the edit-ui repository.
+
+**Changes Made:**
+- Removed entire `easy-seo/public/preview/` directory (268 files, 24MB)
+- Added `public/preview/` to `easy-seo/.gitignore` to prevent accidental re-addition
+- Updated ARCHITECTURE.md to document the cleanup
+
+**Assets Removed:**
+- Marketing/preview HTML pages for various sections (Discover, Consider, Get, home)
+- 200+ image assets (webp, mp4, jpeg, ico) including testimonials, case studies, and marketing materials
+- JavaScript files for preview site functionality
+- Duplicate nested `preview/preview/` directory structure
+- robots.txt and sitemap.xml for the preview site
+
+**Assets Retained (Required by Editor):**
+- `astro.wasm` (5.1MB) - Used by `main.jsx` for Astro compiler initialization
+- `logo.webp` (17KB) - Displayed in LoginPage, RepositorySelectionPage, and AppLayout
+- `vite.svg` (1.5KB) - Referenced in `index.html` as favicon
+
+**Impact:**
+- Reduced repo size by 24MB (~83% reduction in easy-seo/public/)
+- Cleaner codebase focused solely on editor functionality
+- Improved build performance with smaller asset directory
+- The `sync-to-edit-ui` workflow will no longer sync unnecessary marketing files

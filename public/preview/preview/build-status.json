@@ -1,6 +1,0 @@
-{
-  "status": "error",
-  "message": "Build process exited with code 254\n\nSTDOUT:\n\n\nSTDERR:\nnpm error code ENOENT\nnpm error syscall open\nnpm error path /package.json\nnpm error errno -2\nnpm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/package.json'\nnpm error enoent This is related to npm not being able to find a file.\nnpm error enoent\nnpm error A complete log of this run can be found in: /home/jules/.npm/_logs/2025-10-06T15_14_50_028Z-debug-0.log\n",
-  "details": "Error: Build process exited with code 254\n\nSTDOUT:\n\n\nSTDERR:\nnpm error code ENOENT\nnpm error syscall open\nnpm error path /package.json\nnpm error errno -2\nnpm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/package.json'\nnpm error enoent This is related to npm not being able to find a file.\nnpm error enoent\nnpm error A complete log of this run can be found in: /home/jules/.npm/_logs/2025-10-06T15_14_50_028Z-debug-0.log\n\n    at ChildProcess.<anonymous> (file:///app/easy-seo/build-preview.js:68:16)\n    at ChildProcess.emit (node:events:518:28)\n    at maybeClose (node:internal/child_process:1101:16)\n    at ChildProcess._handle.onexit (node:internal/child_process:304:5)",
-  "timestamp": "2025-10-06T15:14:50.106Z"
-}
