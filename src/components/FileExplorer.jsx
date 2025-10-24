@@ -9,6 +9,7 @@ import RenameModal from './RenameModal';
 import ReadmeDisplay from './ReadmeDisplay';
 import AssignLayoutModal from './AssignLayoutModal';
 import * as cache from '../utils/cache';
+import { routeForPath } from '../utils/editorRouting';
 
 function FileExplorer({ repo }) {
   const [files, setFiles] = useState([]);
@@ -136,15 +137,9 @@ function FileExplorer({ repo }) {
 
     if (file.type === 'dir') {
       setPath(file.path);
-    } else if (file.path.endsWith('.astro')) {
-      // .astro files open in the new unified visual editor
-      navigate(`/visual-editor?path=${file.path}`);
-    } else if (file.path.endsWith('.md') || file.path.endsWith('.mdx')) {
-      // Markdown files open in the original content editor
-      navigate(`/editor?path=${file.path}`);
     } else {
-      // Fallback for any other file types
-      navigate(`/editor?path=${file.path}`);
+      const { pathname, search } = routeForPath(file.path);
+      navigate(`${pathname}${search}`);
     }
   };
 

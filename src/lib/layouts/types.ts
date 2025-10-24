@@ -10,6 +10,12 @@ export type BodyNode =
   | { type: "component"; name: string; props?: Record<string, any> }
   | { type: "raw"; html: string };
 
+export type ThemeSettings = {
+  background?: string;
+  typographyScale?: 'S' | 'M' | 'L';
+  spacingPreset?: 'Tight' | 'Comfort' | 'Spacious';
+};
+
 export type LayoutBlueprint = {
   name: string;
   htmlAttrs?: Record<string, string>;
@@ -19,4 +25,5 @@ export type LayoutBlueprint = {
   preContent: BodyNode[];
   contentSlot: { name: string; single?: boolean };
   postContent: BodyNode[];
+  theme?: ThemeSettings;
 };

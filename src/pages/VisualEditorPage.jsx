@@ -6,15 +6,23 @@ import { validateAstroLayout } from '../lib/layouts/validateAstro';
 import VisualSidebar from '../components/VisualSidebar';
 import PreviewPane from '../components/PreviewPane';
 import MobileQuickBar from '../components/MobileQuickBar';
+import ComponentsDock from '../components/ComponentsDock';
+import DesignSheet from '../components/DesignSheet';
 import { usePreviewController } from '../hooks/usePreviewController';
 import { useAutosave } from '../hooks/useAutosave';
+import { useLongPress } from '../hooks/useLongPress';
+import { useDraggable } from '../hooks/useDraggable';
+import BlockContextMenu from '../components/BlockContextMenu';
 import { ensureUniqueAstroPath } from '../utils/uniquePath';
+import { EditorModes } from '../state/editorModes';
 
 function VisualEditorPage() {
   const [blueprint, setBlueprint] = useState(null);
   const [fileSha, setFileSha] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editorMode, setEditorMode] = useState(EditorModes.None);
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, blockId: null });
   const [isDesignPanelOpen, setIsDesignPanelOpen] = useState(false);
   const location = useLocation();
   const previewIframeRef = useRef(null);
@@ -31,6 +39,58 @@ function VisualEditorPage() {
   } = usePreviewController();
 
   useAutosave(blueprint, setBlueprint, fileSha);
+
+  const handleAddBlock = (type) => {
+    if (!blueprint) return;
+
+    // A real implementation would have default props based on type
+    const newBlock = {
+      type: 'component',
+      name: type,
+      props: {},
+    };
+
+    // Default to adding to postContent for now.
+    // This will be expanded to support selected regions.
+    const updatedBlueprint = {
+      ...blueprint,
+      postContent: [...(blueprint.postContent || []), newBlock],
+    };
+
+    setBlueprint(updatedBlueprint);
+    setEditorMode(EditorModes.None);
+  };
+
+  const handleThemeChange = (key, value) => {
+    if (!blueprint) return;
+
+    // Use a nested property update, e.g., 'theme.background'
+    const [themeKey, property] = key.split('.');
+
+    const updatedBlueprint = {
+      ...blueprint,
+      theme: {
+        ...blueprint.theme,
+        [property]: value,
+      },
+    };
+    setBlueprint(updatedBlueprint);
+  };
+
+  const handleContextMenuAction = (action) => {
+    alert(`Action: ${action} on block ${contextMenu.blockId}`);
+    setContextMenu({ visible: false, x: 0, y: 0, blockId: null });
+  };
+
+  const openContextMenu = (event, blockId) => {
+    event.preventDefault();
+    setContextMenu({
+      visible: true,
+      x: event.clientX,
+      y: event.clientY,
+      blockId,
+    });
+  };
 
   const handleSave = async () => {
     if (!blueprint) return;
@@ -142,8 +202,25 @@ function VisualEditorPage() {
     fetchAndParseFile();
   }, [location.search]);
 
+  const longPressProps = useLongPress(() => openContextMenu(new MouseEvent('contextmenu'), 'some-block-id'));
+  const { isDragging, dragOffset, draggableProps } = useDraggable();
+
   return (
-    <div className="bg-gray-100 min-h-screen flex">
+    <div className="bg-gray-100 min-h-screen flex" onClick={() => contextMenu.visible && setContextMenu({ visible: false })}>
+      {isDragging && (
+        <div
+          className="fixed bg-blue-200 border border-blue-500 rounded-md p-2 z-50"
+          style={{ transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)` }}
+        >
+          Dragging...
+        </div>
+      )}
+      <BlockContextMenu
+        visible={contextMenu.visible}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        onAction={handleContextMenuAction}
+      />
       <div className="flex-grow p-4 sm:p-6 lg:p-8">
         <header className="mb-6 flex items-center justify-between">
           <div>
@@ -174,7 +251,16 @@ function VisualEditorPage() {
         )}
 
         {blueprint && (
-          <PreviewPane ref={previewIframeRef} filePath={new URLSearchParams(location.search).get('path')} cacheKey={lastRunId || ''} />
+          <div>
+            <div
+              className="bg-gray-200 p-4 my-2 rounded-md cursor-grab"
+              {...draggableProps}
+              {...longPressProps}
+            >
+              Draggable Block
+            </div>
+            <PreviewPane ref={previewIframeRef} filePath={new URLSearchParams(location.search).get('path')} cacheKey={lastRunId || ''} />
+          </div>
         )}
       </div>
       <div className="hidden lg:block">
@@ -192,22 +278,19 @@ function VisualEditorPage() {
           onRebuild={triggerBuild}
           rebuildDisabled={rebuildDisabled}
           rebuildCountdown={rebuildCountdown}
-          onAddBlock={() => alert('Add block clicked')}
-          onOpenDesign={() => setIsDesignPanelOpen(true)}
+          onAdd={() => setEditorMode(EditorModes.Blocks)}
+          onDesign={() => setEditorMode(EditorModes.Design)}
         />
-        {isDesignPanelOpen && (
-          <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setIsDesignPanelOpen(false)}>
-            <div className="fixed bottom-0 inset-x-0 bg-white p-4 rounded-t-lg" onClick={(e) => e.stopPropagation()}>
-              <VisualSidebar
-                blueprint={blueprint}
-                setBlueprint={setBlueprint}
-                onSave={handleSave}
-                onSaveAsLayout={handleSaveAsLayout}
-                previewIframe={previewIframeRef.current}
-              />
-            </div>
-          </div>
-        )}
+        <ComponentsDock
+          visible={editorMode === EditorModes.Blocks}
+          onAdd={handleAddBlock}
+        />
+        <DesignSheet
+          visible={editorMode === EditorModes.Design}
+          onClose={() => setEditorMode(EditorModes.None)}
+          values={blueprint?.theme || {}}
+          onChange={handleThemeChange}
+        />
       </div>
     </div>
   );
