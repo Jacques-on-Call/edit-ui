@@ -213,3 +213,147 @@ Folder suggestions per Design Type (defaults)
 - Contact → `/` (create `/contact` page)
 
 Note: If the suggested folder doesn’t exist, offer to create it (confirm).
+
+## iPhone‑first plan 
+Set out below this gets me to a fully functional, user‑friendly Content Editor, Visual Layout Editor, and real Astro Preview inside the easy‑seo app. It’s sequenced to land the highest risk items first (preview fidelity), keeps everything layman‑friendly, and is technically achievable by Jules at your speed.
+
+### Phase 0 — Preconditions (same day, 1–2 hrs)
+- Confirm preview base:
+  - If preview is same origin: use /preview (default).
+  - If different origin: set VITE_PREVIEW_BASE_URL to the exact preview origin/path.
+- Worker housekeeping:
+  - Fix UTF‑8 decode in handleAssignLayoutRequest (use TextDecoder).
+  - Fix duplicate‑layout syntax bug or temporarily hide the action.
+- quick UI hygiene:
+  - Fix uniquePath.ts loop var (i, not n).
+  - Remove duplicate/legacy PreviewPane; keep one source.
+
+Definition of done:
+- Preview base decided; env configured.
+- Worker deploy OK (no syntax errors).
+- GitHub Action build still succeeds and writes to public/preview.
+
+### Week 1 — Make Preview perfect, then unblock creation and editing
+
+#### Day 1 — Real Astro Preview (fixes issue #1044)
+- Implement a full‑screen PreviewPane (iframe) with:
+  - Route mapping helper: src/pages path → /preview route (index rules, nested dirs).
+  - Single “Rebuild preview” button → POST /api/trigger-build → poll /api/build-status with backoff.
+  - Cache‑busting query v=run_id_or_timestamp on successful build reload.
+  - Same‑origin detection: show Back/Forward if same origin; otherwise “Open in new tab”.
+- Integrate the PreviewPane:
+  - Content Editor: replace any legacy preview with the new pane.
+  - Visual Editor: one rebuild button, remove duplicates.
+
+Acceptance criteria:
+- A page edited in the app matches https://strategycontent.pages.dev/ visually after rebuild.
+- User sees “Updating…” during build and “Last built <relative time>” once complete.
+
+#### Day 2 — Explorer iPhone UX + Search snippets
+- Make the file list the only scroll container (overflow-auto on the main list; no nested scrolls).
+- Add overscroll-behavior: contain; ensure no overlay intercepts touches.
+- Search UI:
+  - Results show display name (frontmatter title or filename).
+  - Show 1 short snippet with the highlighted match (use fragments from /api/search).
+- Replace all [?] affordances with clear SVG icons.
+
+Acceptance criteria:
+- Scrolling works anywhere in the list on iPhone.
+- Search results show friendly names with a highlighted one‑line snippet.
+
+#### Day 3 — Create Page modal (layman‑first)
+- Modal shows:
+  - Page Name (slugified).
+  - Design Type: General, Service, Blog, Contact, Product.
+  - Smart folder suggestion per type with one‑tap accept (create folder if missing).
+- Remove technical choices (“.astro vs .md”); rename Classic → General.
+
+Acceptance criteria:
+- Creating “Blog” suggests /blog; “Service” → /services; “Product” → /products; “Contact” → root; “General” → root.
+- Users never see filetype jargon.
+
+#### Day 4 — Content Editor usability
+- Sticky header with Home/Publish visible (safe‑area aware).
+- Merge duplicate preview controls; keep only the new PreviewPane trigger.
+- Context‑aware TinyMCE toolbar in the bottom slider (headings, bold/italic, links, lists, quote, code).
+- “Add…” opens a simple insert modal (image, table, button, section).
+
+Acceptance criteria:
+- Header never hides behind scroll.
+- Users can perform common text edits and insert basics without hunting.
+
+#### Day 5 — Folder delete, confirm, recurse
+- Wire long‑press folder delete to /api/delete-folder (already implemented in Worker).
+- Add a confirmation dialog and progress state.
+
+Acceptance criteria:
+- Long‑press delete removes a folder and all contents; user is warned and can cancel.
+
+### Week 2 — Visual Editor polish, Design Dashboard, SEO gate, QA
+
+#### Day 6 — Visual Editor header cleanup
+- Remove obsolete top nav (Explorer/Layouts/Preview text).
+- Keep minimal icon nav:
+  - House → Explorer; a simple Design icon → open Design Dashboard (or settings modal).
+- Ensure only one rebuild button exists (top or bottom quick bar).
+
+Acceptance criteria:
+- Clean top area with large, tappable icons; no duplicate controls.
+
+#### Day 7 — Components dock + helper hints
+- Add “X” to close the components panel.
+- Add one‑line hint at top: “Tap to add. Long‑press a block for settings.”
+- Ensure all dock buttons are wired and respond (Design/Components).
+
+Acceptance criteria:
+- Components panel opens/closes predictably; actions work; hints reduce confusion.
+
+#### Day 8 — Design Dashboard (Layout Dashboard)
+- Title “Layouts”; remove “File-based Layouts (src/layouts)” text.
+- Tiles show a page SVG icon + name (“MainLayout”), no “.astro” suffix on the face.
+- Long‑press actions: Rename, Duplicate, Delete.
+
+Acceptance criteria:
+- Simple, visual tiles; long‑press menus work.
+
+#### Day 9 — SEO gate before Publish
+- Before Publish:
+  - Check Title, Description, Slug, and at least one internal link (quick heuristic: outbound link starting with /).
+- Highlight missing items with plain, non‑technical language.
+
+Acceptance criteria:
+- Users cannot publish without basics; guidance is friendly and actionable.
+
+#### Day 10 — QA and hardening
+- Unit tests for pathToPreviewRoute edge cases:
+  - index pages; nested index; md/mdx; spaces and case; double‑slash avoidance.
+- Mobile QA:
+  - iOS Safari: scroll, safe‑areas, headers, large tap targets, long‑press.
+- Performance polish:
+  - Debounce search; throttle preview polling backoff (2s → 4s → 8–10s); minimum 30–45s between rebuilds.
+
+Acceptance criteria:
+- All acceptance checks pass; builds are stable; iPhone experience is smooth.
+
+Dependencies to confirm up front
+- Preview origin and X‑Frame‑Options:
+  - Prefer same origin for best iframe controls.
+  - If cross‑origin, we’ll degrade controls (no Back/Forward, “Open in new tab” shown).
+- Ensure the Pages site serving /preview includes all CSS/assets (the GHA build must output a complete bundle). If styling is still off, we’ll:
+  - Inspect <link> and asset URLs in /preview to ensure absolute/relative paths are correct.
+  - Confirm the production domain serves those assets under the same base.
+
+Risks and mitigations
+- Preview looks “white page”:
+  - Check missing CSS links in preview HTML; fix base path or asset pipeline; add cache‑busting.
+- iOS scroll traps:
+  - Remove nested scrolls; use one main container; avoid overlays.
+- User confusion:
+  - Remove all technical copy and duplicate controls; provide one‑line hints in Explorer, Components dock, and Design.
+
+Optional fast‑track (can be done in parallel, same day)
+- Confirm/fix /api/assign-layout UTF‑8 decoding with TextDecoder.
+- Fix uniquePath.ts loop variable.
+- Add the preview route helper + two unit tests.
+- Hide or fix the duplicate‑layout D1 function to unblock Worker deploys.
+
