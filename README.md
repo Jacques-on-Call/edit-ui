@@ -47,3 +47,4 @@ Launches the test runner in interactive watch mode.
 The `easy-seo` application is a single-page application (SPA) that interacts with a Cloudflare Worker as its backend. The worker proxies requests to the GitHub API, allowing the editor to read and write files to your Astro project's repository.
 
 For a more detailed explanation of the architecture, please see the [ARCHITECTURE.md](ARCHITECTURE.md) file.
+to understand how we work read contributions and agent.md’s
