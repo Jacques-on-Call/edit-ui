@@ -78,14 +78,9 @@ const LayoutsDashboardPage = () => {
         if (!astroRes.ok) throw new Error(`Failed to fetch Astro layouts: ${astroRes.statusText}`);
 
         const astroRaw = await astroRes.json();
-        if (!Array.isArray(astroRaw)) {
-          console.warn("API returned non-array response for Astro layouts:", astroRaw);
-          setAstroLayouts([]);
-          return;
-        }
         // Normalize Astro layouts (ensure fields we use exist)
-        const normalizedAstro = astroRaw
-          .filter(item => item && typeof item.name === 'string' && item.name.endsWith('.astro'))
+        const normalizedAstro = (Array.isArray(astroRaw) ? astroRaw : [])
+          .filter(item => item.name?.endsWith('.astro'))
           .map(item => ({
             id: item.sha || item.path || item.name,
             name: item.name,
@@ -203,24 +198,15 @@ const LayoutsDashboardPage = () => {
     navigate(`/visual-editor?path=src/layouts/${filename}&new=1`);
   };
 
-  const handleRename = (layout) => {
-    const newName = window.prompt(`Rename layout "${layout.name}":`, layout.name);
-    if (newName && newName !== layout.name) {
-      // Handle rename logic here
-      console.log(`Rename ${layout.name} to ${newName}`);
-    }
-  };
-
   const LayoutCard = ({ layout, onLongPress }) => {
-    const pressTimer = React.useRef(null);
+    const isAstro = layout.source === 'astro';
 
+    const pressTimer = React.useRef(null);
     const handlePointerDown = (e) => {
       if (e.button === 2) return;
       pressTimer.current = setTimeout(() => onLongPress(layout, e), 500);
     };
-
     const handlePointerUp = () => clearTimeout(pressTimer.current);
-
     const handleContextMenu = (e) => {
       e.preventDefault();
       clearTimeout(pressTimer.current);
@@ -229,17 +215,32 @@ const LayoutsDashboardPage = () => {
 
     return (
       <div
-        className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col items-center justify-center p-6 text-center transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+        key={layout.id}
+        className={`bg-white rounded-lg shadow-md overflow-hidden border-2 transition-all hover:shadow-xl hover:-translate-y-1 ${isAstro ? "border-blue-300" : "border-purple-300"}`}
         onMouseDown={handlePointerDown}
         onMouseUp={handlePointerUp}
         onMouseLeave={handlePointerUp}
         onTouchStart={handlePointerDown}
         onTouchEnd={handlePointerUp}
         onContextMenu={handleContextMenu}
-        onClick={() => navigate(`/visual-editor?path=${layout.path}`)}
       >
-        <Icon name="Layout" className="w-12 h-12 text-gray-400 mb-3" />
-        <h3 className="font-semibold text-gray-800 truncate w-full">{layout.name.replace('.astro', '')}</h3>
+        <div className="p-4">
+          <div className="flex justify-between items-start">
+            <h3 className="font-bold text-gray-800 truncate pr-2">{layout.name}</h3>
+            <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">Astro</span>
+          </div>
+          {layout.updated && (
+            <p className="text-xs text-gray-500 mt-1">Updated: {new Date(layout.updated).toLocaleDateString()}</p>
+          )}
+        </div>
+        <div className="bg-gray-50 p-3">
+          <Link
+            to={`/visual-editor?path=${layout.path}`}
+            className="w-full text-center block bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            Open
+          </Link>
+        </div>
       </div>
     );
   };
@@ -252,7 +253,7 @@ const LayoutsDashboardPage = () => {
           onClick={() => setCreateModalOpen(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center"
         >
-          <Icon name="Plus" className="mr-2" />
+          <Icon name="plus" className="mr-2" />
           Create New Layout
         </button>
       </div>
@@ -274,6 +275,7 @@ const LayoutsDashboardPage = () => {
           {/* Astro File-based Layouts */}
           {astroLayouts.length > 0 && (
             <div>
+              <h2 className="text-xl font-semibold text-gray-700 mt-8 mb-4 border-b pb-2">File-based Layouts (src/layouts)</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {astroLayouts.map((layout) => (
                   <LayoutCard key={layout.id} layout={layout} onLongPress={handleLongPress} />
@@ -290,7 +292,6 @@ const LayoutsDashboardPage = () => {
           y={contextMenu.y}
           layout={contextMenu.layout}
           onClose={handleCloseContextMenu}
-          onRename={handleRename}
           onDelete={handleDelete}
           onDuplicate={handleDuplicate}
           onShare={() => {/* optional share logic */}}

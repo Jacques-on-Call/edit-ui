@@ -63,11 +63,6 @@ function FileExplorer({ repo }) {
       }
       let data = await response.json();
 
-      if (data.length > 100) {
-        console.warn(`Large folder detected: ${data.length} items. This may impact performance.`);
-        // Here you could set a state to show a warning in the UI
-      }
-
       const sortedData = data.sort((a, b) => {
         if (a.type === 'dir' && b.type !== 'dir') return -1;
         if (a.type !== 'dir' && b.type === 'dir') return 1;
@@ -185,31 +180,19 @@ function FileExplorer({ repo }) {
   const handleDeleteConfirm = async () => {
     if (!fileToDelete) return;
     try {
-      let response;
-      if (fileToDelete.type === 'dir') {
-        response = await fetch('/api/delete-folder', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ repo, path: fileToDelete.path }),
-        });
-      } else {
-        response = await fetch('/api/files', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ repo, path: fileToDelete.path, sha: fileToDelete.sha }),
-        });
-      }
+      const response = await fetch('/api/files', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ repo, path: fileToDelete.path, sha: fileToDelete.sha }),
+      });
       const data = await response.json();
       if (!data.success) {
-        throw new Error(data.error || `Failed to delete ${fileToDelete.type}.`);
+        throw new Error(data.error || 'Failed to delete file.');
       }
       setFileToDelete(null);
       fetchFiles(); // Refresh file list
-      if (fileToDelete.type !== 'dir') {
-        cache.remove(fileToDelete.sha);
-      }
+      cache.remove(fileToDelete.sha);
     } catch (err) {
       console.error(err);
       // Here you might want to show an error message to the user
@@ -317,12 +300,10 @@ function FileExplorer({ repo }) {
   const getCurrentFolderName = () => isAtRoot ? 'Home' : path.split('/').pop();
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Scrollable content area */}
-      <div className="flex-grow overflow-y-auto p-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {Array.isArray(files) && files.filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md').map(file => (
-            <FileTile
+    <div className="relative min-h-[calc(100vh-250px)]">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-24">
+        {Array.isArray(files) && files.filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md').map(file => (
+          <FileTile
             key={file.sha}
             file={file}
             isSelected={selectedFile && selectedFile.sha === file.sha}
@@ -333,28 +314,24 @@ function FileExplorer({ repo }) {
             onRename={() => handleRenameRequest(file)}
             onDelete={() => handleDeleteRequest(file)}
           />
-          ))}
-        </div>
-
-        {isReadmeLoading && <div className="text-center text-gray-500 my-8">Loading README...</div>}
-        {readmeContent && !isReadmeLoading && (
-          <ReadmeDisplay
-            content={readmeContent}
-            isVisible={isReadmeVisible}
-            onToggle={handleToggleReadme}
-          />
-        )}
+        ))}
       </div>
-
-      {/* Bottom Toolbar */}
-      <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 flex justify-between items-center p-2 z-10">
+      {isReadmeLoading && <div className="text-center text-gray-500 my-8">Loading README...</div>}
+      {readmeContent && !isReadmeLoading && (
+        <ReadmeDisplay
+          content={readmeContent}
+          isVisible={isReadmeVisible}
+          onToggle={handleToggleReadme}
+        />
+      )}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 flex justify-between items-center p-2 z-10">
         <div className="flex-1 flex justify-start">
             <button
                 className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-200"
                 onClick={handleNewLayout}
                 title="Manage Layouts"
             >
-                <Icon name="Layout" className="h-6 w-6" />
+                <Icon name="layout-editor" className="h-6 w-6" />
                 <span className="font-semibold hidden sm:inline">Layouts</span>
             </button>
         </div>
@@ -364,7 +341,7 @@ function FileExplorer({ repo }) {
                 onClick={() => setCreateModalOpen(true)}
                 title="Create a new file or folder"
             >
-                <Icon name="Plus" />
+                <Icon name="plus" />
             </button>
         </div>
         <div className="flex-1 flex justify-end">
@@ -373,7 +350,7 @@ function FileExplorer({ repo }) {
                 onClick={handleGoHome}
                 disabled={isAtRoot}
             >
-                <Icon name="Home" />
+                <Icon name="home" />
                 <span className="font-semibold">{getCurrentFolderName()}</span>
             </button>
         </div>
