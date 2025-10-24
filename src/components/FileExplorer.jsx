@@ -180,25 +180,15 @@ function FileExplorer({ repo }) {
   const handleDeleteConfirm = async () => {
     if (!fileToDelete) return;
     try {
-      let response;
-      if (fileToDelete.type === 'dir') {
-        response = await fetch('/api/delete-folder', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ repo, path: fileToDelete.path }),
-        });
-      } else {
-        response = await fetch('/api/files', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ repo, path: fileToDelete.path, sha: fileToDelete.sha }),
-        });
-      }
+      const response = await fetch('/api/files', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ repo, path: fileToDelete.path, sha: fileToDelete.sha }),
+      });
       const data = await response.json();
       if (!data.success) {
-        throw new Error(data.error || 'Failed to delete.');
+        throw new Error(data.error || 'Failed to delete file.');
       }
       setFileToDelete(null);
       fetchFiles(); // Refresh file list
@@ -310,33 +300,31 @@ function FileExplorer({ repo }) {
   const getCurrentFolderName = () => isAtRoot ? 'Home' : path.split('/').pop();
 
   return (
-    <div className="flex flex-col h-full">
-      <main className="flex-1 overflow-y-auto overscroll-contain p-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {Array.isArray(files) && files.filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md').map(file => (
-            <FileTile
-              key={file.sha}
-              file={file}
-              isSelected={selectedFile && selectedFile.sha === file.sha}
-              metadata={metadataCache[file.sha]}
-              onClick={handleFileClick}
-              onDoubleClick={handleFileDoubleClick}
-              onLongPress={(file, coords) => handleLongPress(file, coords)}
-              onRename={() => handleRenameRequest(file)}
-              onDelete={() => handleDeleteRequest(file)}
-            />
-          ))}
-        </div>
-        {isReadmeLoading && <div className="text-center text-gray-500 my-8">Loading README...</div>}
-        {readmeContent && !isReadmeLoading && (
-          <ReadmeDisplay
-            content={readmeContent}
-            isVisible={isReadmeVisible}
-            onToggle={handleToggleReadme}
+    <div className="relative min-h-[calc(100vh-250px)]">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-24">
+        {Array.isArray(files) && files.filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md').map(file => (
+          <FileTile
+            key={file.sha}
+            file={file}
+            isSelected={selectedFile && selectedFile.sha === file.sha}
+            metadata={metadataCache[file.sha]}
+            onClick={handleFileClick}
+            onDoubleClick={handleFileDoubleClick}
+            onLongPress={(file, coords) => handleLongPress(file, coords)}
+            onRename={() => handleRenameRequest(file)}
+            onDelete={() => handleDeleteRequest(file)}
           />
-        )}
-      </main>
-      <footer className="flex-shrink-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 flex justify-between items-center p-2 z-10">
+        ))}
+      </div>
+      {isReadmeLoading && <div className="text-center text-gray-500 my-8">Loading README...</div>}
+      {readmeContent && !isReadmeLoading && (
+        <ReadmeDisplay
+          content={readmeContent}
+          isVisible={isReadmeVisible}
+          onToggle={handleToggleReadme}
+        />
+      )}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 flex justify-between items-center p-2 z-10">
         <div className="flex-1 flex justify-start">
             <button
                 className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-200"
@@ -366,7 +354,7 @@ function FileExplorer({ repo }) {
                 <span className="font-semibold">{getCurrentFolderName()}</span>
             </button>
         </div>
-      </footer>
+      </div>
       {isCreateModalOpen && <CreateModal path={path} repo={repo} onClose={() => setCreateModalOpen(false)} onCreate={fetchFiles} />}
       {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} file={contextMenu.file} onClose={handleCloseContextMenu} onRename={handleRenameRequest} onDelete={handleDeleteRequest} onDuplicate={handleDuplicate} onAssignLayout={handleAssignLayoutRequest} />}
       {fileToDelete && <ConfirmDialog message={`Are you sure you want to delete "${fileToDelete.name}"?`} onConfirm={handleDeleteConfirm} onCancel={() => setFileToDelete(null)} />}

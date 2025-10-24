@@ -8,6 +8,7 @@ import { marked } from 'marked';
 import TurndownService from 'turndown';
 
 import TopToolbar from '../components/TopToolbar';
+import BottomToolbar from '../components/BottomToolbar';
 import AssignLayoutModal from '../components/AssignLayoutModal';
 import { unifiedParser } from '../utils/unifiedParser';
 import { stringifyAstroFile } from '../utils/astroFileParser';
@@ -280,26 +281,22 @@ function EditorPage() {
     },
     plugins: [
       'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
-      'searchreplace', 'visualblocks', 'code', 'fullscreen',
-      'insertdatetime', 'media', 'table', 'help', 'wordcount'
+      'searchreplace', 'visualblocks', 'code',
+      'insertdatetime', 'table', 'help', 'wordcount'
     ],
-    toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright | bullist numlist outdent indent | link | removeformat',
+    toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link | removeformat',
     content_style: `body {  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;  font-size: 16px; line-height: 1.6; padding: 1rem; } .section { margin-bottom: 2rem; padding: 1rem; background: #f9fafb; border-radius: 8px; } .hero-section { text-align: center; padding: 2rem 1rem; } .grid-section { padding: 1rem; } .grid-items { display: grid; gap: 1rem; margin-top: 1rem; } .grid-item { padding: 1rem; background: white; border-radius: 6px; border: 1px solid #e5e7eb; } hr { margin: 2rem 0; border: none; border-top: 2px dashed #d1d5db; }`,
   };
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      <header className="sticky top-0 z-10">
-        <TopToolbar
-          onPublish={handlePublish}
-          isPublishing={isPublishing}
-          onChangeLayout={() => setAssignLayoutModalOpen(true)}
-          layoutPath={frontmatter.layout}
-          filePath={filePath}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-        />
-      </header>
+      <TopToolbar
+        onPublish={handlePublish}
+        isPublishing={isPublishing}
+        onChangeLayout={() => setAssignLayoutModalOpen(true)}
+        layoutPath={frontmatter.layout}
+        filePath={filePath}
+      />
       {isAssignLayoutModalOpen && (
         <AssignLayoutModal
           onClose={() => setAssignLayoutModalOpen(false)}
@@ -309,7 +306,22 @@ function EditorPage() {
       )}
       {parsingError && <ErrorDisplay error={parsingError} rawContent={rawContentOnError} />}
 
-      <main className="flex-grow w-full overflow-y-auto">
+      <div className="flex border-b border-gray-200 bg-white shadow-sm">
+        <button
+          className={`px-6 py-3 text-sm font-semibold focus:outline-none transition-colors duration-200 ${activeTab === 'editor' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'}`}
+          onClick={() => setActiveTab('editor')}
+        >
+          Editor
+        </button>
+        <button
+          className={`px-6 py-3 text-sm font-semibold focus:outline-none transition-colors duration-200 ${activeTab === 'preview' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'}`}
+          onClick={() => setActiveTab('preview')}
+        >
+          Preview
+        </button>
+      </div>
+
+      <div className="flex-grow w-full overflow-y-auto">
         {activeTab === 'editor' && (
           <div className="w-full h-full flex flex-col bg-white">
             <div className="flex-grow">
@@ -331,7 +343,8 @@ function EditorPage() {
             />
           </div>
         )}
-      </main>
+      </div>
+      <BottomToolbar />
     </div>
   );
 }

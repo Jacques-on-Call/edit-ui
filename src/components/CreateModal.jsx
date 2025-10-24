@@ -17,14 +17,11 @@ function slugify(input) {
 function CreateModal({ path, repo, onClose, onCreate }) {
   const navigate = useNavigate();
   const [name, setName] = useState('');
-  const [pageType, setPageType] = useState('md'); // 'astro' or 'md'
+  const [pageType, setPageType] = useState('astro'); // 'astro' or 'md'
   const [designType, setDesignType] = useState('');
   const [templates, setTemplates] = useState([]);
   const [error, setError] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [location, setLocation] = useState(path);
-  const [suggestedPath, setSuggestedPath] = useState(null);
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -34,11 +31,10 @@ function CreateModal({ path, repo, onClose, onCreate }) {
         const files = await response.json();
         const templateOptions = files
           .filter(file => file.name.endsWith('.astro'))
-          .map(file => {
-            let displayName = file.name.replace('.astro', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            if (displayName === 'Classic') displayName = 'General';
-            return { name: displayName, path: file.path };
-          });
+          .map(file => ({
+            name: file.name.replace('.astro', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            path: file.path
+          }));
         setTemplates(templateOptions);
         if (templateOptions.length > 0) {
           setDesignType(templateOptions[0].path);
@@ -49,24 +45,6 @@ function CreateModal({ path, repo, onClose, onCreate }) {
     };
     fetchTemplates();
   }, [repo]);
-
-  useEffect(() => {
-    if (pageType === 'astro' && designType) {
-        const selectedTemplate = templates.find(t => t.path === designType);
-        if (selectedTemplate) {
-            const name = selectedTemplate.name.toLowerCase();
-            if (name.includes('blog')) {
-                setSuggestedPath('src/pages/discover/blog');
-            } else if (name.includes('service')) {
-                setSuggestedPath('src/pages/consider/service');
-            } else {
-                setSuggestedPath(null);
-            }
-        }
-    } else {
-        setSuggestedPath(null);
-    }
-  }, [designType, pageType, templates]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -90,7 +68,7 @@ function CreateModal({ path, repo, onClose, onCreate }) {
         const pageTitle = name.replace(/"/g, '\\"');
         finalContent = templateContent.replace(/title\s*=\s*".*?"/, `title="${pageTitle}"`);
         const fileName = `${slug}.astro`;
-        fullPath = location.endsWith('/') ? `${location}${fileName}` : `${location}/${fileName}`;
+        fullPath = path.endsWith('/') ? `${path}${fileName}` : `${path}/${fileName}`;
         navigateTo = `/visual-editor?path=${fullPath}`;
       } else { // pageType is 'md'
         const pageTitle = name.replace(/"/g, '\\"');
@@ -105,7 +83,7 @@ layout: ../../layouts/MainLayout.astro
 This is a new page. You can start writing content here.
 `;
         const fileName = `${slug}.md`;
-        fullPath = location.endsWith('/') ? `${location}${fileName}` : `${location}/${fileName}`;
+        fullPath = path.endsWith('/') ? `${path}${fileName}` : `${path}/${fileName}`;
         navigateTo = `/editor?path=${fullPath}`;
       }
 
@@ -151,48 +129,22 @@ This is a new page. You can start writing content here.
           </div>
 
           <div className="mb-4">
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-            <input
-                type="text"
-                id="location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-bark-blue focus:border-bark-blue"
-            />
-            {suggestedPath && suggestedPath !== location && (
-                <div className="mt-2">
-                    <button type="button" onClick={() => { setLocation(suggestedPath); setSuggestedPath(null); }} className="text-sm text-bark-blue hover:underline">
-                        Suggestion: Save in <code>{suggestedPath}</code>
-                    </button>
-                </div>
-            )}
-          </div>
-
-          <div className="mb-4">
-            {!showAdvanced ? (
-                <button type="button" onClick={() => setShowAdvanced(true)} className="text-sm text-bark-blue hover:underline">
-                    Advanced options
-                </button>
-            ) : (
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Page Type</label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center">
-                        <input type="radio" value="md" checked={pageType === 'md'} onChange={() => setPageType('md')} className="form-radio" />
-                        <span className="ml-2">Content Page (.md)</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input type="radio" value="astro" checked={pageType === 'astro'} onChange={() => setPageType('astro')} className="form-radio" />
-                        <span className="ml-2">Visual Page (.astro)</span>
-                      </label>
-                    </div>
-                </div>
-            )}
+            <label className="block text-sm font-medium text-gray-700 mb-2">Page Type</label>
+            <div className="flex gap-4">
+              <label className="flex items-center">
+                <input type="radio" value="astro" checked={pageType === 'astro'} onChange={() => setPageType('astro')} className="form-radio" />
+                <span className="ml-2">Visual Page (.astro)</span>
+              </label>
+              <label className="flex items-center">
+                <input type="radio" value="md" checked={pageType === 'md'} onChange={() => setPageType('md')} className="form-radio" />
+                <span className="ml-2">Content Page (.md)</span>
+              </label>
+            </div>
           </div>
 
           {pageType === 'astro' && (
             <div className="mb-6">
-              <label htmlFor="design" className="block text-sm font-medium text-gray-700 mb-1">Page Type</label>
+              <label htmlFor="design" className="block text-sm font-medium text-gray-700 mb-1">Design Type</label>
               <select
                 id="design"
                 value={designType}
@@ -204,7 +156,7 @@ This is a new page. You can start writing content here.
                   <option key={opt.path} value={opt.path}>{opt.name}</option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">Choose a starting point. You can change styles later in Design.</p>
+              <p className="text-xs text-gray-500 mt-1">Choose a starting point. You can customize everything later.</p>
             </div>
           )}
 
