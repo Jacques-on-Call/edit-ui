@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import type { LayoutBlueprint, HeadNode, BodyNode } from "./types";
 
 const esc = (s: string) => s.replace(/`/g, "\\`");
@@ -27,6 +28,9 @@ function renderBody(nodes: BodyNode[], indent = "    "): string {
   return nodes
     .map((n) => {
       if (n.type === "component") {
+        if (!n.id) {
+          n.id = uuidv4(); // Assign a unique ID if it doesn't have one.
+        }
         const props =
           n.props && Object.keys(n.props).length
             ? " " +
@@ -34,7 +38,7 @@ function renderBody(nodes: BodyNode[], indent = "    "): string {
                 .map(([k, v]) => `${k}={${JSON.stringify(v)}}`)
                 .join(" ")
             : "";
-        return `${indent}<${n.name}${props} />`;
+        return `${indent}<${n.name}${props} data-sc-id="${n.id}" />`;
       }
       return n.html
         .split("\n")

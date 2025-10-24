@@ -7,7 +7,7 @@ export type HeadNode =
   | { type: "raw"; html: string };
 
 export type BodyNode =
-  | { type: "component"; name: string; props?: Record<string, any> }
+  | { type: "component"; name: string; props?: Record<string, any>; id?: string }
   | { type: "raw"; html: string };
 
 export type ThemeSettings = {

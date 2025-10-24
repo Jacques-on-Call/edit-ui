@@ -8,6 +8,8 @@ import PreviewPane from '../components/PreviewPane';
 import MobileQuickBar from '../components/MobileQuickBar';
 import ComponentsDock from '../components/ComponentsDock';
 import DesignSheet from '../components/DesignSheet';
+import OverlayCanvas from '../components/OverlayCanvas';
+import BlockSettingsSheet from '../components/BlockSettingsSheet';
 import { usePreviewController } from '../hooks/usePreviewController';
 import { useAutosave } from '../hooks/useAutosave';
 import { useLongPress } from '../hooks/useLongPress';
@@ -22,6 +24,7 @@ function VisualEditorPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editorMode, setEditorMode] = useState(EditorModes.None);
+  const [selectedBlockId, setSelectedBlockId] = useState(null);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, blockId: null });
   const [isDesignPanelOpen, setIsDesignPanelOpen] = useState(false);
   const location = useLocation();
@@ -80,6 +83,28 @@ function VisualEditorPage() {
   const handleContextMenuAction = (action) => {
     alert(`Action: ${action} on block ${contextMenu.blockId}`);
     setContextMenu({ visible: false, x: 0, y: 0, blockId: null });
+  };
+
+  const handleSelectBlock = (blockId) => {
+    setSelectedBlockId(blockId);
+  };
+
+  const handleBlockChange = (key, value) => {
+    if (!blueprint || !selectedBlockId) return;
+
+    const [propType, propName] = key.split('.');
+
+    const updatedBlueprint = {
+      ...blueprint,
+      preContent: blueprint.preContent.map(block =>
+        block.id === selectedBlockId ? { ...block, [propType]: { ...block[propType], [propName]: value } } : block
+      ),
+      postContent: blueprint.postContent.map(block =>
+        block.id === selectedBlockId ? { ...block, [propType]: { ...block[propType], [propName]: value } } : block
+      ),
+    };
+
+    setBlueprint(updatedBlueprint);
   };
 
   const openContextMenu = (event, blockId) => {
@@ -205,6 +230,8 @@ function VisualEditorPage() {
   const longPressProps = useLongPress(() => openContextMenu(new MouseEvent('contextmenu'), 'some-block-id'));
   const { isDragging, dragOffset, draggableProps } = useDraggable();
 
+  const selectedBlock = blueprint?.preContent.find(b => b.id === selectedBlockId) || blueprint?.postContent.find(b => b.id === selectedBlockId);
+
   return (
     <div className="bg-gray-100 min-h-screen flex" onClick={() => contextMenu.visible && setContextMenu({ visible: false })}>
       {isDragging && (
@@ -251,15 +278,13 @@ function VisualEditorPage() {
         )}
 
         {blueprint && (
-          <div>
-            <div
-              className="bg-gray-200 p-4 my-2 rounded-md cursor-grab"
-              {...draggableProps}
-              {...longPressProps}
-            >
-              Draggable Block
-            </div>
+          <div className="relative h-full">
             <PreviewPane ref={previewIframeRef} filePath={new URLSearchParams(location.search).get('path')} cacheKey={lastRunId || ''} />
+            <OverlayCanvas
+              previewIframe={previewIframeRef.current}
+              onSelectBlock={handleSelectBlock}
+              onLongPressBlock={openContextMenu}
+            />
           </div>
         )}
       </div>
@@ -290,6 +315,12 @@ function VisualEditorPage() {
           onClose={() => setEditorMode(EditorModes.None)}
           values={blueprint?.theme || {}}
           onChange={handleThemeChange}
+        />
+        <BlockSettingsSheet
+          visible={!!selectedBlockId}
+          block={selectedBlock}
+          onChange={handleBlockChange}
+          onClose={() => setSelectedBlockId(null)}
         />
       </div>
     </div>

@@ -1,7 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { compileAstro } from '../compileAstro';
 import { parseAstroToBlueprint } from '../parseAstro';
 import { validateAstroLayout } from '../validateAstro';
+
+// Mock the uuid library to produce predictable IDs
+vi.mock('uuid', () => ({
+  v4: () => 'mock-uuid',
+}));
 
 const goldenBlueprint = {
   name: 'Golden Layout',
@@ -14,9 +19,9 @@ const goldenBlueprint = {
     title: { type: 'string', default: 'My Awesome Site' },
   },
   head: [{ type: 'raw', html: '<meta charset="utf-8" />' }],
-  preContent: [{ type: 'component', name: 'Header' }],
+  preContent: [{ type: 'component', name: 'Header', id: 'header-id' }],
   contentSlot: { name: 'default' },
-  postContent: [{ type: 'component', name: 'Footer' }],
+  postContent: [{ type: 'component', name: 'Footer', id: 'footer-id' }],
 };
 
 const goldenAstro = `---
@@ -41,7 +46,7 @@ const { title = "My Awesome Site" } = Astro.props;
   </head>
   <body>
     <!-- editor:region name="pre-content" -->
-    <Header />
+    <Header data-sc-id="header-id" />
     <!-- /editor:region -->
 
     <!-- editor:content-slot name="default" -->
@@ -49,7 +54,7 @@ const { title = "My Awesome Site" } = Astro.props;
     <!-- /editor:content-slot -->
 
     <!-- editor:region name="post-content" -->
-    <Footer />
+    <Footer data-sc-id="footer-id" />
     <!-- /editor:region -->
   </body>
 </html>
@@ -90,7 +95,7 @@ describe('Layout Validator', () => {
   });
 
   it('should invalidate a layout with nested <html> tags', () => {
-    const invalid = goldenAstro.replace('<Header />', '<html><Header /></html>');
+    const invalid = goldenAstro.replace('<Header data-sc-id="header-id" />', '<html><Header data-sc-id="header-id" /></html>');
     const { ok, errors } = validateAstroLayout(invalid);
     expect(ok).toBe(false);
     expect(errors[0]).toContain('Forbidden tag');

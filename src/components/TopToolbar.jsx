@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Icon from './Icon';
 
-function TopToolbar({ onPublish, isPublishing, onChangeLayout, layoutPath }) {
+function TopToolbar({ onPublish, isPublishing, onChangeLayout, layoutPath, filePath }) {
   const location = useLocation();
   const currentPath = new URLSearchParams(location.search).get('path');
   const buttonClass = "p-2 rounded-md hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500";
@@ -33,6 +33,14 @@ function TopToolbar({ onPublish, isPublishing, onChangeLayout, layoutPath }) {
             <Icon name="layout" className="text-gray-600" />
           </button>
         )}
+        <Link
+          to={`/visual-editor?path=${filePath}`}
+          className={`${buttonClass} text-gray-600`}
+          aria-label="Design"
+          title="Design"
+        >
+          <Icon name="design" className="text-gray-600" />
+        </Link>
         <button
           onClick={onPublish}
           disabled={isPublishing}

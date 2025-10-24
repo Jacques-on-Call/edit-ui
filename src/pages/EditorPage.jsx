@@ -59,6 +59,7 @@ function EditorPage() {
   // Core state
   const [frontmatter, setFrontmatter] = useState({});
   const [content, setContent] = useState(null); // This is always HTML for the editor
+  const [fileSha, setFileSha] = useState(null);
   const [originalBody, setOriginalBody] = useState('');
   const [originalSections, setOriginalSections] = useState([]);
   const [fileType, setFileType] = useState(null);
@@ -124,6 +125,15 @@ function EditorPage() {
         fullContent = `---\n${frontmatterString}---\n${markdownBody}`;
       }
 
+      const res = await fetch(`/api/file?repo=${repo}&path=${filePath}`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.sha !== fileSha) {
+        if (!window.confirm('The file has been modified since you opened it. Do you want to overwrite the changes?')) {
+          setIsPublishing(false);
+          return;
+        }
+      }
+
       const response = await fetch('/api/file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -131,7 +141,8 @@ function EditorPage() {
           repo,
           path: filePath,
           content: btoa(unescape(encodeURIComponent(fullContent))),
-          message: `docs: update content for ${filePath}`
+          message: `docs: update content for ${filePath}`,
+          sha: data.sha,
         }),
         credentials: 'include'
       });
@@ -203,6 +214,7 @@ function EditorPage() {
           const res = await fetch(`/api/file?repo=${repo}&path=${filePath}`, { credentials: 'include' });
           if (!res.ok) throw new Error(`Failed to fetch file content: ${res.statusText}`);
           const data = await res.json();
+          setFileSha(data.sha);
           const binaryString = atob(data.content);
           const bytes = new Uint8Array(binaryString.length);
           for (let i = 0; i < binaryString.length; i++) {
@@ -283,6 +295,7 @@ function EditorPage() {
         isPublishing={isPublishing}
         onChangeLayout={() => setAssignLayoutModalOpen(true)}
         layoutPath={frontmatter.layout}
+        filePath={filePath}
       />
       {isAssignLayoutModalOpen && (
         <AssignLayoutModal
