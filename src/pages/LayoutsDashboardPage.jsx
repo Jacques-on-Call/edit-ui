@@ -224,14 +224,9 @@ const LayoutsDashboardPage = () => {
         onTouchEnd={handlePointerUp}
         onContextMenu={handleContextMenu}
       >
-        <div className="p-4">
-          <div className="flex justify-between items-start">
-            <h3 className="font-bold text-gray-800 truncate pr-2">{layout.name}</h3>
-            <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">Astro</span>
-          </div>
-          {layout.updated && (
-            <p className="text-xs text-gray-500 mt-1">Updated: {new Date(layout.updated).toLocaleDateString()}</p>
-          )}
+        <div className="p-4 flex items-center">
+          <Icon name="page" className="w-6 h-6 mr-4 text-gray-400" />
+          <h3 className="font-bold text-gray-800 truncate pr-2">{layout.name.replace('.astro', '')}</h3>
         </div>
         <div className="bg-gray-50 p-3">
           <Link
@@ -267,23 +262,15 @@ const LayoutsDashboardPage = () => {
 
       {astroLayouts.length === 0 && !loading ? (
         <div className="text-center p-10 bg-white rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold text-gray-700">No file-based layouts found.</h3>
+          <h3 className="text-xl font-semibold text-gray-700">No layouts found.</h3>
           <p className="text-gray-500 mt-2">Add .astro layout files to src/layouts to see them here.</p>
         </div>
       ) : (
-        <>
-          {/* Astro File-based Layouts */}
-          {astroLayouts.length > 0 && (
-            <div>
-              <h2 className="text-xl font-semibold text-gray-700 mt-8 mb-4 border-b pb-2">File-based Layouts (src/layouts)</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {astroLayouts.map((layout) => (
-                  <LayoutCard key={layout.id} layout={layout} onLongPress={handleLongPress} />
-                ))}
-              </div>
-            </div>
-          )}
-        </>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {astroLayouts.map((layout) => (
+            <LayoutCard key={layout.id} layout={layout} onLongPress={handleLongPress} />
+          ))}
+        </div>
       )}
 
       {contextMenu && (

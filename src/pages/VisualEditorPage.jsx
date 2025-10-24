@@ -249,19 +249,6 @@ function VisualEditorPage() {
         onAction={handleContextMenuAction}
       />
       <div className="flex-grow p-4 sm:p-6 lg:p-8">
-        <header className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Visual Editor</h1>
-            {builtAtISO && <p className="text-gray-500 text-sm">Last built {new Date(builtAtISO).toLocaleTimeString()}</p>}
-          </div>
-          <div className="flex items-center gap-2">
-            {stale && !building && (
-              <button className="px-4 py-2 rounded bg-blue-600 text-white" onClick={triggerBuild}>Rebuild Preview</button>
-            )}
-            {building && <span className="text-amber-600">Building preview…</span>}
-          </div>
-        </header>
-
         {isLoading && <p>Loading...</p>}
 
         {(error || previewError) && (
@@ -309,6 +296,7 @@ function VisualEditorPage() {
         <ComponentsDock
           visible={editorMode === EditorModes.Blocks}
           onAdd={handleAddBlock}
+          onClose={() => setEditorMode(EditorModes.None)}
         />
         <DesignSheet
           visible={editorMode === EditorModes.Design}

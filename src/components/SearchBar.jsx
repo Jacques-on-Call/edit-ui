@@ -1,7 +1,11 @@
 import { useState, useCallback, useMemo } from 'react';
 import { debounce } from 'lodash';
 import { useNavigate } from 'react-router-dom';
-import Icon from './Icon'; // Import the Icon component
+import Icon from './Icon';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkFrontmatter from 'remark-frontmatter';
+import yaml from 'js-yaml';
 
 const SearchBar = ({ repo }) => {
   const [query, setQuery] = useState('');
@@ -9,6 +13,22 @@ const SearchBar = ({ repo }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  const parseFrontmatter = (content) => {
+    try {
+      const file = unified()
+        .use(remarkParse)
+        .use(remarkFrontmatter, ['yaml'])
+        .parse(content);
+      const yamlNode = file.children.find(child => child.type === 'yaml');
+      if (yamlNode) {
+        return yaml.load(yamlNode.value);
+      }
+    } catch (e) {
+      console.error("Frontmatter parsing error:", e);
+    }
+    return {};
+  };
 
   const performSearch = useCallback(async (searchQuery) => {
     if (!searchQuery) {
@@ -48,7 +68,15 @@ const SearchBar = ({ repo }) => {
   const handleResultClick = (result) => {
     setQuery('');
     setResults([]);
-    navigate(`/explorer/file?path=${result.path}`);
+    navigate(`/editor?path=${result.path}`);
+  };
+
+  const highlight = (text) => {
+    if (!query) return text;
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.split(regex).map((part, i) =>
+      regex.test(part) ? <mark key={i} className="bg-yellow-200">{part}</mark> : part
+    );
   };
 
   return (
@@ -70,16 +98,25 @@ const SearchBar = ({ repo }) => {
           {!loading && !error && results.length === 0 && (
             <div className="px-4 py-3 text-gray-500">No results found.</div>
           )}
-          {results.map((result) => (
-            <div
-              key={result.sha}
-              className="px-4 py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50"
-              onClick={() => handleResultClick(result)}
-            >
-              <p className="font-semibold text-gray-800">{result.name}</p>
-              <p className="text-sm text-gray-500">{result.path}</p>
-            </div>
-          ))}
+          {results.map((result) => {
+            const frontmatter = parseFrontmatter((result.fragments || []).join('\n'));
+            const displayName = frontmatter.title || result.name;
+
+            return (
+              <div
+                key={result.path}
+                className="px-4 py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50"
+                onClick={() => handleResultClick(result)}
+              >
+                <p className="font-semibold text-gray-800">{highlight(displayName)}</p>
+                {result.fragments && result.fragments.length > 0 && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    ...{highlight(result.fragments[0])}...
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
