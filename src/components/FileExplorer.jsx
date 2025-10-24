@@ -63,6 +63,11 @@ function FileExplorer({ repo }) {
       }
       let data = await response.json();
 
+      if (data.length > 100) {
+        console.warn(`Large folder detected: ${data.length} items. This may impact performance.`);
+        // Here you could set a state to show a warning in the UI
+      }
+
       const sortedData = data.sort((a, b) => {
         if (a.type === 'dir' && b.type !== 'dir') return -1;
         if (a.type !== 'dir' && b.type === 'dir') return 1;

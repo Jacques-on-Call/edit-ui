@@ -78,9 +78,14 @@ const LayoutsDashboardPage = () => {
         if (!astroRes.ok) throw new Error(`Failed to fetch Astro layouts: ${astroRes.statusText}`);
 
         const astroRaw = await astroRes.json();
+        if (!Array.isArray(astroRaw)) {
+          console.warn("API returned non-array response for Astro layouts:", astroRaw);
+          setAstroLayouts([]);
+          return;
+        }
         // Normalize Astro layouts (ensure fields we use exist)
-        const normalizedAstro = (Array.isArray(astroRaw) ? astroRaw : [])
-          .filter(item => item.name?.endsWith('.astro'))
+        const normalizedAstro = astroRaw
+          .filter(item => item && typeof item.name === 'string' && item.name.endsWith('.astro'))
           .map(item => ({
             id: item.sha || item.path || item.name,
             name: item.name,

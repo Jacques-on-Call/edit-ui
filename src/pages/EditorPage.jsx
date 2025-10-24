@@ -281,16 +281,11 @@ function EditorPage() {
     },
     plugins: [
       'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
-      'searchreplace', 'visualblocks', 'code', 'fullscreen', 'insertdatetime',
-      'media', 'table', 'help', 'wordcount'
+      'searchreplace', 'visualblocks', 'code',
+      'insertdatetime', 'table', 'help', 'wordcount'
     ],
-    toolbar: `
-      undo redo | blocks | bold italic underline strikethrough |
-      forecolor backcolor | alignleft aligncenter alignright alignjustify |
-      bullist numlist outdent indent | link image media | removeformat | help
-    `,
+    toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link | removeformat',
     content_style: `body {  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;  font-size: 16px; line-height: 1.6; padding: 1rem; } .section { margin-bottom: 2rem; padding: 1rem; background: #f9fafb; border-radius: 8px; } .hero-section { text-align: center; padding: 2rem 1rem; } .grid-section { padding: 1rem; } .grid-items { display: grid; gap: 1rem; margin-top: 1rem; } .grid-item { padding: 1rem; background: white; border-radius: 6px; border: 1px solid #e5e7eb; } hr { margin: 2rem 0; border: none; border-top: 2px dashed #d1d5db; }`,
-    block_formats: 'Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Blockquote=blockquote;',
   };
 
   return (
@@ -301,8 +296,6 @@ function EditorPage() {
         onChangeLayout={() => setAssignLayoutModalOpen(true)}
         layoutPath={frontmatter.layout}
         filePath={filePath}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
       />
       {isAssignLayoutModalOpen && (
         <AssignLayoutModal
@@ -313,7 +306,22 @@ function EditorPage() {
       )}
       {parsingError && <ErrorDisplay error={parsingError} rawContent={rawContentOnError} />}
 
-      <div className="flex-grow w-full overflow-y-auto pt-16">
+      <div className="flex border-b border-gray-200 bg-white shadow-sm">
+        <button
+          className={`px-6 py-3 text-sm font-semibold focus:outline-none transition-colors duration-200 ${activeTab === 'editor' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'}`}
+          onClick={() => setActiveTab('editor')}
+        >
+          Editor
+        </button>
+        <button
+          className={`px-6 py-3 text-sm font-semibold focus:outline-none transition-colors duration-200 ${activeTab === 'preview' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'}`}
+          onClick={() => setActiveTab('preview')}
+        >
+          Preview
+        </button>
+      </div>
+
+      <div className="flex-grow w-full overflow-y-auto">
         {activeTab === 'editor' && (
           <div className="w-full h-full flex flex-col bg-white">
             <div className="flex-grow">

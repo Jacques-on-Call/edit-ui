@@ -51,16 +51,10 @@ const SearchBar = ({ repo }) => {
     navigate(`/explorer/file?path=${result.path}`);
   };
 
-  const highlightSnippet = (snippet, query) => {
-    if (!snippet) return '';
-    const regex = new RegExp(`(${query})`, 'gi');
-    return snippet.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
-  };
-
   return (
     <div className="relative w-full">
       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-        <Icon name="Search" className="text-gray-400" />
+        <Icon name="search" className="text-gray-400" />
       </div>
       <input
         type="text"
@@ -82,11 +76,8 @@ const SearchBar = ({ repo }) => {
               className="px-4 py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50"
               onClick={() => handleResultClick(result)}
             >
-              <p className="font-semibold text-gray-800">{result.display_name || result.name}</p>
-              <p
-                className="text-sm text-gray-500"
-                dangerouslySetInnerHTML={{ __html: highlightSnippet(result.snippet, query) }}
-              />
+              <p className="font-semibold text-gray-800">{result.name}</p>
+              <p className="text-sm text-gray-500">{result.path}</p>
             </div>
           ))}
         </div>
