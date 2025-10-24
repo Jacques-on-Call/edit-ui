@@ -79,8 +79,12 @@ function LayoutContextMenu({ x, y, layout, onClose, onRename, onDelete, onDuplic
           </button>
         </li>
         <li>
-          <button onClick={() => handleAction(onDuplicate)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-            Duplicate
+          <button
+            onClick={() => handleAction(onDuplicate)}
+            className="w-full text-left px-4 py-2 text-sm text-gray-400 cursor-not-allowed"
+            disabled
+          >
+            Duplicate (Coming Soon)
           </button>
         </li>
         <div className="border-t my-1"></div>
