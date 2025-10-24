@@ -55,9 +55,10 @@ This directory contains the complete source code for the React frontend.
 | `App.jsx`               | **[Routing Core]** Defines the application's top-level routes using `react-router-dom`. It separates routes into two categories: standalone routes (like `/login`) and routes nested within the main `<AppLayout />` (like `/explorer` and `/editor`).                                                                                |
 | `global.css`            | Contains the base Tailwind CSS directives and global styles for the application.                                                                                                                                                                                                                                             |
 | `pages/`                | Contains the top-level components for each page/view of the application. See the detailed breakdown below.                                                                                                                                                                                                                     |
-| `components/`           | Contains reusable React components that are used across multiple pages (e.g., `FileExplorer`, `Icon`, `RepoSelector`, `TopToolbar`, `MobileQuickBar`).                                                                                                                                                                                           |
-| `hooks/`                | Contains reusable React hooks for managing complex stateful logic (e.g., `usePreviewController`, `useAutosave`).                                                                                                                                                                                                            |
-| `utils/`                | Contains utility functions and helper modules that are used throughout the application (e.g., `astroFileParser.js`, `htmlGenerator.js`, `cache.js`, `uniquePath.ts`, `previewBridge.js`).                                                                                                                                                                              |
+| `components/`           | Contains reusable React components that are used across multiple pages. Key components include `FileExplorer`, `MobileQuickBar`, `ComponentsDock`, `DesignSheet`, `BlockContextMenu`, `OverlayCanvas`, and `BlockSettingsSheet`. |
+| `hooks/`                | Contains reusable React hooks for managing complex stateful logic (e.g., `usePreviewController`, `useAutosave`, `useLongPress`).                                                                                                                                                                                                           |
+| `utils/`                | Contains utility functions and helper modules that are used throughout the application (e.g., `astroFileParser.js`, `htmlGenerator.js`, `cache.js`, `uniquePath.ts`, `editorRouting.js`).                                                                                                                                                                             |
+| `state/`                | Contains state management files, such as `editorModes.ts`, which defines the different modes for the visual editor.                                                                                                                                                                                                        |
 | `scripts/`              | Contains client-side scripts, such as the `preview-bridge.js` for iframe communication.                                                                                                                                                                                                                                   |
 
 #### 2.2.3. Pages (`/easy-seo/src/pages/`)
@@ -67,10 +68,9 @@ This directory contains the complete source code for the React frontend.
 | `LoginPage.jsx`             | `/`                      | The user's entry point. It handles the "Login with GitHub" button click, initiates the OAuth popup window, and listens for a `postMessage` event from the `CallbackPage` to know when to redirect to `/repository-selection`.                                                            |
 | `CallbackPage.jsx`          | `/callback`              | Handles the redirect from GitHub after authentication. It extracts the `code` and `state`, calls the backend `/api/token` endpoint to get a session cookie, and then notifies the `LoginPage` via `postMessage` before closing itself.                                                      |
 | `RepositorySelectionPage.jsx` | `/repository-selection`  | Displays a list of the user's GitHub repositories using the `RepoSelector` component. When a repository is selected, its full name is saved to `localStorage` and the user is redirected to `/explorer`.                                                                                |
-| `ExplorerPage.jsx`          | `/explorer`              | The main file browsing interface. It retrieves the selected repository from `localStorage` and renders the `FileExplorer` component, which handles the logic for displaying files and folders.                                                                                             |
-| `EditorRouter.jsx`          | `/editor`                | **[Editor Router]** A top-level component that determines which editor mode to render—'Layout Mode' or 'Content Mode'—based on the file type (`.astro` vs. `.md`) and the presence of editor markers. |
-| `LayoutModeEditor.jsx`      | `/editor` (Layout Mode)  | **[Layout Mode UI]** The UI for editing the structure of `.astro` layout files. It provides controls for managing imports, props, and the arrangement of components in the `pre-content` and `post-content` regions. |
-| `ContentModeEditor.jsx`     | `/editor` (Content Mode) | **[Content Mode UI]** The UI for editing block-based content. It provides a rich palette of content blocks (e.g., `Section`, `Columns`, `Image`) that can be composed to build a page. |
+| `ExplorerPage.jsx`          | `/explorer`              | The main file browsing interface. It renders the `FileExplorer` component, which uses the `editorRouting.js` utility to correctly route files to either the content or visual editor.                                                                                             |
+| `EditorPage.jsx`            | `/editor`                | **[Content Editor UI]** Provides a rich text editor (TinyMCE) for editing the body content of Markdown, MDX, or Astro files. It includes a "Design" button that provides a handoff to the `VisualEditorPage` for layout-level changes.                                                     |
+| `VisualEditorPage.jsx`      | `/visual-editor`         | **[Visual Editor UI]** The main UI for the visual editor. It provides a live preview of the page and a set of tools for editing the layout and content of Astro files. It uses a layered editing model with an `OverlayCanvas` to provide a more intuitive editing experience. |
 | `LayoutsDashboardPage.jsx`  | `/layouts`               | A dashboard for managing file-based Astro layouts from the user's repository, which are retrieved via the `/api/astro-layouts` endpoint.                                                               |
 
 ---
@@ -93,8 +93,8 @@ The Cloudflare Worker exposes a series of API endpoints under the `/api/` path. 
 | `GET`  | `/api/metadata`             | Fetches the commit history for a file to get metadata like the last author and modification date.                                                                                     | `FileExplorer.jsx`                                     |
 | `GET`  | `/api/search`               | Performs a search for files within the `src/pages` directory of the repository using the GitHub Search API.                                                                           | `SearchBar.jsx` (within `FileExplorer`)                |
 | `GET`  | `/api/astro-layouts`        | A specialized version of `/api/files` that specifically lists files in the `src/layouts` directory of the user's repository.                                                            | `LayoutsDashboardPage.jsx`                             |
-| `GET`  | `/api/get-file-content`     | Fetches the raw, decoded content of a single file from the repository.                                                                                                                | `LayoutModeEditor.jsx`, `ContentModeEditor.jsx`         |
-| `POST` | `/api/save-layout`          | A unified endpoint for creating or updating `.astro` files. The worker handles Base64 encoding and commits the changes to the user's repository.                                     | `LayoutModeEditor.jsx`, `ContentModeEditor.jsx`         |
+| `GET`  | `/api/get-file-content`     | Fetches the raw, decoded content of a single file from the repository.                                                                                                                | `VisualEditorPage.jsx`, `EditorPage.jsx`         |
+| `POST` | `/api/save-layout`          | A unified endpoint for creating or updating `.astro` files. The worker handles Base64 encoding and commits the changes to the user's repository.                                     | `VisualEditorPage.jsx`, `EditorPage.jsx`         |
 | `POST` | `/api/trigger-build`        | Triggers a GitHub Actions workflow (`build-preview.yml`) to generate a site preview. Requires a `GITHUB_TOKEN` secret on the worker.                                                  | `usePreviewController.js` |
 | `GET`  | `/api/build-status`         | Checks the status of the latest run of the `build-preview.yml` workflow.                                                                                                              | `usePreviewController.js` |
 
@@ -134,6 +134,18 @@ In 'Content Mode', the editor uses a block-based system to compose page content.
 
 This architecture separates the content's structure (the JSON tree) from its presentation (the `.astro` components), making the content highly portable and easy to render.
 
+### 4.3. Layered Editing Overlay
+
+To provide a more intuitive and "native" editing experience, the visual editor uses a layered editing model. This model overlays interactive elements on top of a live `iframe` preview of the page, allowing users to directly manipulate the content and layout of the page.
+
+**How it Works:**
+
+1.  **Stable IDs (`data-sc-id`)**: The Astro compiler is configured to inject a stable `data-sc-id` attribute into each editable block's output. This ID is a unique identifier that is persisted in the `LayoutBlueprint`.
+
+2.  **Preview Bridge (`preview-bridge.js`)**: The `preview-bridge.js` script, which runs inside the `iframe` preview, is responsible for scanning the page for elements with a `data-sc-id` attribute. It then posts the bounding box coordinates of these elements to the parent editor window. The bridge also streams updates on scroll, resize, and DOM mutations to ensure the overlays stay in sync.
+
+3.  **Overlay Canvas (`OverlayCanvas.jsx`)**: The `OverlayCanvas` component in the editor receives the bounding box data from the `preview-bridge`. It then renders transparent, tappable rectangles over the `iframe`, perfectly aligned with the real components. These overlays are responsible for handling user interactions, such as tap-to-select, long-press-to-open-context-menu, and drag-to-reorder.
+
 ---
 
 ## 5. Architectural Questions & Observations
@@ -154,7 +166,11 @@ This architecture separates the content's structure (the JSON tree) from its pre
 
 1.  **`package.json` Strategy**: The dual `package.json` setup is intentional. The root `package.json` is for the user's Astro site build. The `easy-seo/package.json` is for the editor application itself, which has its own deployment workflow.
 
-2.  **Repository Flexibility**: The current design assumes each user has a repository with an Astro project structure (e.g., `src/pages`). Future work may involve making the application more flexible to handle different project structures or non-Astro sites.
+2.  **Sprint 5.4 & 5.5 Completion**: Sprints 5.4 and 5.5 introduced significant improvements to the visual editor, including a new layered editing model, a mobile-first UX polish, and a number of stability and security enhancements.
+
+3.  **Backend Hardening**: Several backend hardening fixes were applied, including improved 404 handling in the `/api/file` endpoint and UTF-8 safe decoding in the `/api/get-file-content` and `/api/assign-layout` endpoints.
+
+4.  **Repository Flexibility**: The current design assumes each user has a repository with an Astro project structure (e.g., `src/pages`). Future work may involve making the application more flexible to handle different project structures or non-Astro sites.
 
 3.  **Error Handling**: There is a recognized need to improve user-facing error messages across the application to be more explicit about what went wrong and how to fix it. The pattern in `EditorPage.jsx` is a good model to follow.
 
