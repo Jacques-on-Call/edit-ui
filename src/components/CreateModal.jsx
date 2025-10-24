@@ -24,6 +24,14 @@ function CreateModal({ path, repo, onClose, onCreate }) {
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
+    const designTypeHints = {
+      'General': 'Saves to your main content folder by default.',
+      'Blog': 'Creates a new post in /src/pages/blog.',
+      'Service': 'Creates a new page in /src/pages/services.',
+      'Product': 'Creates a new page in /src/pages/products.',
+      'Contact': 'Creates a new page in /src/pages/contact.',
+    };
+
     const fetchTemplates = async () => {
       try {
         const response = await fetch(`/api/files?repo=${repo}&path=src/templates/pages`, { credentials: 'include' });
@@ -31,10 +39,15 @@ function CreateModal({ path, repo, onClose, onCreate }) {
         const files = await response.json();
         const templateOptions = files
           .filter(file => file.name.endsWith('.astro'))
-          .map(file => ({
-            name: file.name.replace('.astro', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            path: file.path
-          }));
+          .map(file => {
+            let name = file.name.replace('.astro', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            if (name === 'Classic') name = 'General';
+            return {
+              name,
+              path: file.path,
+              hint: designTypeHints[name] || 'Choose a starting point for your page.'
+            };
+          });
         setTemplates(templateOptions);
         if (templateOptions.length > 0) {
           setDesignType(templateOptions[0].path);
@@ -133,11 +146,11 @@ This is a new page. You can start writing content here.
             <div className="flex gap-4">
               <label className="flex items-center">
                 <input type="radio" value="astro" checked={pageType === 'astro'} onChange={() => setPageType('astro')} className="form-radio" />
-                <span className="ml-2">Visual Page (.astro)</span>
+                <span className="ml-2">Page Style (Visual Editing)</span>
               </label>
               <label className="flex items-center">
                 <input type="radio" value="md" checked={pageType === 'md'} onChange={() => setPageType('md')} className="form-radio" />
-                <span className="ml-2">Content Page (.md)</span>
+                <span className="ml-2">Web Page Content (Text Only)</span>
               </label>
             </div>
           </div>
@@ -156,7 +169,9 @@ This is a new page. You can start writing content here.
                   <option key={opt.path} value={opt.path}>{opt.name}</option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">Choose a starting point. You can customize everything later.</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {templates.find(t => t.path === designType)?.hint || 'Choose a starting point. You can customize everything later.'}
+              </p>
             </div>
           )}
 

@@ -192,13 +192,13 @@ const LayoutEditor = ({ initialState, filePath, fileSha }) => {
         {selectedId === id && (
           <div className="absolute top-0 right-0 -mt-8 flex space-x-1 bg-slate-700 p-1 rounded-lg shadow-lg">
             <button onClick={() => moveComponent(id, 'up')} disabled={!canMoveUp} className="p-1 hover:bg-slate-600 rounded disabled:opacity-50">
-              <Icon name="arrow-up" />
+              <Icon name="ArrowUp" />
             </button>
             <button onClick={() => moveComponent(id, 'down')} disabled={!canMoveDown} className="p-1 hover:bg-slate-600 rounded disabled:opacity-50">
-              <Icon name="arrow-down" />
+              <Icon name="ArrowDown" />
             </button>
             <button onClick={() => deleteComponent(id)} className="p-1 hover:bg-slate-600 rounded">
-              <Icon name="trash" />
+              <Icon name="Trash2" />
             </button>
           </div>
         )}
@@ -265,14 +265,14 @@ const LayoutEditor = ({ initialState, filePath, fileSha }) => {
     <div className="h-screen flex flex-col bg-slate-900 text-white">
       <header className="flex items-center justify-between p-3 border-b border-slate-700 bg-slate-800 shadow-md z-20">
         <Link to="/explorer" className="p-2 rounded-md hover:bg-slate-700 transition-colors">
-          <Icon name="home" className="text-white" />
+          <Icon name="Home" className="text-white" />
         </Link>
         <h1 className="font-semibold text-center truncate">{filename}</h1>
         <button
           onClick={handleSave}
           className="p-2 rounded-md hover:bg-slate-700 transition-colors"
         >
-          <Icon name="publish" className="text-white" />
+          <Icon name="UploadCloud" className="text-white" />
         </button>
       </header>
 

@@ -4,6 +4,7 @@ import { parseAstroToBlueprint } from '../lib/layouts/parseAstro';
 import { compileAstro } from '../lib/layouts/compileAstro';
 import { validateAstroLayout } from '../lib/layouts/validateAstro';
 import VisualSidebar from '../components/VisualSidebar';
+import Icon from '../components/Icon';
 import PreviewPane from '../components/PreviewPane';
 import MobileQuickBar from '../components/MobileQuickBar';
 import ComponentsDock from '../components/ComponentsDock';
@@ -249,20 +250,22 @@ function VisualEditorPage() {
         onAction={handleContextMenuAction}
       />
       <div className="flex-grow p-4 sm:p-6 lg:p-8">
-        <header className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Visual Editor</h1>
-            {builtAtISO && <p className="text-gray-500 text-sm">Last built {new Date(builtAtISO).toLocaleTimeString()}</p>}
-          </div>
-          <div className="flex items-center gap-2">
-            {stale && !building && (
-              <button className="px-4 py-2 rounded bg-blue-600 text-white" onClick={triggerBuild}>Rebuild Preview</button>
-            )}
-            {building && <span className="text-amber-600">Building preview…</span>}
-          </div>
+        <header className="fixed top-0 left-0 right-0 bg-white shadow-md z-10 h-16 flex items-center justify-between px-4">
+            <Link to="/explorer" className="p-2 rounded-md hover:bg-gray-200">
+                <Icon name="Home" />
+            </Link>
+            <div className="text-center">
+                <h1 className="text-lg font-semibold">Visual Editor</h1>
+                {builtAtISO && <p className="text-xs text-gray-500">Last built {new Date(builtAtISO).toLocaleTimeString()}</p>}
+            </div>
+            <Link to="/design" className="p-2 rounded-md hover:bg-gray-200">
+                <Icon name="LayoutDashboard" />
+            </Link>
         </header>
 
-        {isLoading && <p>Loading...</p>}
+        <div className="pt-16">
+            {isLoading && <p>Loading...</p>}
+        </div>
 
         {(error || previewError) && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">
@@ -309,6 +312,7 @@ function VisualEditorPage() {
         <ComponentsDock
           visible={editorMode === EditorModes.Blocks}
           onAdd={handleAddBlock}
+          onClose={() => setEditorMode(EditorModes.None)}
         />
         <DesignSheet
           visible={editorMode === EditorModes.Design}

@@ -141,11 +141,11 @@ export default function LayoutModeEditor({ initialBlueprint, initialSha, filePat
     <div className="h-screen flex flex-col bg-slate-900 text-white">
       <header className="flex items-center justify-between p-3 border-b border-slate-700 bg-slate-800 shadow-md z-20">
         <Link to="/explorer" className="p-2 rounded-md hover:bg-slate-700 transition-colors">
-          <Icon name="home" className="text-white" />
+          <Icon name="Home" className="text-white" />
         </Link>
         <h1 className="font-semibold text-center truncate">{filename}</h1>
         <button onClick={handleSave} className="p-2 rounded-md hover:bg-slate-700 transition-colors">
-          <Icon name="publish" className="text-white" />
+          <Icon name="UploadCloud" className="text-white" />
         </button>
       </header>
 
