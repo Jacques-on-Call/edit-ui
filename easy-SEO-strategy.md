@@ -1,46 +1,241 @@
-# easy-SEO: Strategic Roadmap
+# Easy SEO: Visual Website Builder
 
-This document outlines the strategic direction for the easy-SEO application. It defines the target user, the problem we are solving, the technical solution, and the value proposition. It also details a phased development roadmap to guide the refinement and refactoring of the application.
+## Vision Overview
 
-## 1. The 4Ws Canvas: A Risk-Reduction System
+A no-code website builder for non-technical business owners (lawyers, plumbers, contractors) who want modern, SEO-optimized websites without needing coding skills. Built on free tools (GitHub, Cloudflare, Astro) with a visual editor that makes website creation as simple as editing a document.
 
-This framework helps us identify and mitigate the biggest risks in the project by clarifying our core assumptions.
+-----
 
-*   **WHO is the user?**
-    *   The "Frustrated Founder": A non-technical solopreneur or small business owner who is an expert in their own field but finds existing website building and SEO tools (like WordPress or Wix) to be complex and overwhelming. They are likely not familiar with developer tools like GitHub.
+## Core Components
 
-*   **WHAT is the problem?**
-    *   Building a website and implementing a coherent SEO strategy is too complicated. Users get lost in technical details, leading to unstructured websites with poor content funnels and orphaned pages. They need a guided experience that simplifies content creation and ensures it aligns with a sound SEO structure.
+### 1. File Explorer (Home Base)
 
-*   **WHERE is the solution deployed?**
-    *   The solution is a headless CMS powered by a React/Vite/Tailwind SPA (to be migrated to Preact) for the frontend editor, and a Cloudflare Worker for the backend. The user's actual website is an Astro site stored in a GitHub repository, deployed via Cloudflare Pages. The architecture must be built on technologies with generous free tiers to minimize initial capital expenditure.
+**What you see:**
 
-*   **WHY is this valuable?**
-    *   **Simplicity:** It removes the technical barrier to creating a well-structured, SEO-optimized website.
-    *   **Guidance:** It leads the user through a structured content creation process, preventing common mistakes like orphaned pages.
-    *   **Automation:** The "one-click" setup wizard automates the creation of the GitHub repository and Cloudflare deployment, hiding the complexity from the user.
-    *   **Scalability:** It offers a "Pro" tier with advanced, AI-driven SEO insights from the Priority Intelligence Engine, providing a clear upgrade path for users who want to take their SEO to the next level.
+- Welcome card for first-time users explaining the basics
+- Folder structure that mirrors your website’s visitor journey
+- Visual indicators showing:
+  - **Red/Orange/Green** SEO health scores per page
+  - **Published status** for each page
+  - **Last modified** info from GitHub
+- Home button (bottom right) to navigate back from any folder
 
-## 2. Project Roadmap: From Refactoring to Release
+**How folders work:**
 
-This roadmap is divided into three distinct phases, each with a clear goal. This agile-like approach ensures we build a stable foundation before adding new features.
+- Folders = URL structure
+- Example: A “Get” folder creates URLs like `lawyer.com/get/legal-help.html`
+- Users see actual URLs during creation and preview
 
-### Phase 1: Foundational Refactoring
-*   **Goal:** Create a stable and consistent technical foundation.
-*   **Key Actions:**
-    *   Migrate the `easy-SEO` application from React to Preact to align with the `priority-engine-ui` stack and improve performance.
-    *   Completely remove the `@craftjs/core` dependency and all related components to eliminate the source of current instability.
+**Future enhancement:**
 
-### Phase 2: Rebuild the Core Visual Editor
-*   **Goal:** Build the new, intuitive, and user-friendly layout dashboard.
-*   **Key Actions:**
-    *   Refactor and improve the existing drag-and-drop interface with a robust, vanilla JavaScript approach to enhance stability and mobile-friendliness.
-    *   Create the initial set of essential UI components (e.g., Text, Image, Hero Section, etc.).
-    *   Implement the settings panels required to edit the properties (e.g., color, spacing, content) of these components.
+- Interactive sitemap showing visitor flow as a visual flowchart
+- Migration tool to import existing websites (especially from cPanel/WordPress)
 
-### Phase 3: Enhance and Polish
-*   **Goal:** Refine the user experience and add more creative power.
-*   **Key Actions:**
-    *   Implement the live preview feature, allowing users to see their changes in a frameless iframe that displays the Astro `preview build` output for faster iteration.
-    *   Fix existing UX bugs, such as the file explorer's double-touch menu.
-    *   Continuously add more advanced content editing tools and UI components based on real-world usage and feedback.
+-----
+
+### 2. Content Editor (Where Words Happen)
+
+**Philosophy:** Content first, design second.
+
+**Powered by TinyMCE** - A rich text editor that shows exactly what visitors will see:
+
+**Basic formatting:**
+
+- Headings, bold, italic, underline
+- Lists, quotes, code blocks
+- Tables and columns
+
+**Smart features:**
+
+- Auto-converts URLs to clickable links
+- Drag-and-drop images with size/alt text controls
+- Embed videos, audio, and other media
+- Reusable content blocks (hero sections, features, quotes)
+- Undo/redo with autosave
+
+**Mobile-optimized:**
+
+- Touch-friendly toolbar
+- Tap-to-edit blocks
+- Responsive interface for phones and tablets
+
+**Workflow:**
+
+1. Start with basic template
+1. Edit content on left side
+1. See design preview on right (mobile: two tabs)
+1. Apply styles in Visual Editor
+
+-----
+
+### 3. Visual Editor (The Magic Layer)
+
+**What it is:**
+An interactive overlay where “what you see is what you get” - click, drag, and style your website in real-time.
+
+**How it works:**
+
+**The view:**
+
+- Full-screen iframe showing your live preview
+- Transparent overlay with bordered components on top
+- Components update as you create content and apply styles
+
+**Interactions:**
+
+- **Single click** → Select element, show properties panel
+- **Drag handles** → Move selected elements
+- **Double click** → Edit content inline
+- **Long press/right click** → Advanced options menu
+
+**Component hierarchy** (in order of control):
+
+1. **Layout** - Grid, flex containers, sections (the foundation)
+1. **Components** - Heroes, cards, buttons, tables (building blocks)
+1. **Elements** - Text, images, icons (the content)
+1. **Styles** - Colors, spacing, effects (the polish)
+
+**Settings panel** (context-aware based on selection):
+
+- **Layout tab:** Position, size, spacing, alignment
+- **Style tab:** Colors, borders, shadows, effects
+- **Content tab:** Text, images, links
+- **Advanced tab:** Custom CSS, animations, responsive behavior
+
+**Technical approach:**
+
+- Design changes saved as structured JSON
+- Converted to Tailwind classes and CSS variables at render time
+- Iframe and overlay communicate via message bridge (same-origin)
+- Drag operations computed in overlay, applied via commands to iframe
+- “Preview mode” toggles interaction on/off to prevent conflicts
+
+-----
+
+## User Journey
+
+### First-Time User:
+
+1. **Welcome card** explains the concept
+1. Click **“Create New Page”**
+1. Choose a **basic template** to start
+1. **Content Editor opens:** Write your content (left side shows editor, right side shows preview)
+1. Switch to **Visual Editor:** Click elements to style them
+1. Hit **“Preview”** to see it on desktop/tablet/mobile
+1. Click **“Publish”** when ready - deploys automatically
+1. SEO score appears (red/orange/green) in File Explorer
+
+### Returning User:
+
+1. Open **File Explorer**
+1. See all pages with SEO scores and publish status
+1. Single tap file → **Quick actions** (Edit, Preview, Duplicate, Delete)
+1. Long press file → **Full options menu** (including “Preview Site”)
+1. Navigate folders to manage different site sections
+1. Home button always available to return to main view
+
+-----
+
+## Navigation & Toolbar
+
+**Layout (top to bottom):**
+
+- **Header:** App logo, current location breadcrumb
+- **Toolbar:** Create button, Search, Filters
+- **Main area:** File/folder grid with status indicators
+- **Action buttons:** Context-sensitive based on selection
+
+**Preview options:**
+
+- Long press any file → “Preview Site” to see that specific page
+- Preview button in header for full site preview
+- Device switcher (desktop/tablet/mobile views)
+
+-----
+
+## Publish & SEO
+
+### Publishing Flow:
+
+1. Save draft → Triggers preview build
+1. “Preview before publish” reminder in File Explorer
+1. Click “Publish” → Deploys automatically to Cloudflare
+1. Version history available for rollback
+
+### SEO Features:
+
+- **Built-in (free tier):** Astro’s automatic SEO optimization
+- **Hints throughout app:** Google, voice search, and AI visibility tips
+- **Basic dashboard:** Shows SEO health per page
+- **Paid tier:** Full “Priority Intelligence” app for monitoring and guidance
+
+-----
+
+## Settings & Configuration
+
+**Global settings:**
+
+- Domain setup via Cloudflare
+- Theme colors and fonts
+- SEO defaults (meta descriptions, titles)
+- Analytics integration (Priority Intelligence for paid users)
+
+**Responsive testing:**
+
+- Switch between desktop/tablet/mobile previews
+- See exactly how visitors experience your site
+
+-----
+
+## Business Model
+
+**Free Tier:**
+
+- Basic templates
+- Core editor and visual styling
+- SEO optimization via Astro
+- GitHub + Cloudflare hosting (free)
+- Basic SEO dashboard
+
+**Paid Tier:**
+
+- Advanced layout templates
+- Modern design varieties
+- Priority Intelligence app (full SEO monitoring)
+- Advanced analytics
+- Collaboration features (future)
+- Priority support
+
+-----
+
+## Target Audience
+
+**Primary:** Non-technical business owners
+
+- Lawyers, plumbers, contractors
+- Know their business but not web development
+- Want modern, professional websites
+- Need easy ongoing management
+- Value SEO and visitor experience
+
+-----
+
+## Key Innovations
+
+1. **Content-first approach:** Write naturally, style later
+1. **Visual hierarchy:** Understand layout → components → elements → styles
+1. **Real-time preview:** See changes instantly in actual site context
+1. **SEO baked in:** From folder structure to meta tags to AI visibility
+1. **Free foundation:** GitHub + Cloudflare + Astro = $0 hosting
+1. **Smart defaults:** Modern designs that work out of the box
+
+-----
+
+## Future Enhancements
+
+- Website migration tool (cPanel/WordPress import)
+- Interactive sitemap visualization
+- Multi-user collaboration
+- Template marketplace
+- Advanced animation controls
+- A/B testing integration​​​​​​​​​​​​​​​​
