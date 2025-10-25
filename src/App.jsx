@@ -27,7 +27,7 @@ function App() {
           FIX: Add a root-level redirect. If the user is authenticated and lands at "/",
           this will automatically send them to the explorer, preventing a blank page.
         */}
-        <Route index element={<Navigate to="/explorer" replace />} />
+        <Route index element={<ExplorerPage />} />
 
         <Route path="explorer" element={<ExplorerPage />} />
         <Route path="editor" element={<EditorPage />} />
