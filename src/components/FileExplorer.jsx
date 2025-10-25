@@ -12,7 +12,11 @@ import * as cache from '../utils/cache';
 import { routeForPath } from '../utils/editorRouting';
 
 function FileExplorer({ repo }) {
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState([
+    { name: 'test-file-1.md', type: 'file', sha: '123' },
+    { name: 'test-folder-1', type: 'dir', sha: '456' },
+    { name: 'another-doc.txt', type: 'file', sha: '789' },
+  ]);
   const [path, setPath] = useState('src/pages');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -299,22 +303,34 @@ function FileExplorer({ repo }) {
   const isAtRoot = path === 'src/pages';
   const getCurrentFolderName = () => isAtRoot ? 'Home' : path.split('/').pop();
 
+  console.log('Rendering Explorer', files);
+
+  const visibleFiles = Array.isArray(files) ? files.filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md') : [];
+
   return (
     <div className="relative min-h-[calc(100vh-250px)]">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-24">
-        {Array.isArray(files) && files.filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md').map(file => (
-          <FileTile
-            key={file.sha}
-            file={file}
-            isSelected={selectedFile && selectedFile.sha === file.sha}
-            metadata={metadataCache[file.sha]}
-            onClick={handleFileClick}
-            onDoubleClick={handleFileDoubleClick}
-            onLongPress={(file, coords) => handleLongPress(file, coords)}
-            onRename={() => handleRenameRequest(file)}
-            onDelete={() => handleDeleteRequest(file)}
-          />
-        ))}
+      <div style={{ border: '2px solid red', backgroundColor: 'lightgrey', overflow: 'auto', minHeight: '300px' }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-24">
+          {visibleFiles.length > 0 ? (
+            visibleFiles.map(file => (
+              <FileTile
+                key={file.sha}
+                file={file}
+                isSelected={selectedFile && selectedFile.sha === file.sha}
+                metadata={metadataCache[file.sha]}
+                onClick={handleFileClick}
+                onDoubleClick={handleFileDoubleClick}
+                onLongPress={(file, coords) => handleLongPress(file, coords)}
+                onRename={() => handleRenameRequest(file)}
+                onDelete={() => handleDeleteRequest(file)}
+              />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12 text-gray-500">
+              <p>This folder is empty.</p>
+            </div>
+          )}
+        </div>
       </div>
       {isReadmeLoading && <div className="text-center text-gray-500 my-8">Loading README...</div>}
       {readmeContent && !isReadmeLoading && (
@@ -331,7 +347,7 @@ function FileExplorer({ repo }) {
                 onClick={handleNewLayout}
                 title="Manage Layouts"
             >
-                <Icon name="layout-editor" className="h-6 w-6" />
+                {/* <Icon name="layout-editor" className="h-6 w-6" /> */}
                 <span className="font-semibold hidden sm:inline">Layouts</span>
             </button>
         </div>
@@ -341,7 +357,7 @@ function FileExplorer({ repo }) {
                 onClick={() => setCreateModalOpen(true)}
                 title="Create a new file or folder"
             >
-                <Icon name="plus" />
+                {/* <Icon name="plus" /> */}
             </button>
         </div>
         <div className="flex-1 flex justify-end">
@@ -350,7 +366,7 @@ function FileExplorer({ repo }) {
                 onClick={handleGoHome}
                 disabled={isAtRoot}
             >
-                <Icon name="home" />
+                {/* <Icon name="home" /> */}
                 <span className="font-semibold">{getCurrentFolderName()}</span>
             </button>
         </div>

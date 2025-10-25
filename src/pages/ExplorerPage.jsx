@@ -1,7 +1,12 @@
+import { useEffect } from 'react';
 import FileExplorer from '../components/FileExplorer';
 import { Link, useLocation } from 'react-router-dom';
 
 function ExplorerPage() {
+  useEffect(() => {
+    console.log('Explorer mounted');
+  }, []);
+
   const location = useLocation();
   // Prioritize repo from navigation state, fall back to localStorage.
   const selectedRepo = location.state?.selectedRepo || localStorage.getItem('selectedRepo');
