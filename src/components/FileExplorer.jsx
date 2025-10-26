@@ -154,7 +154,7 @@ function FileExplorer({ repo }) {
     const newPath = file.path.replace(file.name, newName);
 
     try {
-      const response = await fetch('/api/duplicate-file', {
+      const response = await fetch('/api/files/duplicate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -180,7 +180,7 @@ function FileExplorer({ repo }) {
   const handleDeleteConfirm = async () => {
     if (!fileToDelete) return;
     try {
-      const response = await fetch('/api/files', {
+      const response = await fetch('/api/files/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -247,8 +247,8 @@ function FileExplorer({ repo }) {
     const newPath = oldPath.substring(0, oldPath.lastIndexOf('/') + 1) + newName;
 
     try {
-      const response = await fetch('/api/rename-file', {
-        method: 'POST',
+      const response = await fetch('/api/files/rename', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ repo, oldPath, newPath, sha: file.sha }),

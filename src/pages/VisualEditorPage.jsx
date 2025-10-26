@@ -189,7 +189,7 @@ function VisualEditorPage() {
       try {
         let fileContent, sha;
         if (isNew && templatePath) {
-          const response = await fetch(`/api/get-file-content?repo=${repo}&path=${templatePath}&ref=${branch}`, { credentials: 'include' });
+          const response = await fetch(`/api/files/content?repo=${repo}&path=${templatePath}&ref=${branch}`, { credentials: 'include' });
           if (!response.ok) throw new Error(`API Error: Failed to fetch template file (status: ${response.status})`);
           const { content } = await response.json();
           const pageTitle = filePath.split('/').pop().replace('.astro', '').replace(/-/g, ' ');
