@@ -43,10 +43,6 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress, onDoubleCl
   };
 
   const handlePointerDown = (e) => {
-    // Prevent iOS from initiating text selection/callout
-    if (e.type === 'touchstart') {
-      e.preventDefault?.();
-    }
     // Ignore right-clicks for mouse events.
     if (e.button === 2) return;
 
