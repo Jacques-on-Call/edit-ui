@@ -225,7 +225,7 @@ function EditorPage() {
         if (localDraft) {
           fileContent = localDraft;
         } else {
-          const res = await fetch(`/api/file?repo=${repo}&path=${filePath}`, { credentials: 'include' });
+          const res = await fetch(`/api/files/get?repo=${repo}&path=${filePath}`, { credentials: 'include' });
           if (!res.ok) throw new Error(`Failed to fetch file content: ${res.statusText}`);
           const data = await res.json();
           setFileSha(data.sha);
