@@ -56,7 +56,7 @@ function FileExplorer({ repo }) {
     setReadmeLoading(false);
 
     try {
-      const response = await fetch(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' });
+      const response = await fetch(`/api/files/list?repo=${repo}&path=${path}`, { credentials: 'include' });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Network response was not ok: ${response.statusText} - ${errorText}`);
@@ -75,7 +75,7 @@ function FileExplorer({ repo }) {
       if (readmeFile) {
         setReadmeLoading(true);
         try {
-          const readmeRes = await fetch(`/api/file?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' });
+          const readmeRes = await fetch(`/api/files/get?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' });
           if (!readmeRes.ok) throw new Error('Could not fetch README content.');
           const readmeData = await readmeRes.json();
           // The content from GitHub API is base64 encoded.

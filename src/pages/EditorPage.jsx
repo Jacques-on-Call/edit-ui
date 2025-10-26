@@ -139,7 +139,7 @@ function EditorPage() {
         fullContent = `---\n${frontmatterString}---\n${markdownBody}`;
       }
 
-      const res = await fetch(`/api/file?repo=${repo}&path=${filePath}`, { credentials: 'include' });
+      const res = await fetch(`/api/files/get?repo=${repo}&path=${filePath}`, { credentials: 'include' });
       const data = await res.json();
       if (data.sha !== fileSha) {
         if (!window.confirm('The file has been modified since you opened it. Do you want to overwrite the changes?')) {
@@ -148,8 +148,8 @@ function EditorPage() {
         }
       }
 
-      const response = await fetch('/api/file', {
-        method: 'POST',
+      const response = await fetch('/api/files/update', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           repo,
@@ -225,7 +225,7 @@ function EditorPage() {
         if (localDraft) {
           fileContent = localDraft;
         } else {
-          const res = await fetch(`/api/file?repo=${repo}&path=${filePath}`, { credentials: 'include' });
+          const res = await fetch(`/api/files/get?repo=${repo}&path=${filePath}`, { credentials: 'include' });
           if (!res.ok) throw new Error(`Failed to fetch file content: ${res.statusText}`);
           const data = await res.json();
           setFileSha(data.sha);

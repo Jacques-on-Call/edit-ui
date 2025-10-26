@@ -135,8 +135,8 @@ function VisualEditorPage() {
     const filePath = searchParams.get('path');
 
     try {
-      const response = await fetch('/api/file', {
-        method: 'POST',
+      const response = await fetch('/api/files/update', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
@@ -196,7 +196,7 @@ function VisualEditorPage() {
           fileContent = content.replace(/title\s*=\s*".*?"/, `title="${pageTitle}"`);
           sha = null;
         } else {
-          const response = await fetch(`/api/file?repo=${repo}&path=${filePath}&ref=${branch}`, { credentials: 'include' });
+          const response = await fetch(`/api/files/get?repo=${repo}&path=${filePath}&ref=${branch}`, { credentials: 'include' });
           if (!response.ok) {
              if (response.status === 404) {
                  throw new Error("File not found. It may not have been saved yet.");
