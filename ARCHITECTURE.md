@@ -71,6 +71,12 @@ Contents
     - Compiler/Parser/Validator ensure safe round‑trip
 
 - Cloudflare Worker (API)
+  - **File Structure**: The worker is organized into a modular structure:
+    - `index.js`: The main entry point for the Cloudflare Worker.
+    - `src/router.js`: Contains the request routing logic, mapping API endpoints to their corresponding handler functions.
+    - `src/handlers/`: This directory contains the individual handler functions for each API endpoint (e.g., `files.js`, `auth.js`).
+    - `src/services/`: This directory houses the business logic for interacting with external services, such as `github.js` and `d1.js`.
+    - `src/utils/`: This directory contains helper functions, such as authentication logic.
   - Auth: `/api/callback` (sets `gh_session`)
   - GitHub operations: list dir, get file, get content, create/update, delete, rename, duplicate
   - Search: `/api/search` (returns fragments/snippets)
