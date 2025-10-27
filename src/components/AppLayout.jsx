@@ -24,29 +24,17 @@ function AppLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
 
   useEffect(() => {
-    console.log('[Auth] Checking authentication status...');
     // 1. Check authentication status first
     fetch('/api/me', { credentials: 'include' })
       .then(res => {
-        console.log(`[Auth] /api/me response status: ${res.status}`);
         if (res.ok) {
           setIsAuthenticated(true);
-          console.log('[Auth] User is authenticated.');
-          return res.json(); // Parse JSON to log the payload
         } else {
           setIsAuthenticated(false);
-          console.error('[Auth] Authentication failed. Redirecting to login.');
           navigate('/login');
-          return null; // Stop processing
         }
       })
-      .then(data => {
-        if (data) {
-          console.log('[Auth] /api/me response payload:', data);
-        }
-      })
-      .catch((err) => {
-        console.error('[Auth] Network error during authentication:', err);
+      .catch(() => {
         setIsAuthenticated(false);
         navigate('/login');
       });
