@@ -307,7 +307,7 @@ function FileExplorer({ repo }) {
         {visibleFiles.length === 0 && !loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center p-8 text-gray-500">
-              <Icon name="folder-open" className="mx-auto h-12 w-12 mb-4" />
+              <Icon name="FolderOpen" className="mx-auto h-12 w-12 mb-4" />
               <p>This folder is empty.</p>
             </div>
           </div>
