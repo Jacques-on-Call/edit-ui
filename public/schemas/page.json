@@ -1,0 +1,15 @@
+{
+  "id": "root",
+  "type": "root",
+  "children": [
+    {
+      "id": "d1e4f9b0-9b1a-4e1a-8f8a-0e9b2a1b1b1b",
+      "type": "section",
+      "properties": {
+        "padding": "2rem",
+        "backgroundColor": "#ffffff"
+      },
+      "children": []
+    }
+  ]
+}
