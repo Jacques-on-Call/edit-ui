@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
@@ -12,8 +12,10 @@ import * as cache from '../utils/cache';
 import { routeForPath } from '../utils/editorRouting';
 
 function FileExplorer({ repo }) {
+  const location = useLocation();
+  const initialPath = new URLSearchParams(location.search).get('path') || '';
   const [files, setFiles] = useState([]);
-  const [path, setPath] = useState('src/pages');
+  const [path, setPath] = useState(initialPath);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
