@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    const root = document.getElementById('root');
+
+    // Basic component renderer. This maps component data to DOM elements.
+    // In a real Astro preview, this would be much more complex,
+    // likely involving a client-side rendering framework.
+    function renderComponent(component) {
+      const el = document.createElement('div');
+      el.style.padding = component.properties?.padding || '0.5rem';
+      el.style.margin = '0.5rem';
+      el.style.border = '1px solid #eee';
+      el.style.backgroundColor = component.properties?.backgroundColor || 'transparent';
+
+      const typeEl = document.createElement('div');
+      typeEl.textContent = component.type;
+      typeEl.style.fontSize = '0.75rem';
+      typeEl.style.color = '#999';
+      el.appendChild(typeEl);
+
+      if (component.properties?.text) {
+        const textEl = document.createElement('p');
+        textEl.textContent = component.properties.text;
+        el.appendChild(textEl);
+      }
+
+      if (component.children && component.children.length > 0) {
+        const childrenContainer = document.createElement('div');
+        childrenContainer.style.marginLeft = '1rem';
+        childrenContainer.style.paddingLeft = '1rem';
+        childrenContainer.style.borderLeft = '1px solid #eee';
+        component.children.forEach(child => {
+          childrenContainer.appendChild(renderComponent(child));
+        });
+        el.appendChild(childrenContainer);
+      }
+
+      return el;
+    }
+
+    // Listen for messages from the editor
+    window.addEventListener('message', (event) => {
+      // Basic security: check the origin of the message
+      // if (event.origin !== 'http://localhost:5173') { // Replace with your editor's origin
+      //   console.warn('Message from untrusted origin:', event.origin);
+      //   return;
+      // }
+
+      const { type, payload } = event.data;
+
+      if (type === 'update') {
+        // Clear the previous content
+        root.innerHTML = '';
+
+        // Render the new component tree
+        if (payload && payload.children) {
+          payload.children.forEach(component => {
+            root.appendChild(renderComponent(component));
+          });
+        }
+      }
+    });
+  </script>
+</body>
+</html>
