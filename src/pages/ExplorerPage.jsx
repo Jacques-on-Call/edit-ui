@@ -24,7 +24,9 @@ function ExplorerPage() {
 
   return (
     <div className="h-screen">
-      <FileExplorer repo={selectedRepo} />
+      <div className="p-4 sm:p-6 lg:p-8 h-full">
+        <FileExplorer repo={selectedRepo} />
+      </div>
     </div>
   );
 }

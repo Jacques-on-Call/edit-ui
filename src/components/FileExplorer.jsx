@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
@@ -12,10 +12,8 @@ import * as cache from '../utils/cache';
 import { routeForPath } from '../utils/editorRouting';
 
 function FileExplorer({ repo }) {
-  const location = useLocation();
-  const initialPath = new URLSearchParams(location.search).get('path') || '';
   const [files, setFiles] = useState([]);
-  const [path, setPath] = useState(initialPath);
+  const [path, setPath] = useState('src/pages');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -301,35 +299,24 @@ function FileExplorer({ repo }) {
   const isAtRoot = path === 'src/pages';
   const getCurrentFolderName = () => isAtRoot ? 'Home' : path.split('/').pop();
 
-  const visibleFiles = Array.isArray(files) ? files.filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md') : [];
-
   return (
     <div className="flex flex-col h-screen">
       <div className="flex-grow overflow-auto overscroll-contain">
-        {visibleFiles.length === 0 && !loading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center p-8 text-gray-500">
-              <Icon name="FolderOpen" className="mx-auto h-12 w-12 mb-4" />
-              <p>This folder is empty.</p>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4 pb-24">
-            {visibleFiles.map(file => (
-              <FileTile
-                key={file.sha}
-                file={file}
-                isSelected={selectedFile && selectedFile.sha === file.sha}
-                metadata={metadataCache[file.sha]}
-                onClick={handleFileClick}
-                onDoubleClick={handleFileDoubleClick}
-                onLongPress={(file, coords) => handleLongPress(file, coords)}
-                onRename={() => handleRenameRequest(file)}
-                onDelete={() => handleDeleteRequest(file)}
-              />
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4 pb-24">
+          {Array.isArray(files) && files.filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md').map(file => (
+            <FileTile
+              key={file.sha}
+              file={file}
+              isSelected={selectedFile && selectedFile.sha === file.sha}
+              metadata={metadataCache[file.sha]}
+              onClick={handleFileClick}
+              onDoubleClick={handleFileDoubleClick}
+              onLongPress={(file, coords) => handleLongPress(file, coords)}
+              onRename={() => handleRenameRequest(file)}
+              onDelete={() => handleDeleteRequest(file)}
+            />
+          ))}
+        </div>
         {isReadmeLoading && <div className="text-center text-gray-500 my-8">Loading README...</div>}
         {readmeContent && !isReadmeLoading && (
           <ReadmeDisplay

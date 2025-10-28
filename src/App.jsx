@@ -8,7 +8,6 @@ import RepositorySelectionPage from './pages/RepositorySelectionPage';
 import ExplorerPage from './pages/ExplorerPage';
 import EditorPage from './pages/EditorPage';
 import LayoutsDashboardPage from './pages/LayoutsDashboardPage';
-import VisualEditorPage from './pages/VisualEditorPage';
 
 function App() {
   return (
@@ -32,8 +31,6 @@ function App() {
         <Route path="explorer" element={<ExplorerPage />} />
         <Route path="editor" element={<EditorPage />} />
         <Route path="layouts" element={<LayoutsDashboardPage />} />
-        <Route path="visual-editor" element={<VisualEditorPage />} />
-        <Route path="layout-editor" element={<VisualEditorPage />} />
       </Route>
     </Routes>
   );
