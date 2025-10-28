@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
@@ -12,10 +12,8 @@ import * as cache from '../utils/cache';
 import { routeForPath } from '../utils/editorRouting';
 
 function FileExplorer({ repo }) {
-  const location = useLocation();
-  const initialPath = new URLSearchParams(location.search).get('path') || '';
   const [files, setFiles] = useState([]);
-  const [path, setPath] = useState(initialPath);
+  const [path, setPath] = useState('src/pages');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -58,7 +56,7 @@ function FileExplorer({ repo }) {
     setReadmeLoading(false);
 
     try {
-      const response = await fetch(`/api/files/list?repo=${repo}&path=${path}`, { credentials: 'include' });
+      const response = await fetch(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Network response was not ok: ${response.statusText} - ${errorText}`);
@@ -77,7 +75,7 @@ function FileExplorer({ repo }) {
       if (readmeFile) {
         setReadmeLoading(true);
         try {
-          const readmeRes = await fetch(`/api/files/get?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' });
+          const readmeRes = await fetch(`/api/file?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' });
           if (!readmeRes.ok) throw new Error('Could not fetch README content.');
           const readmeData = await readmeRes.json();
           // The content from GitHub API is base64 encoded.
@@ -156,7 +154,7 @@ function FileExplorer({ repo }) {
     const newPath = file.path.replace(file.name, newName);
 
     try {
-      const response = await fetch('/api/files/duplicate', {
+      const response = await fetch('/api/duplicate-file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -182,7 +180,7 @@ function FileExplorer({ repo }) {
   const handleDeleteConfirm = async () => {
     if (!fileToDelete) return;
     try {
-      const response = await fetch('/api/files/delete', {
+      const response = await fetch('/api/files', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -249,8 +247,8 @@ function FileExplorer({ repo }) {
     const newPath = oldPath.substring(0, oldPath.lastIndexOf('/') + 1) + newName;
 
     try {
-      const response = await fetch('/api/files/rename', {
-        method: 'PATCH',
+      const response = await fetch('/api/rename-file', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ repo, oldPath, newPath, sha: file.sha }),
@@ -302,32 +300,30 @@ function FileExplorer({ repo }) {
   const getCurrentFolderName = () => isAtRoot ? 'Home' : path.split('/').pop();
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="flex-grow overflow-auto overscroll-contain">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4 pb-24">
-          {Array.isArray(files) && files.filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md').map(file => (
-            <FileTile
-              key={file.sha}
-              file={file}
-              isSelected={selectedFile && selectedFile.sha === file.sha}
-              metadata={metadataCache[file.sha]}
-              onClick={handleFileClick}
-              onDoubleClick={handleFileDoubleClick}
-              onLongPress={(file, coords) => handleLongPress(file, coords)}
-              onRename={() => handleRenameRequest(file)}
-              onDelete={() => handleDeleteRequest(file)}
-            />
-          ))}
-        </div>
-        {isReadmeLoading && <div className="text-center text-gray-500 my-8">Loading README...</div>}
-        {readmeContent && !isReadmeLoading && (
-          <ReadmeDisplay
-            content={readmeContent}
-            isVisible={isReadmeVisible}
-            onToggle={handleToggleReadme}
+    <div className="relative min-h-[calc(100vh-250px)]">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-24">
+        {Array.isArray(files) && files.filter(file => !file.name.startsWith('_') && file.name.toLowerCase() !== 'readme.md').map(file => (
+          <FileTile
+            key={file.sha}
+            file={file}
+            isSelected={selectedFile && selectedFile.sha === file.sha}
+            metadata={metadataCache[file.sha]}
+            onClick={handleFileClick}
+            onDoubleClick={handleFileDoubleClick}
+            onLongPress={(file, coords) => handleLongPress(file, coords)}
+            onRename={() => handleRenameRequest(file)}
+            onDelete={() => handleDeleteRequest(file)}
           />
-        )}
+        ))}
       </div>
+      {isReadmeLoading && <div className="text-center text-gray-500 my-8">Loading README...</div>}
+      {readmeContent && !isReadmeLoading && (
+        <ReadmeDisplay
+          content={readmeContent}
+          isVisible={isReadmeVisible}
+          onToggle={handleToggleReadme}
+        />
+      )}
       <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 flex justify-between items-center p-2 z-10">
         <div className="flex-1 flex justify-start">
             <button
