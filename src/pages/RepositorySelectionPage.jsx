@@ -6,8 +6,8 @@ function RepositorySelectionPage() {
 
   const handleRepoSelect = (repo) => {
     localStorage.setItem('selectedRepo', repo);
-    // Pass the repo name in the navigation state to avoid race conditions with localStorage
-    navigate('/explorer', { state: { selectedRepo: repo } });
+    // Navigate to the explorer with the initial path set to src/pages
+    navigate('/explorer?path=src/pages', { state: { selectedRepo: repo } });
   };
 
   return (

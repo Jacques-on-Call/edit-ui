@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
@@ -12,8 +12,12 @@ import * as cache from '../utils/cache';
 import { routeForPath } from '../utils/editorRouting';
 
 function FileExplorer({ repo }) {
+  const location = useLocation();
   const [files, setFiles] = useState([]);
-  const [path, setPath] = useState('src/pages');
+  const [path, setPath] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('path') || 'src/pages';
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -117,6 +121,13 @@ function FileExplorer({ repo }) {
   useEffect(() => {
     fetchFiles();
   }, [fetchFiles]);
+
+  // Update path when URL query param changes
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const newPath = params.get('path') || 'src/pages';
+    setPath(newPath);
+  }, [location.search]);
 
   const handleFileClick = (file) => {
     if (selectedFile && selectedFile.sha === file.sha) {
