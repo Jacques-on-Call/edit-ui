@@ -70,7 +70,7 @@ function ExplorerPage() {
 
   return (
     <div className="h-screen">
-      <div className="p-4 sm:p-6 lg:p-8 h-full">
+      <div className="h-full">
         <FileExplorer repo={selectedRepo} />
       </div>
     </div>
