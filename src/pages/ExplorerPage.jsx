@@ -13,7 +13,9 @@ function ExplorerPage() {
     const verifyUser = async () => {
       try {
         const response = await fetch('/api/me', { credentials: 'include' });
-        if (!response.ok) throw new Error('Not authenticated');
+        if (!response.ok) {
+          throw new Error('Not authenticated');
+        }
         const userData = await response.json();
         setUser(userData);
       } catch (error) {

@@ -23,9 +23,13 @@ function LoginPage() {
   // Check for an existing session on component mount, but only if the user hasn't initiated the login flow.
   useEffect(() => {
     if (isLoggingIn) return;
-
     fetch('/api/me', { credentials: 'include' })
-      .then(res => (res.ok ? res.json() : null))
+      .then(res => {
+        if (res.ok) {
+          return res.json();
+        }
+        return null;
+      })
       .then(userData => {
         if (userData && userData.login) {
           navigate('/repository-selection');
@@ -45,7 +49,6 @@ function LoginPage() {
         navigate('/repository-selection');
       }
     };
-
     window.addEventListener('message', handleAuthMessage);
 
     // Cleanup: remove the event listener when the component unmounts
@@ -72,8 +75,6 @@ function LoginPage() {
       setIsLoggingIn(false); // Reset state if popup fails
     }
   };
-
-  // Removed the useEffect for message handling as it's replaced by the polling mechanism.
 
   return (
     <div className="bg-bark-blue min-h-screen flex flex-col items-center justify-center text-center">
