@@ -12,6 +12,7 @@ import * as cache from '../utils/cache';
 import { routeForPath } from '../utils/editorRouting';
 
 function FileExplorer({ repo }) {
+  window.authDebug.log('FILE_EXPLORER', 'FileExplorer component rendered', { repo });
   const location = useLocation();
   const navigate = useNavigate();
 

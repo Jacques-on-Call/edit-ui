@@ -111,3 +111,8 @@
   transform: scale(1.1);
   background-color: #e74c3c;
 }
+
+/* Ensure clicks go to the button, not the icon inside it */
+.auth-debug-monitor-bug-btn > * {
+  pointer-events: none;
+}
