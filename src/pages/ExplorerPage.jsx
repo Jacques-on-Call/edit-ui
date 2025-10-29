@@ -1,13 +1,47 @@
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import FileExplorer from '../components/FileExplorer';
-import { Link, useLocation } from 'react-router-dom';
+import Icon from '../components/Icon';
 
 function ExplorerPage() {
   const location = useLocation();
-  // Prioritize repo from navigation state, fall back to localStorage.
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const verifyUser = async () => {
+      try {
+        const response = await fetch('/api/me', { credentials: 'include' });
+        if (!response.ok) throw new Error('Not authenticated');
+        const userData = await response.json();
+        setUser(userData);
+      } catch (error) {
+        navigate('/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+    verifyUser();
+  }, [navigate]);
+
   const selectedRepo = location.state?.selectedRepo || localStorage.getItem('selectedRepo');
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen text-gray-500">
+        <Icon name="loader" className="animate-spin h-12 w-12 mr-4" />
+        Verifying session and loading explorer...
+      </div>
+    );
+  }
+
+  if (!user) {
+    // This state should ideally not be reached due to the redirect in useEffect.
+    return null;
+  }
+
   if (!selectedRepo) {
-    // This can happen if the user navigates here directly without selecting a repo
     return (
       <div className="flex flex-col items-center justify-center h-full bg-gray-50 text-center p-8">
         <h1 className="text-2xl font-bold text-gray-800 mb-4">No Repository Selected</h1>
