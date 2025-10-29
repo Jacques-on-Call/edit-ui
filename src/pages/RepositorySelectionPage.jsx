@@ -12,7 +12,7 @@ function RepositorySelectionPage() {
     const verifyUser = async () => {
       window.authDebug.auth('RepositorySelectionPage mounted, verifying user session');
       try {
-        const response = await fetch('/api/me', { credentials: 'include' });
+        const response = await fetch(`/api/me?t=${new Date().getTime()}`, { credentials: 'include' });
         if (!response.ok) {
           window.authDebug.warn('AUTH', 'Session verification failed, redirecting to login', { status: response.status });
           throw new Error('Not authenticated');
