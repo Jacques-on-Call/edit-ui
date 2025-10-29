@@ -13,7 +13,10 @@ function ExplorerPage() {
     window.authDebug.auth('ExplorerPage mounted, verifying user session');
     const verifyUser = async () => {
       try {
-        const response = await fetch(`/api/me?t=${new Date().getTime()}`, { credentials: 'include' });
+        const response = await fetch(`/api/me?t=${new Date().getTime()}`, {
+          credentials: 'include',
+          headers: { 'X-App-Version': 'jules-debug' }
+        });
         if (!response.ok) {
           window.authDebug.warn('AUTH', 'Session verification failed, redirecting to login', { status: response.status });
           throw new Error('Not authenticated');

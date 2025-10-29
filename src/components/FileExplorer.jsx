@@ -62,7 +62,10 @@ function FileExplorer({ repo }) {
       setReadmeLoading(false);
 
       try {
-        const response = await fetch(`/api/list-files-in-repo/?repo=${repo}&path=${currentPath}`, { credentials: 'include' });
+        const response = await fetch(`/api/list-files-in-repo/?repo=${repo}&path=${currentPath}`, {
+          credentials: 'include',
+          headers: { 'X-App-Version': 'jules-debug' }
+        });
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(`Network response was not ok: ${response.statusText} - ${errorText}`);
