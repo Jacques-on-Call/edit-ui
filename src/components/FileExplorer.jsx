@@ -62,7 +62,7 @@ function FileExplorer({ repo }) {
       setReadmeLoading(false);
 
       try {
-        const response = await fetch(`/api/v2/files/list?repo=${repo}&path=${currentPath}&t=${new Date().getTime()}`, {
+        const response = await fetch(`/api/list-files-in-repo/?repo=${repo}&path=${currentPath}`, {
           credentials: 'include',
           headers: { 'X-App-Version': 'jules-debug' }
         });
