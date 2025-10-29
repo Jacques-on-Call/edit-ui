@@ -60,7 +60,7 @@ function FileExplorer({ repo }) {
     setReadmeLoading(false);
 
     try {
-      const response = await fetch(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' });
+      const response = await fetch(`/api/files/?repo=${repo}&path=${path}`, { credentials: 'include' });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Network response was not ok: ${response.statusText} - ${errorText}`);
