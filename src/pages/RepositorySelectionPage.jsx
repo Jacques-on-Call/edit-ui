@@ -10,14 +10,18 @@ function RepositorySelectionPage() {
 
   useEffect(() => {
     const verifyUser = async () => {
+      window.authDebug.auth('RepositorySelectionPage mounted, verifying user session');
       try {
         const response = await fetch('/api/me', { credentials: 'include' });
         if (!response.ok) {
+          window.authDebug.warn('AUTH', 'Session verification failed, redirecting to login', { status: response.status });
           throw new Error('Not authenticated');
         }
         const userData = await response.json();
+        window.authDebug.success('AUTH', 'Session verified successfully', userData);
         setUser(userData);
       } catch (error) {
+        window.authDebug.error('AUTH', 'Error during session verification, redirecting to login', { message: error.message });
         navigate('/login');
       } finally {
         setLoading(false);
@@ -28,7 +32,9 @@ function RepositorySelectionPage() {
   }, [navigate]);
 
   const handleRepoSelect = (repo) => {
+    window.authDebug.log('NAVIGATION', `Repo selected: ${repo}. Navigating to explorer.`);
     localStorage.setItem('selectedRepo', repo);
+    window.authDebug.storage('SET', 'selectedRepo', repo);
     navigate('/explorer?path=src/pages', { state: { selectedRepo: repo } });
   };
 

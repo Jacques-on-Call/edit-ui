@@ -10,15 +10,19 @@ function ExplorerPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    window.authDebug.auth('ExplorerPage mounted, verifying user session');
     const verifyUser = async () => {
       try {
         const response = await fetch('/api/me', { credentials: 'include' });
         if (!response.ok) {
+          window.authDebug.warn('AUTH', 'Session verification failed, redirecting to login', { status: response.status });
           throw new Error('Not authenticated');
         }
         const userData = await response.json();
+        window.authDebug.success('AUTH', 'Session verified successfully', userData);
         setUser(userData);
       } catch (error) {
+        window.authDebug.error('AUTH', 'Error during session verification, redirecting to login', { message: error.message });
         navigate('/login');
       } finally {
         setLoading(false);
@@ -28,6 +32,8 @@ function ExplorerPage() {
   }, [navigate]);
 
   const selectedRepo = location.state?.selectedRepo || localStorage.getItem('selectedRepo');
+  window.authDebug.storage('GET', 'selectedRepo', selectedRepo);
+
 
   if (loading) {
     return (
@@ -44,6 +50,7 @@ function ExplorerPage() {
   }
 
   if (!selectedRepo) {
+    window.authDebug.warn('EXPLORER', 'No repository selected, rendering fallback UI.');
     return (
       <div className="flex flex-col items-center justify-center h-full bg-gray-50 text-center p-8">
         <h1 className="text-2xl font-bold text-gray-800 mb-4">No Repository Selected</h1>

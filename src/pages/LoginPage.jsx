@@ -14,6 +14,7 @@ function LoginPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('close_popup') === 'true' && window.opener) {
+      window.authDebug.auth('Login success message received in popup', { params: window.location.search });
       // Notify the opener window that login was successful, then close.
       window.opener.postMessage('login-success', window.location.origin);
       window.close();
@@ -23,15 +24,18 @@ function LoginPage() {
   // Check for an existing session on component mount, but only if the user hasn't initiated the login flow.
   useEffect(() => {
     if (isLoggingIn) return;
+    window.authDebug.auth('Checking for existing session on LoginPage mount');
     fetch('/api/me', { credentials: 'include' })
       .then(res => {
         if (res.ok) {
           return res.json();
         }
+        window.authDebug.warn('AUTH', 'No active session found during initial check.');
         return null;
       })
       .then(userData => {
         if (userData && userData.login) {
+          window.authDebug.success('AUTH', 'Active session found, redirecting to repo selection', userData);
           navigate('/repository-selection');
         }
       });
@@ -43,25 +47,31 @@ function LoginPage() {
     const handleAuthMessage = (event) => {
       // Important: Check the origin of the message for security
       if (event.origin !== window.location.origin) {
+        window.authDebug.warn('AUTH', 'Ignored message from incorrect origin', { origin: event.origin });
         return;
       }
       if (event.data === 'login-success') {
+        window.authDebug.success('AUTH', 'Received login-success message from popup, navigating to repo selection');
         navigate('/repository-selection');
       }
     };
+    window.authDebug.log('AUTH', 'Adding message listener for popup communication');
     window.addEventListener('message', handleAuthMessage);
 
     // Cleanup: remove the event listener when the component unmounts
     return () => {
+      window.authDebug.log('AUTH', 'Removing message listener');
       window.removeEventListener('message', handleAuthMessage);
     };
   }, [navigate]);
 
   const handleLogin = () => {
+    window.authDebug.auth('Login button clicked, starting OAuth flow');
     setIsLoggingIn(true); // Prevent the session check from running while we're in the popup flow
 
     const state = Math.random().toString(36).substring(2, 15);
     document.cookie = `oauth_state=${state}; path=/; max-age=600; SameSite=Lax; Secure`;
+    window.authDebug.storage('SET', 'oauth_state cookie', state);
 
     const authUrl = new URL('https://github.com/login/oauth/authorize');
     authUrl.searchParams.set('client_id', GITHUB_CLIENT_ID);

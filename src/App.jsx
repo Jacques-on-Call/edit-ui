@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import AuthDebugMonitor from './components/AuthDebugMonitor';
 import AppLayout from './components/AppLayout';
 import LoginPage from './pages/LoginPage';
 import CallbackPage from './pages/CallbackPage';
@@ -11,9 +12,11 @@ import VisualEditorPage from './pages/VisualEditorPage';
 
 function App() {
   return (
-    <Routes>
-      {/* Standalone routes that should NOT have the main AppLayout. */}
-      <Route path="/login" element={<LoginPage />} />
+    <>
+      <AuthDebugMonitor />
+      <Routes>
+        {/* Standalone routes that should NOT have the main AppLayout. */}
+        <Route path="/login" element={<LoginPage />} />
       <Route path="/callback" element={<CallbackPage />} />
       <Route path="/repository-selection" element={<RepositorySelectionPage />} />
 
@@ -35,6 +38,7 @@ function App() {
         <Route path="layout-editor" element={<VisualEditorPage />} />
       </Route>
     </Routes>
+    </>
   );
 }
 
