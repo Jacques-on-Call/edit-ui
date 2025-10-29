@@ -13,11 +13,14 @@ import { routeForPath } from '../utils/editorRouting';
 
 function FileExplorer({ repo }) {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // The `path` is now derived directly from the URL query parameters.
+  // This avoids the race condition and makes the URL the single source of truth.
+  const params = new URLSearchParams(location.search);
+  const currentPath = params.get('path') || 'src/pages';
+
   const [files, setFiles] = useState([]);
-  const [path, setPath] = useState(() => {
-    const params = new URLSearchParams(location.search);
-    return params.get('path') || 'src/pages';
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -30,7 +33,6 @@ function FileExplorer({ repo }) {
   const [readmeContent, setReadmeContent] = useState(null);
   const [isReadmeLoading, setReadmeLoading] = useState(false);
   const [isReadmeVisible, setReadmeVisible] = useState(true);
-  const navigate = useNavigate();
 
   const handleNewLayout = () => {
     navigate('/layouts');
@@ -60,7 +62,7 @@ function FileExplorer({ repo }) {
     setReadmeLoading(false);
 
     try {
-      const response = await fetch(`/api/files/?repo=${repo}&path=${path}`, { credentials: 'include' });
+      const response = await fetch(`/api/files/?repo=${repo}&path=${currentPath}`, { credentials: 'include' });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Network response was not ok: ${response.statusText} - ${errorText}`);
@@ -116,18 +118,13 @@ function FileExplorer({ repo }) {
     } finally {
       setLoading(false);
     }
-  }, [repo, path, fetchMetadata]);
+  }, [repo, currentPath, fetchMetadata]);
 
   useEffect(() => {
     fetchFiles();
-  }, [fetchFiles]);
-
-  // Update path when URL query param changes
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const newPath = params.get('path') || 'src/pages';
-    setPath(newPath);
-  }, [location.search]);
+    // We now depend on location.search directly to re-trigger the fetch
+    // when the user navigates (e.g., clicks a folder).
+  }, [fetchFiles, location.search]);
 
   const handleFileClick = (file) => {
     if (selectedFile && selectedFile.sha === file.sha) {
@@ -147,14 +144,16 @@ function FileExplorer({ repo }) {
     if (!file) return;
 
     if (file.type === 'dir') {
-      setPath(file.path);
+      // Instead of setting local state, we now update the URL.
+      // The useEffect hook listening to `location.search` will trigger a re-fetch.
+      navigate(`?path=${file.path}`);
     } else {
       const { pathname, search } = routeForPath(file.path);
       navigate(`${pathname}${search}`);
     }
   };
 
-  const handleGoHome = () => setPath('src/pages');
+  const handleGoHome = () => navigate('?path=src/pages');
 
   const handleDuplicate = async (file) => {
     handleCloseContextMenu();
@@ -307,8 +306,8 @@ function FileExplorer({ repo }) {
     );
   }
 
-  const isAtRoot = path === 'src/pages';
-  const getCurrentFolderName = () => isAtRoot ? 'Home' : path.split('/').pop();
+  const isAtRoot = currentPath === 'src/pages';
+  const getCurrentFolderName = () => isAtRoot ? 'Home' : currentPath.split('/').pop();
 
   return (
     <div className="relative min-h-[calc(100vh-250px)]">

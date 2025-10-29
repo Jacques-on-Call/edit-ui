@@ -89,18 +89,25 @@
 .log-type-MONITOR { background-color: #27ae60; color: white; }
 .log-type-CONSOLE { background-color: #7f8c8d; color: white; }
 
-
-.auth-debug-monitor-toggle-btn {
+.auth-debug-monitor-bug-btn {
   position: fixed;
-  bottom: 10px;
-  right: 10px;
-  padding: 10px 15px;
-  background-color: #e67e22;
-  color: white;
-  border: none;
-  border-radius: 5px;
+  bottom: 15px;
+  left: 15px;
+  width: 60px;
+  height: 60px;
+  background-color: #c0392b;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  z-index: 9999;
-  font-family: sans-serif;
-  font-weight: bold;
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease-in-out, background-color 0.2s;
+}
+
+.auth-debug-monitor-bug-btn:hover {
+  transform: scale(1.1);
+  background-color: #e74c3c;
 }
