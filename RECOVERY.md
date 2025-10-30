@@ -41,6 +41,20 @@ This document is a living log of common failure modes, known bugs, and the patte
 
 ---
 
+### 4. **File Explorer is Empty (Multi-Part Bug)**
+
+-   **Symptom:** After a successful login, the file explorer page loads but remains permanently empty. The browser's network tab may show a `200 OK` for the file-listing API call, but the response body is empty, or the call may not happen at all.
+-   **Root Cause:** This was a complex bug with three distinct causes that created a "perfect storm" of failure.
+    1.  **Frontend Component Crash:** A CSS conflict in `ExplorerPage.jsx` between a parent `div` with `padding` and the `FileExplorer.jsx` child component with `h-screen` caused a silent rendering crash. This prevented the `useEffect` hook responsible for fetching files from ever running.
+    2.  **Brittle Backend Routing:** The Cloudflare worker's router used a strict equality check (`url.pathname === '/api/list-files-in-repo/'`). A subtle difference in the incoming request path (e.g., a missing trailing slash) caused the check to fail. The request then fell through to the static asset handler, which returned an empty `200 OK` response, causing the frontend to fail when parsing the expected JSON.
+    3.  **Hardcoded GitHub Branch:** The worker's logic for fetching repository contents hardcoded `ref=main`. This would fail for any repository whose default branch is `master` or another name.
+-   **Verification & Fix:**
+    1.  **Check for CSS Conflicts:** Inspect parent components for `padding` when a child component needs to fill the screen height (`h-screen` or `h-full`). Remove the padding from the parent to fix the component crash.
+    2.  **Make Routing Robust:** In `cloudflare-worker-code.js`, change strict path checks (`===`) to more flexible ones (`.startsWith()`) for API routes to prevent silent fall-throughs.
+    3.  **Fetch Default Branch:** Before fetching repository contents, implement a helper function to call the `/repos/{repo}` GitHub API endpoint to get the `default_branch` name. Use this dynamic branch name in all subsequent calls to the contents API.
+
+---
+
 ## 🔧 How to Verify Subsystems
 
 -   **Cloudflare Worker Deployment:**

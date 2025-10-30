@@ -4,6 +4,28 @@ This document records significant changes, architectural decisions, and critical
 
 ---
 
+### **2025-10-29**
+
+**Author:** Jules
+
+**Change:** Resolved a complex, multi-part bug that caused the File Explorer to appear empty after a successful login. This required fixing a silent frontend component crash, a brittle backend routing issue, and a hardcoded branch name.
+
+**Context & Learnings:**
+
+1.  **Frontend Stability (UI):** The initial root cause was a silent crash in the `FileExplorer` component. A CSS conflict between `padding` on the parent `ExplorerPage` and `h-screen` on the child component prevented the component from rendering and triggering its data-fetching `useEffect`. This highlights that UI layout issues can manifest as data-loading failures.
+
+2.  **Backend Routing (Worker):** The Cloudflare worker used a strict equality check (`===`) for the file-listing API route. This was too brittle and failed silently if the request path had a minor difference (e.g., a missing trailing slash). The request would fall through to the static asset handler, resulting in an empty `200 OK` response that the frontend couldn't parse. The fix was to use a more flexible `startsWith()` check for the route.
+
+3.  **Backend Data Fetching (Worker):** The worker was hardcoding `ref=main` when calling the GitHub contents API. This is not a safe assumption, as many repositories use `master` or other names for their default branch. The robust solution was to first call the `/repos/{repo}` endpoint to dynamically fetch the `default_branch` and use that for all subsequent API calls.
+
+**Reflection:**
+
+*   **Most Challenging Part:** Diagnosing a bug that had three separate, interacting root causes was difficult. It required systematically fixing and re-evaluating the system at each step, from the UI rendering layer to the backend's routing and data-fetching logic.
+*   **Key Learning:** "Empty" is not the same as "error." The system was failing "successfully" by returning empty responses instead of throwing errors, which made the problem much harder to trace. This underscores the importance of the "No Silent Failures" principle.
+*   **Advice for Next Agent:** When a data-fetching component shows no data, don't just assume it's a backend API problem. First, verify the component is actually rendering correctly and that its `useEffect` hooks are firing. A simple `console.log` at the start of the hook can save hours of debugging.
+
+---
+
 ### **2025-10-28**
 
 **Author:** Jules
