@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
@@ -12,14 +12,8 @@ import * as cache from '../utils/cache';
 import { routeForPath } from '../utils/editorRouting';
 
 function FileExplorer({ repo }) {
-  window.authDebug.log('FILE_EXPLORER', 'FileExplorer component rendered', { repo });
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const params = new URLSearchParams(location.search);
-  const currentPath = params.get('path') || 'src/pages';
-
   const [files, setFiles] = useState([]);
+  const [path, setPath] = useState('src/pages');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -32,6 +26,7 @@ function FileExplorer({ repo }) {
   const [readmeContent, setReadmeContent] = useState(null);
   const [isReadmeLoading, setReadmeLoading] = useState(false);
   const [isReadmeVisible, setReadmeVisible] = useState(true);
+  const navigate = useNavigate();
 
   const handleNewLayout = () => {
     navigate('/layouts');
@@ -52,85 +47,76 @@ function FileExplorer({ repo }) {
     }
   }, [repo]);
 
-  useEffect(() => {
-    const fetchFiles = async () => {
-      setLoading(true);
-      setError(null);
-      setSelectedFile(null);
-      setMetadataCache({});
-      setReadmeContent(null);
-      setReadmeLoading(false);
+  const fetchFiles = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setSelectedFile(null);
+    setMetadataCache({});
+    setReadmeContent(null);
+    setReadmeLoading(false);
 
-      try {
-        const response = await fetch(`/api/files?repo=${repo}&path=${currentPath}`, {
-          credentials: 'include',
-          headers: { 'X-App-Version': 'jules-debug' }
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Network response was not ok: ${response.statusText} - ${errorText}`);
-        }
-
-        const rawText = await response.text();
-        let data;
-        try {
-          data = JSON.parse(rawText);
-        } catch (e) {
-          window.authDebug.error('FILE_EXPLORER', 'Failed to parse API response as JSON.', { rawResponse: rawText });
-          throw new Error('The server returned an invalid response. Please check the worker logs for more details.');
-        }
-
-        const sortedData = data.sort((a, b) => {
-          if (a.type === 'dir' && b.type !== 'dir') return -1;
-          if (a.type !== 'dir' && b.type === 'dir') return 1;
-          return a.name.localeCompare(b.name);
-        });
-        setFiles(sortedData);
-
-        const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');
-        if (readmeFile) {
-          setReadmeLoading(true);
-          try {
-            const readmeRes = await fetch(`/api/file?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' });
-            if (!readmeRes.ok) throw new Error('Could not fetch README content.');
-            const readmeData = await readmeRes.json();
-            const binaryString = atob(readmeData.content);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-              bytes[i] = binaryString.charCodeAt(i);
-            }
-            const decodedContent = new TextDecoder('utf-8').decode(bytes);
-            setReadmeContent(decodedContent);
-          } catch (readmeErr) {
-            console.error("Failed to fetch or decode README:", readmeErr);
-            setReadmeContent('Could not load README.');
-          } finally {
-            setReadmeLoading(false);
-          }
-        }
-
-        sortedData.forEach(file => {
-          const cachedData = cache.get(file.sha);
-          if (cachedData) {
-            setMetadataCache(prev => ({ ...prev, [file.sha]: cachedData }));
-          } else {
-            fetchMetadata(file);
-          }
-        });
-
-      } catch (err) {
-        console.error("Error fetching files:", err);
-        setError(`Failed to load repository contents. Please check your connection and repository permissions. Details: ${err.message}`);
-      } finally {
-        setLoading(false);
+    try {
+      const response = await fetch(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Network response was not ok: ${response.statusText} - ${errorText}`);
       }
-    };
+      let data = await response.json();
 
-    if (repo) { // Ensure repo is available before fetching
-      fetchFiles();
+      const sortedData = data.sort((a, b) => {
+        if (a.type === 'dir' && b.type !== 'dir') return -1;
+        if (a.type !== 'dir' && b.type === 'dir') return 1;
+        return a.name.localeCompare(b.name);
+      });
+      setFiles(sortedData);
+
+      // Fetch README content
+      const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');
+      if (readmeFile) {
+        setReadmeLoading(true);
+        try {
+          const readmeRes = await fetch(`/api/file?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' });
+          if (!readmeRes.ok) throw new Error('Could not fetch README content.');
+          const readmeData = await readmeRes.json();
+          // The content from GitHub API is base64 encoded.
+          // Use TextDecoder for robust UTF-8 decoding.
+          const binaryString = atob(readmeData.content);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const decodedContent = new TextDecoder('utf-8').decode(bytes);
+          setReadmeContent(decodedContent);
+        } catch (readmeErr) {
+          console.error("Failed to fetch or decode README:", readmeErr);
+          // Non-critical error, so we don't set the main error state
+          setReadmeContent('Could not load README.');
+        } finally {
+          setReadmeLoading(false);
+        }
+      }
+
+      // Fetch metadata for each file
+      sortedData.forEach(file => {
+        const cachedData = cache.get(file.sha);
+        if (cachedData) {
+          setMetadataCache(prev => ({ ...prev, [file.sha]: cachedData }));
+        } else {
+          fetchMetadata(file);
+        }
+      });
+
+    } catch (err) {
+      console.error("Error fetching files:", err);
+      setError(`Failed to load repository contents. Please check your connection and repository permissions. Details: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
-  }, [repo, currentPath, fetchMetadata]);
+  }, [repo, path, fetchMetadata]);
+
+  useEffect(() => {
+    fetchFiles();
+  }, [fetchFiles]);
 
   const handleFileClick = (file) => {
     if (selectedFile && selectedFile.sha === file.sha) {
@@ -141,6 +127,7 @@ function FileExplorer({ repo }) {
   };
 
   const handleFileDoubleClick = (file) => {
+    // Double-click/double-tap always opens the file directly
     handleOpen(file);
   };
 
@@ -149,21 +136,14 @@ function FileExplorer({ repo }) {
     if (!file) return;
 
     if (file.type === 'dir') {
-      navigate(`?path=${file.path}`);
+      setPath(file.path);
     } else {
       const { pathname, search } = routeForPath(file.path);
       navigate(`${pathname}${search}`);
     }
   };
 
-  const handleGoHome = () => navigate('?path=src/pages');
-
-  // Define a single refresh function to be passed down
-  const refreshFiles = () => {
-      // Re-trigger the main data fetching useEffect by changing the dependency it listens to.
-      // A simple way is to navigate to the current path again.
-      navigate(`?path=${currentPath}&t=${new Date().getTime()}`);
-  };
+  const handleGoHome = () => setPath('src/pages');
 
   const handleDuplicate = async (file) => {
     handleCloseContextMenu();
@@ -184,7 +164,7 @@ function FileExplorer({ repo }) {
       if (!data.success) {
         throw new Error(data.error || 'Failed to duplicate file.');
       }
-      refreshFiles();
+      fetchFiles(); // Refresh
     } catch (err) {
       console.error(err);
     }
@@ -211,10 +191,11 @@ function FileExplorer({ repo }) {
         throw new Error(data.error || 'Failed to delete file.');
       }
       setFileToDelete(null);
-      refreshFiles();
+      fetchFiles(); // Refresh file list
       cache.remove(fileToDelete.sha);
     } catch (err) {
       console.error(err);
+      // Here you might want to show an error message to the user
     }
   };
 
@@ -240,9 +221,11 @@ function FileExplorer({ repo }) {
       if (!data.success) {
         throw new Error(data.error || 'Failed to assign layout.');
       }
-      refreshFiles();
+      console.log('Layout assigned successfully!');
+      fetchFiles(); // Refresh to show any potential changes
     } catch (err) {
       console.error(err);
+      // Optionally show an error message to the user
     } finally {
       setFileToAssignLayout(null);
     }
@@ -275,10 +258,11 @@ function FileExplorer({ repo }) {
         throw new Error(data.error || 'Failed to rename file.');
       }
       setFileToRename(null);
-      refreshFiles();
+      fetchFiles(); // Refresh file list
       cache.remove(file.sha);
     } catch (err) {
       console.error(err);
+      // Here you might want to show an error message to the user
     }
   };
 
@@ -298,7 +282,7 @@ function FileExplorer({ repo }) {
           <p className="text-red-600 mb-6 break-words">{error}</p>
           <div className="flex justify-center space-x-4">
             <button
-              onClick={refreshFiles}
+              onClick={fetchFiles}
               className="bg-red-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
             >
               Try Again
@@ -312,8 +296,8 @@ function FileExplorer({ repo }) {
     );
   }
 
-  const isAtRoot = currentPath === 'src/pages';
-  const getCurrentFolderName = () => isAtRoot ? 'Home' : currentPath.split('/').pop();
+  const isAtRoot = path === 'src/pages';
+  const getCurrentFolderName = () => isAtRoot ? 'Home' : path.split('/').pop();
 
   return (
     <div className="relative min-h-[calc(100vh-250px)]">
@@ -371,7 +355,7 @@ function FileExplorer({ repo }) {
             </button>
         </div>
       </div>
-      {isCreateModalOpen && <CreateModal path={currentPath} repo={repo} onClose={() => setCreateModalOpen(false)} onCreate={refreshFiles} />}
+      {isCreateModalOpen && <CreateModal path={path} repo={repo} onClose={() => setCreateModalOpen(false)} onCreate={fetchFiles} />}
       {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} file={contextMenu.file} onClose={handleCloseContextMenu} onRename={handleRenameRequest} onDelete={handleDeleteRequest} onDuplicate={handleDuplicate} onAssignLayout={handleAssignLayoutRequest} />}
       {fileToDelete && <ConfirmDialog message={`Are you sure you want to delete "${fileToDelete.name}"?`} onConfirm={handleDeleteConfirm} onCancel={() => setFileToDelete(null)} />}
       {fileToRename && <RenameModal file={fileToRename} onClose={() => setFileToRename(null)} onRename={handleRenameConfirm} />}
