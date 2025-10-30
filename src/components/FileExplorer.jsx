@@ -334,7 +334,7 @@ function FileExplorer({ repo }) {
                 onClick={handleNewLayout}
                 title="Manage Layouts"
             >
-                <Icon name="layout-editor" className="h-6 w-6" />
+                <Icon name="BookOpen" className="h-6 w-6" />
                 <span className="font-semibold hidden sm:inline">Layouts</span>
             </button>
         </div>
