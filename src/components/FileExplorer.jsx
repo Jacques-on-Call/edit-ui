@@ -66,11 +66,20 @@ function FileExplorer({ repo }) {
           credentials: 'include',
           headers: { 'X-App-Version': 'jules-debug' }
         });
+
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(`Network response was not ok: ${response.statusText} - ${errorText}`);
         }
-        let data = await response.json();
+
+        const rawText = await response.text();
+        let data;
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {
+          window.authDebug.error('FILE_EXPLORER', 'Failed to parse API response as JSON.', { rawResponse: rawText });
+          throw new Error('The server returned an invalid response. Please check the worker logs for more details.');
+        }
 
         const sortedData = data.sort((a, b) => {
           if (a.type === 'dir' && b.type !== 'dir') return -1;
