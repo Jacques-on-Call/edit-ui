@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Icon from './Icon.jsx';
 import FileTile from './FileTile';
 import CreateModal from './CreateModal';
@@ -12,11 +12,8 @@ import * as cache from '../utils/cache';
 import { routeForPath } from '../utils/editorRouting';
 
 function FileExplorer({ repo }) {
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const initialPath = queryParams.get('path') || 'src/pages';
   const [files, setFiles] = useState([]);
-  const [path, setPath] = useState(initialPath);
+  const [path, setPath] = useState('src/pages');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -334,7 +331,7 @@ function FileExplorer({ repo }) {
                 onClick={handleNewLayout}
                 title="Manage Layouts"
             >
-                <Icon name="BookOpen" className="h-6 w-6" />
+                <Icon name="layout-editor" className="h-6 w-6" />
                 <span className="font-semibold hidden sm:inline">Layouts</span>
             </button>
         </div>
