@@ -62,8 +62,7 @@ function FileExplorer({ repo }) {
       setReadmeLoading(false);
 
       try {
-        window.authDebug.log('FILE_EXPLORER', 'Fetching files with repo and path', { repo, currentPath });
-        const response = await fetch(`/api/list-files-in-repo/?repo=${repo}&path=${currentPath}`, {
+        const response = await fetch(`/api/files?repo=${repo}&path=${currentPath}`, {
           credentials: 'include',
           headers: { 'X-App-Version': 'jules-debug' }
         });
