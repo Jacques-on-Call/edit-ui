@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 // The Client ID and Redirect URI are now read from Vite environment variables
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
@@ -7,6 +8,7 @@ const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { checkAuthStatus } = useAuth();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // This useEffect handles the OAuth callback.
@@ -36,13 +38,20 @@ function LoginPage() {
   // This useEffect sets up a listener to hear from the OAuth popup.
   // When the popup sends a 'login-success' message, we navigate to the next page.
   useEffect(() => {
-    const handleAuthMessage = (event) => {
+    const handleAuthMessage = async (event) => {
       // Important: Check the origin of the message for security
       if (event.origin !== window.location.origin) {
         return;
       }
       if (event.data === 'login-success') {
-        navigate('/repository-selection');
+        // Re-check auth status to update the global context
+        const isLoggedIn = await checkAuthStatus();
+        if (isLoggedIn) {
+          navigate('/repository-selection');
+        } else {
+          // Handle case where auth check fails unexpectedly
+          console.error("Login seemed to succeed, but auth check failed.");
+        }
       }
     };
 
@@ -52,7 +61,7 @@ function LoginPage() {
     return () => {
       window.removeEventListener('message', handleAuthMessage);
     };
-  }, [navigate]);
+  }, [navigate, checkAuthStatus]);
 
   const handleLogin = () => {
     setIsLoggingIn(true); // Prevent the session check from running while we're in the popup flow

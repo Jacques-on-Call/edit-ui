@@ -7,6 +7,7 @@ const AuthContext = createContext({
   user: null,
   isLoading: true,
   logout: () => {},
+  checkAuthStatus: async () => {},
 });
 
 // 2. Create the AuthProvider component
@@ -15,28 +16,32 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // This effect runs once on mount to check the user's session
-    const checkAuthStatus = async () => {
-      try {
-        const response = await fetch('/api/me', { credentials: 'include' });
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-          setIsAuthenticated(true);
-        } else {
-          setUser(null);
-          setIsAuthenticated(false);
-        }
-      } catch (error) {
-        console.error('Authentication check failed', error);
+  const checkAuthStatus = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/me', { credentials: 'include' });
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+        setIsAuthenticated(true);
+        return true;
+      } else {
         setUser(null);
         setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
+        return false;
       }
-    };
+    } catch (error) {
+      console.error('Authentication check failed', error);
+      setUser(null);
+      setIsAuthenticated(false);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    // This effect runs once on mount to check the user's session
     checkAuthStatus();
   }, []);
 
@@ -53,6 +58,7 @@ export const AuthProvider = ({ children }) => {
     user,
     isLoading,
     logout,
+    checkAuthStatus,
   };
 
   return (
