@@ -4,6 +4,39 @@ This document is a living log of common failure modes, known bugs, and the patte
 
 ---
 
+### 5. **Authentication Loop after Login**
+
+-   **Symptom:** After a successful login and repository selection, the user is immediately redirected back to the login page, which then sends them back to the repository selection page, creating an infinite loop.
+-   **Root Cause:** This is a race condition caused by a stale global authentication state.
+    1.  The app's global state (`AuthContext`) is initialized on first load when the user is unauthenticated (`isAuthenticated: false`).
+    2.  The user logs in via a popup, which sets a session cookie.
+    3.  The app's global state is *not* updated after the login.
+    4.  When the user tries to access a protected route (like `/explorer`), the `ProtectedRoute` component reads the stale global state and incorrectly determines the user is unauthenticated, redirecting them to `/login`.
+-   **Verification:** Use the `AuthDebugMonitor`. The logs will clearly show that the global state is `isAuthenticated: false` even after the OAuth callback succeeds. You will see the navigation to the protected route immediately followed by a redirect back to login.
+-   **Fix:** The global authentication state must be explicitly refreshed after a successful login.
+    1.  Modify the `AuthContext` to expose a function that can manually trigger the `/api/me` check (e.g., `checkAuthStatus`).
+    2.  In the `LoginPage` component, after the OAuth popup sends its "login-success" message, call this `checkAuthStatus` function *before* navigating to the next page. This ensures the global state is up-to-date.
+
+### 6. **Build Fails with `[vite]: Rollup failed to resolve import`**
+
+-   **Symptom:** The `npm run build` command fails with an error message like `Rollup failed to resolve import "some-package" from "/path/to/some/component.jsx"`.
+-   **Root Cause:** This error has two primary causes:
+    1.  **Missing Dependency:** The required package (e.g., `lucide-preact`) is not listed in the `dependencies` section of `easy-seo/package.json`.
+    2.  **Incorrect File Path:** A developer has created a new file (e.g., a new Context or Component) but has made a typo in the directory path, causing the build tool to be unable to locate it.
+-   **Verification:**
+    1.  **Check `package.json`:** Open `easy-seo/package.json` and ensure the package mentioned in the error message is listed as a dependency.
+    2.  **Verify File Paths:** If the import is for a local file, use the `list_files` command to meticulously check the exact spelling and location of the file and its parent directories. The build tool's path resolution is case-sensitive and exact.
+-   **Fix:**
+    1.  **Install Dependency:** Run `npm install --prefix ./easy-seo some-package` to add the missing package.
+    2.  **Correct Paths:** Use the `rename_file` or `move_file` commands to fix any typos in the file or directory names. Then, correct the `import` statements in the code to match.
+
+### 7. **API Call "Succeeds" but Returns No Data**
+
+-   **Symptom:** A page that fetches data (e.g., the repository selection page) gets stuck or shows an empty list. The browser's network tab shows a `200 OK` status for the relevant API call (e.g., `/api/repos`), but the response body is an empty array `[]`.
+-   **Root Cause:** This is a "silent failure" in the backend. The Cloudflare Worker is catching an error from the upstream API (e.g., the GitHub API) but is programmed to return a `200 OK` with an empty array instead of propagating the error. This completely hides the real problem.
+-   **Verification:** Check the code for the relevant API handler in `cloudflare-worker-code.js`. Look for `try...catch` blocks or `.catch()` statements that return a successful response with empty data.
+-   **Fix:** Modify the backend handler to be more transparent. If the upstream API call fails, the worker should grab the error message and status code from that failure and forward it to the frontend in a proper error response (e.g., a `502 Bad Gateway` or the original status code from GitHub). Then, update the frontend component to handle this specific error and display an informative message to the user.
+
 ## 🐞 Common Failure Modes & Fixes
 
 ### 1. **Cloudflare Worker throws `1101` Exception during Login**

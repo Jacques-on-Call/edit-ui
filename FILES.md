@@ -27,6 +27,10 @@ This document serves as a central registry for the key files and modules in this
 | :--- | :--- | :--- |
 | **`easy-seo/CHANGELOG.md`** | **Editor-Specific Changes:** Records changes and learnings specific to the `easy-seo` application. | |
 | **`easy-seo/src/main.jsx`** | **Application Entry Point:** Initializes the Preact application and sets up the router. | |
-| **`easy-seo/src/App.jsx`** | **Root Component & Router:** Defines the application's URL structure and page components. | **Architectural Note:** This file contains routing logic *only*. It does not handle authentication. |
-| **`easy-seo/src/pages/`** | **Page Components:** Contains the top-level components for each major view (e.g., `LoginPage.jsx`, `ExplorerPage.jsx`). | **Architectural Note:** These components are responsible for their own authentication checks, as there is no central auth system. |
+| **`easy-seo/src/App.jsx`** | **Root Component & Router:** Defines the application's URL structure and page components. | **Architectural Note:** This file now contains the global `AuthDebugMonitor` and wraps all routes. |
+| **`easy-seo/src/pages/`** | **Page Components:** Contains the top-level components for each major view (e.g., `LoginPage.jsx`, `ExplorerPage.jsx`). | |
+| **`easy-seo/src/contexts/`** | **Global State Management:** Contains Preact Contexts for managing application-wide state. | |
+| **`easy-seo/src/contexts/AuthContext.jsx`** | **Authentication State:** Manages the global authentication state (`isAuthenticated`, `user`, `isLoading`) and provides a `checkAuthStatus` function to re-validate the session. | The `AuthProvider` component in this file must wrap the entire application. |
+| **`easy-seo/src/components/ProtectedRoute.jsx`** | **Route Guard:** A component that wraps authenticated routes. It checks the `AuthContext` and redirects unauthenticated users to the login page. | This is the primary mechanism for securing pages. |
+| **`easy-seo/src/components/AuthDebugMonitor.jsx`** | **Global Debugger:** An on-screen monitor for real-time logging of API calls, auth flows, and state changes. | Exposes the `window.authDebug` object for global use. |
 | **`easy-seo/src/components/`** | **Reusable UI Components:** Contains all shared components used throughout the application (e.g., `FileExplorer.jsx`, `RepoSelector.jsx`). | |

@@ -4,6 +4,45 @@ This document records significant changes, architectural decisions, and critical
 
 ---
 
+### **2025-10-30 (Handoff)**
+
+**Author:** Jules #135
+
+**Change:** Performed a major refactor of the application's authentication system to be global and more secure. Implemented a feature-rich, on-screen debug monitor. Fixed a series of critical bugs related to build stability and the authentication flow.
+
+**Context & Learnings:**
+
+1.  **Global Authentication System (Architectural Shift):**
+    *   **Problem:** The application's authentication was previously handled by individual components making API calls. This led to race conditions, stale state, and an authentication loop where users were redirected from the repository selection page back to the login page.
+    *   **Solution:** I implemented a global authentication system using a Preact Context (`AuthContext.jsx`).
+        *   An `AuthProvider` now wraps the entire application, managing a global state (`isAuthenticated`, `user`, `isLoading`).
+        *   A `ProtectedRoute` component now wraps all authenticated routes, centralizing access control and redirecting unauthenticated users.
+        *   The `LoginPage` was updated to explicitly trigger a refresh of the global auth state after a successful login, resolving the stale state and fixing the redirect loop.
+
+2.  **Global `AuthDebugMonitor` (New Feature):**
+    *   **Problem:** A lack of visibility into the application's internal state, API calls, and auth flow made debugging difficult.
+    *   **Solution:** I created and integrated a new `AuthDebugMonitor.jsx` component.
+        *   It is rendered at the application's root (`App.jsx`) to be available on all pages, including the login screen.
+        *   It automatically intercepts and logs all `fetch` requests and `localStorage` operations.
+        *   It provides a global `window.authDebug` API for adding custom logs from any component.
+        *   It starts minimized as a bug icon and can be expanded for detailed inspection, filtering, and exporting of logs.
+
+3.  **Repository Selection Bug (Silent API Failure):**
+    *   **Problem:** The repository selection page would get stuck, showing a loading state indefinitely. The backend (`/api/repos`) was returning a `200 OK` status with an empty array `[]` even when the upstream GitHub API call failed, masking the real error.
+    *   **Solution:**
+        *   I modified the Cloudflare worker (`cloudflare-worker-code.js`) to stop catching errors silently. It now forwards the actual error message and status code from the GitHub API to the frontend.
+        *   I updated the frontend (`RepoSelector.jsx`) to correctly parse and display these more detailed error messages, providing clear feedback to the user.
+
+4.  **Build Failures (Dependency & Path Issues):**
+    *   **Problem:** The Cloudflare deployment was failing due to a missing `lucide-preact` dependency that was required by the new `AuthDebugMonitor`. A significant amount of time was also lost to build failures caused by incorrect file paths during development.
+    *   **Solution:** The missing dependency was added to `package.json`. The path issues were a result of typos during file creation, which is a critical lesson in carefulness.
+
+**Reflection:**
+
+*   **Most Challenging Part:** Diagnosing the authentication loop was the most complex part of this task. The debugger logs were essential in revealing the stale state and the race condition between the login process and the rendering of the protected routes.
+*   **Key Learning:** Global state management for authentication is not optional in a single-page application; it's a requirement for stability. Attempting to manage auth on a per-page or per-component basis is prone to race conditions and bugs.
+*   **Advice for Next Agent:** The new `AuthDebugMonitor` is your most powerful tool. Use `window.authDebug.log()` liberally to trace component lifecycle and state changes. When debugging, the answer is almost always in the logs. Also, be extremely careful with file paths and `import` statements; the Vite build process is strict, and a simple typo can lead to a frustrating and time-consuming debugging session.
+
 ### **2025-10-30**
 
 **Author:** Jules #135
