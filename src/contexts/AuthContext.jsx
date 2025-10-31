@@ -1,5 +1,5 @@
 // easy-seo/src/contexts/AuthContext.jsx
-import { createContext, useState, useEffect, useContext } from 'preact/compat';
+import { createContext, useState, useEffect, useContext, useCallback } from 'preact/compat';
 
 const AuthContext = createContext();
 
@@ -12,48 +12,42 @@ export const AuthProvider = ({ children }) => {
 
   const selectRepo = (repo) => {
     setSelectedRepo(repo);
-    // Optionally, persist to localStorage if needed
   };
 
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/me', {
-          credentials: 'include', // Important: ensures the gh_session cookie is sent
-        });
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-          setIsAuthenticated(true);
-
-          // If authenticated, fetch repositories
-          try {
-            const reposResponse = await fetch('/api/repos', { credentials: 'include' });
-            if (reposResponse.ok) {
-              const reposData = await reposResponse.json();
-              setRepositories(reposData);
-            }
-          } catch (reposError) {
-            console.error('Failed to fetch repositories:', reposError);
-          }
-        } else {
-          setUser(null);
-          setIsAuthenticated(false);
+  const checkAuthStatus = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/me', {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+        setIsAuthenticated(true);
+        const reposResponse = await fetch('/api/repos', { credentials: 'include' });
+        if (reposResponse.ok) {
+          setRepositories(await reposResponse.json());
         }
-      } catch (error) {
-        console.error('Auth check failed:', error);
+      } else {
         setUser(null);
         setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
+        setRepositories([]);
       }
-    };
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      setUser(null);
+      setIsAuthenticated(false);
+      setRepositories([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setUser, setIsAuthenticated, setRepositories, setIsLoading]);
 
+  useEffect(() => {
     checkAuthStatus();
-  }, []);
+  }, [checkAuthStatus]);
 
-  const value = { user, isAuthenticated, isLoading, repositories, selectedRepo, selectRepo };
+  const value = { user, isAuthenticated, isLoading, repositories, selectedRepo, selectRepo, checkAuthStatus };
 
   return (
     <AuthContext.Provider value={value}>

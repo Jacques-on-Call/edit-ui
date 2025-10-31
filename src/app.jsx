@@ -13,10 +13,12 @@ const AppContent = () => {
   return (
     <div className="bg-background text-text min-h-screen p-8" style={{ fontFamily: theme.typography.fontFamily }}>
       <header className="flex justify-between items-center pb-8">
-        <h1 className={theme.typography.h1}>Easy-SEO v0.1</h1>
+        <div className="flex items-center gap-4">
+          <h1 className={theme.typography.h1}>Easy-SEO</h1>
+          <span className="bg-gray-700 text-gray-300 text-xs font-semibold px-2.5 py-1 rounded-full">Early Access</span>
+        </div>
         <nav>
-          <Link href="/" className="mr-4">Login</Link>
-          <Link href="/repos" className="mr-4">Repos</Link>
+          <Link href="/repo-select" className="mr-4">Projects</Link>
           <Link href="/explorer">Explorer</Link>
         </nav>
       </header>
@@ -26,7 +28,7 @@ const AppContent = () => {
       ) : (
         <Router>
           <LoginPage path="/" />
-          <RepoSelectPage path="/repos" />
+          <RepoSelectPage path="/repo-select" />
           <FileExplorerPage path="/explorer" />
         </Router>
       )}
