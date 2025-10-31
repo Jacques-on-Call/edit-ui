@@ -8,19 +8,29 @@ This document records significant changes, architectural decisions, and critical
 
 **Author:** Jules #135
 
-**Change:** Fixed a critical build failure caused by a missing `lucide-preact` dependency.
+**Change:** Implemented a global authentication system, added a new `AuthDebugMonitor` component, and fixed a critical build failure.
 
 **Context & Learnings:**
 
-1.  **Build Failure:** The `vite build` process was failing with a `[vite]: Rollup failed to resolve import "lucide-preact"` error.
-2.  **Root Cause:** The `Icon.jsx` component imports icons from the `lucide-preact` library, but this package was not listed as a dependency in `easy-seo/package.json`.
-3.  **Solution:** The issue was resolved by running `npm install --prefix ./easy-seo lucide-preact` to add the missing package and update `package.json`.
+1.  **Global Authentication:** Refactored the application's authentication to use a global, context-based system.
+    *   Created a `AuthContext` to manage and provide user authentication state.
+    *   Added a `ProtectedRoute` component to guard all authenticated routes.
+    *   Centralized the session-checking logic in the `AuthProvider`, removing redundant checks from `AppLayout`.
+
+2.  **Auth Debug Monitor:** Added a new `AuthDebugMonitor` component, which is available globally.
+    *   It automatically intercepts and logs all `fetch` requests and `localStorage` operations.
+    *   Provides a `window.authDebug` API for custom logging.
+    *   Starts minimized as a bug icon in the bottom-right corner.
+
+3.  **Build Failure:** The `vite build` process was failing with a `[vite]: Rollup failed to resolve import "lucide-preact"` error.
+    *   The `Icon.jsx` component imports icons from the `lucide-preact` library, but this package was not listed as a dependency in `easy-seo/package.json`.
+    *   The issue was resolved by running `npm install --prefix ./easy-seo lucide-preact` to add the missing package and update `package.json`.
 
 **Reflection:**
 
-*   **Most Challenging Part:** The fix was straightforward. The main challenge is ensuring all dependencies are correctly tracked, especially in a monorepo structure.
-*   **Key Learning:** Build-time errors related to module resolution are often the most direct and easiest to solve. The error message clearly identified the missing package, leading to a quick diagnosis.
-*   **Advice for Next Agent:** If you see an "unresolved import" error during a build, the first place to check is the `package.json` file in the relevant project directory.
+*   **Most Challenging Part:** The most challenging part of this task was debugging the build failures that occurred after creating the new authentication context. The issue was ultimately caused by a typo in the file path when creating the new files.
+*   **Key Learning:** When encountering persistent build failures, it's important to verify the most basic assumptions, such as the exact filename and location of the modules being imported.
+*   **Advice for Next Agent:** When creating new files, be extra careful to place them in the correct directory. If you encounter a "module not found" error, use `list_files` to verify the file's location before spending too much time debugging other potential causes.
 
 ---
 
