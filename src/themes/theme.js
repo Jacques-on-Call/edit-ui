@@ -11,7 +11,7 @@ export const theme = {
     surface: '#1E1E1E',       // A slightly lighter dark gray for cards, panels, etc.
     text: '#FFFFFF',          // High-contrast white for readability
     textSecondary: '#A9A9A9', // A muted gray for secondary text
-    accent: '#00BFFF',        // Deep Sky Blue, a complementary accent
+    accent: '#008080',        // Teal
     success: '#32CD32',       // Lime Green for success states
     error: '#FF4500',         // OrangeRed for error states
   },
@@ -22,9 +22,6 @@ export const theme = {
     body: 'text-base font-normal',
   },
   icons: {
-    // A centralized list of icon names from lucide-preact
-    // This helps maintain consistency and avoids typos.
-    // Example: import { theme } from '../themes/theme'; <Icon name={theme.icons.file} />
     file: 'FileText',
     folder: 'Folder',
     repo: 'Github',
@@ -34,5 +31,10 @@ export const theme = {
     login: 'LogIn',
     spinner: 'Loader',
     error: 'AlertTriangle',
+    add: 'Plus',
+    edit: 'Edit',
+    delete: 'Trash2',
+    save: 'Save',
+    publish: 'CloudUpload',
   },
 };

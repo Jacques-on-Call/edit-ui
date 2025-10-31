@@ -5,6 +5,7 @@ import { Router, Link } from 'preact-router';
 import { LoginPage } from './pages/LoginPage';
 import { RepoSelectPage } from './pages/RepoSelectPage';
 import { FileExplorerPage } from './pages/FileExplorerPage';
+import AuthDebugMonitor from './components/AuthDebugMonitor'; // Corrected import
 
 const AppContent = () => {
   const { isLoading } = useAuth();
@@ -29,6 +30,9 @@ const AppContent = () => {
           <FileExplorerPage path="/explorer" />
         </Router>
       )}
+
+      {/* Render the AuthDebugMonitor only in development */}
+      {import.meta.env.DEV && <AuthDebugMonitor />}
     </div>
   );
 };
