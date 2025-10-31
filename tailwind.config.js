@@ -1,5 +1,5 @@
-import typography from '@tailwindcss/typography';
-import forms from '@tailwindcss/forms';
+// easy-seo/tailwind.config.js
+import { theme } from './src/themes/theme.js';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -9,14 +9,11 @@ export default {
   ],
   theme: {
     extend: {
-      colors: {
-        'bark-blue': '#003971',
-        'light-grey': '#F5F5F5',
+      colors: theme.colors,
+      fontFamily: {
+        sans: [theme.typography.fontFamily, 'sans-serif'],
       },
     },
   },
-  plugins: [
-    typography,
-    forms,
-  ],
+  plugins: [],
 }

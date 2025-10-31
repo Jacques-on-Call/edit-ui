@@ -22,10 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Cloudflare Wrangler local state and secrets
-.wrangler/
-.dev.vars
-
-# Preview site assets (not part of the editor app)
-public/preview/
