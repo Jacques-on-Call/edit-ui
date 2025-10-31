@@ -10,12 +10,15 @@ import ExplorerPage from './pages/ExplorerPage';
 import EditorPage from './pages/EditorPage';
 import LayoutsDashboardPage from './pages/LayoutsDashboardPage';
 import VisualEditorPage from './pages/VisualEditorPage';
+import AuthDebugMonitor from './components/AuthDebugMonitor';
 
 function App() {
   return (
-    <Routes>
-      {/* Standalone routes that should NOT have the main AppLayout. */}
-      <Route path="/login" element={<LoginPage />} />
+    <>
+      <AuthDebugMonitor />
+      <Routes>
+        {/* Standalone routes that should NOT have the main AppLayout. */}
+        <Route path="/login" element={<LoginPage />} />
       <Route path="/callback" element={<CallbackPage />} />
       <Route path="/repository-selection" element={<RepositorySelectionPage />} />
 
@@ -39,6 +42,7 @@ function App() {
         <Route path="layout-editor" element={<VisualEditorPage />} />
       </Route>
     </Routes>
+    </>
   );
 }
 

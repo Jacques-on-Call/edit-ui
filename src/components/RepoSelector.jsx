@@ -9,11 +9,13 @@ function RepoSelector({ onRepoSelect }) {
     fetch('/api/repos', {
       credentials: 'include',
     })
-    .then(res => {
+    .then(async res => {
       if (res.ok) {
         return res.json();
       }
-      throw new Error('Failed to fetch repositories. Please try logging out and back in.');
+      // If the response is not ok, parse the JSON error body from the worker
+      const errorData = await res.json();
+      throw new Error(errorData.message || 'An unknown error occurred while fetching repositories.');
     })
     .then(data => {
       // If there's only one repository, select it automatically.
