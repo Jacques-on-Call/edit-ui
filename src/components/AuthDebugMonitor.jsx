@@ -1,184 +1,283 @@
-import { useEffect, useState } from 'react';
-import Icon from './Icon';
-import './AuthDebugMonitor.css';
+import { useState, useEffect, useRef } from 'preact/hooks';
+import { Terminal, Trash2, Download, Search, Pause, Play, Maximize2, Minimize2, Bug } from 'lucide-preact';
 
-// --- Developer Notes ---
-//
-// **Purpose:**
-// The AuthDebugMonitor is a persistent, site-wide debugging tool designed to provide real-time
-// visibility into the application's state, particularly for authentication, API calls, and
-// local storage events. It remains in the application codebase to assist with ongoing
-// maintenance and troubleshooting.
-//
-// **How to Use:**
-// A global `window.authDebug` object is available in all components when this monitor is active.
-// You can add new logging calls anywhere in the application to trace events.
-//
-// **Available Log Functions:**
-//
-// 1. `window.authDebug.log(type, ...args)`
-//    - Generic logging for custom categories.
-//    - `type` (string): A short, uppercase category name (e.g., 'UI', 'ROUTING').
-//    - `...args` (any): One or more values to log (strings, objects, etc.).
-//    - Example: `window.authDebug.log('UI', 'Modal opened', { modalId: 'user-settings' });`
-//
-// 2. `window.authDebug.warn(type, ...args)`
-//    - For logging non-critical warnings. Will be highlighted in yellow.
-//    - Example: `window.authDebug.warn('API', 'API response took longer than 2s');`
-//
-// 3. `window.authDebug.error(type, ...args)`
-//    - For logging errors. Will be highlighted in red.
-//    - Example: `window.authDebug.error('API', 'Failed to fetch user data', error);`
-//
-// 4. `window.authDebug.success(type, ...args)`
-//    - For logging successful operations. Will be highlighted in green.
-//    - Example: `window.authDebug.success('AUTH', 'User successfully logged in', userData);`
-//
-// **Pre-defined Log Types (Shortcuts):**
-// These are helpers for common logging categories.
-//
-// 5. `window.authDebug.auth(...args)`
-//    - Shortcut for `window.authDebug.log('AUTH', ...args)`.
-//    - Used for authentication-related events (login, logout, session checks).
-//
-// 6. `window.authDebug.storage(...args)`
-//    - Shortcut for `window.authDebug.log('STORAGE', ...args)`.
-//    - Used for localStorage or cookie interactions.
-//
-// 7. `window.authDebug.api(...args)`
-//    - Shortcut for `window.authDebug.log('API', ...args)`.
-//    - Used for logging fetch requests and responses.
-//
-// --- End Developer Notes ---
+/**
+ * # AuthDebugMonitor
+ *
+ * A draggable, persistent, on-screen debug monitor for tracking application state,
+ * API calls, authentication flow, and more.
+ *
+ * ## How to Use
+ *
+ * This component, when rendered, exposes a global object: `window.authDebug`.
+ * You can use this object anywhere in the application to log messages to the monitor.
+ *
+ * ### Logging Methods:
+ *
+ * - `window.authDebug.log(category, message, data)`: For general information.
+ * - `window.authDebug.error(category, message, data)`: For errors.
+ * - `window.authDebug.warn(category, message, data)`: For warnings.
+ * - `window.authDebug.success(category, message, data)`: For success events.
+ *
+ * ### Specialized Logging Methods:
+ *
+ * - `window.authDebug.auth(step, data)`: Log an authentication step (e.g., 'GitHub Callback Received').
+ * - `window.authDebug.api(method, url, status, data)`: Log an API call. Automatically hooked into `fetch`.
+ * - `window.authDebug.storage(action, key, value)`: Log localStorage actions. Automatically hooked.
+ * - `window.authDebug.worker(message, data)`: Log messages from a Web Worker context.
+ * - `window.authDebug.route(from, to)`: Log a frontend route change.
+ * - `window.authDebug.state(component, newState)`: Log a component state change.
+ *
+ * ## Automatic Interception
+ *
+ * - **Fetch API:** All `fetch` requests are automatically logged, including method, URL, status, and response body.
+ * - **LocalStorage:** `setItem` and `removeItem` calls are automatically logged.
+ */
+const AuthDebugMonitor = () => {
+    const [logs, setLogs] = useState([]);
+    const [filter, setFilter] = useState('all');
+    const [search, setSearch] = useState('');
+    const [isPaused, setIsPaused] = useState(false);
+    const [isMinimized, setIsMinimized] = useState(true); // Start minimized
+    const logEndRef = useRef(null);
 
-
-// --- Helper Functions ---
-function getTimestamp() {
-  return new Date().toLocaleTimeString('en-US', { hour12: false });
-}
-
-function formatMessage(args) {
-  return args
-    .map(arg => {
-      if (typeof arg === 'object' && arg !== null) {
-        try {
-          return JSON.stringify(arg, getCircularReplacer(), 2);
-        } catch (e) {
-          return '[Unserializable Object]';
+    // Effect for setting up global helpers and interceptors
+    useEffect(() => {
+        // Load persisted logs from localStorage
+        const savedLogs = localStorage.getItem('auth_debug_logs');
+        if (savedLogs) {
+            try {
+                setLogs(JSON.parse(savedLogs));
+            } catch (e) {
+                console.error('Failed to parse saved logs:', e);
+            }
         }
-      }
-      return String(arg);
-    })
-    .join(' ');
-}
 
-const getCircularReplacer = () => {
-  const seen = new WeakSet();
-  return (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return '[Circular Reference]';
-      }
-      seen.add(value);
-    }
-    return value;
-  };
-};
+        // --- Global Debug Object ---
+        window.authDebug = {
+            log: (category, message, data = null) => {
+                if (!isPaused) addLog('info', category, message, data);
+            },
+            error: (category, message, data = null) => addLog('error', category, message, data),
+            warn: (category, message, data = null) => addLog('warn', category, message, data),
+            success: (category, message, data = null) => addLog('success', category, message, data),
+            auth: (step, data = null) => addLog('info', 'AUTH', step, data),
+            api: (method, url, status, data = null) => addLog(status >= 400 ? 'error' : 'info', 'API', `${method} ${url} [${status}]`, data),
+            storage: (action, key, value = null) => addLog('info', 'STORAGE', `${action}: ${key}`, value),
+            worker: (message, data = null) => addLog('info', 'WORKER', message, data),
+            route: (from, to) => addLog('info', 'ROUTE', `${from} → ${to}`),
+            state: (component, newState) => addLog('info', 'STATE', component, newState)
+        };
 
-// --- The Component ---
-function AuthDebugMonitor() {
-  const [logs, setLogs] = useState([]);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [filter, setFilter] = useState('ALL');
-  const [copyButtonText, setCopyButtonText] = useState('Copy All');
+        // --- Interceptors ---
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+            const url = typeof args[0] === 'string' ? args[0].toString() : args[0].url;
+            const method = args[1]?.method || 'GET';
 
-  useEffect(() => {
-    const addLog = (type, level, ...args) => {
-      setLogs(prevLogs => [
-        ...prevLogs,
-        {
-          id: Date.now() + Math.random(),
-          timestamp: getTimestamp(),
-          type,
-          level,
-          message: formatMessage(args),
-        },
-      ]);
+            if (!isPaused) window.authDebug.log('API', `→ ${method} ${url}`, args[1]);
+
+            try {
+                const response = await originalFetch(...args);
+                const clonedResponse = response.clone();
+
+                try {
+                    const data = await clonedResponse.json();
+                    if (!isPaused) window.authDebug.api(method, url, response.status, data);
+                } catch {
+                    if (!isPaused) window.authDebug.api(method, url, response.status, 'Non-JSON response');
+                }
+
+                return response;
+            } catch (error) {
+                if (!isPaused) window.authDebug.error('API', `✗ ${method} ${url}`, error.message);
+                throw error;
+            }
+        };
+
+        const originalSetItem = Storage.prototype.setItem;
+        const originalRemoveItem = Storage.prototype.removeItem;
+
+        Storage.prototype.setItem = function(key, value) {
+            if (key !== 'auth_debug_logs' && !isPaused) {
+                window.authDebug.storage('SET', key, value);
+            }
+            return originalSetItem.call(this, key, value);
+        };
+
+        Storage.prototype.removeItem = function(key) {
+            if (key !== 'auth_debug_logs' && !isPaused) {
+                window.authDebug.storage('REMOVE', key);
+            }
+            return originalRemoveItem.call(this, key);
+        };
+
+        // Cleanup function
+        return () => {
+            window.fetch = originalFetch;
+            Storage.prototype.setItem = originalSetItem;
+            Storage.prototype.removeItem = originalRemoveItem;
+            delete window.authDebug;
+        };
+    }, [isPaused]); // Rerun if isPaused changes to re-hook console logs
+
+    const addLog = (level, category, message, data) => {
+        const newLog = {
+            id: Date.now() + Math.random(),
+            timestamp: new Date().toISOString(),
+            level,
+            category,
+            message,
+            data: data ? JSON.stringify(data, null, 2) : null,
+            url: window.location.href
+        };
+
+        setLogs(prev => {
+            const updated = [...prev, newLog];
+            const trimmed = updated.slice(-1000); // Keep last 1000 logs
+            localStorage.setItem('auth_debug_logs', JSON.stringify(trimmed));
+            return trimmed;
+        });
     };
 
-    window.authDebug = {
-      log: (type, ...args) => addLog(type, 'log', ...args),
-      warn: (type, ...args) => addLog(type, 'warn', ...args),
-      error: (type, ...args) => addLog(type, 'error', ...args),
-      success: (type, ...args) => addLog(type, 'success', ...args),
-      auth: (...args) => addLog('AUTH', 'log', ...args),
-      storage: (...args) => addLog('STORAGE', 'log', ...args),
-      api: (...args) => addLog('API', 'log', ...args),
+    useEffect(() => {
+        if (!isPaused) {
+            logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [logs, isPaused]);
+
+    const clearLogs = () => {
+        setLogs([]);
+        localStorage.removeItem('auth_debug_logs');
     };
 
-    addLog('MONITOR', 'success', 'AuthDebugMonitor initialized.');
-
-    return () => {
-      delete window.authDebug;
+    const exportLogs = () => {
+        const dataStr = JSON.stringify(logs, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `auth-debug-${new Date().toISOString()}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
     };
-  }, []);
 
-  const handleCopyAll = () => {
-    if (logs.length === 0) return;
-
-    const formattedLogs = logs
-      .map(log => `${log.timestamp} [${log.type}] ${log.message}`)
-      .join('\n');
-
-    navigator.clipboard.writeText(formattedLogs).then(() => {
-      setCopyButtonText('Copied!');
-      setTimeout(() => setCopyButtonText('Copy All'), 2000);
-    }).catch(err => {
-      console.error('Failed to copy logs:', err);
-      setCopyButtonText('Error!');
-      setTimeout(() => setCopyButtonText('Copy All'), 2000);
+    const filteredLogs = logs.filter(log => {
+        if (filter !== 'all' && log.level !== filter && log.category !== filter) return false;
+        if (search && !JSON.stringify(log).toLowerCase().includes(search.toLowerCase())) return false;
+        return true;
     });
-  };
 
-  const filteredLogs = logs.filter(log => filter === 'ALL' || log.type === filter);
-  const logTypes = ['ALL', ...Array.from(new Set(logs.map(log => log.type)))];
+    const levelColors = {
+        info: 'text-blue-400',
+        error: 'text-red-400',
+        warn: 'text-yellow-400',
+        success: 'text-green-400'
+    };
 
-  if (isMinimized) {
+    const categoryColors = {
+        AUTH: 'bg-purple-900',
+        API: 'bg-blue-900',
+        STORAGE: 'bg-orange-900',
+        WORKER: 'bg-teal-900',
+        ROUTE: 'bg-indigo-900',
+        STATE: 'bg-pink-900'
+    };
+
+    // Minimized state view
+    if (isMinimized) {
+        return (
+            <button
+                onClick={() => setIsMinimized(false)}
+                className="fixed bottom-5 right-5 bg-bark-blue text-white p-3 rounded-full shadow-lg hover:bg-opacity-90 transition-transform transform hover:scale-110 z-50"
+                title="Open Debug Monitor"
+            >
+                <Bug className="w-6 h-6" />
+            </button>
+        );
+    }
+
+    // Expanded state view
     return (
-      <button
-        className="auth-debug-monitor-bug-btn"
-        onClick={() => setIsMinimized(false)}
-        title="Show Debugger"
-      >
-        <Icon name="bug" className="h-8 w-8 text-white" />
-      </button>
-    );
-  }
+        <div
+            className="fixed bottom-5 right-5 bg-gray-900 text-gray-100 rounded-lg shadow-2xl border border-gray-700 font-mono text-sm z-50 w-[600px] max-w-[90vw] flex flex-col"
+            style={{ maxHeight: '70vh' }}
+        >
+            {/* Header */}
+            <div className="flex items-center justify-between p-3 bg-gray-800 rounded-t-lg border-b border-gray-700 flex-shrink-0">
+                <div className="flex items-center gap-2">
+                    <Terminal className="w-4 h-4 text-green-400" />
+                    <span className="font-bold">Auth Debug Monitor</span>
+                    <span className="text-xs text-gray-500">({filteredLogs.length} logs)</span>
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={() => setIsPaused(!isPaused)} className="p-1 hover:bg-gray-700 rounded" title={isPaused ? 'Resume' : 'Pause'}>
+                        {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                    </button>
+                    <button onClick={() => setIsMinimized(true)} className="p-1 hover:bg-gray-700 rounded" title="Minimize">
+                        <Minimize2 className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
 
-  return (
-    <div className="auth-debug-monitor-container">
-      <div className="auth-debug-monitor-header">
-        <h2>Auth Debug Monitor</h2>
-        <div>
-          <select onChange={(e) => setFilter(e.target.value)} value={filter}>
-            {logTypes.map(type => <option key={type} value={type}>{type}</option>)}
-          </select>
-          <button onClick={handleCopyAll}>{copyButtonText}</button>
-          <button onClick={() => setLogs([])}>Clear</button>
-          <button onClick={() => setIsMinimized(true)}>Minimize</button>
+            {/* Controls */}
+            <div className="p-3 bg-gray-850 border-b border-gray-700 space-y-2 flex-shrink-0">
+                <div className="flex gap-2">
+                    <div className="flex-1 relative">
+                        <Search className="w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-gray-500" />
+                        <input
+                            type="text"
+                            placeholder="Search logs..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full pl-8 pr-2 py-1 bg-gray-900 border border-gray-700 rounded text-xs focus:outline-none focus:border-blue-500"
+                        />
+                    </div>
+                    <button onClick={clearLogs} className="px-3 py-1 bg-red-900 hover:bg-red-800 rounded flex items-center gap-1 text-xs" title="Clear logs">
+                        <Trash2 className="w-3 h-3" /> Clear
+                    </button>
+                    <button onClick={exportLogs} className="px-3 py-1 bg-green-900 hover:bg-green-800 rounded flex items-center gap-1 text-xs" title="Export logs">
+                        <Download className="w-3 h-3" /> Export
+                    </button>
+                </div>
+                <div className="flex gap-1 text-xs flex-wrap">
+                    {['all', 'info', 'error', 'warn', 'success', 'AUTH', 'API', 'STORAGE', 'WORKER', 'ROUTE', 'STATE'].map(f => (
+                        <button
+                            key={f}
+                            onClick={() => setFilter(f)}
+                            className={`px-2 py-1 rounded ${filter === f ? 'bg-blue-600 text-white' : 'bg-gray-800 hover:bg-gray-700'}`}
+                        >
+                            {f.toUpperCase()}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Logs */}
+            <div className="overflow-y-auto p-3 space-y-2 flex-grow">
+                {filteredLogs.length === 0 ? (
+                    <div className="text-gray-500 text-center py-8">
+                        No logs yet. Use window.authDebug.log() to start logging.
+                    </div>
+                ) : (
+                    filteredLogs.map(log => (
+                        <div key={log.id} className="border-l-2 border-gray-700 pl-3 py-1 hover:bg-gray-800/50">
+                            <div className="flex items-start gap-2 text-xs">
+                                <span className="text-gray-500 whitespace-nowrap">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                                <span className={`px-2 py-0.5 rounded text-xs text-white ${categoryColors[log.category] || 'bg-gray-700'}`}>{log.category}</span>
+                                <span className={levelColors[log.level]}>{log.level.toUpperCase()}</span>
+                            </div>
+                            <div className="mt-1 text-gray-300 break-words">{log.message}</div>
+                            {log.data && (
+                                <pre className="mt-1 p-2 bg-gray-950 rounded text-xs overflow-x-auto text-gray-400">{log.data}</pre>
+                            )}
+                        </div>
+                    ))
+                )}
+                <div ref={logEndRef} />
+            </div>
         </div>
-      </div>
-      <pre className="auth-debug-monitor-logs">
-        {filteredLogs.map(log => (
-          <div key={log.id} className={`log-entry log-${log.level}`}>
-            <span className="log-timestamp">{log.timestamp}</span>
-            <span className={`log-type log-type-${log.type}`}>{log.type}</span>
-            <span className="log-message">{log.message}</span>
-          </div>
-        ))}
-      </pre>
-    </div>
-  );
-}
+    );
+};
 
 export default AuthDebugMonitor;

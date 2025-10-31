@@ -326,14 +326,14 @@ function FileExplorer({ repo }) {
       )}
       <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 flex justify-between items-center p-2 z-10">
         <div className="flex-1 flex justify-start">
-            <button
+            {/* <button
                 className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-200"
                 onClick={handleNewLayout}
                 title="Manage Layouts"
             >
                 <Icon name="layout-editor" className="h-6 w-6" />
                 <span className="font-semibold hidden sm:inline">Layouts</span>
-            </button>
+            </button> */}
         </div>
         <div className="flex-1 flex justify-center">
             <button

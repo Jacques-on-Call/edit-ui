@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import ExplorerHeader from './ExplorerHeader';
+import AuthDebugMonitor from './AuthDebugMonitor';
 
 const DefaultHeader = () => (
   <header className="bg-light-grey shadow-md">
@@ -86,6 +87,7 @@ function AppLayout() {
           <p>&copy; {new Date().getFullYear()} Easy SEO. All Rights Reserved.</p>
         </div>
       </footer>
+      <AuthDebugMonitor />
     </div>
   );
 }
