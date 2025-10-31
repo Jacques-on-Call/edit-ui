@@ -28,11 +28,11 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress, onDoubleCl
   const iconName = isDir ? 'folder' : 'file';
   const iconClassName = isDir ? 'text-blue-500' : 'text-green-600';
 
-  // Replaced touch-none with touch-action-manipulation to allow scrolling on touch devices.
+  // Added select-none, touch-none and [-webkit-touch-callout:none] to prevent iOS selection/callout
   const tileClassName = `
     p-2 rounded-lg cursor-pointer transition-all duration-200 text-center flex flex-col items-center justify-center h-32
     ${isSelected ? 'bg-blue-100 border-2 border-blue-500' : 'bg-gray-100 hover:bg-gray-200'}
-    select-none touch-action-manipulation [-webkit-touch-callout:none]
+    select-none touch-none [-webkit-touch-callout:none]
   `;
 
   const clearTimer = () => {
@@ -43,6 +43,10 @@ function FileTile({ file, isSelected, metadata, onClick, onLongPress, onDoubleCl
   };
 
   const handlePointerDown = (e) => {
+    // Prevent iOS from initiating text selection/callout
+    if (e.type === 'touchstart') {
+      e.preventDefault?.();
+    }
     // Ignore right-clicks for mouse events.
     if (e.button === 2) return;
 
