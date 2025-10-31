@@ -7,6 +7,7 @@ import { BrowserRouter } from 'react-router-dom';
 import './global.css';
 import App from './App.jsx';
 import { initialize } from '@astrojs/compiler';
+import { AuthProvider } from './contexts/AuthContext.jsx';
 
 // Initialize the Astro compiler's WASM module and export the promise.
 // This must be done once at startup. Other modules can await this promise
@@ -16,7 +17,9 @@ export const astroCompilerReady = initialize({ wasmURL: '/astro.wasm' });
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 );

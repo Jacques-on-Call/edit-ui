@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 import AppLayout from './components/AppLayout';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 import LoginPage from './pages/LoginPage';
 import CallbackPage from './pages/CallbackPage';
 import RepositorySelectionPage from './pages/RepositorySelectionPage';
@@ -22,13 +23,15 @@ function App() {
         All routes that ARE part of the main application experience are nested here.
         They will all render inside the AppLayout.
       */}
-      <Route path="/" element={<AppLayout />}>
-        {/*
-          FIX: Add a root-level redirect. If the user is authenticated and lands at "/",
-          this will automatically send them to the explorer, preventing a blank page.
-        */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="/explorer" replace />} />
-
         <Route path="explorer" element={<ExplorerPage />} />
         <Route path="editor" element={<EditorPage />} />
         <Route path="layouts" element={<LayoutsDashboardPage />} />

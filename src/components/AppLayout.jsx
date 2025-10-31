@@ -21,37 +21,6 @@ const DefaultHeader = () => (
 
 function AppLayout() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(null);
-
-  useEffect(() => {
-    // 1. Check authentication status first
-    fetch('/api/me', { credentials: 'include' })
-      .then(res => {
-        if (res.ok) {
-          setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
-          navigate('/login');
-        }
-      })
-      .catch(() => {
-        setIsAuthenticated(false);
-        navigate('/login');
-      });
-  }, [navigate]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      // 2. Once authenticated, check for repository selection
-      const publicRoutes = ['/login', '/callback', '/repository-selection'];
-      if (publicRoutes.some(p => location.pathname.startsWith(p))) return;
-      const repo = localStorage.getItem('selectedRepo');
-      if (!repo) {
-        navigate('/repository-selection', { replace: true });
-      }
-    }
-  }, [isAuthenticated, location, navigate]);
 
   const isExplorerPage = location.pathname.startsWith('/explorer');
   const isEditorPage = location.pathname.startsWith('/editor');
@@ -62,19 +31,7 @@ function AppLayout() {
     return <DefaultHeader />;
   };
 
-  // While checking authentication, show a loading state
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <p className="text-lg font-semibold text-gray-700 animate-pulse">Authenticating...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If authenticated, render the layout
-  return isAuthenticated && (
+  return (
     <div className="min-h-screen flex flex-col">
       {renderHeader()}
 
