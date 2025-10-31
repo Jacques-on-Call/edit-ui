@@ -24,6 +24,7 @@
     "front-matter": "^4.0.2",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
+    "lucide-preact": "0.548.0",
     "lucide-react": "^0.546.0",
     "marked": "^16.3.0",
     "marked-gfm-heading-id": "^4.1.2",

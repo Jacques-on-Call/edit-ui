@@ -4,6 +4,26 @@ This document records significant changes, architectural decisions, and critical
 
 ---
 
+### **2025-10-30**
+
+**Author:** Jules #135
+
+**Change:** Fixed a critical build failure caused by a missing `lucide-preact` dependency.
+
+**Context & Learnings:**
+
+1.  **Build Failure:** The `vite build` process was failing with a `[vite]: Rollup failed to resolve import "lucide-preact"` error.
+2.  **Root Cause:** The `Icon.jsx` component imports icons from the `lucide-preact` library, but this package was not listed as a dependency in `easy-seo/package.json`.
+3.  **Solution:** The issue was resolved by running `npm install --prefix ./easy-seo lucide-preact` to add the missing package and update `package.json`.
+
+**Reflection:**
+
+*   **Most Challenging Part:** The fix was straightforward. The main challenge is ensuring all dependencies are correctly tracked, especially in a monorepo structure.
+*   **Key Learning:** Build-time errors related to module resolution are often the most direct and easiest to solve. The error message clearly identified the missing package, leading to a quick diagnosis.
+*   **Advice for Next Agent:** If you see an "unresolved import" error during a build, the first place to check is the `package.json` file in the relevant project directory.
+
+---
+
 ### **2025-10-29**
 
 **Author:** Jules
