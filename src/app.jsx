@@ -31,8 +31,7 @@ const AppContent = () => {
         </Router>
       )}
 
-      {/* Render the AuthDebugMonitor only in development */}
-      {import.meta.env.DEV && <AuthDebugMonitor />}
+      <AuthDebugMonitor />
     </div>
   );
 };

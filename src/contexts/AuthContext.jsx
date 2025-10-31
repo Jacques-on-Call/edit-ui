@@ -7,6 +7,13 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [repositories, setRepositories] = useState([]);
+  const [selectedRepo, setSelectedRepo] = useState(null);
+
+  const selectRepo = (repo) => {
+    setSelectedRepo(repo);
+    // Optionally, persist to localStorage if needed
+  };
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -19,6 +26,17 @@ export const AuthProvider = ({ children }) => {
           const userData = await response.json();
           setUser(userData);
           setIsAuthenticated(true);
+
+          // If authenticated, fetch repositories
+          try {
+            const reposResponse = await fetch('/api/repos', { credentials: 'include' });
+            if (reposResponse.ok) {
+              const reposData = await reposResponse.json();
+              setRepositories(reposData);
+            }
+          } catch (reposError) {
+            console.error('Failed to fetch repositories:', reposError);
+          }
         } else {
           setUser(null);
           setIsAuthenticated(false);
@@ -35,7 +53,7 @@ export const AuthProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-  const value = { user, isAuthenticated, isLoading };
+  const value = { user, isAuthenticated, isLoading, repositories, selectedRepo, selectRepo };
 
   return (
     <AuthContext.Provider value={value}>
