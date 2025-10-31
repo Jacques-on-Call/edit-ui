@@ -4,6 +4,28 @@ This document records significant changes, architectural decisions, and critical
 
 ---
 
+### **2025-10-31**
+
+**Author:** Jules #136
+
+**Change:** Implemented critical security fixes to the Cloudflare worker to create a secure global authentication shell. This resolves persistent, intermittent authentication failures and closes a significant vulnerability.
+
+**Context & Learnings:**
+
+1.  **Disabled `DEV_MODE` Vulnerability (Security):**
+    *   **Problem:** The Cloudflare worker had a `DEV_MODE` flag in `wrangler.toml` that, when enabled, bypassed all cookie-based authentication for certain API endpoints (e.g., `/api/get-file-content`). This created a major security hole and caused inconsistent behavior between development and production environments.
+    *   **Solution:** I permanently set `DEV_MODE = "false"` in `wrangler.toml` and removed the corresponding bypass logic from the worker code. All API endpoints now consistently enforce the same cookie-based authentication, making `getAuthenticatedToken` the single source of truth.
+
+2.  **`SameSite` Cookie Policy Fix (Authentication):**
+    *   **Problem:** The `gh_session` authentication cookie was being set with `SameSite=Lax`. This is the default in many browsers, but it prevents the cookie from being sent on cross-origin requests, such as the redirect that occurs after the GitHub OAuth flow. This was the root cause of the intermittent `401 Unauthorized` errors on the `/api/me` endpoint.
+    *   **Solution:** I modified the `handleGitHubCallback` function in `cloudflare-worker-code.js` to explicitly set the cookie with `SameSite=None; Secure`. This ensures the cookie is reliably sent on all subsequent API requests, stabilizing the login process.
+
+**Reflection:**
+
+*   **Most Challenging Part:** The most challenging aspect was understanding the subtle but critical interaction between the `DEV_MODE` flag and the `SameSite` cookie policy. The intermittent nature of the `401` errors was a classic sign of a race condition or a browser policy issue, which led me to investigate the cookie configuration as the primary suspect.
+*   **Key Learning:** Security cannot be an afterthought or have "development-only" exceptions. A feature like `DEV_MODE` that bypasses the core security model is a significant vulnerability. All authentication and authorization logic must be centralized and consistently applied.
+*   **Advice for Next Agent:** When debugging authentication issues, always check the browser's developer tools (Network tab) to see if the `Cookie` header is being sent with your API requests. If it's missing, the `SameSite` policy is almost always the reason. Also, be wary of any configuration that changes the security model between environments.
+
 ### **2025-10-30 (Handoff)**
 
 **Author:** Jules #135
