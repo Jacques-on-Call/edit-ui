@@ -1,19 +1,18 @@
 // easy-seo/src/pages/CallbackPage.jsx
 import { useEffect } from 'preact/compat';
 import { useAuth } from '../contexts/AuthContext';
-import { useRouter } from 'preact-router';
+import { route } from 'preact-router';
 
 export function CallbackPage() {
   const { checkAuthStatus } = useAuth();
-  const router = useRouter();
 
   useEffect(() => {
     const handleCallback = async () => {
       await checkAuthStatus();
-      router.route('/repo-select', true);
+      route('/repo-select', true);
     };
     handleCallback();
-  }, [checkAuthStatus, router]);
+  }, [checkAuthStatus]);
 
   return (
     <div className="flex items-center justify-center h-screen">

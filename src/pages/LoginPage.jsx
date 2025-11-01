@@ -18,7 +18,7 @@ export function LoginPage() {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-background text-textPrimary px-4 sm:px-0">
-      <div className="bg-surface p-8 sm:p-12 rounded-xl text-center max-w-md w-full">
+      <div className="bg-surface p-10 sm:p-16 rounded-xl text-center max-w-md w-full">
         <h2 className="text-4xl font-bold tracking-tight">Build a Google-ready site in minutes.</h2>
         <p className="text-textSecondary mt-6 text-lg">
             Fast. Simple. SEO-friendly.

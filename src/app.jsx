@@ -12,7 +12,7 @@ const AppContent = () => {
   const { isLoading } = useAuth();
 
   return (
-    <div className="bg-background text-text min-h-screen p-4 sm:p-8" style={{ fontFamily: theme.typography.fontFamily }}>
+    <div className="bg-background text-text min-h-screen p-6 md:p-10" style={{ fontFamily: theme.typography.fontFamily }}>
       <header className="flex justify-between items-center pb-8">
         <div className="flex items-center gap-4">
           <h1 className={theme.typography.h1}>Easy-SEO</h1>
