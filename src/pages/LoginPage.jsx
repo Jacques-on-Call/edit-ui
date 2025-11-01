@@ -1,7 +1,7 @@
 // easy-seo/src/pages/LoginPage.jsx
 import { useAuth } from '../contexts/AuthContext';
 import { theme } from '../themes/theme';
-import { Github, Zap, RefreshCw, TrendingUp } from 'lucide-preact';
+import { Github, Zap, Check, TrendingUp } from 'lucide-preact';
 import { useRouter } from 'preact-router';
 import { useEffect } from 'preact/compat';
 
@@ -34,8 +34,8 @@ export function LoginPage() {
   const githubOauthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=repo,user&redirect_uri=${redirectUri}`;
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-background text-textPrimary">
-      <div className="bg-surface p-12 rounded-xl text-center max-w-md w-full">
+    <div className="flex flex-col items-center justify-center h-screen bg-background text-textPrimary px-4 sm:px-0">
+      <div className="bg-surface p-8 sm:p-12 rounded-xl text-center max-w-md w-full">
         <h2 className="text-4xl font-bold tracking-tight">Build a Google-ready site in minutes.</h2>
         <p className="text-textSecondary mt-6 text-lg">
             Fast. Simple. SEO-friendly.
@@ -55,22 +55,28 @@ export function LoginPage() {
             href={githubOauthUrl}
             className="inline-flex items-center justify-center px-10 py-5 text-lg font-bold text-white bg-primary rounded-lg hover:bg-opacity-90 transition-colors w-full max-w-sm"
           >
-            Get Started
+            Start My Free Site
           </a>
         )}
+
+        <div className="mt-8">
+          <a href={githubOauthUrl} className="text-sm text-textSecondary hover:underline">
+            Already have an account? Log In
+          </a>
+        </div>
 
         <div className="grid grid-cols-3 gap-8 mt-16 text-center">
           <div className="flex flex-col items-center">
             <Zap size={28} className="text-accent mb-3" />
-            <span className="text-sm font-semibold text-textSecondary">⚡ Fast</span>
+            <span className="text-sm font-semibold text-textSecondary">Fast</span>
           </div>
           <div className="flex flex-col items-center">
-            <RefreshCw size={28} className="text-accent mb-3" />
-            <span className="text-sm font-semibold text-textSecondary">✏️ Simple</span>
+            <Check size={28} className="text-accent mb-3" />
+            <span className="text-sm font-semibold text-textSecondary">Simple</span>
           </div>
           <div className="flex flex-col items-center">
             <TrendingUp size={28} className="text-accent mb-3" />
-            <span className="text-sm font-semibold text-textSecondary">🔍 Google-friendly</span>
+            <span className="text-sm font-semibold text-textSecondary">Google-friendly</span>
           </div>
         </div>
       </div>

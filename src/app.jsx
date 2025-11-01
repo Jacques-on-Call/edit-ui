@@ -15,12 +15,9 @@ const AppContent = () => {
       <header className="flex justify-between items-center pb-8">
         <div className="flex items-center gap-4">
           <h1 className={theme.typography.h1}>Easy-SEO</h1>
-          <span className="bg-gray-700 text-gray-300 text-xs font-semibold px-2.5 py-1 rounded-full">Early Access</span>
+          <span className="bg-gray-700 text-gray-300 text-xs font-semibold px-2.5 py-1 rounded-full">Now Available</span>
         </div>
-        <nav>
-          <Link href="/repo-select" className="mr-4">Projects</Link>
-          <Link href="/explorer">Explorer</Link>
-        </nav>
+        <p className="text-sm text-textSecondary">A Strategy Content Agency Tool</p>
       </header>
 
       {isLoading ? (
@@ -33,7 +30,7 @@ const AppContent = () => {
         </Router>
       )}
 
-      <AuthDebugMonitor />
+      {import.meta.env.DEV && <AuthDebugMonitor />}
     </div>
   );
 };
