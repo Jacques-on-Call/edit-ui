@@ -38,13 +38,13 @@ export function LoginPage() {
             href={githubOauthUrl}
             className="inline-flex items-center justify-center px-12 py-6 text-xl font-bold text-white bg-primary rounded-lg hover:bg-opacity-90 transition-colors w-full max-w-md"
           >
-            Sign Up
+            Sign Up Free
           </a>
         )}
 
         <div className="mt-8">
           <a href={githubOauthUrl} className="text-sm text-textSecondary hover:underline">
-            Already have an account? Log In
+            Log In
           </a>
         </div>
 

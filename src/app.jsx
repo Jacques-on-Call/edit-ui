@@ -9,16 +9,19 @@ import { CallbackPage } from './pages/CallbackPage';
 import AuthDebugMonitor from './components/AuthDebugMonitor'; // Corrected import
 
 const AppContent = () => {
-  const { isLoading } = useAuth();
+  const { isLoading, isAuthenticated, user } = useAuth();
 
   return (
     <div className="bg-background text-text min-h-screen p-6 md:p-10" style={{ fontFamily: theme.typography.fontFamily }}>
       <header className="flex justify-between items-center pb-8">
-        <div className="flex items-center gap-4">
-          <h1 className={theme.typography.h1}>Easy-SEO</h1>
-          <span className="bg-gray-700 text-gray-300 text-xs font-semibold px-2.5 py-1 rounded-full">Now Available</span>
-        </div>
-        <p className="text-sm text-textSecondary">A Strategy Content Agency Tool</p>
+        {isAuthenticated && user ? (
+          <div className="flex items-center gap-4">
+            <img src={user.avatar_url} alt="User Avatar" className="w-10 h-10 rounded-full" />
+            <span className="font-bold">{user.login}</span>
+          </div>
+        ) : (
+          <div></div> // Empty div to maintain layout
+        )}
       </header>
 
       {isLoading ? (

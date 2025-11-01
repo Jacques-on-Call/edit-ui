@@ -28,6 +28,7 @@ export function FileExplorerPage() {
 
   const { selectedRepo } = useAuth();
   const [files, setFiles] = useState([]);
+  const [path, setPath] = useState('src/pages');
   const [error, setError] = useState(null);
   const [isFilesLoading, setIsFilesLoading] = useState(false);
 
@@ -37,7 +38,7 @@ export function FileExplorerPage() {
         setIsFilesLoading(true);
         setError(null);
         try {
-          const response = await fetch(`/api/files?repo=${selectedRepo.full_name}`, {
+          const response = await fetch(`/api/files?repo=${selectedRepo.full_name}&path=${path}`, {
             credentials: 'include',
           });
           if (response.ok) {
@@ -67,31 +68,42 @@ export function FileExplorerPage() {
     );
   }
 
-  return (
-    <div className="pt-12">
-      <h2 className={theme.typography.h2}>File Explorer: {selectedRepo.name}</h2>
-      <p className="text-textSecondary mt-2">
-        Browsing files in <span className="font-bold text-accent">{selectedRepo.full_name}</span>.
-      </p>
+  const handleGoHome = () => setPath('src/pages');
+  const isAtRoot = path === 'src/pages';
 
-      <div className="mt-8 bg-surface p-8 rounded-lg">
+  return (
+    <div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-24">
         {isFilesLoading ? (
           <p>Loading files...</p>
         ) : error ? (
           <p className="text-error">{error}</p>
         ) : (
-          <ul>
-            {files.length > 0 ? (
-              files.map((file) => (
-                <li key={file.sha} className="py-2 border-b border-border">
-                  {file.name}
-                </li>
-              ))
-            ) : (
-              <p>No files found in this repository.</p>
-            )}
-          </ul>
+          files.length > 0 ? (
+            files.map((file) => (
+              <div key={file.sha} className="p-4 bg-surface rounded-lg text-center">
+                <p>{file.name}</p>
+              </div>
+            ))
+          ) : (
+            <p>No files found in this directory.</p>
+          )
         )}
+      </div>
+      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t border-border flex justify-between items-center p-2 z-10">
+        <div className="flex-1 flex justify-start">
+        </div>
+        <div className="flex-1 flex justify-center">
+        </div>
+        <div className="flex-1 flex justify-end">
+            <button
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleGoHome}
+                disabled={isAtRoot}
+            >
+                <span>Home</span>
+            </button>
+        </div>
       </div>
     </div>
   );

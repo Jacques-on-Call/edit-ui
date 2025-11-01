@@ -40,12 +40,12 @@ export function RepoSelectPage() {
         Welcome, <span className="font-bold text-accent">{user?.login}</span>. Choose a repository to start editing.
       </p>
 
-      <div className="mt-8 flex flex-col items-center gap-6">
+      <div className="mt-8 flex flex-col items-center gap-8">
         {repositories.length > 0 ? (
           repositories.map((repo) => (
             <button
               key={repo.id}
-              className="w-full max-w-md bg-surface p-6 rounded-lg border-t-2 border-l-2 border-border hover:border-accent transition-all shadow-lg hover:shadow-xl text-left transform hover:-translate-y-1"
+              className="w-full max-w-md bg-surface p-6 rounded-lg border-b-2 border-r-2 border-border hover:border-accent transition-all shadow-lg hover:shadow-xl text-left transform hover:-translate-y-1"
               onClick={() => handleSelectRepo(repo)}
             >
               <h3 className="font-bold text-lg text-accent">{repo.name}</h3>
