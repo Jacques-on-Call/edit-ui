@@ -36,28 +36,12 @@ export function LoginPage() {
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-background text-textPrimary">
       <div className="bg-surface p-12 rounded-xl text-center max-w-md w-full">
-        <h2 className="text-3xl font-bold tracking-tight">Your Website, Made Simple & Fast.</h2>
+        <h2 className="text-4xl font-bold tracking-tight">Build a Google-ready site in minutes.</h2>
         <p className="text-textSecondary mt-6 text-lg">
-            From blank page to search-engine-ready site in minutes—guided every step.
-        </p>
-        <p className="text-textSecondary mt-12 mb-16 max-w-md mx-auto">
-            Create websites that impress visitors and climb search rankings—all in minutes.
+            Fast. Simple. SEO-friendly.
         </p>
 
-        <div className="grid grid-cols-3 gap-8 my-16 text-center">
-          <div className="flex flex-col items-center">
-            <Zap size={28} className="text-accent mb-3" />
-            <span className="text-sm font-semibold text-textSecondary">Lightning Fast</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <RefreshCw size={28} className="text-accent mb-3" />
-            <span className="text-sm font-semibold text-textSecondary">Simple to Update</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <TrendingUp size={28} className="text-accent mb-3" />
-            <span className="text-sm font-semibold text-textSecondary">Google Friendly</span>
-          </div>
-        </div>
+        <div className="my-12">&nbsp;</div> {/* Spacer */}
 
         {isLoading ? (
           <div className="flex items-center justify-center h-[60px]">
@@ -71,10 +55,24 @@ export function LoginPage() {
             href={githubOauthUrl}
             className="inline-flex items-center justify-center px-10 py-5 text-lg font-bold text-white bg-primary rounded-lg hover:bg-opacity-90 transition-colors w-full max-w-sm"
           >
-            <Github size={20} className="mr-3" />
-            Continue with GitHub
+            Get Started
           </a>
         )}
+
+        <div className="grid grid-cols-3 gap-8 mt-16 text-center">
+          <div className="flex flex-col items-center">
+            <Zap size={28} className="text-accent mb-3" />
+            <span className="text-sm font-semibold text-textSecondary">⚡ Fast</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <RefreshCw size={28} className="text-accent mb-3" />
+            <span className="text-sm font-semibold text-textSecondary">✏️ Simple</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <TrendingUp size={28} className="text-accent mb-3" />
+            <span className="text-sm font-semibold text-textSecondary">🔍 Google-friendly</span>
+          </div>
+        </div>
       </div>
     </div>
   );
