@@ -46,15 +46,23 @@ export function RepoSelectPage() {
           repositories.map((repo) => (
             <div
               key={repo.id}
-              className="bg-surface p-6 rounded-lg cursor-pointer hover:bg-opacity-80 transition-colors"
+              className="bg-surface p-6 rounded-lg border border-border hover:border-accent transition-colors shadow-md hover:shadow-lg flex flex-col"
               onClick={() => handleSelectRepo(repo)}
             >
               <h3 className="font-bold text-lg text-accent">{repo.name}</h3>
-              <p className="text-textSecondary text-sm mt-2">{repo.description || 'No description available.'}</p>
+              <p className="text-textSecondary text-sm mt-2 flex-grow">{repo.description || 'No description available.'}</p>
               <div className="flex items-center text-xs text-textSecondary mt-4">
                 <span className="mr-4">{repo.language}</span>
-                <span>★ {repo.stargazers_count}</span>
+                <span className="flex items-center" title="GitHub Stars">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  {repo.stargazers_count}
+                </span>
               </div>
+              <button
+                className="mt-6 w-full bg-primary text-white font-bold py-2 px-4 rounded hover:bg-opacity-90 transition-colors"
+              >
+                Select
+              </button>
             </div>
           ))
         ) : (
