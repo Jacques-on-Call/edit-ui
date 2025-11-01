@@ -34,7 +34,7 @@ export function RepoSelectPage() {
   };
 
   return (
-    <div className="pt-12">
+    <div className="pt-12 px-4">
       <h2 className={theme.typography.h2}>Select a Repository</h2>
       <p className="text-textSecondary mt-2">
         Welcome, <span className="font-bold text-accent">{user?.login}</span>. Choose a repository to start editing.
@@ -45,7 +45,7 @@ export function RepoSelectPage() {
           repositories.map((repo) => (
             <button
               key={repo.id}
-              className="w-full max-w-md bg-surface p-6 rounded-lg border-b-2 border-r-2 border-border hover:border-accent transition-all shadow-lg hover:shadow-xl text-left transform hover:-translate-y-1"
+              className="w-full max-w-md bg-surface p-6 rounded-lg border-b-2 border-r-2 border-border hover:border-accent transition-all shadow-xl hover:shadow-2xl text-left transform hover:-translate-y-1"
               onClick={() => handleSelectRepo(repo)}
             >
               <h3 className="font-bold text-lg text-accent">{repo.name}</h3>
