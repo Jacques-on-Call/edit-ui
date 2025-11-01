@@ -5,13 +5,14 @@ import { Router, Link } from 'preact-router';
 import { LoginPage } from './pages/LoginPage';
 import { RepoSelectPage } from './pages/RepoSelectPage';
 import { FileExplorerPage } from './pages/FileExplorerPage';
+import { CallbackPage } from './pages/CallbackPage';
 import AuthDebugMonitor from './components/AuthDebugMonitor'; // Corrected import
 
 const AppContent = () => {
   const { isLoading } = useAuth();
 
   return (
-    <div className="bg-background text-text min-h-screen p-8" style={{ fontFamily: theme.typography.fontFamily }}>
+    <div className="bg-background text-text min-h-screen p-4 sm:p-8" style={{ fontFamily: theme.typography.fontFamily }}>
       <header className="flex justify-between items-center pb-8">
         <div className="flex items-center gap-4">
           <h1 className={theme.typography.h1}>Easy-SEO</h1>
@@ -25,6 +26,7 @@ const AppContent = () => {
       ) : (
         <Router>
           <LoginPage path="/" />
+          <CallbackPage path="/login" />
           <RepoSelectPage path="/repo-select" />
           <FileExplorerPage path="/explorer" />
         </Router>

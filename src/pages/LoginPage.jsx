@@ -9,23 +9,6 @@ export function LoginPage() {
   const { isAuthenticated, isLoading, checkAuthStatus } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('login') === 'success') {
-      // Manually trigger a re-check of the auth status.
-      checkAuthStatus().then(() => {
-        // After the check is complete, the isAuthenticated state will be updated.
-        // The second useEffect will then handle the redirect.
-      });
-    }
-  }, [checkAuthStatus]);
-
-  useEffect(() => {
-    // This effect runs whenever isAuthenticated changes.
-    if (isAuthenticated && window.location.search.includes('login=success')) {
-      window.location.href = '/repo-select';
-    }
-  }, [isAuthenticated]);
 
   // IMPORTANT: The client ID is now sourced from an environment variable.
   // A .env.local file should be created with VITE_GITHUB_CLIENT_ID=...
@@ -53,7 +36,7 @@ export function LoginPage() {
         ) : (
           <a
             href={githubOauthUrl}
-            className="inline-flex items-center justify-center px-10 py-5 text-lg font-bold text-white bg-primary rounded-lg hover:bg-opacity-90 transition-colors w-full max-w-sm"
+            className="inline-flex items-center justify-center px-12 py-6 text-xl font-bold text-white bg-primary rounded-lg hover:bg-opacity-90 transition-colors w-full max-w-md"
           >
             Start My Free Site
           </a>
