@@ -15,9 +15,9 @@ export function LoginPage() {
         </p>
 
         <ul className="features">
-          <li>✔ Personalized guidance</li>
-          <li>✔ Simple to update</li>
-          <li>✔ Easy SEO (search everywhere optimized)</li>
+          <li><span className="checkmark">✓✓</span> Personalized guidance</li>
+          <li><span className="checkmark">✓✓</span> Simple to update</li>
+          <li><span className="checkmark">✓</span> Easy SEO (search everywhere optimized)</li>
         </ul>
 
         <button className="cta-button">

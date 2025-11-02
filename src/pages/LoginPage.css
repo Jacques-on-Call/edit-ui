@@ -51,9 +51,9 @@
   gap: 0.5rem;
 }
 
-.features li::before {
-  content: '✔';
-  color: #D8F21D;
+.checkmark {
+  color: #6E7B2C; /* Darker green for checkmarks */
+  margin-right: 0.5rem;
 }
 
 .cta-button {
@@ -64,7 +64,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  border: none;
+  border: 1px solid white; /* Added white border */
   border-radius: 5px;
   font-size: 1rem;
   cursor: pointer;
