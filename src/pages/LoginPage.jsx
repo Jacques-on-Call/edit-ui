@@ -12,9 +12,9 @@ export function LoginPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-midnight-blue">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-green"></div>
-        <p className="ml-3 text-light-grey">Checking session...</p>
+      <div className="flex items-center justify-center h-screen" style={{ backgroundColor: '#191970' }}>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#D8F21D' }}></div>
+        <p className="ml-3" style={{ color: '#D9D9D9' }}>Checking session...</p>
       </div>
     );
   }
@@ -25,57 +25,57 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-midnight-blue text-white p-8 font-sans">
-      <div className="w-full max-w-sm">
+    <div className="flex min-h-screen font-sans" style={{ backgroundColor: '#191970', color: 'white' }}>
+      <div className="w-full flex justify-center">
+        <div className="pt-20" style={{ marginLeft: '20%', maxWidth: '500px', width: '100%' }}>
 
-        <header className="flex items-center justify-between mb-8">
-          <h1 className="text-5xl font-bold">ShowUp</h1>
-          <div className="bg-yellow-green rounded-full p-2">
-            <ArrowUpRight className="text-midnight-blue" size={28} />
-          </div>
-        </header>
+          <header className="flex items-center gap-5 mb-10">
+            <img src="/ShowUp-Logo.webp" alt="ShowUp Logo" className="h-14 w-14" />
+            <h1 className="text-6xl font-bold">ShowUp</h1>
+          </header>
 
-        <main>
-          <h2 className="text-xl font-bold text-yellow-green mb-3">Build your business visibility, easily.</h2>
-          <p className="text-light-grey mb-8">
-            ShowUp helps professionals build high-ranking websites and attract new customers - fast.
-          </p>
+          <main>
+            <h2 className="text-3xl font-medium mb-4" style={{ color: '#D8F21D' }}>Build your business visibility, easily.</h2>
+            <p className="text-lg mb-12" style={{ color: '#D9D9D9' }}>
+              ShowUp helps professionals build high-ranking websites and attract new customers - fast.
+            </p>
 
-          <ul className="space-y-4 mb-10">
-            <li className="flex items-center">
-              <Zap size={20} className="text-white mr-3" />
-              <span className="text-light-grey">Personalized guidance</span>
-            </li>
-            <li className="flex items-center">
-              <Check size={20} className="text-white mr-3" />
-              <span className="text-light-grey">Simple to update</span>
-            </li>
-            <li className="flex items-center">
-              <TrendingUp size={20} className="text-white mr-3" />
-              <span className="text-light-grey">Easy SEO (search everywhere optimized)</span>
-            </li>
-          </ul>
+            <ul className="space-y-5 mb-16 text-lg">
+              <li className="flex items-center gap-4">
+                <Zap size={24} style={{ color: '#D8F21D' }} />
+                <span>Personalized guidance</span>
+              </li>
+              <li className="flex items-center gap-4">
+                <Check size={24} style={{ color: '#D8F21D' }} />
+                <span>Simple to update</span>
+              </li>
+              <li className="flex items-center gap-4">
+                <TrendingUp size={24} style={{ color: '#D8F21D' }} />
+                <span>Easy SEO (search everywhere optimized)</span>
+              </li>
+            </ul>
 
-          <div className="mb-6">
-            <a
-              href={githubOauthUrl}
-              className="flex items-center justify-center w-full px-6 py-3 text-lg font-bold bg-surface text-white rounded-md border border-gray-600 hover:bg-gray-700 transition-colors"
-            >
-              <ArrowUpRight size={22} className="mr-2" />
-              Sign Up Free
-            </a>
-          </div>
+            <div className="mb-8">
+              <a
+                href={githubOauthUrl}
+                className="inline-flex items-center gap-3 px-6 py-3 text-xl font-bold rounded-md transition-shadow hover:shadow-2xl"
+                style={{ backgroundColor: '#000', color: 'white', boxShadow: '-4px 4px 0px 0px #A0A0A0' }}
+              >
+                <ArrowUpRight size={24} style={{ color: '#D8F21D' }} />
+                Sign Up Free
+              </a>
+            </div>
 
-          <div>
-            <a href={githubOauthUrl} className="font-bold text-yellow-green hover:underline">
-              Login
-            </a>
-          </div>
-        </main>
+            <div>
+              <a href={githubOauthUrl} className="text-lg font-semibold underline" style={{ color: 'white' }}>
+                Login
+              </a>
+            </div>
+          </main>
 
+        </div>
       </div>
-
-      <footer className="absolute bottom-6 text-sm text-light-grey opacity-75">
+      <footer className="absolute bottom-6 text-sm" style={{ color: '#D9D9D9', left: 'calc(20% + 1rem)' }}>
         Powered by Strategy Content Agency
       </footer>
     </div>
