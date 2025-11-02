@@ -1,38 +1,56 @@
-import './LoginPage.css';
+import { ShieldCheck, TrendingUp, Wand2 } from 'lucide-preact';
 
 export function LoginPage() {
   return (
-    <div className="login-container">
-      <header className="login-header">
-        <img src="/ShowUp-Logo.webp" alt="ShowUp Logo" className="logo-h1" />
-        <img src="/ShowUp-H1-Logo.webp" alt="ShowUp" className="logo-h1-image" />
-      </header>
+    <div className="flex items-center justify-center min-h-screen bg-primary">
+      <div className="w-full max-w-md px-8">
 
-      <main>
-        <p className="tagline">Build your business visibility, easily.</p>
-        <p className="subtext">
-          ShowUp helps professionals build high-ranking websites and attract new customers – fast.
-        </p>
+        <header className="flex items-center gap-4 mb-4">
+          <img src="/ShowUp-H1-Logo.webp" alt="ShowUp Logo" className="w-16 h-16" />
+          <h1 className="text-5xl font-bold text-text">ShowUp</h1>
+        </header>
 
-        <ul className="features">
-          <li><span className="checkmark">✓✓</span> Personalized guidance</li>
-          <li><span className="checkmark">✓✓</span> Simple to update</li>
-          <li><span className="checkmark">✓</span> Easy SEO (search everywhere optimized)</li>
-        </ul>
+        <main>
+          <p className="mb-4 text-2xl font-medium text-text">Build your business visibility, easily.</p>
+          <p className="mb-8 text-lg text-textSecondary">
+            ShowUp helps professionals build high-ranking websites and attract new customers – fast.
+          </p>
 
-        <button className="cta-button">
-          <img src="/ShowUp-Logo.webp" alt="ShowUp Logo" />
-          <span>Sign Up Free</span>
-        </button>
+          <ul className="space-y-4 text-lg text-text mb-9">
+            <li className="flex items-center gap-3">
+              <Wand2 size={24} className="text-accent" />
+              <span>Personalized guidance</span>
+            </li>
+            <li className="flex items-center gap-3">
+              <ShieldCheck size={24} className="text-accent" />
+              <span>Simple to update</span>
+            </li>
+            <li className="flex items-center gap-3">
+              <TrendingUp size={24} className="text-accent" />
+              <span>Easy SEO (search everywhere optimized)</span>
+            </li>
+          </ul>
 
-        <a href="#" className="login-link">
-          Login
-        </a>
-      </main>
+          <a
+            href="/api/login/github"
+            className="flex items-center justify-center w-full gap-4 px-6 py-4 font-bold transition-shadow duration-200 ease-in-out border-2 border-white rounded-lg shadow-[-4px_4px_0px_#D8F21D] hover:shadow-[-6px_6px_0px_#D8F21D] bg-button text-buttonText text-xl"
+          >
+            <img src="/ShowUp-button-Logo.webp" alt="ShowUp Button Logo" className="w-8 h-8" />
+            <span>Sign Up Free</span>
+          </a>
 
-      <footer className="login-footer">
-        <p>Powered by Strategy Content Agency</p>
-      </footer>
+          <div className="mt-6 text-center">
+            <a href="/api/login/github" className="text-lg text-textSecondary hover:text-accent">
+              Login
+            </a>
+          </div>
+        </main>
+
+        <footer className="absolute bottom-5 left-1/2 -translate-x-1/2">
+          <p className="text-sm text-textSecondary">Powered by Strategy Content Agency</p>
+        </footer>
+
+      </div>
     </div>
   );
 }
