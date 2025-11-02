@@ -2,10 +2,9 @@ import { useState, useEffect, useCallback } from 'preact/compat';
 import { route } from 'preact-router';
 import Icon from './Icon';
 import FileTile from './FileTile';
-import CreateModal from './CreateModal';
-import ContextMenu from './ContextMenu';
-import ConfirmDialog from './ConfirmDialog';
-import RenameModal from './RenameModal';
+import SearchBar from './SearchBar';
+import ReadmeDisplay from './ReadmeDisplay';
+import matter from 'gray-matter';
 
 function FileExplorer({ repo }) {
   const [files, setFiles] = useState([]);
@@ -13,10 +12,27 @@ function FileExplorer({ repo }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const [contextMenu, setContextMenu] = useState(null);
-  const [fileToDelete, setFileToDelete] = useState(null);
-  const [fileToRename, setFileToRename] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [metadataCache, setMetadataCache] = useState({});
+  const [readmeContent, setReadmeContent] = useState(null);
+  const [isReadmeLoading, setReadmeLoading] = useState(false);
+  const [isReadmeVisible, setReadmeVisible] = useState(true);
+
+  const fetchMetadata = useCallback(async (file) => {
+    if (file.type === 'dir') return;
+    try {
+      const res = await fetch(`/api/files?repo=${repo}&path=${file.path}`, { credentials: 'include' });
+      if (!res.ok) throw new Error(`Failed to fetch metadata: ${res.statusText}`);
+      const fileData = await res.json();
+      const decodedContent = atob(fileData.content);
+      const { data } = matter(decodedContent);
+      if (data) {
+        setMetadataCache(prev => ({ ...prev, [file.sha]: data }));
+      }
+    } catch (err) {
+      console.error(`Failed to fetch metadata for ${file.path}:`, err);
+    }
+  }, [repo]);
 
   const fetchFiles = useCallback(async () => {
     setLoading(true);
@@ -36,13 +52,35 @@ function FileExplorer({ repo }) {
         return a.name.localeCompare(b.name);
       });
       setFiles(sortedData);
+
+      sortedData.forEach(file => {
+        fetchMetadata(file);
+      });
+
+      const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');
+      if (readmeFile) {
+        setReadmeLoading(true);
+        try {
+          const readmeRes = await fetch(`/api/files?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' });
+          if (!readmeRes.ok) throw new Error('Could not fetch README content.');
+          const readmeData = await readmeRes.json();
+          const decodedContent = atob(readmeData.content);
+          setReadmeContent(decodedContent);
+        } catch (readmeErr) {
+          console.error("Failed to fetch or decode README:", readmeErr);
+          setReadmeContent('Could not load README.');
+        } finally {
+          setReadmeLoading(false);
+        }
+      }
+
     } catch (err) {
       console.error("Error fetching files:", err);
       setError(`Failed to load repository contents. Please check your connection and repository permissions. Details: ${err.message}`);
     } finally {
       setLoading(false);
     }
-  }, [repo, path]);
+  }, [repo, path, fetchMetadata]);
 
   useEffect(() => {
     fetchFiles();
@@ -74,92 +112,11 @@ function FileExplorer({ repo }) {
 
   const handleGoHome = () => setPath('src/pages');
 
-  const handleLongPress = (file, coords) => setContextMenu({ x: coords.clientX, y: coords.clientY, file });
-  const handleCloseContextMenu = () => setContextMenu(null);
-  const handleDeleteRequest = (file) => {
-    setFileToDelete(file);
-    handleCloseContextMenu();
-  };
+  const filteredFiles = files.filter(file =>
+    file.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  const handleDeleteConfirm = async () => {
-    if (!fileToDelete) return;
-    try {
-      const response = await fetch('/api/files', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ repo, path: fileToDelete.path, sha: fileToDelete.sha }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to delete file.');
-      }
-      setFileToDelete(null);
-      fetchFiles(); // Refresh file list
-    } catch (err) {
-      console.error(err);
-      setError(err.message);
-    }
-  };
-
-  const handleRenameRequest = (file) => {
-    setFileToRename(file);
-    handleCloseContextMenu();
-  };
-
-  const handleRenameConfirm = async (file, newName) => {
-    if (!file || !newName || newName === file.name) {
-      setFileToRename(null);
-      return;
-    }
-    const oldPath = file.path;
-    const newPath = oldPath.substring(0, oldPath.lastIndexOf('/') + 1) + newName;
-
-    try {
-      // 1. Get the content of the old file
-      const fileContentResponse = await fetch(`/api/files?repo=${repo}&path=${oldPath}`, { credentials: 'include' });
-      if (!fileContentResponse.ok) {
-        throw new Error('Could not fetch file content to rename.');
-      }
-      const fileData = await fileContentResponse.json();
-      const decodedContent = atob(fileData.content);
-
-      // 2. Create the new file
-      const createResponse = await fetch('/api/file', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          repo,
-          path: newPath,
-          content: decodedContent,
-          message: `feat: rename ${oldPath} to ${newPath}`,
-        }),
-      });
-      if (!createResponse.ok) {
-        const errorData = await createResponse.json();
-        throw new Error(errorData.message || 'Failed to create new file for rename.');
-      }
-
-      // 3. Delete the old file
-      const deleteResponse = await fetch('/api/files', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ repo, path: oldPath, sha: file.sha }),
-      });
-      if (!deleteResponse.ok) {
-        const errorData = await deleteResponse.json();
-        throw new Error(errorData.message || 'Failed to delete old file after rename.');
-      }
-
-      setFileToRename(null);
-      fetchFiles(); // Refresh file list
-    } catch (err) {
-      console.error(err);
-      setError(err.message);
-    }
-  };
+  const handleToggleReadme = () => setReadmeVisible(prev => !prev);
 
   if (loading) {
     return <div className="flex items-center justify-center h-full"><div className="text-center p-8 text-gray-500 animate-pulse">Loading files...</div></div>;
@@ -178,25 +135,37 @@ function FileExplorer({ repo }) {
   }
 
   return (
-    <div className="relative min-h-[calc(100vh-250px)]">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-24">
-        {Array.isArray(files) && files.filter(file => !file.name.startsWith('.')).map(file => (
-          <FileTile
-            key={file.sha}
-            file={file}
-            isSelected={selectedFile && selectedFile.sha === file.sha}
-            onClick={handleFileClick}
-            onDoubleClick={handleFileDoubleClick}
-            onLongPress={handleLongPress}
-          />
-        ))}
+    <div className="flex flex-col h-full">
+      <div className="flex-shrink-0 p-4 border-b border-gray-200">
+        <SearchBar onSearch={setSearchQuery} />
       </div>
-      <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 flex justify-between items-center p-2 z-10">
+      <div className="flex-grow overflow-y-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
+          {Array.isArray(filteredFiles) && filteredFiles.filter(file => !file.name.startsWith('.') && file.name.toLowerCase() !== 'readme.md').map(file => (
+            <FileTile
+              key={file.sha}
+              file={file}
+              metadata={metadataCache[file.sha]}
+              isSelected={selectedFile && selectedFile.sha === file.sha}
+              onClick={handleFileClick}
+              onDoubleClick={handleFileDoubleClick}
+            />
+          ))}
+        </div>
+        {isReadmeLoading && <div className="text-center text-gray-500 my-8">Loading README...</div>}
+        {readmeContent && !isReadmeLoading && (
+          <ReadmeDisplay
+            content={readmeContent}
+            isVisible={isReadmeVisible}
+            onToggle={handleToggleReadme}
+          />
+        )}
+      </div>
+      <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 flex justify-between items-center p-2 z-10">
         <div className="flex-1 flex justify-start"></div>
         <div className="flex-1 flex justify-center">
             <button
                 className="bg-primary text-white rounded-full h-14 w-14 flex items-center justify-center shadow-lg hover:bg-opacity-90"
-                onClick={() => setCreateModalOpen(true)}
                 title="Create a new file or folder"
             >
                 <Icon name="Plus" />
@@ -213,10 +182,6 @@ function FileExplorer({ repo }) {
             </button>
         </div>
       </div>
-      {isCreateModalOpen && <CreateModal path={path} repo={repo} onClose={() => setCreateModalOpen(false)} onCreate={fetchFiles} />}
-      {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} file={contextMenu.file} onClose={handleCloseContextMenu} onRename={handleRenameRequest} onDelete={handleDeleteRequest} />}
-      {fileToDelete && <ConfirmDialog message={`Are you sure you want to delete "${fileToDelete.name}"?`} onConfirm={handleDeleteConfirm} onCancel={() => setFileToDelete(null)} />}
-      {fileToRename && <RenameModal file={fileToRename} onClose={() => setFileToRename(null)} onRename={handleRenameConfirm} />}
     </div>
   );
 }

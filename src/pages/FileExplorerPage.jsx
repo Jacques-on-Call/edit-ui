@@ -37,7 +37,7 @@ export function FileExplorerPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="h-screen">
       <FileExplorer repo={selectedRepo.full_name} />
     </div>
   );

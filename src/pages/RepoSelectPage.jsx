@@ -1,11 +1,11 @@
 // easy-seo/src/pages/RepoSelectPage.jsx
 import { useAuth } from '../contexts/AuthContext';
 import { theme } from '../themes/theme';
-import { Github, AlertTriangle } from 'lucide-preact';
+import { AlertTriangle } from 'lucide-preact';
 import { route } from 'preact-router';
 
 export function RepoSelectPage() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, repositories, selectRepo } = useAuth();
 
   if (isLoading) {
     return (
@@ -17,16 +17,9 @@ export function RepoSelectPage() {
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="flex flex-col items-center justify-center pt-24 text-center">
-        <AlertTriangle size={48} className="text-error mb-4" />
-        <h2 className={theme.typography.h2}>Access Denied</h2>
-        <p className="text-textSecondary mt-2">You must be logged in to select a repository.</p>
-      </div>
-    );
+    route('/login', true);
+    return null;
   }
-
-  const { repositories, selectRepo } = useAuth();
 
   const handleSelectRepo = (repo) => {
     selectRepo(repo);
@@ -34,22 +27,25 @@ export function RepoSelectPage() {
   };
 
   return (
-    <div className="pt-12 px-4">
-      <h2 className={theme.typography.h2}>Select a Repository</h2>
+    <div className="pt-12 px-4 text-center">
+      <img src="/logo.webp" alt="Easy SEO Logo" className="w-24 h-24 mx-auto mb-4" />
+      <h1 className="text-5xl font-bold">Easy SEO</h1>
+      <h2 className={theme.typography.h2_alternative}>Select a Repository</h2>
       <p className="text-textSecondary mt-2">
         Welcome, <span className="font-bold text-accent">{user?.login}</span>. Choose a repository to start editing.
       </p>
 
-      <div className="mt-8 flex flex-col items-center gap-8">
+      <div className="mt-8 flex flex-col items-center gap-4">
         {repositories.length > 0 ? (
           repositories.map((repo) => (
-            <button
-              key={repo.id}
-              className="w-full max-w-md bg-surface p-6 rounded-lg border-b-2 border-r-2 border-border hover:border-accent transition-all shadow-xl hover:shadow-2xl text-left transform hover:-translate-y-1"
-              onClick={() => handleSelectRepo(repo)}
-            >
-              <h3 className="font-bold text-lg text-accent">{repo.name}</h3>
-            </button>
+            <div key={repo.id} className="p-2">
+              <button
+                className="w-full max-w-md bg-surface p-6 rounded-lg border-b-2 border-r-2 border-border hover:border-accent transition-all shadow-lg hover:shadow-xl text-left transform hover:-translate-y-1"
+                onClick={() => handleSelectRepo(repo)}
+              >
+                <h3 className="font-bold text-lg text-accent">{repo.name}</h3>
+              </button>
+            </div>
           ))
         ) : (
           <p className="text-textSecondary">No repositories found.</p>

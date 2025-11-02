@@ -1,7 +1,7 @@
 import { memo } from 'preact/compat';
 import Icon from './Icon';
 
-const FileTile = memo(({ file, isSelected, onClick, onDoubleClick, onLongPress }) => {
+const FileTile = memo(({ file, metadata, isSelected, onClick, onDoubleClick, onLongPress }) => {
   const tileClasses = `
     relative flex flex-col items-center justify-center
     p-4 rounded-lg
@@ -35,6 +35,9 @@ const FileTile = memo(({ file, isSelected, onClick, onDoubleClick, onLongPress }
       </div>
       <div className="w-full text-center mt-2">
         <span className="text-sm font-semibold text-gray-700 truncate">{file.name}</span>
+        {metadata && (
+          <p className="text-xs text-gray-500 truncate">{metadata.title}</p>
+        )}
       </div>
     </div>
   );

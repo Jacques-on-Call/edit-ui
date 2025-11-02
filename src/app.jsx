@@ -1,35 +1,39 @@
 // easy-seo/src/app.jsx
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { theme } from './themes/theme';
-import { Router } from 'preact-router';
+import { Router, Link } from 'preact-router';
 import { LoginPage } from './pages/LoginPage';
 import { RepoSelectPage } from './pages/RepoSelectPage';
 import { FileExplorerPage } from './pages/FileExplorerPage';
 import { CallbackPage } from './pages/CallbackPage';
-import AuthDebugMonitor from './components/AuthDebugMonitor';
+import AuthDebugMonitor from './components/AuthDebugMonitor'; // Corrected import
 
 const AppContent = () => {
-  const { isLoading } = useAuth();
+  const { isLoading, isAuthenticated, user } = useAuth();
 
   return (
-    <div className="bg-background text-text min-h-screen" style={{ fontFamily: theme.typography.fontFamily }}>
-      {/* The header is now a simple placeholder, ensuring a consistent auth shell without displaying user info */}
-      <header className="h-4 bg-background"></header>
-
-      <main className="p-6 md:p-10">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-screen">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+    <div className="bg-background text-text min-h-screen p-6 md:p-10" style={{ fontFamily: theme.typography.fontFamily }}>
+      <header className="flex justify-between items-center pb-8">
+        {isAuthenticated && user ? (
+          <div className="flex items-center gap-4">
+            <img src={user.avatar_url} alt="User Avatar" className="w-10 h-10 rounded-full" />
+            <span className="font-bold">{user.login}</span>
           </div>
         ) : (
-          <Router>
-            <LoginPage path="/" />
-            <CallbackPage path="/login" />
-            <RepoSelectPage path="/repo-select" />
-            <FileExplorerPage path="/explorer" />
-          </Router>
+          <div></div> // Empty div to maintain layout
         )}
-      </main>
+      </header>
+
+      {isLoading ? (
+        <p>Loading application...</p>
+      ) : (
+        <Router>
+          <LoginPage path="/" />
+          <CallbackPage path="/login" />
+          <RepoSelectPage path="/repo-select" />
+          <FileExplorerPage path="/explorer" />
+        </Router>
+      )}
 
       {import.meta.env.DEV && <AuthDebugMonitor />}
     </div>
