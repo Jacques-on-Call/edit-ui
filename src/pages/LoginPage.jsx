@@ -1,6 +1,7 @@
 // easy-seo/src/pages/LoginPage.jsx
 import { useAuth } from '../contexts/AuthContext';
 import { route } from 'preact-router';
+import { Zap, Check, TrendingUp, ArrowUpRight } from 'lucide-preact';
 
 export function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -24,44 +25,54 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-midnight-blue text-white p-6 font-sans">
-      <div className="text-center w-full max-w-lg">
-        <h1 className="text-8xl font-bold mb-4">ShowUp</h1>
-        <h2 className="text-2xl text-light-grey mb-6">Build your business visibility, easily.</h2>
-        <p className="text-light-grey mb-10">
-          ShowUp helps professionals build high-ranking websites and attract new customers - fast.
-        </p>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-midnight-blue text-white p-8 font-sans">
+      <div className="w-full max-w-sm">
 
-        <ul className="text-left text-light-grey space-y-4 mb-12 inline-block">
-          <li className="flex items-center">
-            <svg class="w-6 h-6 mr-2 text-yellow-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            Personalized guidance
-          </li>
-          <li className="flex items-center">
-            <svg class="w-6 h-6 mr-2 text-yellow-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            Simple to update
-          </li>
-          <li className="flex items-center">
-            <svg class="w-6 h-6 mr-2 text-yellow-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            Easy SEO (search everywhere optimized)
-          </li>
-        </ul>
+        <header className="flex items-center justify-between mb-8">
+          <h1 className="text-5xl font-bold">ShowUp</h1>
+          <div className="bg-yellow-green rounded-full p-2">
+            <ArrowUpRight className="text-midnight-blue" size={28} />
+          </div>
+        </header>
 
-        <div className="mb-6">
-          <a
-            href={githubOauthUrl}
-            className="inline-block px-16 py-4 text-xl font-bold bg-yellow-green text-midnight-blue rounded-lg transition-all duration-200 hover:scale-105"
-            style={{ boxShadow: '-4px 4px 0px #D9D9D9' }}
-          >
-            Sign Up Free
-          </a>
-        </div>
+        <main>
+          <h2 className="text-xl font-bold text-yellow-green mb-3">Build your business visibility, easily.</h2>
+          <p className="text-light-grey mb-8">
+            ShowUp helps professionals build high-ranking websites and attract new customers - fast.
+          </p>
 
-        <div className="mb-10">
-          <a href={githubOauthUrl} className="text-light-grey hover:underline">
-            Login
-          </a>
-        </div>
+          <ul className="space-y-4 mb-10">
+            <li className="flex items-center">
+              <Zap size={20} className="text-white mr-3" />
+              <span className="text-light-grey">Personalized guidance</span>
+            </li>
+            <li className="flex items-center">
+              <Check size={20} className="text-white mr-3" />
+              <span className="text-light-grey">Simple to update</span>
+            </li>
+            <li className="flex items-center">
+              <TrendingUp size={20} className="text-white mr-3" />
+              <span className="text-light-grey">Easy SEO (search everywhere optimized)</span>
+            </li>
+          </ul>
+
+          <div className="mb-6">
+            <a
+              href={githubOauthUrl}
+              className="flex items-center justify-center w-full px-6 py-3 text-lg font-bold bg-surface text-white rounded-md border border-gray-600 hover:bg-gray-700 transition-colors"
+            >
+              <ArrowUpRight size={22} className="mr-2" />
+              Sign Up Free
+            </a>
+          </div>
+
+          <div>
+            <a href={githubOauthUrl} className="font-bold text-yellow-green hover:underline">
+              Login
+            </a>
+          </div>
+        </main>
+
       </div>
 
       <footer className="absolute bottom-6 text-sm text-light-grey opacity-75">
