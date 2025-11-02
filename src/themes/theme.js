@@ -14,9 +14,6 @@ export const theme = {
     accent: '#008080',        // Teal
     success: '#32CD32',       // Lime Green for success states
     error: '#FF4500',         // OrangeRed for error states
-    'midnight-blue': '#191970',
-    'yellow-green': '#D8F21D',
-    'light-grey': '#D9D9D9',
   },
   typography: {
     fontFamily: '"Inter", sans-serif', // A clean, modern sans-serif font
