@@ -6,8 +6,8 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-grow flex flex-col justify-center pl-[20vw] pr-4 sm:pr-6 md:pr-10">
+    <div className="min-h-screen flex flex-col pl-[20vw] pr-4 sm:pr-6 md:pr-10">
+      <div className="flex-grow flex flex-col justify-center">
         <div className="max-w-lg">
           <header className="flex items-center gap-3 mb-8">
             <img src="/ShowUp-H1-bigger-Logo.webp.jpeg" alt="ShowUp Logo" className="h-10 w-10" />
@@ -37,13 +37,9 @@ export function LoginPage() {
               </li>
             </ul>
 
-            {/* --- Corrected "Push-Down" Button --- */}
             <button
               onClick={handleLogin}
-              className="bg-black text-white font-bold flex items-center gap-3 py-4 px-8 rounded-lg
-                         shadow-lime-offset transition-all duration-150 ease-in-out
-                         hover:shadow-lime-pressed hover:translate-x-[-4px] hover:translate-y-[4px]
-                         active:translate-y-[5px] active:translate-x-[-3px]"
+              className="bg-button-bg text-button-text font-bold flex items-center gap-3 py-4 px-8 rounded-lg shadow-cta transition-transform transform hover:scale-105"
             >
               <img src="/ShowUp-Button-Logo.webp" alt="Button Logo" className="h-6 w-6" />
               <span>Sign Up Free</span>

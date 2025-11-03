@@ -1,5 +1,6 @@
 // easy-seo/src/app.jsx
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { theme } from './themes/theme';
 import { Router, Link } from 'preact-router';
 import { LoginPage } from './pages/LoginPage';
 import { RepoSelectPage } from './pages/RepoSelectPage';
@@ -11,7 +12,7 @@ const AppContent = () => {
   const { isLoading, isAuthenticated, user } = useAuth();
 
   return (
-    <div className="bg-background text-text min-h-screen p-6 md:p-10">
+    <div className="bg-background text-text min-h-screen p-6 md:p-10" style={{ fontFamily: theme.typography.fontFamily }}>
       <header className="flex justify-between items-center pb-8">
         {isAuthenticated && user ? (
           <div className="flex items-center gap-4">

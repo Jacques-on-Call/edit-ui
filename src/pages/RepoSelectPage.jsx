@@ -1,5 +1,6 @@
 // easy-seo/src/pages/RepoSelectPage.jsx
 import { useAuth } from '../contexts/AuthContext';
+import { theme } from '../themes/theme';
 import { AlertTriangle } from 'lucide-preact';
 import { route } from 'preact-router';
 
@@ -29,7 +30,7 @@ export function RepoSelectPage() {
     <div className="pt-12 px-4 text-center">
       <img src="/logo.webp" alt="Easy SEO Logo" className="w-24 h-24 mx-auto mb-4" />
       <h1 className="text-5xl font-bold">Easy SEO</h1>
-      <h2>Select a Repository</h2>
+      <h2 className={theme.typography.h2_alternative}>Select a Repository</h2>
       <p className="text-textSecondary mt-2">
         Welcome, <span className="font-bold text-accent">{user?.login}</span>. Choose a repository to start editing.
       </p>

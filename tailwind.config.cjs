@@ -18,8 +18,7 @@ module.exports = {
         'button-text': '#FFFFFF',
       },
       boxShadow: {
-        'lime-offset': '-4px 4px 0 #D8F21D',
-        'lime-pressed': '0 0 0 #D8F21D',
+        'cta': '-4px 4px 0px #D8F21D',
       }
     },
   },

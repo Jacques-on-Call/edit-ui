@@ -3,6 +3,8 @@
 This document records significant changes, architectural decisions, and critical bug fixes for the `easy-seo` application. All developers (human or AI) should review this log before beginning work to understand the current context and history of the project.
 
 ---
+### ***2025-11-02**
+Reset to earlier branch to fix a mistake introduced but trying to improve the sign up button.
 
 ### **2025-10-31**
 
