@@ -8,7 +8,7 @@ const LoginPage = () => {
       className="flex flex-col min-h-screen text-white p-8"
       style={{ backgroundColor: '#191970' }}
     >
-      <div className="flex-1 lg:pl-[20vw]">
+      <div className="flex-1" style={{ paddingLeft: '20vw' }}>
         <header className="flex items-center mb-12">
           <h1 className="text-4xl font-bold">ShowUp</h1>
           <div className="ml-4 bg-yellow-400 rounded-full p-1">
@@ -30,17 +30,17 @@ const LoginPage = () => {
 
           <div className="space-y-6 text-left max-w-md mb-12">
             <div className="flex items-center">
-              <Zap color="#D8F21D" className="mr-4 w-6 h-6" />
+              <Zap color="#D8F21D" className="mr-4" size={24} />
               <span className="text-xl" style={{ color: '#D9D9D9' }}>
                 Personalized guidance
               </span>
             </div>
             <div className="flex items-center">
-              <Check color="#D8F21D" className="mr-4 w-6 h-6" />
+              <Check color="#D8F21D" className="mr-4" size={24} />
               <span className="text-xl" style={{ color: '#D9D9D9' }}>Simple to update</span>
             </div>
             <div className="flex items-center">
-              <TrendingUp color="#D8F21D" className="mr-4 w-6 h-6" />
+              <TrendingUp color="#D8F21D" className="mr-4" size={24} />
               <span className="text-xl" style={{ color: '#D9D9D9' }}>
                 Easy SEO (search everywhere optimized)
               </span>
