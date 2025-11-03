@@ -37,20 +37,17 @@ export function LoginPage() {
               </li>
             </ul>
 
-            {/* --- Improved "Push-Down" Button --- */}
-            <div className="relative group w-fit">
-              {/* Base Layer (The Lime Color) */}
-              <div className="absolute inset-0 bg-accent-lime rounded-lg"></div>
-
-              {/* Top Layer (The Black Button) */}
-              <button
-                onClick={handleLogin}
-                className="relative bg-button-bg text-button-text font-bold flex items-center gap-3 py-4 px-8 rounded-lg border-2 border-black transition-transform transform -translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0"
-              >
-                <img src="/ShowUp-Button-Logo.webp" alt="Button Logo" className="h-6 w-6" />
-                <span>Sign Up Free</span>
-              </button>
-            </div>
+            {/* --- Corrected "Push-Down" Button --- */}
+            <button
+              onClick={handleLogin}
+              className="bg-black text-white font-bold flex items-center gap-3 py-4 px-8 rounded-lg
+                         shadow-lime-offset transition-all duration-150 ease-in-out
+                         hover:shadow-lime-pressed hover:translate-x-[-4px] hover:translate-y-[4px]
+                         active:translate-y-[5px] active:translate-x-[-3px]"
+            >
+              <img src="/ShowUp-Button-Logo.webp" alt="Button Logo" className="h-6 w-6" />
+              <span>Sign Up Free</span>
+            </button>
 
             <a href="#" onClick={handleLogin} className="block mt-6 text-sm text-accent-lime hover:text-main-text">
               Login

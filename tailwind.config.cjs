@@ -17,8 +17,9 @@ module.exports = {
         'button-bg': '#000000',
         'button-text': '#FFFFFF',
       },
-      translate: {
-        'press': '2px',
+      boxShadow: {
+        'lime-offset': '-4px 4px 0 #D8F21D',
+        'lime-pressed': '0 0 0 #D8F21D',
       }
     },
   },
