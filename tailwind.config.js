@@ -8,11 +8,9 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {
-      colors: theme.colors,
-      fontFamily: {
-        sans: [theme.typography.fontFamily, 'sans-serif'],
-      },
+    colors: theme.colors,
+    fontFamily: {
+      sans: [theme.typography.fontFamily, 'sans-serif'],
     },
   },
   plugins: [],

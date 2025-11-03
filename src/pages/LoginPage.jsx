@@ -1,13 +1,12 @@
-import { ShieldCheck, TrendingUp, Wand2 } from 'lucide-preact';
+import { Zap, Check, TrendingUp } from 'lucide-preact';
 
 export function LoginPage() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-primary">
-      <div className="w-full max-w-md px-8">
+    <div className="flex items-center min-h-screen bg-primary">
+      <div className="w-full max-w-md px-8 ml-[20%]">
 
         <header className="flex items-center gap-4 mb-4">
-          <img src="/ShowUp-H1-Logo.webp" alt="ShowUp Logo" className="w-16 h-16" />
-          <h1 className="text-5xl font-bold text-text">ShowUp</h1>
+          <img src="/ShowUp-H1-Logo.webp" alt="ShowUp Logo" className="h-16" />
         </header>
 
         <main>
@@ -18,15 +17,15 @@ export function LoginPage() {
 
           <ul className="space-y-4 text-lg text-text mb-9">
             <li className="flex items-center gap-3">
-              <Wand2 size={24} className="text-accent" />
+              <Zap size={24} className="text-text" />
               <span>Personalized guidance</span>
             </li>
             <li className="flex items-center gap-3">
-              <ShieldCheck size={24} className="text-accent" />
+              <Check size={24} className="text-text" />
               <span>Simple to update</span>
             </li>
             <li className="flex items-center gap-3">
-              <TrendingUp size={24} className="text-accent" />
+              <TrendingUp size={24} className="text-text" />
               <span>Easy SEO (search everywhere optimized)</span>
             </li>
           </ul>
@@ -46,7 +45,7 @@ export function LoginPage() {
           </div>
         </main>
 
-        <footer className="absolute bottom-5 left-1/2 -translate-x-1/2">
+        <footer className="mt-12">
           <p className="text-sm text-textSecondary">Powered by Strategy Content Agency</p>
         </footer>
 
