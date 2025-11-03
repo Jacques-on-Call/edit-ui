@@ -1,4 +1,5 @@
-import { Zap, Check, TrendingUp } from 'lucide-preact';
+// Import the new icons from lucide-preact
+import { PenSquare, RefreshCw, TrendingUp } from 'lucide-preact';
 
 export function LoginPage() {
   const handleLogin = () => {
@@ -6,7 +7,10 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col pl-[20vw] pr-4 sm:pr-6 md:pr-10">
+    // --- RESPONSIVE FIX ---
+    // Use fixed padding on mobile (px-6) and switch to margin on desktop (md:ml-[20%])
+    // This provides consistent spacing on small screens.
+    <div className="min-h-screen flex flex-col px-6 md:ml-[20%]">
       <div className="flex-grow flex flex-col justify-center">
         <div className="max-w-lg">
           <header className="flex items-center gap-3 mb-8">
@@ -22,13 +26,15 @@ export function LoginPage() {
               ShowUp helps professionals build high-ranking websites and attract new customers – fast.
             </p>
 
+            {/* --- ICON & LAYOUT FIX --- */}
+            {/* Using specific, more meaningful icons for each feature. */}
             <ul className="space-y-4 text-left mb-12">
               <li className="flex items-center gap-3">
-                <Zap size={24} className="text-accent-lime w-6 h-6" />
+                <PenSquare size={24} className="text-accent-lime w-6 h-6" />
                 <span>Personalized guidance</span>
               </li>
               <li className="flex items-center gap-3">
-                <Check size={24} className="text-accent-lime w-6 h-6" />
+                <RefreshCw size={24} className="text-accent-lime w-6 h-6" />
                 <span>Simple to update</span>
               </li>
               <li className="flex items-center gap-3">
@@ -37,11 +43,12 @@ export function LoginPage() {
               </li>
             </ul>
 
+            {/* --- BUTTON ICON FIX --- */}
             <button
               onClick={handleLogin}
               className="bg-button-bg text-button-text font-bold flex items-center gap-3 py-4 px-8 rounded-lg shadow-cta transition-transform transform hover:scale-105"
             >
-              <img src="/ShowUp-Button-Logo.webp" alt="Button Logo" className="h-6 w-6" />
+              <img src="/ShowUp-Button-Logo.webp" alt="Button Logo" className="h-6 w-6 md:h-8 md:w-8" />
               <span>Sign Up Free</span>
             </button>
 
