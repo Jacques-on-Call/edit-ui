@@ -6,8 +6,8 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col pl-[20vw] pr-4 sm:pr-6 md:pr-10">
-      <div className="flex-grow flex flex-col justify-center">
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-grow flex flex-col justify-center pl-[20vw] pr-4 sm:pr-6 md:pr-10">
         <div className="max-w-lg">
           <header className="flex items-center gap-3 mb-8">
             <img src="/ShowUp-H1-bigger-Logo.webp.jpeg" alt="ShowUp Logo" className="h-10 w-10" />
@@ -40,12 +40,12 @@ export function LoginPage() {
             {/* --- Improved "Push-Down" Button --- */}
             <div className="relative group w-fit">
               {/* Base Layer (The Lime Color) */}
-              <div className="absolute inset-0 bg-accent-lime rounded-lg transform translate-x-press translate-y-press"></div>
+              <div className="absolute inset-0 bg-accent-lime rounded-lg"></div>
 
               {/* Top Layer (The Black Button) */}
               <button
                 onClick={handleLogin}
-                className="relative bg-button-bg text-button-text font-bold flex items-center gap-3 py-4 px-8 rounded-lg border-2 border-black transition-transform group-hover:translate-x-press group-hover:translate-y-press"
+                className="relative bg-button-bg text-button-text font-bold flex items-center gap-3 py-4 px-8 rounded-lg border-2 border-black transition-transform transform -translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:translate-y-0"
               >
                 <img src="/ShowUp-Button-Logo.webp" alt="Button Logo" className="h-6 w-6" />
                 <span>Sign Up Free</span>
