@@ -24,26 +24,33 @@ export function LoginPage() {
 
             <ul className="space-y-4 text-left mb-12">
               <li className="flex items-center gap-3">
-                <Zap size={24} className="text-accent-lime" />
+                <Zap size={24} className="text-accent-lime w-6 h-6" />
                 <span>Personalized guidance</span>
               </li>
               <li className="flex items-center gap-3">
-                <Check size={24} className="text-accent-lime" />
+                <Check size={24} className="text-accent-lime w-6 h-6" />
                 <span>Simple to update</span>
               </li>
               <li className="flex items-center gap-3">
-                <TrendingUp size={24} className="text-accent-lime" />
+                <TrendingUp size={24} className="text-accent-lime w-6 h-6" />
                 <span>Easy SEO (search everywhere optimized)</span>
               </li>
             </ul>
 
-            <button
-              onClick={handleLogin}
-              className="bg-button-bg text-button-text font-bold flex items-center gap-3 py-4 px-8 rounded-lg shadow-cta transition-transform transform hover:scale-105"
-            >
-              <img src="/ShowUp-Button-Logo.webp" alt="Button Logo" className="h-6 w-6" />
-              <span>Sign Up Free</span>
-            </button>
+            {/* --- Improved "Push-Down" Button --- */}
+            <div className="relative group w-fit">
+              {/* Base Layer (The Lime Color) */}
+              <div className="absolute inset-0 bg-accent-lime rounded-lg transform translate-x-press translate-y-press"></div>
+
+              {/* Top Layer (The Black Button) */}
+              <button
+                onClick={handleLogin}
+                className="relative bg-button-bg text-button-text font-bold flex items-center gap-3 py-4 px-8 rounded-lg border-2 border-black transition-transform group-hover:translate-x-press group-hover:translate-y-press"
+              >
+                <img src="/ShowUp-Button-Logo.webp" alt="Button Logo" className="h-6 w-6" />
+                <span>Sign Up Free</span>
+              </button>
+            </div>
 
             <a href="#" onClick={handleLogin} className="block mt-6 text-sm text-accent-lime hover:text-main-text">
               Login

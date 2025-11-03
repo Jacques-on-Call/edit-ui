@@ -17,8 +17,8 @@ module.exports = {
         'button-bg': '#000000',
         'button-text': '#FFFFFF',
       },
-      boxShadow: {
-        'cta': '-4px 4px 0px #D8F21D',
+      translate: {
+        'press': '2px',
       }
     },
   },
