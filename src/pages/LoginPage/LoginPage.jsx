@@ -8,7 +8,7 @@ const LoginPage = () => {
       className="flex flex-col min-h-screen text-white p-8"
       style={{ backgroundColor: '#191970' }}
     >
-      <div className="flex-1" style={{ paddingLeft: '20vw' }}>
+      <div className="flex-1 login-desktop-padding">
         <header className="flex items-center mb-12">
           <h1 className="text-4xl font-bold">ShowUp</h1>
           <div className="ml-4 bg-yellow-400 rounded-full p-1">
