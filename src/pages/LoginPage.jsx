@@ -1,5 +1,5 @@
 // Import the new icons from lucide-preact
-import { PenSquare, RefreshCw, TrendingUp } from 'lucide-preact';
+import { Handshake, FilePenLine, Eye } from 'lucide-preact';
 
 export function LoginPage() {
   const handleLogin = () => {
@@ -30,15 +30,15 @@ export function LoginPage() {
             {/* Using specific, more meaningful icons for each feature. */}
             <ul className="space-y-4 text-left mb-12">
               <li className="flex items-center gap-3">
-                <PenSquare className="text-accent-lime w-6 h-6" />
+                <Handshake className="text-accent-lime w-6 h-6" />
                 <span>Personalized guidance</span>
               </li>
               <li className="flex items-center gap-3">
-                <RefreshCw className="text-accent-lime w-6 h-6" />
+                <FilePenLine className="text-accent-lime w-6 h-6" />
                 <span>Simple to update</span>
               </li>
               <li className="flex items-center gap-3">
-                <TrendingUp className="text-accent-lime w-6 h-6" />
+                <Eye className="text-accent-lime w-6 h-6" />
                 <span>Easy SEO (search everywhere optimized)</span>
               </li>
             </ul>
@@ -52,9 +52,9 @@ export function LoginPage() {
               <span>Sign Up Free</span>
             </button>
 
-            <a role="button" onClick={handleLogin} className="block mt-6 text-sm text-accent-lime hover:text-main-text cursor-pointer">
+            <button onClick={handleLogin} className="block mt-6 text-sm text-accent-lime hover:text-main-text cursor-pointer bg-transparent border-none p-0">
               Login
-            </a>
+            </button>
           </main>
         </div>
       </div>
