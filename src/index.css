@@ -4,8 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-background font-sans text-text;
-  }
+body {
+  @apply bg-midnight-blue text-main-text font-sans;
 }
