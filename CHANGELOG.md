@@ -1,7 +1,18 @@
 # Project Change Log
 
-This document records significant changes, architectural decisions, and critical bug fixes for the `easy-seo` project, including both the Cloudflare Worker backend and the Preact frontend.
+This document records significant changes, architectural decisions, and critical bug fixes for the `easy-seo` project, including both the Cloudflare Worker backend and the Preact frontend. Please do read and add notes for future developers in easy-seo/docs/
+ 
+## 2025-11-04 - Jules #142 - Login and Deployment Pipeline Overhaul
 
+A series of critical fixes were implemented to resolve a non-functional login page and cascading deployment failures. The root cause was a stale production environment caused by misconfigured CI/CD workflows after a major code refactor.
+
+### Fixes & Improvements
+
+-   **`fix(login)`:** Resolved an issue where the `/api/login` endpoint was returning a 404 error. The underlying code was correct, but the worker was not being deployed.
+-   **`fix(worker)`:** Fixed a critical build failure by adding the missing `gray-matter` dependency to the root `package.json`.
+-   **`ci(worker)`:** Corrected the `deploy-worker.yml` GitHub Actions workflow to monitor the correct source files (`index.js`, `cloudflare-worker-src/**`) for the refactored worker, ensuring changes are automatically deployed.
+-   **`ci(ui)`:** Completely overhauled the `deploy-ui.yml` workflow, which was misconfigured to deploy a different project. It is now correctly configured to build and deploy the `easy-seo` application to Cloudflare Pages, resolving the stale frontend issue and ensuring UI changes (like consistent icon sizes) are reflected live.
+-   **`fix(deploy)`:** Decoupled the worker deployment from the frontend by removing the static asset configuration from `wrangler.toml`. This aligns with the project's architecture where the frontend and backend are deployed via separate pipelines.
 ---
 
 ### **v0.1.8: 2025-11-03 (Final Login Page Fixes)**
