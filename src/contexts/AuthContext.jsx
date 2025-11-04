@@ -28,10 +28,12 @@ export const AuthProvider = ({ children }) => {
         if (reposResponse.ok) {
           setRepositories(await reposResponse.json());
         }
+        return true; // Auth success
       } else {
         setUser(null);
         setIsAuthenticated(false);
         setRepositories([]);
+        return false; // Auth failed
       }
     } catch (error) {
       console.error('Auth check failed:', error);

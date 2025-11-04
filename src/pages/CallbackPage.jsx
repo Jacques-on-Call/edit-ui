@@ -8,11 +8,15 @@ export function CallbackPage() {
 
   useEffect(() => {
     const handleCallback = async () => {
-      await checkAuthStatus();
-      route('/repo-select', true);
+      const isLoggedIn = await checkAuthStatus();
+      if (isLoggedIn) {
+        route('/repo-select', true);
+      } else {
+        route('/login', true);
+      }
     };
     handleCallback();
-  }, [checkAuthStatus]);
+  }, []);
 
   return (
     <div className="flex items-center justify-center h-screen">
