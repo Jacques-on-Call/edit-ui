@@ -3,6 +3,40 @@
 This document records significant changes, architectural decisions, and critical bug fixes for the `easy-seo` application. All developers (human or AI) should review this log before beginning work to understand the current context and history of the project.
 
 ---
+
+### **2025-11-04**
+
+**Author:** Jules #142
+
+**Change:** Performed a comprehensive overhaul of the login functionality and the CI/CD deployment pipelines to resolve a complete system failure where the login page was non-functional and the production environment was stale.
+
+**Context & Learnings:**
+
+1.  **Login Functionality (`/api/login` 404 Error):**
+    *   **Problem:** The login link was correctly pointing to `/api/login`, but the request resulted in a 404 error. The backend code in the repository was correct, but it was not being deployed.
+    *   **Solution:** The investigation revealed that a series of cascading failures in the deployment pipelines were preventing any new code from reaching production. Fixing the pipelines resolved the 404 error.
+
+2.  **Worker Build Failure (Dependency):**
+    *   **Problem:** The `wrangler deploy` command was failing with an error `Could not resolve "gray-matter"`. This was a hard blocker preventing any new worker deployments.
+    *   **Solution:** The `gray-matter` package, a dependency for the worker, was missing from the root `package.json`. I installed the dependency (`npm install gray-matter --save-exact`), which fixed the build.
+
+3.  **Worker Deployment Trigger (CI/CD):**
+    *   **Problem:** Even after fixing the build, the worker was not auto-deploying. The `.github/workflows/deploy-worker.yml` workflow was still watching the old, monolithic worker file (`cloudflare-worker-code.js`) and ignoring the new `cloudflare-worker-src/` directory.
+    *   **Solution:** I updated the workflow's `paths` trigger to correctly monitor `index.js` and `cloudflare-worker-src/**`, ensuring that changes to the refactored worker code now trigger a deployment.
+
+4.  **UI Deployment Workflow (CI/CD):**
+    *   **Problem:** The frontend UI was stale, showing old code with visual bugs (inconsistent icon sizes) that had already been fixed in the `easy-seo` directory. The `.github/workflows/deploy-ui.yml` was discovered to be deploying a completely different project (`priority-engine-ui`).
+    *   **Solution:** I completely rewrote the `deploy-ui.yml` workflow to correctly trigger on changes to `easy-seo/**`, build the `easy-seo` project, and deploy its `dist` directory to the correct Cloudflare Pages project (`edit-ui`).
+
+5.  **Worker Asset Configuration (Deployment):**
+    *   **Problem:** A final deployment blocker was an error stating the assets directory (`easy-seo/dist`) could not be found. This was because the `wrangler.toml` file was incorrectly configured to have the worker manage frontend assets, which are handled by a separate pipeline.
+    *   **Solution:** I removed the `[assets]` configuration from `wrangler.toml`, fully decoupling the worker from the frontend deployment and resolving the error.
+
+**Reflection:**
+
+*   **Most Challenging Part:** The most challenging aspect was diagnosing a problem that had multiple, deeply nested root causes across different parts of the system (dependencies, CI/CD, and configuration). It required a systematic process of elimination to uncover each layer of the failure.
+*   **Key Learning:** CI/CD and deployment configurations are just as critical as the application code itself. When a feature that works locally fails in production, the deployment pipeline is a primary suspect. A seemingly simple "stale frontend" issue was the symptom of a completely broken deployment strategy.
+*   **Advice for Next Agent:** Always verify the CI/CD trigger paths (`paths:` in the `.yml` files) after a major code refactor that moves or renames directories. What is in the repository is not always what is being deployed.
 ### ***2025-11-02**
 Reset to earlier branch to fix a mistake introduced but trying to improve the sign up button.
 
