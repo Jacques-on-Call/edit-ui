@@ -21,13 +21,27 @@ function FileExplorer({ repo }) {
   const fetchMetadata = useCallback(async (file) => {
     if (file.type === 'dir') return;
     try {
-      const res = await fetch(`/api/files?repo=${repo}&path=${file.path}`, { credentials: 'include' });
-      if (!res.ok) throw new Error(`Failed to fetch metadata: ${res.statusText}`);
-      const fileData = await res.json();
+      // Fetch frontmatter
+      const fileRes = await fetch(`/api/files?repo=${repo}&path=${file.path}`, { credentials: 'include' });
+      if (!fileRes.ok) throw new Error(`Failed to fetch file content: ${fileRes.statusText}`);
+      const fileData = await fileRes.json();
       const decodedContent = atob(fileData.content);
       const { data } = matter(decodedContent);
-      if (data) {
-        setMetadataCache(prev => ({ ...prev, [file.sha]: data }));
+
+      // Fetch commit data
+      const commitRes = await fetch(`/api/file/commits?repo=${repo}&path=${file.path}`, { credentials: 'include' });
+      if (!commitRes.ok) throw new Error(`Failed to fetch commit data: ${commitRes.statusText}`);
+      const commitData = await commitRes.json();
+      const lastCommit = commitData[0];
+
+      const metadata = {
+        ...data,
+        lastEditor: lastCommit?.commit?.author?.name,
+        lastModified: lastCommit?.commit?.author?.date,
+      };
+
+      if (metadata) {
+        setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
       }
     } catch (err) {
       console.error(`Failed to fetch metadata for ${file.path}:`, err);
@@ -161,11 +175,11 @@ function FileExplorer({ repo }) {
           />
         )}
       </div>
-      <div className="flex-shrink-0 bg-gradient-to-t from-gray-900 to-transparent border-t border-gray-800 flex justify-between items-center p-2 z-10">
+      <div className="flex-shrink-0 bg-gradient-to-t from-blue-900 to-transparent border-t border-blue-200 flex justify-between items-center p-2 z-10">
         <div className="flex-1 flex justify-start"></div>
         <div className="flex-1 flex justify-center">
             <button
-                className="bg-primary text-white rounded-full h-14 w-14 flex items-center justify-center shadow-lg hover:bg-opacity-90"
+                className="bg-primary text-white rounded-full h-14 w-14 flex items-center justify-center shadow-lg hover:bg-opacity-90 border border-accent-lime"
                 title="Create a new file or folder"
             >
                 <Icon name="Plus" />

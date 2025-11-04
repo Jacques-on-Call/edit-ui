@@ -40,10 +40,10 @@ export function RepoSelectPage() {
           repositories.map((repo) => (
             <div key={repo.id} className="w-full max-w-md">
               <button
-                className="w-full bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-lg border border-gray-700 hover:border-accent transition-all shadow-lg hover:shadow-2xl text-left transform hover:-translate-y-1"
+                className="w-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-400 via-blue-800 to-blue-900 p-6 rounded-lg border border-blue-200 hover:border-accent transition-all shadow-lg hover:shadow-2xl text-left transform hover:-translate-y-1"
                 onClick={() => handleSelectRepo(repo)}
               >
-                <h3 className="font-bold text-lg text-accent">{repo.name}</h3>
+                <h3 className="font-bold text-lg text-white text-center">{repo.name}</h3>
               </button>
             </div>
           ))

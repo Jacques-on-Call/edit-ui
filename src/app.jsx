@@ -1,7 +1,7 @@
 // easy-seo/src/app.jsx
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { theme } from './themes/theme';
-import { Router, Link } from 'preact-router';
+import { Router, useRouter } from 'preact-router';
 import { LoginPage } from './pages/LoginPage';
 import { RepoSelectPage } from './pages/RepoSelectPage';
 import { FileExplorerPage } from './pages/FileExplorerPage';
@@ -10,11 +10,13 @@ import AuthDebugMonitor from './components/AuthDebugMonitor'; // Corrected impor
 
 const AppContent = () => {
   const { isLoading, isAuthenticated, user } = useAuth();
+  const [router] = useRouter();
+  const currentPath = router.url;
 
   return (
     <div className="bg-background text-text min-h-screen p-6 md:p-10" style={{ fontFamily: theme.typography.fontFamily }}>
       <header className="flex justify-between items-center pb-8">
-        {isAuthenticated && user ? (
+        {isAuthenticated && user && currentPath !== '/explorer' ? (
           <div className="flex items-center gap-4">
             <img src={user.avatar_url} alt="User Avatar" className="w-10 h-10 rounded-full" />
             <span className="font-bold">{user.login}</span>

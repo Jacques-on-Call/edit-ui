@@ -29,7 +29,7 @@ const SearchBar = ({ onSearch }) => {
         value={query}
         onChange={handleChange}
         placeholder="...find your content or file"
-        className="w-full pl-10 pr-4 py-2 text-text bg-surface border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-accent"
+        className="w-full pl-10 pr-4 py-2 text-text bg-transparent border-none focus:outline-none focus:ring-0"
       />
     </div>
   );
