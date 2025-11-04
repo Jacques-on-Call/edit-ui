@@ -52,7 +52,7 @@ export function LoginPage() {
               <span>Sign Up Free</span>
             </button>
 
-            <button onClick={handleLogin} className="block mt-6 text-sm text-accent-lime hover:text-main-text cursor-pointer bg-transparent border-none p-0">
+            <button onClick={() => window.location.href = '/api/login'} className="block mt-6 text-sm text-accent-lime hover:text-main-text cursor-pointer bg-transparent border-none p-0">
               Login
             </button>
           </main>
