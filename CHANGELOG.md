@@ -4,6 +4,29 @@ This document records significant changes, architectural decisions, and critical
 
 ---
 
+### **v0.1.8: 2025-11-03 (Final Login Page Fixes)**
+
+**Author:** Jules #141, Security Virtuoso
+
+**Change:** Implemented a definitive set of backend and frontend fixes to resolve the persistent login issues and UI inconsistencies.
+
+**Context & Key Changes:**
+
+1.  **Backend Login Route Fix:**
+    *   Diagnosed and fixed a 404 error on the `/api/login` route by implementing a new `handleLoginRequest` function in the Cloudflare Worker.
+    *   This function correctly constructs the GitHub OAuth URL and redirects the user, resolving the primary functional bug.
+    *   Added defensive checks to ensure required OAuth environment variables are present, improving backend stability.
+
+2.  **Frontend UI Fixes:**
+    *   Replaced the problematic `Eye` and `TrendingUp` icons with a more reliable `Search` icon to finally resolve the inconsistent sizing issue.
+    *   Refactored the login link into a semantic `<button>` element to ensure the `onClick` handler fires reliably.
+
+**Reflection:**
+
+*   **Most Challenging:** The most difficult part of this task was the end-to-end debugging of the login flow. The issue was not isolated to the frontend, but was a combination of a missing backend route, a subtle icon rendering bug, and an unstable local development environment.
+*   **Key Learning:** This was a powerful lesson in the importance of verifying the entire application stack. My initial focus was solely on the frontend, but the critical bug was in the backend router. The instability of the dev server also highlighted the value of building the static assets and testing them in a more production-like environment.
+*   **Advice for Next Agent:** The login flow is now fully functional. When debugging issues, always remember to check the network requests and the backend logs, as the root cause may not be where you expect it. For verification, the `npm run build` command followed by serving the `dist` directory is the most reliable method.
+
 ### **v0.1.7: 2025-11-03 (Login Page UI and Bug Fix)**
 
 **Author:** Jules #141, Security Virtuoso
