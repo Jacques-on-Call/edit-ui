@@ -38,7 +38,7 @@ export function LoginPage() {
                 <span>Simple to update</span>
               </li>
               <li className="flex items-center gap-3">
-                <Search className="text-accent-lime w-6 h-6" />
+                <Search className="text-accent-lime" style={{ width: '24px', height: '24px' }} />
                 <span>Easy SEO (search everywhere optimized)</span>
               </li>
             </ul>

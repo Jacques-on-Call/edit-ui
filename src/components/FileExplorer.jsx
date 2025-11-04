@@ -161,7 +161,7 @@ function FileExplorer({ repo }) {
           />
         )}
       </div>
-      <div className="flex-shrink-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 flex justify-between items-center p-2 z-10">
+      <div className="flex-shrink-0 bg-gradient-to-t from-gray-900 to-transparent border-t border-gray-800 flex justify-between items-center p-2 z-10">
         <div className="flex-1 flex justify-start"></div>
         <div className="flex-1 flex justify-center">
             <button
@@ -173,7 +173,7 @@ function FileExplorer({ repo }) {
         </div>
         <div className="flex-1 flex justify-end">
             <button
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-text hover:bg-gray-800 disabled:opacity-50"
                 onClick={handleGoHome}
                 disabled={path === 'src/pages'}
             >

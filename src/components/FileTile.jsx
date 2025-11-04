@@ -5,11 +5,11 @@ const FileTile = memo(({ file, metadata, isSelected, onClick, onDoubleClick, onL
   const tileClasses = `
     relative flex flex-col items-center justify-center
     p-4 rounded-lg
-    border-2
+    border
     transition-all duration-150 ease-in-out
     cursor-pointer
     h-36
-    ${isSelected ? 'bg-blue-100 border-blue-400 shadow-lg' : 'bg-white border-gray-200 hover:shadow-md hover:border-gray-300'}
+    ${isSelected ? 'bg-accent/20 border-accent shadow-lg' : 'bg-surface border-border hover:shadow-md hover:border-gray-700'}
   `;
 
   const handleLongPress = (e) => {
