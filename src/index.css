@@ -7,3 +7,44 @@
 body {
   @apply bg-midnight-blue text-main-text font-sans;
 }
+
+/* Ensure all icons in the login form are the same size */
+.login-form input[type="text"],
+.login-form input[type="password"],
+.login-form button {
+  font-size: 16px; /* Prevents iOS zoom on focus */
+  padding: 12px;
+}
+
+/* Fix icon sizing consistency */
+.login-form svg,
+.login-form .icon {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px;
+  min-height: 20px;
+  flex-shrink: 0;
+}
+
+/* Specific fix for eye toggle icon */
+.password-toggle-icon,
+button[type="button"] svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Mobile-specific adjustments for iPhone */
+@media (max-width: 768px) {
+  .login-form input,
+  .login-form button {
+    -webkit-appearance: none;
+    border-radius: 8px;
+    font-size: 16px; /* Prevents zoom */
+  }
+
+  /* Ensure icons are properly sized on mobile */
+  .login-form svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
