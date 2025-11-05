@@ -7,10 +7,10 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center p-4">
+    <div className="min-h-screen flex flex-col justify-center p-4 lg:pl-[20vw]">
       <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-8 text-white border border-white/20">
-        <header className="flex flex-col items-center text-center mb-8">
-          <img src="/ShowUp-H1-bigger-Logo.webp.jpeg" alt="ShowUp Logo" className="h-16 w-16 mb-4" />
+        <header className="flex flex-col items-start text-left mb-8">
+          <img src="/ShowUp-H1-Logo.webp" alt="ShowUp Logo" className="h-16 w-16 mb-4" />
           <h1 className="text-5xl font-bold">ShowUp</h1>
           <p className="text-xl font-medium text-accent-lime mt-4">
             Build your business visibility, easily.
@@ -39,7 +39,7 @@ export function LoginPage() {
 
           <button
             onClick={handleLogin}
-            className="w-full bg-accent-lime/20 text-white font-bold flex items-center justify-center gap-3 py-4 px-8 rounded-xl border border-accent-lime/50 backdrop-blur-sm shadow-lg transition-all duration-300 transform hover:bg-accent-lime/30 hover:shadow-xl hover:-translate-y-1"
+            className="w-full bg-black/30 text-white font-bold flex items-center justify-center gap-3 py-4 px-8 rounded-xl border border-accent-lime/50 backdrop-blur-sm shadow-lg transition-all duration-300 transform hover:bg-black/50 hover:shadow-xl hover:-translate-y-1"
           >
             <img src="/ShowUp-Button-Logo.webp" alt="Button Logo" className="h-7 w-7" />
             <span>Sign Up Free Use</span>

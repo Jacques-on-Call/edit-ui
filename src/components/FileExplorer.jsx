@@ -199,7 +199,7 @@ function FileExplorer({ repo }) {
             </button>
 
             <button
-                className="bg-accent-lime/20 text-white rounded-full h-14 w-14 flex items-center justify-center shadow-lg border border-accent-lime/50 backdrop-blur-sm transform transition-transform hover:scale-110"
+                className="bg-black/30 text-white rounded-full h-14 w-14 flex items-center justify-center shadow-lg border border-accent-lime/50 backdrop-blur-sm transform transition-transform hover:scale-110"
                 title="Create a new file or folder"
             >
                 <Icon name="Plus" className="w-8 h-8"/>
