@@ -2,17 +2,15 @@ import { useState, useEffect, useCallback } from 'preact/compat';
 import { route } from 'preact-router';
 import Icon from './Icon';
 import FileTile from './FileTile';
-import SearchBar from './SearchBar';
 import ReadmeDisplay from './ReadmeDisplay';
 import matter from 'gray-matter';
 
-function FileExplorer({ repo }) {
+function FileExplorer({ repo, searchQuery }) {
   const [files, setFiles] = useState([]);
   const [path, setPath] = useState('src/pages');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [metadataCache, setMetadataCache] = useState({});
   const [readmeContent, setReadmeContent] = useState(null);
   const [isReadmeLoading, setReadmeLoading] = useState(false);
@@ -150,13 +148,6 @@ function FileExplorer({ repo }) {
 
   return (
     <div className="flex flex-col h-screen bg-transparent text-white">
-      {/* Header section with Search Bar */}
-      <header className="flex-shrink-0 p-4 z-10">
-        <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-lg border border-white/20">
-          <SearchBar onSearch={setSearchQuery} />
-        </div>
-      </header>
-
       {/* Main content area */}
       <main className="flex-grow overflow-y-auto pb-24"> {/* Add padding-bottom to avoid overlap with toolbar */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">

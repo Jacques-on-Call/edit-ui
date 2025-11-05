@@ -1,5 +1,6 @@
 // easy-seo/src/app.jsx
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { HeaderProvider, useHeader } from './contexts/HeaderContext';
 import { theme } from './themes/theme';
 import { Router, useRouter } from 'preact-router';
 import { LoginPage } from './pages/LoginPage';
@@ -9,9 +10,8 @@ import { CallbackPage } from './pages/CallbackPage';
 import AuthDebugMonitor from './components/AuthDebugMonitor'; // Corrected import
 
 const AppContent = () => {
-  const { isLoading, isAuthenticated, user } = useAuth();
-  const [router] = useRouter();
-  const currentPath = router.url;
+  const { isLoading } = useAuth();
+  const { headerContent } = useHeader();
 
   return (
     <div
@@ -25,15 +25,8 @@ const AppContent = () => {
       </div>
 
       <main className="relative z-10 p-6 md:p-10">
-        <header className="flex justify-between items-center pb-8">
-          {isAuthenticated && user && currentPath !== '/explorer' ? (
-            <div className="flex items-center gap-4">
-              <img src={user.avatar_url} alt="User Avatar" className="w-10 h-10 rounded-full" />
-              <span className="font-bold">{user.login}</span>
-            </div>
-          ) : (
-            <div></div> // Empty div to maintain layout
-          )}
+        <header className="flex justify-between items-center pb-8 h-16">
+          {headerContent || <div></div>}
         </header>
 
         {isLoading ? (
@@ -58,7 +51,9 @@ const AppContent = () => {
 export function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <HeaderProvider>
+        <AppContent />
+      </HeaderProvider>
     </AuthProvider>
   );
 }

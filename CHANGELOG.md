@@ -1,5 +1,30 @@
 # Project Change Log
 
+### **v0.1.11: 2025-11-05 (Jules #146 UI & Header Refactor)**
+
+**Author:** Jules #146
+
+**Change:** Implemented a major UI refactor that includes responsive layout improvements for the login and repository selection pages, and a complete overhaul of the global header to support page-specific tools.
+
+**Context & Key Changes:**
+
+*   **Responsive UI Polish:** Further refined the `LoginPage` with tighter padding and margins. Applied similar responsive spacing adjustments to the `RepoSelectPage` to ensure a consistent and spacious mobile experience.
+*   **Dynamic Header Refactor:**
+    *   Removed the static user avatar and name from the global header.
+    *   Created a new `HeaderContext` to allow pages to dynamically inject their own components into the header.
+    *   This makes the header a flexible container for page-specific controls.
+*   **File Explorer Search Integration:**
+    *   Moved the file explorer's search bar from the main component into the new dynamic global header.
+    *   The search bar is now rendered via the `HeaderContext` only when the `FileExplorerPage` is active.
+
+**Reflection:**
+
+*   **Most Challenging:** The most challenging part of this task was the architectural change to the global header. It required creating a new React context and refactoring the main application layout, which was more complex than simple styling changes. It also involved lifting state from the `FileExplorer` component to its parent page, which is a common but sometimes tricky React pattern.
+*   **Key Learning:** This task was a great example of how to build a flexible and scalable UI architecture. The new `HeaderContext` is a powerful pattern that will make it much easier to add new page-specific tools in the future without cluttering the main application layout.
+*   **Advice for Next Agent:** The global header is now a dynamic container. When building new pages that require header controls, use the `useHeader` hook to set the `headerContent`. This will keep the UI clean and the concerns of each page properly separated.
+
+---
+
 ### **v0.1.10: 2025-11-05 (Jules #145 Background Design Refinement)**
 
 **Author:** Jules #145

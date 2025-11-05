@@ -1,12 +1,23 @@
 // easy-seo/src/pages/FileExplorerPage.jsx
 import { useAuth } from '../contexts/AuthContext';
+import { useHeader } from '../contexts/HeaderContext';
+import { useEffect, useState } from 'preact/hooks';
 import { theme } from '../themes/theme';
 import { AlertTriangle } from 'lucide-preact';
 import { route } from 'preact-router';
 import FileExplorer from '../components/FileExplorer';
+import SearchBar from '../components/SearchBar';
 
 export function FileExplorerPage() {
   const { isAuthenticated, isLoading, selectedRepo } = useAuth();
+  const { setHeaderContent } = useHeader();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    setHeaderContent(<SearchBar onSearch={setSearchQuery} />);
+    // Clear the header when the component unmounts
+    return () => setHeaderContent(null);
+  }, [setHeaderContent]);
 
   if (isLoading) {
     return (
@@ -38,7 +49,7 @@ export function FileExplorerPage() {
 
   return (
     <div className="h-screen">
-      <FileExplorer repo={selectedRepo.full_name} />
+      <FileExplorer repo={selectedRepo.full_name} searchQuery={searchQuery} />
     </div>
   );
 }
