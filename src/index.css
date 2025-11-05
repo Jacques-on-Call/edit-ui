@@ -4,8 +4,64 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-midnight-blue text-main-text font-sans;
+@layer base {
+  body {
+    @apply bg-midnight-blue text-main-text font-sans;
+  }
+}
+
+/* Glassmorphism Orb styles */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(216, 242, 29, 0.2) 0%, rgba(216, 242, 29, 0) 70%);
+  filter: blur(50px);
+  animation: float 20s infinite ease-in-out;
+}
+
+.orb-1 {
+  width: 400px;
+  height: 400px;
+  top: 10%;
+  left: 15%;
+  animation-delay: 0s;
+  animation-duration: 25s;
+}
+
+.orb-2 {
+  width: 300px;
+  height: 300px;
+  top: 60%;
+  right: 10%;
+  animation-delay: 5s;
+  animation-duration: 30s;
+}
+
+.orb-3 {
+  width: 250px;
+  height: 250px;
+  bottom: 5%;
+  left: 30%;
+  animation-delay: 10s;
+  animation-duration: 20s;
+}
+
+/* Keyframe animations */
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(100px, 50px) scale(1.1); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes pulse-bg {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.animate-pulse-bg {
+    background-size: 200% 200%;
+    animation: pulse-bg 15s ease infinite;
 }
 
 /* Ensure all icons in the login form are the same size */

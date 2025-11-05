@@ -13,114 +13,42 @@ function formatRelativeDate(dateString) {
   return `${days}d ago`;
 }
 
-function FileTile({ file, isSelected, metadata, onClick, onLongPress, onDoubleClick }) {
-  const pressTimer = useRef(null);
-  const startPos = useRef({ x: 0, y: 0 });
-  const lastTapTime = useRef(0);
-
+function FileTile({ file, isSelected, metadata, onClick, onDoubleClick }) {
   const isDir = file.type === 'dir';
-  const iconName = isDir ? 'Folder' : 'File';
+  const iconName = isDir ? 'Folder' : 'FileText';
 
   const tileClassName = `
-    p-2 rounded-lg cursor-pointer transition-all duration-200 text-center flex flex-col items-center justify-center h-32
-    ${isSelected ? 'bg-accent/20 border-accent shadow-lg' : 'bg-surface border-border hover:shadow-md hover:border-gray-700'}
-    select-none touch-none [-webkit-touch-callout:none]
+    relative p-3 rounded-xl cursor-pointer transition-all duration-300 text-center
+    flex flex-col items-center justify-between h-36 w-full
+    bg-white/5 border border-white/10
+    hover:bg-white/10 hover:-translate-y-1 hover:shadow-xl
+    ${isSelected ? 'bg-accent-lime/20 border-accent-lime/50 shadow-lg' : 'shadow-md'}
+    select-none touch-manipulation
   `;
 
-  const clearTimer = () => {
-    if (pressTimer.current) {
-      clearTimeout(pressTimer.current);
-      pressTimer.current = null;
-    }
-  };
-
-  const handlePointerDown = (e) => {
-    if (e.type === 'touchstart') {
-      e.preventDefault?.();
-    }
-    if (e.button === 2) return;
-
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    startPos.current = { x: clientX, y: clientY };
-
-    const coords = { clientX, clientY };
-
-    pressTimer.current = setTimeout(() => {
-      onLongPress?.(file, coords);
-    }, 500);
-  };
-
-  const handlePointerUp = (e) => {
-    clearTimer();
-
-    if (e.type === 'touchend') {
-      const now = Date.now();
-      const timeSinceLastTap = now - lastTapTime.current;
-
-      if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
-        e.preventDefault?.();
-        if (onDoubleClick) {
-          onDoubleClick(file);
-        } else {
-          onClick?.(file);
-        }
-        lastTapTime.current = 0;
-      } else {
-        lastTapTime.current = now;
-      }
-    }
-  };
-
-  const handleTouchMove = (e) => {
-    if (!pressTimer.current || !e.touches || e.touches.length === 0) return;
-    const { clientX, clientY } = e.touches[0];
-    const dx = Math.abs(clientX - startPos.current.x);
-    const dy = Math.abs(clientY - startPos.current.y);
-    if (dx > 10 || dy > 10) {
-      clearTimer();
-    }
-  };
-
-  const handleTouchCancel = () => {
-    clearTimer();
-  };
-
-  const handleContextMenu = (e) => {
-    e.preventDefault();
-    clearTimer();
-    onLongPress?.(file, { clientX: e.clientX, clientY: e.clientY });
-  };
+  const iconColor = isDir ? 'text-accent-lime' : 'text-white/80';
 
   return (
     <div
       className={tileClassName}
       onClick={() => onClick?.(file)}
       onDblClick={() => onDoubleClick?.(file)}
-      onMouseDown={handlePointerDown}
-      onMouseUp={handlePointerUp}
-      onMouseLeave={handlePointerUp}
-      onTouchStart={handlePointerDown}
-      onTouchEnd={handlePointerUp}
-      onTouchMove={handleTouchMove}
-      onTouchCancel={handleTouchCancel}
-      onContextMenu={handleContextMenu}
     >
-      <div className="flex flex-col items-center justify-center text-center w-full">
+      <div className="flex-grow flex flex-col items-center justify-center text-center w-full">
         <div className="mb-2">
-          <Icon name={iconName} className="w-12 h-12 text-text" />
+          <Icon name={iconName} className={`w-12 h-12 ${iconColor} transition-colors`} />
         </div>
         <div className="w-full">
-          <div className="font-semibold text-blue-300 truncate" title={file.name}>
+          <div className="font-semibold text-sm text-white truncate" title={file.name}>
             {file.name}
           </div>
-          {metadata?.lastEditor && (
-            <div className="text-xs text-muted-text mt-1 truncate">
-              {metadata.lastEditor} - {formatRelativeDate(metadata.lastModified)}
-            </div>
-          )}
         </div>
       </div>
+      {metadata?.lastEditor && (
+        <div className="flex-shrink-0 text-xs text-gray-400 mt-2 truncate w-full">
+          {metadata.lastEditor} - {formatRelativeDate(metadata.lastModified)}
+        </div>
+      )}
     </div>
   );
 }

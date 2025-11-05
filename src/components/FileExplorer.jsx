@@ -149,11 +149,16 @@ function FileExplorer({ repo }) {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-shrink-0 p-4 border-b border-gray-200">
-        <SearchBar onSearch={setSearchQuery} />
-      </div>
-      <div className="flex-grow overflow-y-auto">
+    <div className="flex flex-col h-screen bg-transparent text-white">
+      {/* Header section with Search Bar */}
+      <header className="flex-shrink-0 p-4 z-10">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-lg border border-white/20">
+          <SearchBar onSearch={setSearchQuery} />
+        </div>
+      </header>
+
+      {/* Main content area */}
+      <main className="flex-grow overflow-y-auto pb-24"> {/* Add padding-bottom to avoid overlap with toolbar */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
           {Array.isArray(filteredFiles) && filteredFiles.filter(file => !file.name.startsWith('.') && file.name.toLowerCase() !== 'readme.md').map(file => (
             <FileTile
@@ -166,36 +171,50 @@ function FileExplorer({ repo }) {
             />
           ))}
         </div>
-        {isReadmeLoading && <div className="text-center text-gray-500 my-8">Loading README...</div>}
+        {isReadmeLoading && <div className="text-center text-gray-400 my-8">Loading README...</div>}
         {readmeContent && !isReadmeLoading && (
-          <ReadmeDisplay
-            content={readmeContent}
-            isVisible={isReadmeVisible}
-            onToggle={handleToggleReadme}
-          />
+          <div className="p-4">
+             <div className="bg-black/20 p-6 rounded-lg border border-white/10">
+                <ReadmeDisplay
+                  content={readmeContent}
+                  isVisible={isReadmeVisible}
+                  onToggle={handleToggleReadme}
+                />
+             </div>
+          </div>
         )}
-      </div>
-      <div className="flex-shrink-0 bg-gradient-to-t from-blue-900 to-transparent border-t border-blue-200 flex justify-between items-center p-2 z-10">
-        <div className="flex-1 flex justify-start"></div>
-        <div className="flex-1 flex justify-center">
+      </main>
+
+      {/* Bottom Toolbar */}
+      <footer className="fixed bottom-0 left-0 right-0 p-3 z-20">
+         <div className="w-full max-w-2xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl shadow-lg flex justify-between items-center p-2 border border-white/20">
             <button
-                className="bg-primary text-white rounded-full h-14 w-14 flex items-center justify-center shadow-lg hover:bg-opacity-90 border border-accent-lime"
-                title="Create a new file or folder"
-            >
-                <Icon name="Plus" />
-            </button>
-        </div>
-        <div className="flex-1 flex justify-end">
-            <button
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-text hover:bg-gray-800 disabled:opacity-50"
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white/80 hover:bg-white/10 transition-colors disabled:opacity-40"
                 onClick={handleGoHome}
                 disabled={path === 'src/pages'}
+                title="Go to root directory"
             >
-                <Icon name="Home" />
-                <span className="font-semibold">Home</span>
+                <Icon name="Home" className="w-5 h-5" />
+                <span className="font-semibold text-sm">Home</span>
             </button>
-        </div>
-      </div>
+
+            <button
+                className="bg-accent-lime/20 text-white rounded-full h-14 w-14 flex items-center justify-center shadow-lg border border-accent-lime/50 backdrop-blur-sm transform transition-transform hover:scale-110"
+                title="Create a new file or folder"
+            >
+                <Icon name="Plus" className="w-8 h-8"/>
+            </button>
+
+            <button
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white/80 hover:bg-white/10 transition-colors"
+                title="Back to repository selection"
+                onClick={() => route('/repo-select')}
+            >
+                 <Icon name="ArrowLeft" className="w-5 h-5" />
+                <span className="font-semibold text-sm">Back</span>
+            </button>
+         </div>
+      </footer>
     </div>
   );
 }

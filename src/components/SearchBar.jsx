@@ -21,15 +21,15 @@ const SearchBar = ({ onSearch }) => {
 
   return (
     <div className="relative w-full">
-      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-        <Icon name="Search" className="text-gray-400" />
+      <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+        <Icon name="Search" className="text-white/40 w-5 h-5" />
       </div>
       <input
         type="text"
         value={query}
         onChange={handleChange}
-        placeholder="...find your content or file"
-        className="w-full pl-10 pr-4 py-2 text-text bg-transparent border-none focus:outline-none focus:ring-0"
+        placeholder="Find content or files..."
+        className="w-full bg-transparent text-white/80 placeholder-white/40 border-none rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-accent-lime/50"
       />
     </div>
   );

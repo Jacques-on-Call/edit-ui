@@ -1,7 +1,7 @@
 // easy-seo/src/pages/RepoSelectPage.jsx
 import { useAuth } from '../contexts/AuthContext';
 import { theme } from '../themes/theme';
-import { AlertTriangle } from 'lucide-preact';
+import { AlertTriangle, Github } from 'lucide-preact';
 import { route } from 'preact-router';
 
 export function RepoSelectPage() {
@@ -9,15 +9,14 @@ export function RepoSelectPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center pt-24">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
-        <p className="ml-3">Loading user data...</p>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-lime"></div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    route('/login', true);
+    route('/', true); // Redirect to login page
     return null;
   }
 
@@ -27,29 +26,40 @@ export function RepoSelectPage() {
   };
 
   return (
-    <div className="pt-12 px-4 text-center">
-      <img src="/logo.webp" alt="Easy SEO Logo" className="w-24 h-24 mx-auto mb-4" />
-      <h1 className="text-5xl font-bold">Easy SEO</h1>
-      <h2 className={theme.typography.h2_alternative}>Select a Repository</h2>
-      <p className="text-textSecondary mt-2">
-        Welcome, <span className="font-bold text-accent">{user?.login}</span>. Choose a repository to start editing.
-      </p>
+    <div className="min-h-screen flex flex-col justify-center items-center p-4">
+      <div className="w-full max-w-lg bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-8 text-white border border-white/20">
+        <header className="flex flex-col items-center text-center mb-8">
+          <img src={user?.avatar_url} alt="User Avatar" className="h-20 w-20 mb-4 rounded-full border-2 border-accent-lime/50" />
+          <h1 className="text-3xl font-bold">Welcome, {user?.login}</h1>
+          <p className="text-lg text-gray-300 mt-2">
+            Select a repository to start editing.
+          </p>
+        </header>
 
-      <div className="mt-8 flex flex-col items-center gap-4">
-        {repositories.length > 0 ? (
-          repositories.map((repo) => (
-            <div key={repo.id} className="w-full max-w-md">
-              <button
-                className="w-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-400 via-blue-800 to-blue-900 p-6 rounded-lg border border-blue-200 hover:border-accent transition-all shadow-lg hover:shadow-2xl text-left transform hover:-translate-y-1"
-                onClick={() => handleSelectRepo(repo)}
-              >
-                <h3 className="font-bold text-lg text-white text-center">{repo.name}</h3>
-              </button>
-            </div>
-          ))
-        ) : (
-          <p className="text-textSecondary">No repositories found.</p>
-        )}
+        <main className="w-full">
+          <div className="flex flex-col items-center gap-4">
+            {repositories.length > 0 ? (
+              repositories.map((repo) => (
+                <button
+                  key={repo.id}
+                  className="w-full bg-white/5 hover:bg-white/10 text-white font-semibold flex items-center justify-center gap-3 py-4 px-6 rounded-xl border border-white/20 backdrop-blur-sm shadow-md transition-all duration-300 transform hover:shadow-xl hover:-translate-y-1"
+                  onClick={() => handleSelectRepo(repo)}
+                >
+                  <Github className="w-5 h-5 text-accent-lime" />
+                  <span>{repo.name}</span>
+                </button>
+              ))
+            ) : (
+              <div className="text-center bg-black/20 p-6 rounded-lg border border-white/10">
+                <AlertTriangle className="mx-auto h-12 w-12 text-accent-lime/50 mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No Repositories Found</h3>
+                <p className="text-gray-400">
+                  Please make sure the application has access to your repositories.
+                </p>
+              </div>
+            )}
+          </div>
+        </main>
       </div>
     </div>
   );

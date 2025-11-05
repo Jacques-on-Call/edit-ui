@@ -14,28 +14,41 @@ const AppContent = () => {
   const currentPath = router.url;
 
   return (
-    <div className="bg-background text-text min-h-screen p-6 md:p-10" style={{ fontFamily: theme.typography.fontFamily }}>
-      <header className="flex justify-between items-center pb-8">
-        {isAuthenticated && user && currentPath !== '/explorer' ? (
-          <div className="flex items-center gap-4">
-            <img src={user.avatar_url} alt="User Avatar" className="w-10 h-10 rounded-full" />
-            <span className="font-bold">{user.login}</span>
+    <div
+      className="relative min-h-screen text-text"
+      style={{ fontFamily: theme.typography.fontFamily }}
+    >
+      <div className="fixed inset-0 z-[-1] bg-gradient-to-br from-gradient-start via-midnight-blue to-black animate-pulse-bg">
+        <div className="orb orb-1"></div>
+        <div className="orb orb-2"></div>
+        <div className="orb orb-3"></div>
+      </div>
+
+      <main className="relative z-10 p-6 md:p-10">
+        <header className="flex justify-between items-center pb-8">
+          {isAuthenticated && user && currentPath !== '/explorer' ? (
+            <div className="flex items-center gap-4">
+              <img src={user.avatar_url} alt="User Avatar" className="w-10 h-10 rounded-full" />
+              <span className="font-bold">{user.login}</span>
+            </div>
+          ) : (
+            <div></div> // Empty div to maintain layout
+          )}
+        </header>
+
+        {isLoading ? (
+          <div className="flex justify-center items-center h-full">
+            <p>Loading application...</p>
           </div>
         ) : (
-          <div></div> // Empty div to maintain layout
+          <Router>
+            <LoginPage path="/" />
+            <CallbackPage path="/login" />
+            <RepoSelectPage path="/repo-select" />
+            <FileExplorerPage path="/explorer" />
+          </Router>
         )}
-      </header>
-
-      {isLoading ? (
-        <p>Loading application...</p>
-      ) : (
-        <Router>
-          <LoginPage path="/" />
-          <CallbackPage path="/login" />
-          <RepoSelectPage path="/repo-select" />
-          <FileExplorerPage path="/explorer" />
-        </Router>
-      )}
+      </main>
 
       {import.meta.env.DEV && <AuthDebugMonitor />}
     </div>
