@@ -14,9 +14,12 @@
 .orb {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(216, 242, 29, 0.2) 0%, rgba(216, 242, 29, 0) 70%);
   filter: blur(50px);
   animation: float 20s infinite ease-in-out;
+}
+
+.orb-white {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
 }
 
 .orb-1 {
@@ -49,7 +52,9 @@
 /* Keyframe animations */
 @keyframes float {
   0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(100px, 50px) scale(1.1); }
+  25% { transform: translate(20vw, 15vh) scale(1.2); }
+  50% { transform: translate(-10vw, 30vh) scale(0.9); }
+  75% { transform: translate(15vw, -20vh) scale(1.1); }
   100% { transform: translate(0, 0) scale(1); }
 }
 

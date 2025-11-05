@@ -1,5 +1,26 @@
 # Project Change Log
 
+### **v0.1.10: 2025-11-05 (Jules #145 Background Design Refinement)**
+
+**Author:** Jules #145
+
+**Change:** Refined the application's background design to match the user's specific visual requirements. The implementation now features a moving radial gradient (dark blue to black) and soft, drifting white orbs.
+
+**Context & Key Changes:**
+
+*   **Restored Animated Gradient:** Re-implemented the animated background, changing it to a radial gradient that transitions from `midnight-blue` at the center to black at the edges, creating a dramatic vignette effect.
+*   **Refined Orb Palette:** Updated all three animated orbs to be a soft, high-contrast white, which stands out against the dark, moving background. Increased the orb opacity to ensure they are subtle but clearly visible.
+*   **Retained Dynamic Animation:** Kept the wide-ranging "drifting" animation for the orbs and the "pulsing" animation for the background gradient to ensure the UI feels alive and dynamic.
+*   **Login Page UI Refinements:** Implemented several user-requested changes to the login page layout. The main headline and logo are now grouped together, the "Build your business..." tagline is left-aligned below the headline, and the text "free tier forever no cards needed" has been added below the signup button for clarity.
+
+**Reflection:**
+
+*   **Most Challenging:** The most challenging part of this task was correctly interpreting the user's iterative feedback. My initial implementation was a misinterpretation, and it required a second pass to fully align the code with the user's vision. This highlights the difficulty of translating subjective aesthetic preferences into precise CSS.
+*   **Key Learning:** Iteration and clarification are key. It's better to ask clarifying questions and do a second pass than to commit a change that doesn't meet the user's expectations. Frontend verification is also critical; the invisible orb issue was only caught because of the screenshot review process.
+*   **Advice for Next Agent:** When a user provides feedback on a visual design, take it literally and ask for confirmation of your understanding before proceeding. For this specific background, the interplay between the radial gradient, the `pulse-bg` animation, and the floating white orbs is the core of the aesthetic.
+
+---
+
 ### **v0.1.9: 2025-11-05 (Liquid Glass UI & Feature Polish)**
 
 **Author:** Jules #144, Security Virtuoso

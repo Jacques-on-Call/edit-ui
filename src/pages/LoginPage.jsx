@@ -9,16 +9,18 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col justify-center p-4 lg:pl-[20vw]">
       <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-8 text-white border border-white/20">
-        <header className="flex flex-col items-start text-left mb-8">
-          <img src="/ShowUp-H1-Logo.webp" alt="ShowUp Logo" className="h-16 w-16 mb-4" />
-          <h1 className="text-5xl font-bold">ShowUp</h1>
-          <p className="text-xl font-medium text-accent-lime mt-4">
+        <header className="text-left mb-8">
+          <div className="flex flex-row items-center">
+            <img src="/ShowUp-H1-Logo.webp" alt="ShowUp Logo" className="h-16 w-16 mr-4" />
+            <h1 className="text-5xl font-bold">Show<span className="text-accent-magenta">Up</span></h1>
+          </div>
+          <p className="text-xl font-medium text-accent-lime mt-2">
             Build your business visibility, easily.
           </p>
         </header>
 
         <main>
-          <p className="text-center text-gray-300 mb-8">
+          <p className="text-left text-gray-300 mb-8">
             ShowUp helps professionals build high-ranking websites and attract new customers – fast.
           </p>
 
@@ -44,6 +46,8 @@ export function LoginPage() {
             <img src="/ShowUp-Button-Logo.webp" alt="Button Logo" className="h-7 w-7" />
             <span>Sign Up Free Use</span>
           </button>
+
+          <p className="text-center text-xs text-gray-400 mt-3">free tier forever no cards needed</p>
 
           <button onClick={() => window.location.href = '/api/login'} className="block w-full text-center mt-6 text-sm text-accent-lime hover:underline cursor-pointer bg-transparent border-none p-0">
             Already have an account? Login

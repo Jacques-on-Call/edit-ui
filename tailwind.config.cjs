@@ -12,6 +12,8 @@ module.exports = {
       colors: {
         'midnight-blue': '#191970',
         'accent-lime': '#D8F21D',
+        'accent-magenta': '#FF00FF', // Bright Magenta
+        'accent-coral': '#FF7F50', // Coral
         'muted-text': '#D9D9D9',
         'main-text': '#FFFFFF',
         'button-bg': '#000000',
