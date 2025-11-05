@@ -1,6 +1,5 @@
 // easy-seo/src/app.jsx
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { HeaderProvider, useHeader } from './contexts/HeaderContext';
 import { theme } from './themes/theme';
 import { Router, useRouter } from 'preact-router';
 import { LoginPage } from './pages/LoginPage';
@@ -10,23 +9,31 @@ import { CallbackPage } from './pages/CallbackPage';
 import AuthDebugMonitor from './components/AuthDebugMonitor'; // Corrected import
 
 const AppContent = () => {
-  const { isLoading } = useAuth();
-  const { headerContent } = useHeader();
+  const { isLoading, isAuthenticated, user } = useAuth();
+  const [router] = useRouter();
+  const currentPath = router.url;
 
   return (
     <div
       className="relative min-h-screen text-text"
       style={{ fontFamily: theme.typography.fontFamily }}
     >
-      <div className="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-midnight-blue via-gradient-start to-black animate-pulse-bg">
-        <div className="orb orb-white orb-1"></div>
-        <div className="orb orb-white orb-2"></div>
-        <div className="orb orb-white orb-3"></div>
+      <div className="fixed inset-0 z-[-1] bg-gradient-to-br from-gradient-start via-midnight-blue to-black animate-pulse-bg">
+        <div className="orb orb-1"></div>
+        <div className="orb orb-2"></div>
+        <div className="orb orb-3"></div>
       </div>
 
       <main className="relative z-10 p-6 md:p-10">
-        <header className={headerContent ? 'flex justify-between items-center pb-8 h-16' : ''}>
-          {headerContent}
+        <header className="flex justify-between items-center pb-8">
+          {isAuthenticated && user && currentPath !== '/explorer' ? (
+            <div className="flex items-center gap-4">
+              <img src={user.avatar_url} alt="User Avatar" className="w-10 h-10 rounded-full" />
+              <span className="font-bold">{user.login}</span>
+            </div>
+          ) : (
+            <div></div> // Empty div to maintain layout
+          )}
         </header>
 
         {isLoading ? (
@@ -51,9 +58,7 @@ const AppContent = () => {
 export function App() {
   return (
     <AuthProvider>
-      <HeaderProvider>
-        <AppContent />
-      </HeaderProvider>
+      <AppContent />
     </AuthProvider>
   );
 }
