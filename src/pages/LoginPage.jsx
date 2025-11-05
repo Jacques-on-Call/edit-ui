@@ -8,23 +8,23 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col justify-center p-4 lg:pl-[20vw]">
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-8 text-white border border-white/20">
-        <header className="text-left mb-8">
+      <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-6 md:p-8 text-white border border-white/20">
+        <header className="text-left mb-6 md:mb-8">
           <div className="flex flex-row items-center">
             <img src="/ShowUp-H1-Logo.webp" alt="ShowUp Logo" className="h-16 w-16 mr-4" />
             <h1 className="text-5xl font-bold">Show<span className="text-accent-magenta">Up</span></h1>
           </div>
-          <p className="text-xl font-medium text-accent-lime mt-2">
+          <p className="text-xl font-medium text-accent-lime mt-4">
             Build your business visibility, easily.
           </p>
         </header>
 
         <main>
-          <p className="text-left text-gray-300 mb-8">
+          <p className="text-left text-gray-300 mb-6 md:mb-8">
             ShowUp helps professionals build high-ranking websites and attract new customers – fast.
           </p>
 
-          <ul className="space-y-4 text-left mb-10 bg-white/5 p-6 rounded-lg border border-white/10">
+          <ul className="space-y-4 text-left mb-8 md:mb-10 bg-white/5 p-6 rounded-lg border border-white/10">
             <li className="flex items-center gap-4">
               <Handshake className="text-accent-lime w-6 h-6 flex-shrink-0" />
               <span>Personalized guidance to rank higher</span>

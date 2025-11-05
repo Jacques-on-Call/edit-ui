@@ -12,6 +12,7 @@
 *   **Refined Orb Palette:** Updated all three animated orbs to be a soft, high-contrast white, which stands out against the dark, moving background. Increased the orb opacity to ensure they are subtle but clearly visible.
 *   **Retained Dynamic Animation:** Kept the wide-ranging "drifting" animation for the orbs and the "pulsing" animation for the background gradient to ensure the UI feels alive and dynamic.
 *   **Login Page UI Refinements:** Implemented several user-requested changes to the login page layout. The main headline and logo are now grouped together, the "Build your business..." tagline is left-aligned below the headline, and the text "free tier forever no cards needed" has been added below the signup button for clarity.
+*   **Responsive Layout Improvements:** Added responsive spacing to the login page to improve the mobile layout. The padding and margins of the main container, header, and other key elements have been adjusted to provide a more spacious and visually balanced experience on smaller screens, while preserving the original design on desktop.
 
 **Reflection:**
 
