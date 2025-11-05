@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setUser, setIsAuthenticated, setRepositories, setIsLoading]);
 
   useEffect(() => {
     checkAuthStatus();
