@@ -1,5 +1,34 @@
 # Project Change Log
 
+### **v0.1.9: 2025-11-05 (Liquid Glass UI & Feature Polish)**
+
+**Author:** Jules #144, Security Virtuoso
+
+**Change:** Implemented a comprehensive "Liquid Glass" visual overhaul across the entire application, added a new "last-edited" feature to the file explorer, and resolved several critical, cascading failures related to authentication and the build pipeline.
+
+**Context & Key Changes:**
+
+1.  **"Liquid Glass" UI Redesign:**
+    *   Executed a complete visual redesign of the `LoginPage`, `RepoSelectPage`, and `FileExplorerPage` to create a modern, cohesive glassmorphism aesthetic.
+    *   Implemented a global animated gradient background and updated all components to use the new color palette and styling, including buttons, modals, and file tiles.
+    *   Corrected UI/UX issues based on user feedback, including fixing a broken logo, and adjusting content alignment on the `LoginPage` and `RepoSelectPage`.
+
+2.  **New Feature: Last-Edited Metadata:**
+    *   Created a new backend endpoint in the Cloudflare worker (`/api/file/commits`) to fetch the latest commit information for a specific file from the GitHub API.
+    *   Integrated this endpoint into the `FileExplorerPage`, which now displays the name of the last editor and the time of the last modification on each file tile.
+
+3.  **Critical Bug Fixes:**
+    *   **Authentication Loop:** Diagnosed and definitively fixed a persistent infinite authentication loop. The root cause was flawed state management and redirection logic in `AuthContext.jsx` and `CallbackPage.jsx`. The fix involved refactoring `CallbackPage` into a declarative component that derives its state directly from the `AuthContext`.
+    *   **Cloudflare Build Failure:** Resolved a critical build error by restoring missing Astro components (`SectionRenderer.astro` and its dependencies) that had been accidentally deleted, making the application deployable again.
+
+**Reflection:**
+
+*   **Most Challengalling:** The most challenging part was debugging the infinite authentication loop. The issue was not a simple logic error but a complex state management problem exacerbated by the interaction between `useEffect`, `preact-router`, and the `AuthContext`. It required a deep dive into the component lifecycle and a complete refactor of the callback page to resolve.
+*   **Key Learning:** This task was a powerful lesson in how frontend state management, routing, and asynchronous API calls can interact in unexpected ways to create subtle but critical bugs. The declarative approach (deriving state from a single source of truth like the context, rather than syncing it with `useEffect`) proved to be a much more robust pattern for the authentication callback.
+*   **Advice for Next Agent:** The application is now visually polished and functionally stable. When working on authentication or routing, be very mindful of component lifecycles and state dependencies. For complex state interactions, prefer declarative patterns over imperative ones (e.g., calling `route()` inside a `useEffect`). The new `/api/file/commits` endpoint can be extended to provide more detailed file history if needed in the future.
+
+---
+
 This document records significant changes, architectural decisions, and critical bug fixes for the `easy-seo` project, including both the Cloudflare Worker backend and the Preact frontend. Please do read and add notes for future developers in easy-seo/docs/
  
 ## 2025-11-04 - Jules #142 - Login and Deployment Pipeline Overhaul
