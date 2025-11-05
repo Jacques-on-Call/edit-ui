@@ -48,10 +48,10 @@ const ReadmeDisplay = memo(({ content, onToggle, isVisible }) => {
         >
           <h3 className="text-lg font-semibold flex items-center gap-3">
             <Icon name="BookOpen" className="text-accent-lime" />
-            <span>README.md</span>
+            <span>README</span>
           </h3>
           <button className="text-white/60 hover:text-white">
-            <Icon name={isVisible ? 'ChevronUp' : 'ChevronDown'} />
+            <Icon name={isVisible ? 'EyeOff' : 'Eye'} />
           </button>
         </div>
         {isVisible && (

@@ -1,5 +1,6 @@
-import { useRef } from 'preact/hooks';
+import { useState, useRef, useCallback } from 'preact/hooks';
 import Icon from './Icon.jsx';
+import ContextMenu from './ContextMenu.jsx';
 
 function formatRelativeDate(dateString) {
   if (!dateString) return '';
@@ -13,9 +14,58 @@ function formatRelativeDate(dateString) {
   return `${days}d ago`;
 }
 
-function FileTile({ file, isSelected, metadata, onClick, onDoubleClick }) {
+function getIconForFile(fileName) {
+  if (fileName.endsWith('.md')) return 'FileText';
+  if (fileName.endsWith('.jsx')) return 'FileCode';
+  if (fileName.endsWith('.js')) return 'FileCode';
+  if (fileName.endsWith('.html')) return 'FileCode';
+  if (fileName.endsWith('.css')) return 'FileCode';
+  return 'File';
+}
+
+function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete }) {
+  const [contextMenu, setContextMenu] = useState({ x: null, y: null });
+  const longPressTimer = useRef();
+
+  const handleMouseDown = useCallback((e) => {
+    longPressTimer.current = setTimeout(() => {
+      e.preventDefault();
+      setContextMenu({ x: e.pageX, y: e.pageY });
+    }, 500);
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    clearTimeout(longPressTimer.current);
+  }, []);
+
+  const handleTouchStart = useCallback((e) => {
+    longPressTimer.current = setTimeout(() => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      setContextMenu({ x: touch.pageX, y: touch.pageY });
+    }, 500);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    clearTimeout(longPressTimer.current);
+  }, []);
+
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    setContextMenu({ x: e.pageX, y: e.pageY });
+  };
+
+  const closeContextMenu = () => {
+    setContextMenu({ x: null, y: null });
+  };
+
+  const menuOptions = [
+    { label: 'Open', action: () => onDoubleClick(file) },
+    { label: 'Delete', action: () => onDelete(file) },
+  ];
+
   const isDir = file.type === 'dir';
-  const iconName = isDir ? 'Folder' : 'FileText';
+  const iconName = isDir ? 'Folder' : getIconForFile(file.name);
 
   const tileClassName = `
     relative p-3 rounded-xl cursor-pointer transition-all duration-300 text-center
@@ -26,30 +76,46 @@ function FileTile({ file, isSelected, metadata, onClick, onDoubleClick }) {
     select-none touch-manipulation
   `;
 
-  const iconColor = isDir ? 'text-accent-lime' : 'text-white/80';
+  const iconColor = isDir ? 'text-accent-lime' : 'text-cyan-400';
 
   return (
-    <div
-      className={tileClassName}
-      onClick={() => onClick?.(file)}
-      onDblClick={() => onDoubleClick?.(file)}
-    >
-      <div className="flex-grow flex flex-col items-center justify-center text-center w-full">
-        <div className="mb-2">
-          <Icon name={iconName} className={`w-12 h-12 ${iconColor} transition-colors`} />
-        </div>
-        <div className="w-full">
-          <div className="font-semibold text-sm text-white truncate" title={file.name}>
-            {file.name}
+    <>
+      <div
+        className={tileClassName}
+        onClick={() => onClick?.(file)}
+        onDblClick={() => onDoubleClick?.(file)}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onContextMenu={handleContextMenu}
+      >
+        <div className="flex-grow flex flex-col items-center justify-center text-center w-full">
+          <div className="mb-2">
+            <Icon name={iconName} className={`w-12 h-12 ${iconColor} transition-colors`} />
+          </div>
+          <div className="w-full">
+            <div className="font-semibold text-sm text-white truncate" title={file.name}>
+            {file.name.replace('.md', '')}
+            </div>
           </div>
         </div>
+        {metadata?.lastEditor && (
+          <div className="flex-shrink-0 text-xs text-gray-400 mt-2 truncate w-full">
+            {metadata.lastEditor} - {formatRelativeDate(metadata.lastModified)}
+          </div>
+        )}
       </div>
-      {metadata?.lastEditor && (
-        <div className="flex-shrink-0 text-xs text-gray-400 mt-2 truncate w-full">
-          {metadata.lastEditor} - {formatRelativeDate(metadata.lastModified)}
-        </div>
+      {contextMenu.x !== null && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          options={menuOptions}
+          onClose={closeContextMenu}
+        />
       )}
-    </div>
+    </>
   );
 }
 

@@ -110,6 +110,26 @@ function FileExplorer({ repo, searchQuery }) {
     handleOpen(file);
   };
 
+  const handleDelete = async (file) => {
+    if (confirm(`Are you sure you want to delete ${file.name}?`)) {
+      try {
+        const response = await fetch(`/api/files?repo=${repo}&path=${file.path}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          fetchFiles();
+        } else {
+          const errorText = await response.text();
+          setError(`Failed to delete file: ${errorText}`);
+        }
+      } catch (err) {
+        setError(`Failed to delete file: ${err.message}`);
+      }
+    }
+  };
+
   const handleOpen = (fileToOpen) => {
     const file = fileToOpen || selectedFile;
     if (!file) return;
@@ -159,13 +179,14 @@ function FileExplorer({ repo, searchQuery }) {
               isSelected={selectedFile && selectedFile.sha === file.sha}
               onClick={handleFileClick}
               onDoubleClick={handleFileDoubleClick}
+              onDelete={handleDelete}
             />
           ))}
         </div>
         {isReadmeLoading && <div className="text-center text-gray-400 my-8">Loading README...</div>}
         {readmeContent && !isReadmeLoading && (
-          <div className="p-4">
-             <div className="bg-black/20 p-6 rounded-lg border border-white/10">
+          <div className="p-2 sm:p-4">
+             <div className="bg-black/20 p-4 sm:p-6 rounded-lg border border-white/10">
                 <ReadmeDisplay
                   content={readmeContent}
                   isVisible={isReadmeVisible}
@@ -193,7 +214,7 @@ function FileExplorer({ repo, searchQuery }) {
                 className="bg-black/30 text-white rounded-full h-14 w-14 flex items-center justify-center shadow-lg border border-accent-lime/50 backdrop-blur-sm transform transition-transform hover:scale-110"
                 title="Create a new file or folder"
             >
-                <Icon name="Plus" className="w-8 h-8"/>
+                <Icon name="Plus" className="w-8 h-8 text-accent-lime"/>
             </button>
 
             <button
