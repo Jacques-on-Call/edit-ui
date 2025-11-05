@@ -25,8 +25,8 @@ const AppContent = () => {
       </div>
 
       <main className="relative z-10 p-6 md:p-10">
-        <header className="flex justify-between items-center pb-8 h-16">
-          {headerContent || <div></div>}
+        <header className={headerContent ? 'flex justify-between items-center pb-8 h-16' : ''}>
+          {headerContent}
         </header>
 
         {isLoading ? (

@@ -7,8 +7,8 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center p-4 lg:pl-[10vw]">
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-4 md:p-6 text-white border border-white/20">
+    <div className="min-h-screen flex flex-col justify-center px-2 py-4 sm:p-4 lg:pl-[10vw]">
+      <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-2 sm:p-4 md:p-6 text-white border border-white/20">
         <header className="text-left mb-6 md:mb-8">
           <div className="flex flex-row items-center">
             <img src="/ShowUp-H1-Logo.webp" alt="ShowUp Logo" className="h-16 w-16 mr-4" />
