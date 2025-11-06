@@ -24,7 +24,11 @@ function FileExplorer({ repo, searchQuery }) {
   const { searchResults, performSearch, isSearching } = useSearch(repo);
 
   useEffect(() => {
-    performSearch(searchQuery, fileManifest);
+    if (searchQuery && searchQuery.trim().length > 0) {
+      performSearch(searchQuery, fileManifest);
+    } else {
+      performSearch('', []); // Clear search results
+    }
   }, [searchQuery, performSearch, fileManifest]);
 
   useEffect(() => {
