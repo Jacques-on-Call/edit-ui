@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'preact/hooks';
 import matter from 'gray-matter';
 
-export function useSearch(repo) {
+export function useSearch(repo, files) {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [fileContentCache, setFileContentCache] = useState({});
@@ -25,8 +25,8 @@ export function useSearch(repo) {
     }
   }, [repo, fileContentCache]);
 
-  const performSearch = useCallback(async (query, fileManifest) => {
-    if (!query || !fileManifest || fileManifest.length === 0) {
+  const performSearch = useCallback(async (query) => {
+    if (!query) {
       setSearchResults([]);
       setIsSearching(false);
       return;
@@ -36,7 +36,7 @@ export function useSearch(repo) {
     const lowerCaseQuery = query.toLowerCase();
     const results = [];
 
-    for (const file of fileManifest) {
+    for (const file of files) {
       const content = await fetchContent(file);
       const fileNameMatch = file.name.toLowerCase().includes(lowerCaseQuery);
       const contentMatch = content.toLowerCase().includes(lowerCaseQuery);
@@ -51,7 +51,7 @@ export function useSearch(repo) {
 
     setSearchResults(results);
     setIsSearching(false);
-  }, [fileManifest, fetchContent]);
+  }, [files, fetchContent]);
 
   return { searchResults, performSearch, isSearching };
 }

@@ -7,11 +7,9 @@ import CreateModal from './CreateModal';
 import SearchResult from './SearchResult';
 import matter from 'gray-matter';
 import { useSearch } from '../hooks/useSearch';
-import LiquidGlassButton from './LiquidGlassButton';
 
 function FileExplorer({ repo, searchQuery }) {
-  const [currentFiles, setCurrentFiles] = useState([]);
-  const [fileManifest, setFileManifest] = useState([]);
+  const [files, setFiles] = useState([]);
   const [path, setPath] = useState('src/pages');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,34 +19,11 @@ function FileExplorer({ repo, searchQuery }) {
   const [isReadmeLoading, setReadmeLoading] = useState(false);
   const [isReadmeVisible, setReadmeVisible] = useState(true);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const { searchResults, performSearch, isSearching } = useSearch(repo);
+  const { searchResults, performSearch, isSearching } = useSearch(repo, files);
 
   useEffect(() => {
-    if (searchQuery && searchQuery.trim().length > 0) {
-      performSearch(searchQuery, fileManifest);
-    } else {
-      performSearch('', []); // Clear search results
-    }
-  }, [searchQuery, performSearch, fileManifest]);
-
-  useEffect(() => {
-    async function getFileManifest() {
-      try {
-        const res = await fetch(`/api/files/all?repo=${repo}`, { credentials: 'include' });
-        if (!res.ok) {
-          throw new Error(`Failed to fetch file manifest: ${res.statusText}`);
-        }
-        const data = await res.json();
-        setFileManifest(data);
-      } catch (err) {
-        console.error("Error fetching file manifest:", err);
-        setError(`Failed to load file manifest. Search may be unavailable. Details: ${err.message}`);
-      }
-    }
-    if (repo) {
-      getFileManifest();
-    }
-  }, [repo]);
+    performSearch(searchQuery);
+  }, [searchQuery, performSearch]);
 
   const fetchDetailsForFile = useCallback(async (file) => {
     if (file.type === 'dir') return;
@@ -64,7 +39,7 @@ function FileExplorer({ repo, searchQuery }) {
       const commitRes = await fetch(`/api/file/commits?repo=${repo}&path=${file.path}`, { credentials: 'include' });
       if (!commitRes.ok) throw new Error(`Failed to fetch commit data: ${commitRes.statusText}`);
       const commitData = await commitRes.json();
-      const lastCommit = Array.isArray(commitData) ? commitData[0] : undefined;
+      const lastCommit = commitData[0];
 
       const metadata = {
         ...data,
@@ -97,7 +72,7 @@ function FileExplorer({ repo, searchQuery }) {
         if (a.type !== 'dir' && b.type === 'dir') return 1;
         return a.name.localeCompare(b.name);
       });
-      setCurrentFiles(sortedData);
+      setFiles(sortedData);
 
       sortedData.forEach(file => {
         fetchDetailsForFile(file);
@@ -219,8 +194,8 @@ description: "A fresh new page."
 
   const handleToggleReadme = () => setReadmeVisible(prev => !prev);
 
-  const filesToDisplay = currentFiles
-    .filter(file => file.type === 'dir' || file.name.endsWith('.astro'));
+  const filesToDisplay = files
+  .filter(file => file.type === 'dir' || file.name.endsWith('.astro'));
 
   if (loading) {
     return <div className="flex items-center justify-center h-full"><div className="text-center p-8 text-gray-500 animate-pulse">Loading files...</div></div>;
@@ -305,7 +280,13 @@ description: "A fresh new page."
                 <Icon name="Home" className="w-5 h-5" />
                 <span className="font-semibold text-sm">Home</span>
             </button>
-            <LiquidGlassButton onClick={() => setCreateModalOpen(true)} />
+            <button
+                onClick={() => setCreateModalOpen(true)}
+                className="bg-white/10 text-white rounded-full h-16 w-16 flex items-center justify-center shadow-lg border border-white/20 backdrop-blur-md transform transition-transform hover:scale-110 hover:bg-white/20"
+                title="Create a new file or folder"
+            >
+                <Icon name="Plus" className="w-10 h-10 text-accent-lime"/>
+            </button>
             <button
                 className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white/80 hover:bg-white/10 transition-colors"
                 title="Back to repository selection"
