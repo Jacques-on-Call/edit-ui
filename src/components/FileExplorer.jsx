@@ -3,6 +3,7 @@ import { route } from 'preact-router';
 import Icon from './Icon';
 import FileTile from './FileTile';
 import ReadmeDisplay from './ReadmeDisplay';
+import CreateModal from './CreateModal';
 import matter from 'gray-matter';
 
 function FileExplorer({ repo, searchQuery }) {
@@ -12,18 +13,21 @@ function FileExplorer({ repo, searchQuery }) {
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [metadataCache, setMetadataCache] = useState({});
+  const [fileContentCache, setFileContentCache] = useState({});
   const [readmeContent, setReadmeContent] = useState(null);
   const [isReadmeLoading, setReadmeLoading] = useState(false);
   const [isReadmeVisible, setReadmeVisible] = useState(true);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
 
-  const fetchMetadata = useCallback(async (file) => {
+  const fetchDetailsForFile = useCallback(async (file) => {
     if (file.type === 'dir') return;
     try {
-      // Fetch frontmatter
+      // Fetch frontmatter and content
       const fileRes = await fetch(`/api/files?repo=${repo}&path=${file.path}`, { credentials: 'include' });
       if (!fileRes.ok) throw new Error(`Failed to fetch file content: ${fileRes.statusText}`);
       const fileData = await fileRes.json();
       const decodedContent = atob(fileData.content);
+      setFileContentCache(prev => ({ ...prev, [file.sha]: decodedContent }));
       const { data } = matter(decodedContent);
 
       // Fetch commit data
@@ -42,7 +46,7 @@ function FileExplorer({ repo, searchQuery }) {
         setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
       }
     } catch (err) {
-      console.error(`Failed to fetch metadata for ${file.path}:`, err);
+      console.error(`Failed to fetch details for ${file.path}:`, err);
     }
   }, [repo]);
 
@@ -66,7 +70,7 @@ function FileExplorer({ repo, searchQuery }) {
       setFiles(sortedData);
 
       sortedData.forEach(file => {
-        fetchMetadata(file);
+        fetchDetailsForFile(file);
       });
 
       const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');
@@ -92,7 +96,7 @@ function FileExplorer({ repo, searchQuery }) {
     } finally {
       setLoading(false);
     }
-  }, [repo, path, fetchMetadata]);
+  }, [repo, path, fetchDetailsForFile]);
 
   useEffect(() => {
     fetchFiles();
@@ -109,6 +113,45 @@ function FileExplorer({ repo, searchQuery }) {
   const handleFileDoubleClick = (file) => {
     handleOpen(file);
   };
+
+  const handleCreate = async (name, type) => {
+    try {
+      const fullPath = `${path}/${name}`;
+      let body = { repo, path: fullPath, type };
+
+      // For files, add some default, base64 encoded content
+      if (type === 'file') {
+        const defaultContent = `---
+title: "New Page"
+description: "A fresh new page."
+---
+
+# Welcome to your new page!
+`;
+        body.content = btoa(defaultContent);
+      }
+
+      const response = await fetch('/api/files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      });
+
+      if (response.ok) {
+        fetchFiles(); // Refresh the file list
+        setCreateModalOpen(false); // Close the modal
+      } else {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+    } catch (err) {
+      console.error('Create error:', err);
+      setError(`Failed to create item: ${err.message}`);
+      // Keep modal open to show the error if desired, or handle error state inside the modal
+    }
+  };
+
 
   const handleDelete = async (file) => {
     if (confirm(`Are you sure you want to delete ${file.name}?`)) {
@@ -144,9 +187,20 @@ function FileExplorer({ repo, searchQuery }) {
 
   const handleGoHome = () => setPath('src/pages');
 
-  const filteredFiles = files.filter(file =>
-    file.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredFiles = files
+    .filter(file => file.type === 'dir' || file.name.endsWith('.astro'))
+    .filter(file => {
+      const query = searchQuery.toLowerCase().trim();
+      if (!query) return true;
+
+      const fileNameMatch = file.name.toLowerCase().includes(query);
+      if (fileNameMatch) return true;
+
+      if (file.type === 'dir') return false;
+
+      const content = fileContentCache[file.sha];
+      return content && content.toLowerCase().includes(query);
+    });
 
   const handleToggleReadme = () => setReadmeVisible(prev => !prev);
 
@@ -168,6 +222,13 @@ function FileExplorer({ repo, searchQuery }) {
 
   return (
     <div className="flex flex-col h-screen bg-transparent text-white">
+      <CreateModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onCreate={handleCreate}
+        path={path}
+        repo={repo}
+      />
       {/* Main content area */}
       <main className="flex-grow overflow-y-auto pb-24"> {/* Add padding-bottom to avoid overlap with toolbar */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
@@ -185,7 +246,7 @@ function FileExplorer({ repo, searchQuery }) {
         </div>
         {isReadmeLoading && <div className="text-center text-gray-400 my-8">Loading README...</div>}
         {readmeContent && !isReadmeLoading && (
-          <div className="p-2 sm:p-4">
+          <div className="w-full">
              <div className="bg-black/20 p-4 sm:p-6 rounded-lg border border-white/10">
                 <ReadmeDisplay
                   content={readmeContent}
@@ -211,10 +272,11 @@ function FileExplorer({ repo, searchQuery }) {
             </button>
 
             <button
-                className="bg-black/30 text-white rounded-full h-14 w-14 flex items-center justify-center shadow-lg border border-accent-lime/50 backdrop-blur-sm transform transition-transform hover:scale-110"
+                onClick={() => setCreateModalOpen(true)}
+                className="bg-accent-lime text-black rounded-full h-16 w-16 flex items-center justify-center shadow-lg border border-accent-lime/50 backdrop-blur-sm transform transition-transform hover:scale-110"
                 title="Create a new file or folder"
             >
-                <Icon name="Plus" className="w-8 h-8 text-accent-lime"/>
+                <Icon name="Plus" className="w-10 h-10"/>
             </button>
 
             <button

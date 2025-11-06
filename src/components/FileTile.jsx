@@ -26,9 +26,12 @@ function getIconForFile(fileName) {
 function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete }) {
   const [contextMenu, setContextMenu] = useState({ x: null, y: null });
   const longPressTimer = useRef();
+  const isLongPress = useRef(false);
 
   const handleMouseDown = useCallback((e) => {
+    isLongPress.current = false;
     longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
       e.preventDefault();
       setContextMenu({ x: e.pageX, y: e.pageY });
     }, 500);
@@ -39,7 +42,9 @@ function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete
   }, []);
 
   const handleTouchStart = useCallback((e) => {
+    isLongPress.current = false;
     longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
       e.preventDefault();
       const touch = e.touches[0];
       setContextMenu({ x: touch.pageX, y: touch.pageY });
@@ -49,6 +54,14 @@ function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete
   const handleTouchEnd = useCallback(() => {
     clearTimeout(longPressTimer.current);
   }, []);
+
+  const handleClick = (e) => {
+    if (isLongPress.current) {
+      e.preventDefault();
+      return;
+    }
+    onClick?.(file);
+  };
 
   const handleContextMenu = (e) => {
     e.preventDefault();
@@ -82,7 +95,7 @@ function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete
     <>
       <div
         className={tileClassName}
-        onClick={() => onClick?.(file)}
+        onClick={handleClick}
         onDblClick={() => onDoubleClick?.(file)}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
@@ -97,12 +110,12 @@ function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete
           </div>
           <div className="w-full">
             <div className="font-semibold text-sm text-white truncate" title={file.name}>
-            {file.name.replace('.md', '')}
+              {file.name.replace(/\.[^/.]+$/, "")}
             </div>
           </div>
         </div>
         {metadata?.lastEditor && (
-          <div className="flex-shrink-0 text-xs text-gray-400 mt-2 truncate w-full">
+          <div className="flex-shrink-0 text-xs text-gray-500 mt-1 truncate w-full">
             {metadata.lastEditor} - {formatRelativeDate(metadata.lastModified)}
           </div>
         )}
