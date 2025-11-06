@@ -26,7 +26,7 @@ export function RepoSelectPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center">
+    <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-lg bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-2 sm:p-6 md:p-8 text-white border border-white/20">
         <header className="flex flex-col items-center text-center mb-6 md:mb-8">
           <img src={user?.avatar_url} alt="User Avatar" className="h-16 w-16 md:h-20 md:w-20 mb-4 rounded-full border-2 border-accent-lime/50" />

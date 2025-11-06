@@ -20,11 +20,11 @@ export function LoginPage() {
         </header>
 
         <main>
-          <p className="text-center text-gray-300 mb-8">
+          <p className="text-left text-gray-300 mb-6 md:mb-8">
             ShowUp helps professionals build high-ranking websites and attract new customers – fast.
           </p>
 
-          <ul className="space-y-4 text-left mb-10 bg-white/5 p-6 rounded-lg border border-white/10">
+          <ul className="space-y-4 text-left mb-8 md:mb-10 bg-white/5 p-6 rounded-lg border border-white/10">
             <li className="flex items-center gap-4">
               <Handshake className="text-accent-lime w-6 h-6 flex-shrink-0" />
               <span>Personalized guidance to rank higher</span>
@@ -46,6 +46,8 @@ export function LoginPage() {
             <img src="/ShowUp-Button-Logo.webp" alt="Button Logo" className="h-7 w-7" />
             <span>Sign Up Free Use</span>
           </button>
+
+          <p className="text-center text-xs text-gray-400 mt-3">free tier forever no cards needed</p>
 
           <button onClick={() => window.location.href = '/api/login'} className="block w-full text-center mt-6 text-sm text-accent-lime hover:underline cursor-pointer bg-transparent border-none p-0">
             Already have an account? Login
