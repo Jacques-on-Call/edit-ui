@@ -7,8 +7,10 @@ import CreateModal from './CreateModal';
 import SearchResult from './SearchResult';
 import matter from 'gray-matter';
 import { useSearch } from '../hooks/useSearch';
+import { useFileManifest } from '../hooks/useFileManifest';
 
 function FileExplorer({ repo, searchQuery }) {
+  const { fileManifest } = useFileManifest(repo);
   const [files, setFiles] = useState([]);
   const [path, setPath] = useState('src/pages');
   const [loading, setLoading] = useState(true);
@@ -19,7 +21,7 @@ function FileExplorer({ repo, searchQuery }) {
   const [isReadmeLoading, setReadmeLoading] = useState(false);
   const [isReadmeVisible, setReadmeVisible] = useState(true);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const { searchResults, performSearch, isSearching } = useSearch(repo, files);
+  const { searchResults, performSearch, isSearching } = useSearch(repo, fileManifest);
 
   useEffect(() => {
     performSearch(searchQuery);
