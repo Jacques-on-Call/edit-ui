@@ -9,8 +9,9 @@ import matter from 'gray-matter';
 import { useSearch } from '../hooks/useSearch';
 import LiquidGlassButton from './LiquidGlassButton';
 
-function FileExplorer({ repo, searchQuery, fileManifest }) {
+function FileExplorer({ repo, searchQuery }) {
   const [currentFiles, setCurrentFiles] = useState([]);
+  const [fileManifest, setFileManifest] = useState([]);
   const [path, setPath] = useState('src/pages');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,11 +21,30 @@ function FileExplorer({ repo, searchQuery, fileManifest }) {
   const [isReadmeLoading, setReadmeLoading] = useState(false);
   const [isReadmeVisible, setReadmeVisible] = useState(true);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const { searchResults, performSearch, isSearching } = useSearch(repo, fileManifest);
+  const { searchResults, performSearch, isSearching } = useSearch(repo);
 
   useEffect(() => {
-    performSearch(searchQuery);
-  }, [searchQuery, performSearch]);
+    performSearch(searchQuery, fileManifest);
+  }, [searchQuery, performSearch, fileManifest]);
+
+  useEffect(() => {
+    async function getFileManifest() {
+      try {
+        const res = await fetch(`/api/files/all?repo=${repo}`, { credentials: 'include' });
+        if (!res.ok) {
+          throw new Error(`Failed to fetch file manifest: ${res.statusText}`);
+        }
+        const data = await res.json();
+        setFileManifest(data);
+      } catch (err) {
+        console.error("Error fetching file manifest:", err);
+        setError(`Failed to load file manifest. Search may be unavailable. Details: ${err.message}`);
+      }
+    }
+    if (repo) {
+      getFileManifest();
+    }
+  }, [repo]);
 
   const fetchDetailsForFile = useCallback(async (file) => {
     if (file.type === 'dir') return;
@@ -40,7 +60,7 @@ function FileExplorer({ repo, searchQuery, fileManifest }) {
       const commitRes = await fetch(`/api/file/commits?repo=${repo}&path=${file.path}`, { credentials: 'include' });
       if (!commitRes.ok) throw new Error(`Failed to fetch commit data: ${commitRes.statusText}`);
       const commitData = await commitRes.json();
-      const lastCommit = commitData[0];
+      const lastCommit = Array.isArray(commitData) ? commitData[0] : undefined;
 
       const metadata = {
         ...data,
