@@ -7,6 +7,7 @@ import CreateModal from './CreateModal';
 import SearchResult from './SearchResult';
 import matter from 'gray-matter';
 import { useSearch } from '../hooks/useSearch';
+import LiquidGlassButton from './LiquidGlassButton';
 
 function FileExplorer({ repo, searchQuery, fileManifest }) {
   const [currentFiles, setCurrentFiles] = useState([]);
@@ -280,13 +281,7 @@ description: "A fresh new page."
                 <Icon name="Home" className="w-5 h-5" />
                 <span className="font-semibold text-sm">Home</span>
             </button>
-            <button
-                onClick={() => setCreateModalOpen(true)}
-                className="bg-white/10 text-white rounded-full h-16 w-16 flex items-center justify-center shadow-lg border border-white/20 backdrop-blur-md transform transition-transform hover:scale-110 hover:bg-white/20"
-                title="Create a new file or folder"
-            >
-                <Icon name="Plus" className="w-10 h-10 text-accent-lime"/>
-            </button>
+            <LiquidGlassButton onClick={() => setCreateModalOpen(true)} />
             <button
                 className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white/80 hover:bg-white/10 transition-colors"
                 title="Back to repository selection"
