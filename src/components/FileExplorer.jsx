@@ -196,8 +196,27 @@ description: "A fresh new page."
 
   const handleToggleReadme = () => setReadmeVisible(prev => !prev);
 
-  const filesToDisplay = files
-  .filter(file => file.type === 'dir' || file.name.endsWith('.astro'));
+  const [filteredFiles, setFilteredFiles] = useState([]);
+
+  useEffect(() => {
+    const baseFiltered = files.filter(file => file.type === 'dir' || file.name.endsWith('.astro'));
+
+    if (!searchQuery || !searchQuery.trim()) {
+      setFilteredFiles(baseFiltered);
+      return;
+    }
+
+    const q = searchQuery.toLowerCase();
+    const searchFiltered = baseFiltered.filter((f) => {
+      const name = (f.name || '').toLowerCase();
+      const path = (f.path || '').toLowerCase();
+      return name.includes(q) || path.includes(q);
+    });
+
+    setFilteredFiles(searchFiltered);
+  }, [files, searchQuery]);
+
+  const filesToDisplay = filteredFiles;
 
   if (loading) {
     return <div className="flex items-center justify-center h-full"><div className="text-center p-8 text-gray-500 animate-pulse">Loading files...</div></div>;

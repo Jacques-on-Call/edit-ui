@@ -1,20 +1,24 @@
-// https://github.com/Jacques-on-Call/StrategyContent/blob/main/easy-seo/src/components/SearchBar.jsx
 import { useState, useMemo, useEffect } from 'preact/hooks';
 import { debounce } from 'lodash-es';
 import Icon from './Icon';
 
+/**
+* Robust SearchBar:
+* - Debounced search (300ms)
+* - Cancels pending debounce on unmount
+* - Flushes search instantly on Enter
+* - Logs errors from onSearch to avoid silent failures
+*/
 const SearchBar = ({ onSearch }) => {
 const [query, setQuery] = useState('');
 
-// create one debounced function and ensure cleanup on unmount
 const debouncedSearch = useMemo(
 () =>
 debounce((searchQuery) => {
 try {
 onSearch(searchQuery);
 } catch (err) {
-// swallow to avoid uncaught exceptions breaking future events
-// but log so developer can see the problem
+// Prevent uncaught exceptions from breaking future events
 // eslint-disable-next-line no-console
 console.error('onSearch handler error:', err);
 }
@@ -24,8 +28,8 @@ console.error('onSearch handler error:', err);
 
 useEffect(() => {
 return () => {
-// cancel pending debounced calls when component unmounts
-debouncedSearch.cancel && debouncedSearch.cancel();
+// Cancel pending debounced calls when component unmounts
+if (debouncedSearch && debouncedSearch.cancel) debouncedSearch.cancel();
 };
 }, [debouncedSearch]);
 
@@ -36,11 +40,15 @@ debouncedSearch(newQuery);
 };
 
 const handleKeyDown = (e) => {
-// immediate search on Enter (flush debounce) for expected UX
 if (e.key === 'Enter') {
-// flush pending debounced call and call instantly
-debouncedSearch.cancel && debouncedSearch.cancel();
+// flush and call immediately for expected UX
+if (debouncedSearch && debouncedSearch.cancel) debouncedSearch.cancel();
+try {
 onSearch(query);
+} catch (err) {
+// eslint-disable-next-line no-console
+console.error('onSearch immediate call error:', err);
+}
 }
 };
 
