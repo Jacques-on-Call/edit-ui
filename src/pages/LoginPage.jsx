@@ -7,11 +7,13 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center p-4 lg:pl-[20vw]">
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-8 text-white border border-white/20">
-        <header className="flex flex-col items-start text-left mb-8">
-          <img src="/ShowUp-H1-Logo.webp" alt="ShowUp Logo" className="h-16 w-16 mb-4" />
-          <h1 className="text-5xl font-bold">ShowUp</h1>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-2 sm:p-4 md:p-6 text-white border border-white/20">
+        <header className="text-left mb-6 md:mb-8">
+          <div className="flex flex-row items-center">
+            <img src="/ShowUp-H1-Logo.webp" alt="ShowUp Logo" className="h-16 w-16 mr-4" />
+            <h1 className="text-5xl font-bold">Show<span className="text-accent-magenta">Up</span></h1>
+          </div>
           <p className="text-xl font-medium text-accent-lime mt-4">
             Build your business visibility, easily.
           </p>

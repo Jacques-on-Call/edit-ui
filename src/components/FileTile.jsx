@@ -61,7 +61,7 @@ function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete
 
   const menuOptions = [
     { label: 'Open', action: () => onDoubleClick(file) },
-    { label: 'Delete', action: () => onDelete(file) },
+    { label: 'Delete', action: () => onDelete?.(file) },
   ];
 
   const isDir = file.type === 'dir';
