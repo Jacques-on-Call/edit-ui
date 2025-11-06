@@ -206,12 +206,15 @@ description: "A fresh new page."
       if (!query) return true;
 
       const fileNameMatch = file.name.toLowerCase().includes(query);
-      if (fileNameMatch) return true;
-
-      if (file.type === 'dir') return false;
 
       const content = fileContentCache[file.sha];
-      return content && content.toLowerCase().includes(query);
+      const contentMatch = content && content.toLowerCase().includes(query);
+
+      if (file.type === 'dir') {
+        return fileNameMatch;
+      } else {
+        return fileNameMatch || contentMatch;
+      }
     });
 
   const handleToggleReadme = () => setReadmeVisible(prev => !prev);
