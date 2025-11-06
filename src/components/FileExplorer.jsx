@@ -4,6 +4,7 @@ import Icon from './Icon';
 import FileTile from './FileTile';
 import ReadmeDisplay from './ReadmeDisplay';
 import CreateModal from './CreateModal';
+import SearchResult from './SearchResult';
 import matter from 'gray-matter';
 
 function FileExplorer({ repo, searchQuery }) {
@@ -18,6 +19,7 @@ function FileExplorer({ repo, searchQuery }) {
   const [isReadmeLoading, setReadmeLoading] = useState(false);
   const [isReadmeVisible, setReadmeVisible] = useState(true);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   const fetchDetailsForFile = useCallback(async (file) => {
     if (file.type === 'dir') return;
@@ -102,6 +104,15 @@ function FileExplorer({ repo, searchQuery }) {
     fetchFiles();
   }, [fetchFiles]);
 
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      setShowSearchResults(true);
+    } else {
+      setShowSearchResults(false);
+    }
+  }, [searchQuery]);
+
+
   const handleFileClick = (file) => {
     if (selectedFile && selectedFile.sha === file.sha) {
       handleOpen(file);
@@ -179,6 +190,7 @@ description: "A fresh new page."
 
     if (file.type === 'dir') {
       setPath(file.path);
+      setShowSearchResults(false);
     } else {
       // For now, just log the file path. Routing will be handled later.
       console.log(`Navigating to editor for: ${file.path}`);
@@ -203,6 +215,13 @@ description: "A fresh new page."
     });
 
   const handleToggleReadme = () => setReadmeVisible(prev => !prev);
+
+  const searchResults = filteredFiles
+    .filter(file => file.type !== 'dir')
+    .map(file => ({
+      ...file,
+      content: fileContentCache[file.sha] || ''
+    }));
 
   if (loading) {
     return <div className="flex items-center justify-center h-full"><div className="text-center p-8 text-gray-500 animate-pulse">Loading files...</div></div>;
@@ -231,30 +250,46 @@ description: "A fresh new page."
       />
       {/* Main content area */}
       <main className="flex-grow overflow-y-auto pb-24"> {/* Add padding-bottom to avoid overlap with toolbar */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
-          {Array.isArray(filteredFiles) && filteredFiles.filter(file => !file.name.startsWith('.') && file.name.toLowerCase() !== 'readme.md').map(file => (
-            <FileTile
-              key={file.sha}
-              file={file}
-              metadata={metadataCache[file.sha]}
-              isSelected={selectedFile && selectedFile.sha === file.sha}
-              onClick={handleFileClick}
-              onDoubleClick={handleFileDoubleClick}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-        {isReadmeLoading && <div className="text-center text-gray-400 my-8">Loading README...</div>}
-        {readmeContent && !isReadmeLoading && (
-          <div className="w-full">
-             <div className="bg-black/20 p-4 sm:p-6 rounded-lg border border-white/10">
-                <ReadmeDisplay
-                  content={readmeContent}
-                  isVisible={isReadmeVisible}
-                  onToggle={handleToggleReadme}
-                />
-             </div>
+        {showSearchResults ? (
+          <div className="p-4">
+            <h2 class="text-xl font-bold mb-4">Search Results</h2>
+            {searchResults.map(file => (
+              <SearchResult
+                key={file.sha}
+                file={file}
+                searchQuery={searchQuery}
+                onSelect={handleOpen}
+              />
+            ))}
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
+              {Array.isArray(filteredFiles) && filteredFiles.filter(file => !file.name.startsWith('.') && file.name.toLowerCase() !== 'readme.md').map(file => (
+                <FileTile
+                  key={file.sha}
+                  file={file}
+                  metadata={metadataCache[file.sha]}
+                  isSelected={selectedFile && selectedFile.sha === file.sha}
+                  onClick={handleFileClick}
+                  onDoubleClick={handleFileDoubleClick}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+            {isReadmeLoading && <div className="text-center text-gray-400 my-8">Loading README...</div>}
+            {readmeContent && !isReadmeLoading && (
+              <div className="w-full">
+                 <div className="bg-black/20 p-4 sm:p-6 rounded-lg border border-white/10">
+                    <ReadmeDisplay
+                      content={readmeContent}
+                      isVisible={isReadmeVisible}
+                      onToggle={handleToggleReadme}
+                    />
+                 </div>
+              </div>
+            )}
+          </>
         )}
       </main>
 
@@ -273,10 +308,10 @@ description: "A fresh new page."
 
             <button
                 onClick={() => setCreateModalOpen(true)}
-                className="bg-accent-lime text-black rounded-full h-16 w-16 flex items-center justify-center shadow-lg border border-accent-lime/50 backdrop-blur-sm transform transition-transform hover:scale-110"
+                className="bg-white/10 text-white rounded-full h-16 w-16 flex items-center justify-center shadow-lg border border-white/20 backdrop-blur-md transform transition-transform hover:scale-110 hover:bg-white/20"
                 title="Create a new file or folder"
             >
-                <Icon name="Plus" className="w-10 h-10"/>
+                <Icon name="Plus" className="w-10 h-10 text-accent-lime"/>
             </button>
 
             <button
