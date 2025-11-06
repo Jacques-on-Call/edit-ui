@@ -6,6 +6,7 @@ import ReadmeDisplay from './ReadmeDisplay';
 import CreateModal from './CreateModal';
 import SearchResult from './SearchResult';
 import matter from 'gray-matter';
+import { useSearch } from '../hooks/useSearch';
 
 function FileExplorer({ repo, searchQuery }) {
   const [files, setFiles] = useState([]);
@@ -14,12 +15,15 @@ function FileExplorer({ repo, searchQuery }) {
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [metadataCache, setMetadataCache] = useState({});
-  const [fileContentCache, setFileContentCache] = useState({});
   const [readmeContent, setReadmeContent] = useState(null);
   const [isReadmeLoading, setReadmeLoading] = useState(false);
   const [isReadmeVisible, setReadmeVisible] = useState(true);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const [showSearchResults, setShowSearchResults] = useState(false);
+  const { searchResults, performSearch, isSearching } = useSearch(repo, files);
+
+  useEffect(() => {
+    performSearch(searchQuery);
+  }, [searchQuery, performSearch]);
 
   const fetchDetailsForFile = useCallback(async (file) => {
     if (file.type === 'dir') return;
@@ -29,7 +33,6 @@ function FileExplorer({ repo, searchQuery }) {
       if (!fileRes.ok) throw new Error(`Failed to fetch file content: ${fileRes.statusText}`);
       const fileData = await fileRes.json();
       const decodedContent = atob(fileData.content);
-      setFileContentCache(prev => ({ ...prev, [file.sha]: decodedContent }));
       const { data } = matter(decodedContent);
 
       // Fetch commit data
@@ -104,14 +107,7 @@ function FileExplorer({ repo, searchQuery }) {
     fetchFiles();
   }, [fetchFiles]);
 
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      setShowSearchResults(true);
-    } else {
-      setShowSearchResults(false);
-    }
-  }, [searchQuery]);
-
+  const showSearchResults = searchQuery.trim().length > 0;
 
   const handleFileClick = (file) => {
     if (selectedFile && selectedFile.sha === file.sha) {
@@ -159,7 +155,6 @@ description: "A fresh new page."
     } catch (err) {
       console.error('Create error:', err);
       setError(`Failed to create item: ${err.message}`);
-      // Keep modal open to show the error if desired, or handle error state inside the modal
     }
   };
 
@@ -190,41 +185,17 @@ description: "A fresh new page."
 
     if (file.type === 'dir') {
       setPath(file.path);
-      setShowSearchResults(false);
     } else {
-      // For now, just log the file path. Routing will be handled later.
       console.log(`Navigating to editor for: ${file.path}`);
     }
   };
 
   const handleGoHome = () => setPath('src/pages');
 
-  const filteredFiles = files
-    .filter(file => file.type === 'dir' || file.name.endsWith('.astro'))
-    .filter(file => {
-      const query = searchQuery.toLowerCase().trim();
-      if (!query) return true;
-
-      const fileNameMatch = file.name.toLowerCase().includes(query);
-
-      const content = fileContentCache[file.sha];
-      const contentMatch = content && content.toLowerCase().includes(query);
-
-      if (file.type === 'dir') {
-        return fileNameMatch;
-      } else {
-        return fileNameMatch || contentMatch;
-      }
-    });
-
   const handleToggleReadme = () => setReadmeVisible(prev => !prev);
 
-  const searchResults = filteredFiles
-    .filter(file => file.type !== 'dir')
-    .map(file => ({
-      ...file,
-      content: fileContentCache[file.sha] || ''
-    }));
+  const filesToDisplay = files
+  .filter(file => file.type === 'dir' || file.name.endsWith('.astro'));
 
   if (loading) {
     return <div className="flex items-center justify-center h-full"><div className="text-center p-8 text-gray-500 animate-pulse">Loading files...</div></div>;
@@ -251,24 +222,27 @@ description: "A fresh new page."
         path={path}
         repo={repo}
       />
-      {/* Main content area */}
-      <main className="flex-grow overflow-y-auto pb-24"> {/* Add padding-bottom to avoid overlap with toolbar */}
+      <main className="flex-grow overflow-y-auto pb-24">
         {showSearchResults ? (
           <div className="p-4">
             <h2 class="text-xl font-bold mb-4">Search Results</h2>
-            {searchResults.map(file => (
-              <SearchResult
-                key={file.sha}
-                file={file}
-                searchQuery={searchQuery}
-                onSelect={handleOpen}
-              />
-            ))}
+            {isSearching ? (
+              <div className="text-center p-8 text-gray-500 animate-pulse">Searching...</div>
+            ) : (
+              searchResults.map(file => (
+                <SearchResult
+                  key={file.sha}
+                  file={file}
+                  searchQuery={searchQuery}
+                  onSelect={handleOpen}
+                />
+              ))
+            )}
           </div>
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
-              {Array.isArray(filteredFiles) && filteredFiles.filter(file => !file.name.startsWith('.') && file.name.toLowerCase() !== 'readme.md').map(file => (
+              {Array.isArray(filesToDisplay) && filesToDisplay.filter(file => !file.name.startsWith('.') && file.name.toLowerCase() !== 'readme.md').map(file => (
                 <FileTile
                   key={file.sha}
                   file={file}
@@ -295,8 +269,6 @@ description: "A fresh new page."
           </>
         )}
       </main>
-
-      {/* Bottom Toolbar */}
       <footer className="fixed bottom-0 left-0 right-0 p-3 z-20">
          <div className="w-full max-w-2xl mx-auto bg-white/10 backdrop-blur-md rounded-2xl shadow-lg flex justify-between items-center p-2 border border-white/20">
             <button
@@ -308,7 +280,6 @@ description: "A fresh new page."
                 <Icon name="Home" className="w-5 h-5" />
                 <span className="font-semibold text-sm">Home</span>
             </button>
-
             <button
                 onClick={() => setCreateModalOpen(true)}
                 className="bg-white/10 text-white rounded-full h-16 w-16 flex items-center justify-center shadow-lg border border-white/20 backdrop-blur-md transform transition-transform hover:scale-110 hover:bg-white/20"
@@ -316,7 +287,6 @@ description: "A fresh new page."
             >
                 <Icon name="Plus" className="w-10 h-10 text-accent-lime"/>
             </button>
-
             <button
                 className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white/80 hover:bg-white/10 transition-colors"
                 title="Back to repository selection"
