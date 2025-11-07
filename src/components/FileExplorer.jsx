@@ -139,13 +139,13 @@ function FileExplorer({ repo, searchQuery }) {
         body: JSON.stringify(body),
       });
 
-      if (response.ok) {
-        fetchFiles(); // Refresh the file list
-        setCreateModalOpen(false); // Close the modal
-      } else {
+      if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText);
       }
+
+      fetchFiles(); // Refresh the file list
+      setCreateModalOpen(false); // Close the modal
     } catch (err) {
       console.error('Create error:', err);
       setError(`Failed to create item: ${err.message}`);
