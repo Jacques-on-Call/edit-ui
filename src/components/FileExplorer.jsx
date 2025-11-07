@@ -31,17 +31,19 @@ function FileExplorer({ repo, searchQuery }) {
   const fetchDetailsForFile = useCallback(async (file) => {
     if (file.type === 'dir') return;
     try {
-      // Fetch frontmatter and content
-      const fileData = await fetchJson(`/api/files?repo=${repo}&path=${file.path}`);
+      // Use the new, dedicated endpoint for fetching decoded file content
+      const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
+      const fileData = await fetchJson(url);
+
       if (!fileData || typeof fileData.content !== 'string') {
         console.error('Unexpected file detail response', fileData);
         setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Missing content' } }));
         return;
       }
-      const decodedContent = atob(fileData.content);
-      const { data } = matter(decodedContent);
 
-      // Fetch commit data
+      const { data } = matter(fileData.content);
+
+      // Fetch commit data separately
       const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`);
       const lastCommit = commitData[0];
 
@@ -65,7 +67,7 @@ function FileExplorer({ repo, searchQuery }) {
     setError(null);
 
     try {
-      let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`);
+      let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' });
 
       const sortedData = data.sort((a, b) => {
         if (a.type === 'dir' && b.type !== 'dir') return -1;
@@ -164,6 +166,7 @@ function FileExplorer({ repo, searchQuery }) {
       try {
         await fetchJson(`/api/files?repo=${repo}&path=${file.path}`, {
           method: 'DELETE',
+          credentials: 'include',
         });
         fetchFiles();
       } catch (err) {
