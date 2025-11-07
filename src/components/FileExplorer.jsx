@@ -5,7 +5,6 @@ import FileTile from './FileTile';
 import ReadmeDisplay from './ReadmeDisplay';
 import CreateModal from './CreateModal';
 import SearchResult from './SearchResult';
-import matter from 'gray-matter';
 import { useSearch } from '../hooks/useSearch';
 import { useFileManifest } from '../hooks/useFileManifest';
 import { fetchJson } from '../lib/fetchJson';
@@ -31,24 +30,22 @@ function FileExplorer({ repo, searchQuery }) {
   const fetchDetailsForFile = useCallback(async (file) => {
     if (file.type === 'dir') return;
     try {
-      // Use the new, dedicated endpoint for fetching decoded file content
+      // Use the new, dedicated endpoint for fetching decoded and parsed file content
       const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
       const fileData = await fetchJson(url);
 
-      if (!fileData || typeof fileData.content !== 'string') {
+      if (!fileData || typeof fileData.frontmatter !== 'object') {
         console.error('Unexpected file detail response', fileData);
-        setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Missing content' } }));
+        setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Missing or invalid frontmatter' } }));
         return;
       }
-
-      const { data } = matter(fileData.content);
 
       // Fetch commit data separately
       const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`);
       const lastCommit = commitData[0];
 
       const metadata = {
-        ...data,
+        ...fileData.frontmatter,
         lastEditor: lastCommit?.commit?.author?.name,
         lastModified: lastCommit?.commit?.author?.date,
       };
