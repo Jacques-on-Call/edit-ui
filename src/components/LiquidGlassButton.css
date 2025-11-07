@@ -1,15 +1,16 @@
 .button {
   border-radius: 50%;
   position: relative;
+  /* Add a filter property to enable drop-shadow on the icon */
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
 }
 
 .base {
   position: absolute;
   inset: 0;
-  background: rgba(60, 60, 60, 0.2);
+  background: rgba(40, 40, 40, 0.5); /* Darker base for contrast */
   border-radius: inherit;
-  filter: blur(0px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.45);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.6);
 }
 
 .icon {
@@ -19,34 +20,47 @@
   align-items: center;
   justify-content: center;
   color: #A9F600; /* neonish green */
-  font-size: 42px;
-  z-index: 2;
-  /* Under-icon glow */
-  text-shadow: 0 0 22px rgba(19, 19, 48, 0.15);
+  z-index: 5; /* Ensure icon is on top */
+  /* Layer 6: Under-Icon Subsurface Shadow */
+  filter: drop-shadow(0 0 8px rgba(0,0,0,0.25));
 }
 
+/* Layer 4: Internal Light Pool */
+.light-pool {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at 50% 70%,
+    rgba(255,255,255,0.12),
+    transparent 60%
+  );
+  z-index: 3;
+}
+
+/* Layer 2: Main Glass Body */
 .body {
   position: absolute;
   inset: 0;
-  /* Harder Edges + Less Blur */
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(6px);
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(5px);
   border-radius: inherit;
-  /* Inner Rim Stroke */
-  border: 1px solid rgba(255,255,255,0.45);
-  /* Inner Shadow for depth */
-  box-shadow: inset 0 2px 12px -2px rgba(0,0,0,0.24);
+  /* Layer 3: Inner Refracted Rim */
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.14);
+  z-index: 2;
 }
 
+/* Layer 1: Asymmetric Glass Highlight */
 .surface {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  /* Top Gloss Highlight Arc */
   background: linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.35) 0%,
-    rgba(255,255,255,0.05) 30%,
-    transparent 50%
+    130deg,
+    rgba(255,255,255,0.55) 0%,
+    rgba(255,255,255,0.15) 16%,
+    rgba(255,255,255,0.05) 40%,
+    transparent 60%
   );
+  z-index: 4;
 }

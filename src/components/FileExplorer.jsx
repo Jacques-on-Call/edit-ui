@@ -300,6 +300,7 @@ function FileExplorer({ repo, searchQuery }) {
               title="Create a new file or folder"
             >
               <div className="base"></div>
+              <div className="light-pool"></div>
               <div className="body"></div>
               <div className="surface"></div>
               <div className="icon text-[28px] sm:text-[32px] md:text-[36px]">+</div>
