@@ -1,0 +1,46 @@
+.button {
+  width: 90px;
+  height: 90px;
+  border-radius: 28px;
+  position: relative;
+}
+
+.base {
+  position: absolute;
+  inset: 0;
+  background: rgba(60, 60, 60, 1);
+  border-radius: inherit;
+  filter: blur(0px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.45);
+}
+
+.icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #A9F600; /* neonish green */
+  font-size: 42px;
+  z-index: 2;
+}
+
+.body {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(12px);
+  border-radius: inherit;
+  border: 1px solid rgba(255,255,255,0.18);
+}
+
+.surface {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.35),
+    rgba(255,255,255,0.05)
+  );
+}
