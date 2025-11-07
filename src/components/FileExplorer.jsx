@@ -28,37 +28,12 @@ function FileExplorer({ repo, searchQuery }) {
     performSearch(searchQuery);
   }, [searchQuery, performSearch]);
 
-  const fetchDetailsForFile = useCallback(async (file) => {
-    if (file.type === 'dir') return;
-    try {
-      // Fetch frontmatter and content
-      const fileData = await fetchJson(`/api/files?repo=${repo}&path=${file.path}`, { credentials: 'include' });
-      const decodedContent = atob(fileData.content);
-      const { data } = matter(decodedContent);
-
-      // Fetch commit data
-      const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`, { credentials: 'include' });
-      const lastCommit = commitData[0];
-
-      const metadata = {
-        ...data,
-        lastEditor: lastCommit?.commit?.author?.name,
-        lastModified: lastCommit?.commit?.author?.date,
-      };
-
-      if (metadata) {
-        setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
-      }
-    } catch (err) {
-      console.error(`Failed to fetch details for ${file.path}:`, err);
-    }
-  }, [repo]);
-
   const fetchFiles = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
+      // Now fetches the enriched data directly
       let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' });
 
       const sortedData = data.sort((a, b) => {
@@ -66,11 +41,19 @@ function FileExplorer({ repo, searchQuery }) {
         if (a.type !== 'dir' && b.type === 'dir') return 1;
         return a.name.localeCompare(b.name);
       });
-      setFiles(sortedData);
 
+      // The metadata is now part of the file object from the API
+      const newMetadata = {};
       sortedData.forEach(file => {
-        fetchDetailsForFile(file);
+        if (file.lastEditor || file.lastModified) {
+          newMetadata[file.sha] = {
+            lastEditor: file.lastEditor,
+            lastModified: file.lastModified,
+          };
+        }
       });
+      setMetadataCache(newMetadata);
+      setFiles(sortedData);
 
       const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');
       if (readmeFile) {
