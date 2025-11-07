@@ -1,14 +1,14 @@
 .button {
   width: 90px;
   height: 90px;
-  border-radius: 28px;
+  border-radius: 50%;
   position: relative;
 }
 
 .base {
   position: absolute;
   inset: 0;
-  background: rgba(60, 60, 60, 1);
+  background: rgba(60, 60, 60, 0.2);
   border-radius: inherit;
   filter: blur(0px);
   box-shadow: 0 12px 24px rgba(0,0,0,0.45);
