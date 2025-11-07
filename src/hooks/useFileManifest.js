@@ -12,7 +12,9 @@ export function useFileManifest(repo) {
     setError(null);
 
     try {
-      const response = await fetch(`/api/files/all?repo=${repo}`, { credentials: 'include' });
+      const repoParam = encodeURIComponent(repo);
+      const url = `/api/files?repo=${repoParam}`;
+      const response = await fetch(url, { credentials: 'include' });
       if (!response.ok) {
         throw new Error('Failed to fetch file manifest');
       }
