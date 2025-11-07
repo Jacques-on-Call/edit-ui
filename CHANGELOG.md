@@ -1,5 +1,30 @@
 # Project Change Log
 
+### **v0.1.13: 2025-11-06 (Jules #147 File Explorer Stability Fix)**
+
+**Author:** Jules #147
+
+**Change:** Implemented a comprehensive, multi-layered fix to resolve critical stability issues in the file explorer, including `404` errors on file lists, `ReferenceError` crashes when fetching file details, and a backend CORS misconfiguration.
+
+**Context & Key Changes:**
+
+*   **Backend: CORS Fix:** Diagnosed and fixed a critical CORS issue where the backend would respond with `Access-Control-Allow-Origin: null`. The root cause was inconsistent `Origin` header handling in the Cloudflare Worker. The fix involved updating all route handlers in `content.js` to use a safe default origin, ensuring the client can always read API responses.
+*   **Backend: Router Flexibility:** Updated the backend router (`router.js`) to flexibly handle both `/api/files` and path-based URLs like `/api/files/src/pages`, making the API more resilient.
+*   **Backend: API Hardening:** Added defensive error handling to all backend route handlers that interact with the GitHub API. The handlers now check if the response is `ok` before attempting to parse JSON, preventing server-side crashes and returning clear error messages.
+*   **Frontend: Robust API Calls:**
+    *   Created a new centralized `fetchJson` utility to standardize all client-side API calls with robust error handling.
+    *   Refactored all API calls in `FileExplorer.jsx`, `useFileManifest.js`, and `useSearch.js` to use this new utility.
+    *   Corrected the file manifest fetch to use the canonical `/api/files?repo=...` endpoint, resolving the original `404` error.
+*   **Frontend: Create File Fix:** Refactored the "Create File" functionality to robustly fetch a template file from the repository, preventing crashes when the template is unavailable.
+
+**Reflection:**
+
+*   **Most Challenging:** The most challenging part of this task was diagnosing the CORS issue. The browser's network inspector showed a `200 OK` status, but the response body was empty, which was misleading. It required a deep understanding of CORS policies to realize that the `Access-Control-Allow-Origin: null` header was the true culprit preventing the client-side JavaScript from accessing the response.
+*   **Key Learning:** This was a powerful lesson in end-to-end debugging and the importance of robust error handling at every layer of the stack. A simple frontend `ReferenceError` was ultimately traced back to an inconsistent header in a backend route. The solution required a holistic approach, hardening both the client and the server to prevent similar issues in the future.
+*   **Advice for Next Agent:** When debugging network issues, always inspect the response headers, not just the status code. If you see CORS-related errors, the problem is almost always on the server. The new `fetchJson` utility should be used for all new client-side API calls to ensure consistent error handling.
+
+---
+
 ### **v0.1.12: 2025-11-06 (Jules #146 File Explorer Overhaul)**
 
 **Author:** Jules #146

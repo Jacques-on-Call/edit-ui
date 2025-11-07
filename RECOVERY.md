@@ -4,6 +4,35 @@ This document serves as a debug diary for the `easy-seo` project. It records com
 
 ---
 
+## **Bug: API Requests Fail Silently with `ReferenceError` on Client**
+
+**Date:** 2025-11-06
+**Agent:** Jules #147
+
+### **Symptoms:**
+
+Multiple components in the application, including the file explorer and search, were failing to render data. The browser's developer console showed `ReferenceError: ... is not defined` or similar errors deep within the component's rendering logic. The network tab, however, showed that the relevant API requests (e.g., to `/api/files`) were succeeding with a `200 OK` status, but the response body appeared "Empty" or was unreadable by the client-side JavaScript.
+
+### **Root Cause:**
+
+The root cause was a subtle but critical CORS misconfiguration in the Cloudflare Worker backend.
+
+1.  **Inconsistent Origin Header:** In `cloudflare-worker-src/routes/content.js`, the CORS headers were being generated using `request.headers.get('Origin')` directly. If a request was sent without an `Origin` header (which can happen in certain scenarios), this value would be `null`.
+2.  **`Access-Control-Allow-Origin: null`:** The worker would then respond with the header `Access-Control-Allow-Origin: null`.
+3.  **Browser Security Policy:** According to the CORS specification, a response with `Access-Control-Allow-Origin: null` does **not** grant access to a page loaded from a specific origin (e.g., `http://localhost:5173`). For security reasons, the browser would therefore block the client-side JavaScript from accessing the response body, even though the network request itself was successful.
+4.  **Client-Side Crash:** The client-side code, expecting a JSON response, would receive an inaccessible (effectively `null` or `undefined`) response. When it tried to access properties on this non-existent data (e.g., `data.content`), it would throw a `ReferenceError`, causing the component to crash.
+
+This issue was exacerbated by a lack of defensive error handling on both the client and the server. The client was not validating the API response before parsing it, and the server was not gracefully handling potential errors from the upstream GitHub API.
+
+### **Solution:**
+
+The solution was a comprehensive, multi-layered fix to improve the robustness of the entire API communication stack.
+
+1.  **Fix the CORS Header:** The primary fix was to update all route handlers in `cloudflare-worker-src/routes/content.js` to use a safe, non-null default for the `Origin` header. The logic was changed to `const origin = request.headers.get('Origin') || 'https://edit.strategycontent.agency';`. This ensures that the `Access-Control-Allow-Origin` header always contains a valid origin, resolving the CORS issue.
+2.  **Harden the Backend:** All API handlers in `content.js` were refactored to include defensive checks. They now validate the response from the GitHub API (`response.ok`) and handle non-JSON or error responses gracefully, preventing server-side crashes and returning clear, structured JSON error messages to the client.
+3.  **Harden the Frontend:** A new centralized utility function, `fetchJson`, was created in `easy-seo/src/lib/fetchJson.js`. This function wraps the native `fetch` call with robust error handling, checking the response status and parsing the JSON safely.
+4.  **Refactor All Client-Side Calls:** All `fetch` calls in the `easy-seo` application (in `FileExplorer.jsx`, `useFileManifest.js`, etc.) were refactored to use the new `fetchJson` utility, ensuring consistent and safe API communication across the entire frontend.
+
 ## **Bug: Infinite Authentication Loop on Login**
 
 **Date:** 2025-11-05

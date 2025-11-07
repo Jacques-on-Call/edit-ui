@@ -12,6 +12,10 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/pages/RepoSelectPage.jsx`**: The repository selection page.
 -   **`src/pages/FileExplorerPage.jsx`**: The main file explorer page.
 
+### **Utilities**
+
+-   **`src/lib/fetchJson.js`**: A robust, centralized utility for making `fetch` requests to the backend API, with built-in error handling.
+
 ### **Components**
 
 -   **`src/components/FileExplorer.jsx`**: The core file explorer component.
