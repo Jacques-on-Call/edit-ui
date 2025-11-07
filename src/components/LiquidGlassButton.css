@@ -1,16 +1,23 @@
 .button {
   border-radius: 50%;
   position: relative;
-  /* Add a filter property to enable drop-shadow on the icon */
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+  transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1); /* Release spring motion */
+  filter: drop-shadow(0 4px 8px rgba(25, 25, 112, 0.3)); /* Midnight blue shadow */
+}
+
+/* On-click "sinking" animation */
+.button:active {
+  transform: scale(0.97) translateY(2px);
+  transition-duration: 0.12s;
 }
 
 .base {
   position: absolute;
   inset: 0;
-  background: rgba(40, 40, 40, 0.5); /* Darker base for contrast */
+  background: rgba(40, 40, 40, 0.5); /* Darker base */
   border-radius: inherit;
-  box-shadow: 0 12px 24px rgba(0,0,0,0.6);
+  /* Shadow: smaller, offset, darker blue */
+  box-shadow: 0 4px 12px rgba(25, 25, 112, 0.45);
 }
 
 .icon {
@@ -19,13 +26,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #A9F600; /* neonish green */
-  z-index: 5; /* Ensure icon is on top */
-  /* Layer 6: Under-Icon Subsurface Shadow */
-  filter: drop-shadow(0 0 8px rgba(0,0,0,0.25));
+  color: #A9F600;
+  z-index: 5;
+  transition: color 0.12s, text-shadow 0.12s;
+
+  /* Glistening reverse outline */
+  text-shadow:
+    0 0 18px rgba(169, 246, 0, 0.4), /* Main glow */
+    1px 1px 2px rgba(255, 255, 255, 0.15); /* Upward-left "etched" highlight */
 }
 
-/* Layer 4: Internal Light Pool */
+.button:active .icon {
+  color: #c8ff4a; /* Brighter neon on press */
+  text-shadow: 0 0 24px rgba(169, 246, 0, 0.7); /* Diffuse glow */
+}
+
+/* Layer 4: Internal Light Pool - subtle radial reflection */
 .light-pool {
   position: absolute;
   inset: 0;
@@ -38,23 +54,26 @@
   z-index: 3;
 }
 
-/* Layer 2: Main Glass Body */
+/* Layer 2: Main Glass Body with Bevel */
 .body {
   position: absolute;
   inset: 0;
   background: rgba(255,255,255,0.10);
   backdrop-filter: blur(5px);
   border-radius: inherit;
-  /* Layer 3: Inner Refracted Rim */
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.14);
+  /* Super thin inner bevel */
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.1),  /* Top highlight */
+    inset 0 -1px 1px rgba(0,0,0,0.1);    /* Bottom shadow */
   z-index: 2;
 }
 
-/* Layer 1: Asymmetric Glass Highlight */
+/* Layer 1: Partial Edge Shimmer (Catch-light) */
 .surface {
   position: absolute;
   inset: 0;
   border-radius: inherit;
+  /* Asymmetric highlight */
   background: linear-gradient(
     130deg,
     rgba(255,255,255,0.55) 0%,
@@ -63,4 +82,20 @@
     transparent 60%
   );
   z-index: 4;
+}
+
+/* Add a crescent shimmer using a pseudo-element */
+.surface::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    right: 4px;
+    bottom: 2px;
+    border-radius: 50%;
+    border-top: 2px solid rgba(255, 255, 255, 0.35);
+    filter: blur(1px);
+    opacity: 0.8;
+    transform: rotate(-30deg);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 50%, 0% 50%); /* Only show top half */
 }
