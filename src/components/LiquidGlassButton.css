@@ -1,25 +1,131 @@
 .button {
   border-radius: 50%;
   position: relative;
-  transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1); /* Release spring motion */
-  filter: drop-shadow(0 4px 8px rgba(25, 25, 112, 0.3)); /* Midnight blue shadow */
+  transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1);
+  filter: drop-shadow(0 6px 16px rgba(25, 25, 112, 0.4)) 
+          drop-shadow(0 2px 8px rgba(100, 150, 255, 0.2)); /* Layered glow */
 }
 
-/* On-click "sinking" animation */
 .button:active {
-  transform: scale(0.97) translateY(2px);
+  transform: scale(0.96) translateY(3px);
   transition-duration: 0.12s;
+  filter: drop-shadow(0 2px 6px rgba(25, 25, 112, 0.5))
+          drop-shadow(0 1px 4px rgba(100, 150, 255, 0.3));
 }
 
+/* Base: Deep shadow foundation */
 .base {
   position: absolute;
   inset: 0;
-  background: rgba(40, 40, 40, 0.5); /* Darker base */
+  background: rgba(30, 35, 50, 0.6);
   border-radius: inherit;
-  /* Shadow: smaller, offset, darker blue */
-  box-shadow: 0 4px 12px rgba(25, 25, 112, 0.45);
+  box-shadow: 
+    0 8px 24px rgba(25, 25, 112, 0.5),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.4); /* Inner depth */
+  z-index: 1;
 }
 
+/* Glass body with enhanced blur */
+.body {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border-radius: inherit;
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.15),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.2),
+    inset 2px 2px 6px rgba(255, 255, 255, 0.05); /* 3D bevel */
+  z-index: 2;
+}
+
+/* Light pool - deeper internal glow */
+.light-pool {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    ellipse at 50% 75%,
+    rgba(169, 246, 0, 0.08),
+    rgba(255, 255, 255, 0.12) 30%,
+    transparent 65%
+  );
+  z-index: 3;
+}
+
+/* Enhanced fluid edge shimmer */
+.surface {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: 
+    linear-gradient(
+      135deg,
+      rgba(100, 200, 255, 0.4) 0%,
+      rgba(255, 255, 255, 0.6) 8%,
+      rgba(255, 255, 255, 0.2) 20%,
+      rgba(100, 200, 255, 0.1) 35%,
+      transparent 50%
+    );
+  z-index: 4;
+  /* Animated shimmer effect */
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; }
+}
+
+/* Dynamic crescent catch-light */
+.surface::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  right: 6px;
+  bottom: 3px;
+  border-radius: 50%;
+  border-top: 2.5px solid rgba(150, 220, 255, 0.5);
+  border-left: 1px solid rgba(150, 220, 255, 0.25);
+  filter: blur(1.5px);
+  opacity: 0.85;
+  transform: rotate(-25deg);
+  clip-path: polygon(0% 0%, 100% 0%, 100% 45%, 0% 45%);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { 
+    opacity: 0.85;
+    border-top-color: rgba(150, 220, 255, 0.5);
+  }
+  50% { 
+    opacity: 1;
+    border-top-color: rgba(180, 240, 255, 0.7);
+  }
+}
+
+/* Fluid edge accent - bottom right */
+.surface::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  width: 40%;
+  height: 35%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 70% 70%,
+    rgba(100, 200, 255, 0.25),
+    transparent 60%
+  );
+  filter: blur(4px);
+  animation: shimmer 3s ease-in-out infinite reverse;
+}
+
+/* Enhanced icon with indented effect */
 .icon {
   position: absolute;
   inset: 0;
@@ -28,74 +134,49 @@
   justify-content: center;
   color: #A9F600;
   z-index: 5;
-  transition: color 0.12s, text-shadow 0.12s;
-
-  /* Glistening reverse outline */
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 300;
+  
+  /* Etched/indented effect */
   text-shadow:
-    0 0 18px rgba(169, 246, 0, 0.4), /* Main glow */
-    1px 1px 2px rgba(255, 255, 255, 0.15); /* Upward-left "etched" highlight */
+    0 1px 0 rgba(0, 0, 0, 0.6),          /* Deep shadow below */
+    0 -1px 0 rgba(255, 255, 255, 0.1),   /* Subtle highlight above */
+    0 0 20px rgba(169, 246, 0, 0.4),     /* Soft glow */
+    1px 2px 3px rgba(0, 0, 0, 0.5);      /* Depth shadow */
 }
 
 .button:active .icon {
-  color: #c8ff4a; /* Brighter neon on press */
-  text-shadow: 0 0 24px rgba(169, 246, 0, 0.7); /* Diffuse glow */
+  color: #c8ff4a;
+  transform: translateY(1px); /* Sink with button */
+  text-shadow: 
+    0 0 30px rgba(169, 246, 0, 0.8),
+    0 0 15px rgba(200, 255, 74, 0.6),
+    0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
-/* Layer 4: Internal Light Pool - subtle radial reflection */
-.light-pool {
+/* Optional: Outer glow ring for extra spectacle */
+.button::before {
+  content: '';
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
+  inset: -3px;
+  border-radius: 50%;
   background: radial-gradient(
-    circle at 50% 70%,
-    rgba(255,255,255,0.12),
-    transparent 60%
+    circle,
+    transparent 65%,
+    rgba(100, 150, 255, 0.15) 75%,
+    transparent 85%
   );
-  z-index: 3;
+  z-index: 0;
+  animation: pulse-ring 2.5s ease-in-out infinite;
 }
 
-/* Layer 2: Main Glass Body with Bevel */
-.body {
-  position: absolute;
-  inset: 0;
-  background: rgba(255,255,255,0.10);
-  backdrop-filter: blur(5px);
-  border-radius: inherit;
-  /* Super thin inner bevel */
-  box-shadow:
-    inset 0 1px 1px rgba(255,255,255,0.1),  /* Top highlight */
-    inset 0 -1px 1px rgba(0,0,0,0.1);    /* Bottom shadow */
-  z-index: 2;
-}
-
-/* Layer 1: Partial Edge Shimmer (Catch-light) */
-.surface {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  /* Asymmetric highlight */
-  background: linear-gradient(
-    130deg,
-    rgba(255,255,255,0.55) 0%,
-    rgba(255,255,255,0.15) 16%,
-    rgba(255,255,255,0.05) 40%,
-    transparent 60%
-  );
-  z-index: 4;
-}
-
-/* Add a crescent shimmer using a pseudo-element */
-.surface::before {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 4px;
-    right: 4px;
-    bottom: 2px;
-    border-radius: 50%;
-    border-top: 2px solid rgba(255, 255, 255, 0.35);
-    filter: blur(1px);
+@keyframes pulse-ring {
+  0%, 100% { 
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% { 
     opacity: 0.8;
-    transform: rotate(-30deg);
-    clip-path: polygon(0% 0%, 100% 0%, 100% 50%, 0% 50%); /* Only show top half */
+    transform: scale(1.02);
+  }
 }
