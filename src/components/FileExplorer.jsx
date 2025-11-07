@@ -32,12 +32,17 @@ function FileExplorer({ repo, searchQuery }) {
     if (file.type === 'dir') return;
     try {
       // Fetch frontmatter and content
-      const fileData = await fetchJson(`/api/files?repo=${repo}&path=${file.path}`, { credentials: 'include' });
+      const fileData = await fetchJson(`/api/files?repo=${repo}&path=${file.path}`);
+      if (!fileData || typeof fileData.content !== 'string') {
+        console.error('Unexpected file detail response', fileData);
+        setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Missing content' } }));
+        return;
+      }
       const decodedContent = atob(fileData.content);
       const { data } = matter(decodedContent);
 
       // Fetch commit data
-      const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`, { credentials: 'include' });
+      const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`);
       const lastCommit = commitData[0];
 
       const metadata = {
@@ -50,7 +55,8 @@ function FileExplorer({ repo, searchQuery }) {
         setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
       }
     } catch (err) {
-      console.error(`Failed to fetch details for ${file.path}:`, err);
+      console.error(`Failed to fetch details for ${file.path}:`, err.message);
+      setMetadataCache(prev => ({ ...prev, [file.sha]: { error: err.message } }));
     }
   }, [repo]);
 
@@ -59,7 +65,7 @@ function FileExplorer({ repo, searchQuery }) {
     setError(null);
 
     try {
-      let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' });
+      let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`);
 
       const sortedData = data.sort((a, b) => {
         if (a.type === 'dir' && b.type !== 'dir') return -1;
@@ -158,7 +164,6 @@ function FileExplorer({ repo, searchQuery }) {
       try {
         await fetchJson(`/api/files?repo=${repo}&path=${file.path}`, {
           method: 'DELETE',
-          credentials: 'include',
         });
         fetchFiles();
       } catch (err) {
