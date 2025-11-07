@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'preact/hooks';
 import matter from 'gray-matter';
+import { fetchJson } from '../lib/fetchJson';
 
 export function useSearch(repo, files) {
   const [searchResults, setSearchResults] = useState([]);
@@ -14,8 +15,7 @@ export function useSearch(repo, files) {
       return '';
     }
     try {
-      const res = await fetch(`/api/files?repo=${repo}&path=${file.path}`, { credentials: 'include' });
-      const data = await res.json();
+      const data = await fetchJson(`/api/files?repo=${repo}&path=${file.path}`, { credentials: 'include' });
       const content = atob(data.content);
       setFileContentCache(prev => ({ ...prev, [file.sha]: content }));
       return content;

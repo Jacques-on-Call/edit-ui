@@ -8,6 +8,7 @@ import SearchResult from './SearchResult';
 import matter from 'gray-matter';
 import { useSearch } from '../hooks/useSearch';
 import { useFileManifest } from '../hooks/useFileManifest';
+import { fetchJson } from '../lib/fetchJson';
 
 function FileExplorer({ repo, searchQuery }) {
   const { fileManifest } = useFileManifest(repo);
@@ -31,16 +32,12 @@ function FileExplorer({ repo, searchQuery }) {
     if (file.type === 'dir') return;
     try {
       // Fetch frontmatter and content
-      const fileRes = await fetch(`/api/files?repo=${repo}&path=${file.path}`, { credentials: 'include' });
-      if (!fileRes.ok) throw new Error(`Failed to fetch file content: ${fileRes.statusText}`);
-      const fileData = await fileRes.json();
+      const fileData = await fetchJson(`/api/files?repo=${repo}&path=${file.path}`, { credentials: 'include' });
       const decodedContent = atob(fileData.content);
       const { data } = matter(decodedContent);
 
       // Fetch commit data
-      const commitRes = await fetch(`/api/file/commits?repo=${repo}&path=${file.path}`, { credentials: 'include' });
-      if (!commitRes.ok) throw new Error(`Failed to fetch commit data: ${commitRes.statusText}`);
-      const commitData = await commitRes.json();
+      const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`, { credentials: 'include' });
       const lastCommit = commitData[0];
 
       const metadata = {
@@ -62,12 +59,7 @@ function FileExplorer({ repo, searchQuery }) {
     setError(null);
 
     try {
-      const response = await fetch(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' });
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Network response was not ok: ${response.statusText} - ${errorText}`);
-      }
-      let data = await response.json();
+      let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' });
 
       const sortedData = data.sort((a, b) => {
         if (a.type === 'dir' && b.type !== 'dir') return -1;
@@ -84,9 +76,7 @@ function FileExplorer({ repo, searchQuery }) {
       if (readmeFile) {
         setReadmeLoading(true);
         try {
-          const readmeRes = await fetch(`/api/files?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' });
-          if (!readmeRes.ok) throw new Error('Could not fetch README content.');
-          const readmeData = await readmeRes.json();
+          const readmeData = await fetchJson(`/api/files?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' });
           const decodedContent = atob(readmeData.content);
           setReadmeContent(decodedContent);
         } catch (readmeErr) {
@@ -130,14 +120,16 @@ function FileExplorer({ repo, searchQuery }) {
 
       // For files, add some default, base64 encoded content
       if (type === 'file') {
-        const defaultContent = `---
-title: "New Page"
-description: "A fresh new page."
----
-
-# Welcome to your new page!
-`;
-        body.content = btoa(defaultContent);
+        try {
+            const templateUrl = `/api/files?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent('src/pages/_template.astro')}`;
+            const templateData = await fetchJson(templateUrl, { credentials: 'include' });
+            const content = atob(templateData.content);
+            body.content = btoa(content);
+        } catch (err) {
+            console.error('Template fetch error:', err);
+            setError(err.message || String(err));
+            return;
+        }
       }
 
       const response = await fetch('/api/files', {
@@ -164,17 +156,11 @@ description: "A fresh new page."
   const handleDelete = async (file) => {
     if (confirm(`Are you sure you want to delete ${file.name}?`)) {
       try {
-        const response = await fetch(`/api/files?repo=${repo}&path=${file.path}`, {
+        await fetchJson(`/api/files?repo=${repo}&path=${file.path}`, {
           method: 'DELETE',
           credentials: 'include',
         });
-
-        if (response.ok) {
-          fetchFiles();
-        } else {
-          const errorText = await response.text();
-          setError(`Failed to delete file: ${errorText}`);
-        }
+        fetchFiles();
       } catch (err) {
         setError(`Failed to delete file: ${err.message}`);
       }

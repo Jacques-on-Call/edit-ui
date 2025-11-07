@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
+import { fetchJson } from '../lib/fetchJson';
 
 export function useFileManifest(repo) {
   const [fileManifest, setFileManifest] = useState([]);
@@ -12,13 +13,7 @@ export function useFileManifest(repo) {
     setError(null);
 
     try {
-      const repoParam = encodeURIComponent(repo);
-      const url = `/api/files?repo=${repoParam}`;
-      const response = await fetch(url, { credentials: 'include' });
-      if (!response.ok) {
-        throw new Error('Failed to fetch file manifest');
-      }
-      const data = await response.json();
+      const data = await fetchJson(`/api/files?repo=${repo}`, { credentials: 'include' });
       setFileManifest(data);
     } catch (err) {
       setError(err);
