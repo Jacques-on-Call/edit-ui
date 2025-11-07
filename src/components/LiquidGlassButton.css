@@ -1,9 +1,9 @@
-.button {
+button {
   border-radius: 50%;
   position: relative;
   transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1);
   filter: drop-shadow(0 6px 16px rgba(25, 25, 112, 0.4)) 
-          drop-shadow(0 2px 8px rgba(100, 150, 255, 0.2)); /* Layered glow */
+          drop-shadow(0 2px 8px rgba(100, 150, 255, 0.2));
 }
 
 .button:active {
@@ -17,38 +17,38 @@
 .base {
   position: absolute;
   inset: 0;
-  background: rgba(30, 35, 50, 0.6);
+  background: rgba(30, 35, 50, 0.4); /* More transparent */
   border-radius: inherit;
   box-shadow: 
     0 8px 24px rgba(25, 25, 112, 0.5),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.4); /* Inner depth */
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
   z-index: 1;
 }
 
-/* Glass body with enhanced blur */
+/* Glass body - much clearer with less blur */
 .body {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  background: rgba(255, 255, 255, 0.04); /* Reduced from 0.08 */
+  backdrop-filter: blur(6px) saturate(150%); /* Reduced blur from 12px */
+  -webkit-backdrop-filter: blur(6px) saturate(150%);
   border-radius: inherit;
   box-shadow:
-    inset 0 1px 2px rgba(255, 255, 255, 0.15),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.2),
-    inset 2px 2px 6px rgba(255, 255, 255, 0.05); /* 3D bevel */
+    inset 0 1px 2px rgba(255, 255, 255, 0.12),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.15),
+    inset 2px 2px 6px rgba(255, 255, 255, 0.04);
   z-index: 2;
 }
 
-/* Light pool - deeper internal glow */
+/* Light pool - more subtle */
 .light-pool {
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: radial-gradient(
     ellipse at 50% 75%,
-    rgba(169, 246, 0, 0.08),
-    rgba(255, 255, 255, 0.12) 30%,
+    rgba(169, 246, 0, 0.05), /* Reduced opacity */
+    rgba(255, 255, 255, 0.08) 30%,
     transparent 65%
   );
   z-index: 3;
@@ -62,14 +62,13 @@
   background: 
     linear-gradient(
       135deg,
-      rgba(100, 200, 255, 0.4) 0%,
-      rgba(255, 255, 255, 0.6) 8%,
-      rgba(255, 255, 255, 0.2) 20%,
-      rgba(100, 200, 255, 0.1) 35%,
+      rgba(100, 200, 255, 0.35) 0%,
+      rgba(255, 255, 255, 0.5) 8%,
+      rgba(255, 255, 255, 0.15) 20%,
+      rgba(100, 200, 255, 0.08) 35%,
       transparent 50%
     );
   z-index: 4;
-  /* Animated shimmer effect */
   animation: shimmer 3s ease-in-out infinite;
 }
 
@@ -118,7 +117,7 @@
   border-radius: 50%;
   background: radial-gradient(
     circle at 70% 70%,
-    rgba(100, 200, 255, 0.25),
+    rgba(100, 200, 255, 0.2),
     transparent 60%
   );
   filter: blur(4px);
@@ -139,22 +138,22 @@
   
   /* Etched/indented effect */
   text-shadow:
-    0 1px 0 rgba(0, 0, 0, 0.6),          /* Deep shadow below */
-    0 -1px 0 rgba(255, 255, 255, 0.1),   /* Subtle highlight above */
-    0 0 20px rgba(169, 246, 0, 0.4),     /* Soft glow */
-    1px 2px 3px rgba(0, 0, 0, 0.5);      /* Depth shadow */
+    0 1px 0 rgba(0, 0, 0, 0.6),
+    0 -1px 0 rgba(255, 255, 255, 0.1),
+    0 0 20px rgba(169, 246, 0, 0.4),
+    1px 2px 3px rgba(0, 0, 0, 0.5);
 }
 
 .button:active .icon {
   color: #c8ff4a;
-  transform: translateY(1px); /* Sink with button */
+  transform: translateY(1px);
   text-shadow: 
     0 0 30px rgba(169, 246, 0, 0.8),
     0 0 15px rgba(200, 255, 74, 0.6),
     0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
-/* Optional: Outer glow ring for extra spectacle */
+/* Optional: Outer glow ring */
 .button::before {
   content: '';
   position: absolute;
@@ -163,7 +162,7 @@
   background: radial-gradient(
     circle,
     transparent 65%,
-    rgba(100, 150, 255, 0.15) 75%,
+    rgba(100, 150, 255, 0.12),
     transparent 85%
   );
   z-index: 0;
