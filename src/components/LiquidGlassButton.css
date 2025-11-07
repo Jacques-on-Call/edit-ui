@@ -1,6 +1,4 @@
 .button {
-  width: 90px;
-  height: 90px;
   border-radius: 50%;
   position: relative;
 }
@@ -23,24 +21,32 @@
   color: #A9F600; /* neonish green */
   font-size: 42px;
   z-index: 2;
+  /* Under-icon glow */
+  text-shadow: 0 0 22px rgba(19, 19, 48, 0.15);
 }
 
 .body {
   position: absolute;
   inset: 0;
-  background: rgba(255,255,255,0.12);
-  backdrop-filter: blur(12px);
+  /* Harder Edges + Less Blur */
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(6px);
   border-radius: inherit;
-  border: 1px solid rgba(255,255,255,0.18);
+  /* Inner Rim Stroke */
+  border: 1px solid rgba(255,255,255,0.45);
+  /* Inner Shadow for depth */
+  box-shadow: inset 0 2px 12px -2px rgba(0,0,0,0.24);
 }
 
 .surface {
   position: absolute;
   inset: 0;
   border-radius: inherit;
+  /* Top Gloss Highlight Arc */
   background: linear-gradient(
     to bottom,
-    rgba(255,255,255,0.35),
-    rgba(255,255,255,0.05)
+    rgba(255,255,255,0.35) 0%,
+    rgba(255,255,255,0.05) 30%,
+    transparent 50%
   );
 }

@@ -293,16 +293,16 @@ function FileExplorer({ repo, searchQuery }) {
             <Icon name="Home" className="w-5 h-5" />
             <span className="font-semibold text-sm">Home</span>
           </button>
-          <div className="flex-shrink-0 mx-4">
+          <div className="flex-shrink-0 mx-2 sm:mx-4">
             <div
               onClick={() => setCreateModalOpen(true)}
-              className="button"
+              className="button w-[56px] h-[56px] sm:w-[64px] sm:h-[64px] md:w-[72px] md:h-[72px]"
               title="Create a new file or folder"
             >
               <div className="base"></div>
               <div className="body"></div>
               <div className="surface"></div>
-              <div className="icon">+</div>
+              <div className="icon text-[28px] sm:text-[32px] md:text-[36px]">+</div>
             </div>
           </div>
           <button
