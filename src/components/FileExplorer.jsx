@@ -7,7 +7,7 @@ import CreateModal from './CreateModal';
 import SearchResult from './SearchResult';
 import { useSearch } from '../hooks/useSearch';
 import { useFileManifest } from '../hooks/useFileManifest';
-import { fetchJson } from '../lib/fetchJson';
+import { fetchJson } from '/src/lib/fetchJson.js';
 import './LiquidGlassButton.css';
 
 function FileExplorer({ repo, searchQuery }) {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
-import { fetchJson } from '../lib/fetchJson';
+import { fetchJson } from '/src/lib/fetchJson.js';
 
 export function useFileManifest(repo) {
   const [fileManifest, setFileManifest] = useState([]);

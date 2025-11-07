@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'preact/hooks';
 import matter from 'gray-matter';
-import { fetchJson } from '../lib/fetchJson';
+import { fetchJson } from '/src/lib/fetchJson.js';
 
 export function useSearch(repo, files) {
   const [searchResults, setSearchResults] = useState([]);
