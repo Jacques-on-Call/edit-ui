@@ -1,130 +1,116 @@
 .button {
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   position: relative;
   transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1);
-  filter: drop-shadow(0 6px 16px rgba(25, 25, 112, 0.4)) 
-          drop-shadow(0 2px 8px rgba(100, 150, 255, 0.2));
+  filter: drop-shadow(0 8px 20px rgba(25, 25, 112, 0.35)) 
+          drop-shadow(0 3px 10px rgba(100, 150, 255, 0.15));
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .button:active {
   transform: scale(0.96) translateY(3px);
   transition-duration: 0.12s;
-  filter: drop-shadow(0 2px 6px rgba(25, 25, 112, 0.5))
-          drop-shadow(0 1px 4px rgba(100, 150, 255, 0.3));
+  filter: drop-shadow(0 3px 8px rgba(25, 25, 112, 0.45))
+          drop-shadow(0 1px 5px rgba(100, 150, 255, 0.25));
 }
 
-/* Base: Deep shadow foundation */
+/* Base with stronger presence */
 .base {
   position: absolute;
   inset: 0;
-  background: rgba(30, 35, 50, 0.4); /* More transparent */
+  background: rgba(40, 45, 60, 0.65);
   border-radius: inherit;
   box-shadow: 
-    0 8px 24px rgba(25, 25, 112, 0.5),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+    0 10px 30px rgba(20, 25, 40, 0.6),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.4);
   z-index: 1;
 }
 
-/* Glass body - much clearer with less blur */
+/* Frosted glass body - iOS style */
 .body {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.04); /* Reduced from 0.08 */
-  backdrop-filter: blur(6px) saturate(150%); /* Reduced blur from 12px */
-  -webkit-backdrop-filter: blur(6px) saturate(150%);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
   border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow:
-    inset 0 1px 2px rgba(255, 255, 255, 0.12),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.15),
-    inset 2px 2px 6px rgba(255, 255, 255, 0.04);
+    inset 0 1px 1px rgba(255, 255, 255, 0.3),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.2);
   z-index: 2;
 }
 
-/* Light pool - more subtle */
+/* Soft internal light */
 .light-pool {
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: radial-gradient(
-    ellipse at 50% 75%,
-    rgba(169, 246, 0, 0.05), /* Reduced opacity */
-    rgba(255, 255, 255, 0.08) 30%,
-    transparent 65%
+    ellipse at 50% 80%,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 70%
   );
   z-index: 3;
 }
 
-/* Enhanced fluid edge shimmer */
+/* Glass highlight - top edge shimmer */
 .surface {
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: 
     linear-gradient(
-      135deg,
-      rgba(100, 200, 255, 0.35) 0%,
-      rgba(255, 255, 255, 0.5) 8%,
-      rgba(255, 255, 255, 0.15) 20%,
-      rgba(100, 200, 255, 0.08) 35%,
+      145deg,
+      rgba(255, 255, 255, 0.6) 0%,
+      rgba(255, 255, 255, 0.3) 15%,
+      rgba(255, 255, 255, 0.1) 30%,
       transparent 50%
     );
   z-index: 4;
-  animation: shimmer 3s ease-in-out infinite;
 }
 
-@keyframes shimmer {
-  0%, 100% { opacity: 0.9; }
-  50% { opacity: 1; }
-}
-
-/* Dynamic crescent catch-light */
+/* Top crescent highlight */
 .surface::before {
   content: '';
   position: absolute;
-  top: 3px;
-  left: 6px;
-  right: 6px;
-  bottom: 3px;
+  top: 2%;
+  left: 5%;
+  right: 5%;
+  height: 40%;
   border-radius: 50%;
-  border-top: 2.5px solid rgba(150, 220, 255, 0.5);
-  border-left: 1px solid rgba(150, 220, 255, 0.25);
-  filter: blur(1.5px);
-  opacity: 0.85;
-  transform: rotate(-25deg);
-  clip-path: polygon(0% 0%, 100% 0%, 100% 45%, 0% 45%);
-  animation: pulse-glow 2s ease-in-out infinite;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  filter: blur(3px);
+  opacity: 0.9;
 }
 
-@keyframes pulse-glow {
-  0%, 100% { 
-    opacity: 0.85;
-    border-top-color: rgba(150, 220, 255, 0.5);
-  }
-  50% { 
-    opacity: 1;
-    border-top-color: rgba(180, 240, 255, 0.7);
-  }
-}
-
-/* Fluid edge accent - bottom right */
+/* Subtle bottom reflection */
 .surface::after {
   content: '';
   position: absolute;
-  bottom: 4px;
-  right: 8px;
-  width: 40%;
-  height: 35%;
+  bottom: 8%;
+  left: 15%;
+  right: 15%;
+  height: 25%;
   border-radius: 50%;
   background: radial-gradient(
-    circle at 70% 70%,
-    rgba(100, 200, 255, 0.2),
-    transparent 60%
+    ellipse at center,
+    rgba(255, 255, 255, 0.15),
+    transparent 70%
   );
-  filter: blur(4px);
-  animation: shimmer 3s ease-in-out infinite reverse;
+  filter: blur(5px);
 }
 
-/* Enhanced icon with indented effect */
+/* Enhanced BIGGER icon with refined depth */
 .icon {
   position: absolute;
   inset: 0;
@@ -135,35 +121,66 @@
   z-index: 5;
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 300;
+  font-size: 56px;
   
-  /* Etched/indented effect */
+  /* Layered shadow for depth */
   text-shadow:
-    0 1px 0 rgba(0, 0, 0, 0.6),
-    0 -1px 0 rgba(255, 255, 255, 0.1),
-    0 0 20px rgba(169, 246, 0, 0.4),
-    1px 2px 3px rgba(0, 0, 0, 0.5);
+    /* Deep carved shadow */
+    0 3px 6px rgba(0, 0, 0, 0.7),
+    0 5px 12px rgba(0, 0, 0, 0.5),
+    
+    /* Top edge highlight */
+    0 -1px 0 rgba(255, 255, 255, 0.25),
+    -1px -1px 0 rgba(255, 255, 255, 0.15),
+    
+    /* Inner darkness */
+    0 2px 0 rgba(0, 0, 0, 0.8),
+    
+    /* Neon glow */
+    0 0 30px rgba(169, 246, 0, 0.6),
+    0 0 18px rgba(169, 246, 0, 0.4),
+    0 0 10px rgba(169, 246, 0, 0.3);
 }
 
 .button:active .icon {
   color: #c8ff4a;
-  transform: translateY(1px);
+  transform: translateY(0.5px);
   text-shadow: 
-    0 0 30px rgba(169, 246, 0, 0.8),
-    0 0 15px rgba(200, 255, 74, 0.6),
-    0 1px 2px rgba(0, 0, 0, 0.7);
+    0 2px 4px rgba(0, 0, 0, 0.85),
+    0 3px 6px rgba(0, 0, 0, 0.6),
+    0 0 40px rgba(169, 246, 0, 1),
+    0 0 25px rgba(200, 255, 74, 0.8),
+    0 0 15px rgba(200, 255, 74, 0.6);
 }
 
-/* Optional: Outer glow ring */
+/* Soft glow behind icon */
+.icon::before {
+  content: '';
+  position: absolute;
+  width: 65%;
+  height: 65%;
+  background: radial-gradient(
+    circle,
+    rgba(169, 246, 0, 0.15),
+    transparent 65%
+  );
+  filter: blur(10px);
+  z-index: -1;
+  border-radius: 50%;
+}
+
+/* Outer atmospheric glow */
 .button::before {
   content: '';
   position: absolute;
-  inset: -3px;
+  inset: -4px;
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    transparent 65%,
-    rgba(100, 150, 255, 0.12),
-    transparent 85%
+    transparent 60%,
+    rgba(100, 150, 255, 0.12) 75%,
+    rgba(150, 200, 255, 0.08) 85%,
+    transparent 95%
   );
   z-index: 0;
   animation: pulse-ring 2.5s ease-in-out infinite;
@@ -171,11 +188,11 @@
 
 @keyframes pulse-ring {
   0%, 100% { 
-    opacity: 0.5;
+    opacity: 0.6;
     transform: scale(1);
   }
   50% { 
-    opacity: 0.8;
-    transform: scale(1.02);
+    opacity: 0.9;
+    transform: scale(1.03);
   }
 }
