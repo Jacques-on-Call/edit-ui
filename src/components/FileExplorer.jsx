@@ -294,17 +294,16 @@ function FileExplorer({ repo, searchQuery }) {
             <span className="font-semibold text-sm">Home</span>
           </button>
           <div className="flex-shrink-0 mx-2 sm:mx-4">
-            <div
+            <button
+              className="liquid-btn"
+              aria-label="Create"
               onClick={() => setCreateModalOpen(true)}
-              className="button w-[56px] h-[56px] sm:w-[64px] sm:h-[64px] md:w-[72px] md:h-[72px]"
               title="Create a new file or folder"
             >
-              <div className="base"></div>
-              <div className="light-pool"></div>
-              <div className="body"></div>
-              <div className="surface"></div>
-              <div className="icon text-[28px] sm:text-[32px] md:text-[36px]">+</div>
-            </div>
+              <div className="rim-glow"></div>
+              <div className="orb"></div>
+              <span className="plus">+</span>
+            </button>
           </div>
           <button
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white/80 hover:bg-white/10 transition-colors"
