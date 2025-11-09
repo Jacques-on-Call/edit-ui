@@ -72,20 +72,22 @@ const AuthDebugMonitor = () => {
         // --- Interceptors ---
         const originalFetch = window.fetch;
         window.fetch = async (...args) => {
-            const url = typeof args[0] === 'string' ? args[0].toString() : args[0].url;
-            const method = args[1]?.method || 'GET';
+            const [url, options] = args;
+            const method = options?.method || 'GET';
 
-            if (!isPaused) window.authDebug.log('API', `→ ${method} ${url}`, args[1]);
+            if (!isPaused) window.authDebug.log('API', `→ ${method} ${url}`, options);
 
             try {
+                // The original implementation was missing the second argument `options`,
+                // which includes critical settings like `credentials: 'include'`.
                 const response = await originalFetch(...args);
                 const clonedResponse = response.clone();
 
                 try {
                     const data = await clonedResponse.json();
-                    if (!isPaused) window.authDebug.api(method, url, response.status, data);
+                    if (!isPaused) window.authDebug.api(method, url.toString(), response.status, data);
                 } catch {
-                    if (!isPaused) window.authDebug.api(method, url, response.status, 'Non-JSON response');
+                    if (!isPaused) window.authDebug.api(method, url.toString(), response.status, 'Non-JSON response');
                 }
 
                 return response;
@@ -94,6 +96,7 @@ const AuthDebugMonitor = () => {
                 throw error;
             }
         };
+
 
         const originalSetItem = Storage.prototype.setItem;
         const originalRemoveItem = Storage.prototype.removeItem;
