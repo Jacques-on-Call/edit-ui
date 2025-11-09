@@ -23,7 +23,7 @@ function getIconForFile(fileName) {
   return 'File';
 }
 
-function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete, onLongPress }) {
+function FileTile({ file, isSelected, metadata, onOpen, onShowActions }) {
   const longPressTimer = useRef();
   const isLongPress = useRef(false);
 
@@ -32,9 +32,9 @@ function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete
     longPressTimer.current = setTimeout(() => {
       isLongPress.current = true;
       e.preventDefault();
-      onLongPress?.(e);
+      onShowActions?.(file, e);
     }, 500);
-  }, [onLongPress]);
+  }, [file, onShowActions]);
 
   const handleMouseUp = useCallback(() => {
     clearTimeout(longPressTimer.current);
@@ -45,10 +45,9 @@ function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete
     longPressTimer.current = setTimeout(() => {
       isLongPress.current = true;
       e.preventDefault();
-      const touch = e.touches[0];
-      onLongPress?.({ clientX: touch.pageX, clientY: touch.pageY });
+      onShowActions?.(file, e);
     }, 500);
-  }, [onLongPress]);
+  }, [file, onShowActions]);
 
   const handleTouchEnd = useCallback(() => {
     clearTimeout(longPressTimer.current);
@@ -59,12 +58,12 @@ function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete
       e.preventDefault();
       return;
     }
-    onClick?.(file);
+    onOpen?.(file);
   };
 
   const handleContextMenu = (e) => {
     e.preventDefault();
-    onLongPress?.(e);
+    onShowActions?.(file, e);
   };
 
   const isDir = file.type === 'dir';
@@ -86,7 +85,6 @@ function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete
       <div
         className={tileClassName}
         onClick={handleClick}
-        onDblClick={() => onDoubleClick?.(file)}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}

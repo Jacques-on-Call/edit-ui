@@ -7,11 +7,13 @@ import { AlertTriangle } from 'lucide-preact';
 import { route } from 'preact-router';
 import FileExplorer from '../components/FileExplorer';
 import SearchBar from '../components/SearchBar';
+import CreateModal from '../components/CreateModal'; // add or ensure this exists
 
 export function FileExplorerPage() {
   const { isAuthenticated, isLoading, selectedRepo } = useAuth();
   const { setHeaderContent } = useHeader();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCreateOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     setHeaderContent(<SearchBar onSearch={setSearchQuery} />);
@@ -49,7 +51,21 @@ export function FileExplorerPage() {
 
   return (
     <div className="h-screen">
-      <FileExplorer repo={selectedRepo.full_name} searchQuery={searchQuery} />
+      <FileExplorer repo={selectedRepo.full_name} searchQuery={searchQuery}
+        onShowCreate={() => setCreateOpen(true)}
+      />
+
+      {isCreateOpen && (
+        <CreateModal
+          repo={selectedRepo.full_name}
+          path="/" // or current folder
+          onClose={() => setCreateOpen(false)}
+          onCreate={() => {
+            setCreateOpen(false);
+            // refresh file list (FileExplorer should accept a refresh trigger)
+          }}
+        />
+      )}
     </div>
   );
 }

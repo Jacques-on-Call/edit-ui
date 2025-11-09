@@ -11,7 +11,7 @@ import { useFileManifest } from '../hooks/useFileManifest';
 import { fetchJson } from '/src/lib/fetchJson.js';
 import './LiquidGlassButton.css';
 
-function FileExplorer({ repo, searchQuery }) {
+function FileExplorer({ repo, searchQuery, onShowCreate }) {
   const { fileManifest } = useFileManifest(repo);
   const [files, setFiles] = useState([]);
   const [path, setPath] = useState('src/pages');
@@ -22,13 +22,14 @@ function FileExplorer({ repo, searchQuery }) {
   const [readmeContent, setReadmeContent] = useState(null);
   const [isReadmeLoading, setReadmeLoading] = useState(false);
   const [isReadmeVisible, setReadmeVisible] = useState(true);
-  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const { searchResults, performSearch, isSearching } = useSearch(repo, fileManifest);
 
   const handleLongPress = (file, event) => {
     event.preventDefault();
-    setContextMenu({ x: event.clientX, y: event.clientY, file });
+    const x = event.touches ? event.touches[0].pageX : event.pageX;
+    const y = event.touches ? event.touches[0].pageY : event.pageY;
+    setContextMenu({ x, y, file });
   };
 
   const handleCloseContextMenu = () => {
@@ -219,13 +220,6 @@ function FileExplorer({ repo, searchQuery }) {
 
   return (
     <div className="flex flex-col h-screen bg-transparent text-white">
-      <CreateModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        onCreate={handleCreate}
-        path={path}
-        repo={repo}
-      />
       <main className="flex-grow overflow-y-auto pb-24">
         {showSearchResults ? (
           <div className="p-4">
@@ -252,10 +246,8 @@ function FileExplorer({ repo, searchQuery }) {
                   file={file}
                   metadata={metadataCache[file.sha]}
                   isSelected={selectedFile && selectedFile.sha === file.sha}
-                  onClick={handleFileClick}
-                  onDoubleClick={handleFileDoubleClick}
-                  onDelete={handleDelete}
-                  onLongPress={(e) => handleLongPress(file, e)}
+                  onOpen={handleOpen}
+                  onShowActions={handleLongPress}
                 />
               ))}
             </div>
@@ -298,7 +290,7 @@ function FileExplorer({ repo, searchQuery }) {
             <button
               className="liquid-btn"
               aria-label="Create"
-              onClick={() => setCreateModalOpen(true)}
+              onClick={onShowCreate}
               title="Create a new file or folder"
             >
               <div className="orb"></div>
