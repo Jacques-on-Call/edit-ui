@@ -8,7 +8,7 @@
 */
 
 :root {
-  --btn-size: 84px;
+  --btn-size: 56px; /* Reduced size */
   --glass-color-tint: rgba(40, 120, 90, 0.18);
   --shadow-color-dark: rgba(12, 12, 12, 0.30);
   --inner-shadow-color: rgba(10, 10, 12, 0.45);
@@ -46,7 +46,7 @@
 .liquid-btn::before {
   content: "";
   position: absolute;
-  inset: 6%;
+  inset: 4px; /* Reduced inset to fix gap */
   border-radius: 50%;
   background: radial-gradient(60% 55% at 30% 30%, rgba(255, 255, 255, 0.06) 0%, transparent 30%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.02)),
@@ -79,21 +79,13 @@
   position: relative;
   z-index: 5;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: calc(var(--size) * 0.46);
+  font-size: calc(var(--size) * 0.6); /* Adjusted for new button size */
   line-height: 1;
   color: rgba(20, 20, 20, 0.62);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
   transform: translateY(1px);
   transition: color var(--transition-fast) ease, transform var(--transition-fast) ease;
-  display: inline-block;
-  width: 1em;
-  height: 1em;
-  text-align: center;
-  line-height: 1;
-  padding-top: 1px;
-  border-radius: 12%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.02));
-  box-shadow: inset 0 6px 10px -8px rgba(255, 255, 255, 0.55), inset 0 -8px 18px -12px rgba(0, 0, 0, 0.45);
+  /* Removed background and shadow to eliminate the square */
 }
 
 /* Small lime orb (top-left) */
@@ -106,8 +98,6 @@
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.45) 12%, rgba(255, 255, 255, 0.35) 40%);
   box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.5), inset 0 4px 10px -6px rgba(255, 255, 255, 0.35);
-  z-index: 6;
-  pointer-events: none;
   transition: transform var(--transition-medium) cubic-bezier(.2, .9, .3, 1), background var(--transition-fast) ease, box-shadow var(--transition-fast);
 }
 
