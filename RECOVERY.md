@@ -4,6 +4,60 @@ This document serves as a debug diary for the `easy-seo` project. It records com
 
 ---
 
+## **Bug: Missing gh_session Token Causes Authentication Failures**
+
+**Date:** 2025-11-09
+**Agent:** GitHub Copilot
+
+### **Symptoms:**
+
+Multiple pages in the application were failing with authentication errors. Specifically:
+- Repository selection page showing "No Repositories Found" despite user having repos
+- File explorer page showing authentication errors or empty file lists
+- Search functionality not working
+- Context menu on file tiles not appearing
+- Create button not opening modal
+
+The browser's network tab showed that API requests to protected endpoints like `/api/repos`, `/api/files`, etc. were returning `401 Unauthorized` responses, even though the user had successfully logged in via GitHub OAuth.
+
+### **Root Cause:**
+
+The root cause was that the `gh_session` cookie was not being sent with API requests from the browser. This cookie is set by the backend after successful OAuth authentication and contains the GitHub access token.
+
+The issue was in the `fetchJson` utility function (`src/lib/fetchJson.js`). By default, the browser's `fetch` API does NOT send cookies with cross-origin requests, even to the same domain. You must explicitly set `credentials: 'include'` in the fetch options.
+
+While some API calls in the codebase were explicitly passing `credentials: 'include'`, many were not, leading to inconsistent authentication behavior.
+
+### **Solution:**
+
+The fix was to update the `fetchJson` utility to include `credentials: 'include'` by default:
+
+```javascript
+export async function fetchJson(url, options = {}) {
+  const response = await fetch(url, {
+    credentials: 'include', // Always include cookies (gh_session token)
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+  // ... rest of function
+}
+```
+
+This ensures that ALL API calls made through this utility automatically send the authentication cookie, fixing the authentication issues across the entire application.
+
+As a cleanup step, all explicit `credentials: 'include'` parameters were removed from individual API calls since they're now redundant.
+
+### **Additional Fixes:**
+
+While investigating, several related issues were also fixed:
+1. **Context Menu:** The `ContextMenu` component was receiving incorrect props (`file`, `onDelete`) instead of the expected `options` array.
+2. **Create Modal:** The create file/folder logic was split between `FileExplorer` and `FileExplorerPage`, causing state management issues. This was refactored to properly flow through the page component.
+
+---
+
 ## **Bug: API Requests Fail Silently with `ReferenceError` on Client**
 
 **Date:** 2025-11-06

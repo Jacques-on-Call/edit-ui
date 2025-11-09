@@ -15,7 +15,7 @@ export function useSearch(repo, files) {
       return '';
     }
     try {
-      const data = await fetchJson(`/api/files?repo=${repo}&path=${file.path}`, { credentials: 'include' });
+      const data = await fetchJson(`/api/files?repo=${repo}&path=${file.path}`);
       const content = atob(data.content);
       setFileContentCache(prev => ({ ...prev, [file.sha]: content }));
       return content;

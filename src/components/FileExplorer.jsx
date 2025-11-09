@@ -11,7 +11,7 @@ import { useFileManifest } from '../hooks/useFileManifest';
 import { fetchJson } from '/src/lib/fetchJson.js';
 import './LiquidGlassButton.css';
 
-function FileExplorer({ repo, searchQuery, onShowCreate }) {
+function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTrigger }) {
   const { fileManifest } = useFileManifest(repo);
   const [files, setFiles] = useState([]);
   const [path, setPath] = useState('src/pages');
@@ -24,6 +24,13 @@ function FileExplorer({ repo, searchQuery, onShowCreate }) {
   const [isReadmeVisible, setReadmeVisible] = useState(true);
   const [contextMenu, setContextMenu] = useState(null);
   const { searchResults, performSearch, isSearching } = useSearch(repo, fileManifest);
+
+  // Notify parent of path changes
+  useEffect(() => {
+    if (onPathChange) {
+      onPathChange(path);
+    }
+  }, [path, onPathChange]);
 
   const handleLongPress = (file, event) => {
     event.preventDefault();
@@ -77,7 +84,7 @@ function FileExplorer({ repo, searchQuery, onShowCreate }) {
     setError(null);
 
     try {
-      let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' });
+      let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`);
 
       const sortedData = data.sort((a, b) => {
         if (a.type === 'dir' && b.type !== 'dir') return -1;
@@ -94,7 +101,7 @@ function FileExplorer({ repo, searchQuery, onShowCreate }) {
       if (readmeFile) {
         setReadmeLoading(true);
         try {
-          const readmeData = await fetchJson(`/api/files?repo=${repo}&path=${readmeFile.path}`, { credentials: 'include' });
+          const readmeData = await fetchJson(`/api/files?repo=${repo}&path=${readmeFile.path}`);
           const decodedContent = atob(readmeData.content);
           setReadmeContent(decodedContent);
         } catch (readmeErr) {
@@ -117,6 +124,13 @@ function FileExplorer({ repo, searchQuery, onShowCreate }) {
     fetchFiles();
   }, [fetchFiles]);
 
+  // Refresh files when refreshTrigger changes
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      fetchFiles();
+    }
+  }, [refreshTrigger, fetchFiles]);
+
   const showSearchResults = searchQuery.trim().length > 0;
 
   const handleFileClick = (file) => {
@@ -131,52 +145,12 @@ function FileExplorer({ repo, searchQuery, onShowCreate }) {
     handleOpen(file);
   };
 
-  const handleCreate = async (name, type) => {
-    try {
-      const fullPath = `${path}/${name}`;
-      let body = { repo, path: fullPath, type };
-
-      // For files, add some default, base64 encoded content
-      if (type === 'file') {
-        try {
-            const templateUrl = `/api/files?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent('src/pages/_template.astro')}`;
-            const templateData = await fetchJson(templateUrl, { credentials: 'include' });
-            const content = atob(templateData.content);
-            body.content = btoa(content);
-        } catch (err) {
-            console.error('Template fetch error:', err);
-            setError(err.message || String(err));
-            return;
-        }
-      }
-
-      const response = await fetch('/api/files', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
-      }
-
-      fetchFiles(); // Refresh the file list
-      setCreateModalOpen(false); // Close the modal
-    } catch (err) {
-      console.error('Create error:', err);
-      setError(`Failed to create item: ${err.message}`);
-    }
-  };
-
 
   const handleDelete = async (file) => {
     if (confirm(`Are you sure you want to delete ${file.name}?`)) {
       try {
         await fetchJson(`/api/files?repo=${repo}&path=${file.path}`, {
           method: 'DELETE',
-          credentials: 'include',
         });
         fetchFiles();
       } catch (err) {
@@ -255,9 +229,17 @@ function FileExplorer({ repo, searchQuery, onShowCreate }) {
               <ContextMenu
                 x={contextMenu.x}
                 y={contextMenu.y}
-                file={contextMenu.file}
+                options={[
+                  {
+                    label: 'Open',
+                    action: () => handleOpen(contextMenu.file)
+                  },
+                  {
+                    label: 'Delete',
+                    action: () => handleDelete(contextMenu.file)
+                  }
+                ]}
                 onClose={handleCloseContextMenu}
-                onDelete={handleDelete}
               />
             )}
             {isReadmeLoading && <div className="text-center text-gray-400 my-8">Loading README...</div>}

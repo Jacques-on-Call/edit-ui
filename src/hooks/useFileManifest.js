@@ -13,7 +13,7 @@ export function useFileManifest(repo) {
     setError(null);
 
     try {
-      const data = await fetchJson(`/api/files?repo=${repo}`, { credentials: 'include' });
+      const data = await fetchJson(`/api/files?repo=${repo}`);
       setFileManifest(data);
     } catch (err) {
       setError(err);

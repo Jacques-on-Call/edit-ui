@@ -7,13 +7,16 @@ import { AlertTriangle } from 'lucide-preact';
 import { route } from 'preact-router';
 import FileExplorer from '../components/FileExplorer';
 import SearchBar from '../components/SearchBar';
-import CreateModal from '../components/CreateModal'; // add or ensure this exists
+import CreateModal from '../components/CreateModal';
+import { fetchJson } from '../lib/fetchJson';
 
 export function FileExplorerPage() {
   const { isAuthenticated, isLoading, selectedRepo } = useAuth();
   const { setHeaderContent } = useHeader();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateOpen, setCreateOpen] = useState(false);
+  const [currentPath, setCurrentPath] = useState('src/pages');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     setHeaderContent(<SearchBar onSearch={setSearchQuery} />);
@@ -49,23 +52,55 @@ export function FileExplorerPage() {
     );
   }
 
+  const handleCreate = async (name, type) => {
+    try {
+      const fullPath = `${currentPath}/${name}`;
+      let body = { repo: selectedRepo.full_name, path: fullPath, type };
+
+      // For files, add some default, base64 encoded content
+      if (type === 'file') {
+        try {
+          const templateUrl = `/api/files?repo=${encodeURIComponent(selectedRepo.full_name)}&path=${encodeURIComponent('src/pages/_template.astro')}`;
+          const templateData = await fetchJson(templateUrl);
+          const content = atob(templateData.content);
+          body.content = btoa(content);
+        } catch (err) {
+          console.error('Template fetch error:', err);
+          // Continue without template
+          body.content = btoa('---\ntitle: New Page\n---\n<h1>New Page</h1>');
+        }
+      }
+
+      await fetchJson('/api/files', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+
+      setCreateOpen(false);
+      setRefreshTrigger(prev => prev + 1); // Trigger refresh
+    } catch (err) {
+      console.error('Create error:', err);
+      alert(`Failed to create item: ${err.message}`);
+    }
+  };
+
   return (
     <div className="h-screen">
-      <FileExplorer repo={selectedRepo.full_name} searchQuery={searchQuery}
+      <FileExplorer 
+        repo={selectedRepo.full_name} 
+        searchQuery={searchQuery}
         onShowCreate={() => setCreateOpen(true)}
+        onPathChange={setCurrentPath}
+        refreshTrigger={refreshTrigger}
       />
 
-      {isCreateOpen && (
-        <CreateModal
-          repo={selectedRepo.full_name}
-          path="/" // or current folder
-          onClose={() => setCreateOpen(false)}
-          onCreate={() => {
-            setCreateOpen(false);
-            // refresh file list (FileExplorer should accept a refresh trigger)
-          }}
-        />
-      )}
+      <CreateModal
+        isOpen={isCreateOpen}
+        repo={selectedRepo.full_name}
+        path={currentPath}
+        onClose={() => setCreateOpen(false)}
+        onCreate={handleCreate}
+      />
     </div>
   );
 }

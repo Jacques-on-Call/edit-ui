@@ -1,5 +1,38 @@
 # Project Change Log
 
+### **v0.1.14: 2025-11-09 (Fix Missing gh_session Token and UI Issues)**
+
+**Author:** GitHub Copilot
+
+**Change:** Fixed critical authentication issues where the `gh_session` cookie was not being sent with API requests, causing failures in repository selection and file explorer pages. Also fixed modal integration issues.
+
+**Context & Key Changes:**
+
+*   **Root Cause:** The `fetchJson` utility function was not including `credentials: 'include'` by default, which prevented the browser from sending the `gh_session` cookie with API requests to the backend.
+*   **Frontend: fetchJson Enhancement:** Updated the `fetchJson` utility in `src/lib/fetchJson.js` to automatically include `credentials: 'include'` with all requests. This ensures the authentication cookie is sent with every API call.
+*   **Frontend: Code Cleanup:** Removed redundant explicit `credentials: 'include'` parameters from all API calls in:
+    *   `FileExplorer.jsx` (4 instances)
+    *   `useFileManifest.js` (1 instance)
+    *   `useSearch.js` (1 instance)
+*   **Frontend: Modal Architecture Fix:** Refactored the create file/folder functionality:
+    *   Moved `handleCreate` logic from `FileExplorer.jsx` to `FileExplorerPage.jsx` for proper state management
+    *   Fixed `CreateModal` integration to properly pass `isOpen` prop
+    *   Added `refreshTrigger` prop to `FileExplorer` to enable parent-controlled refresh
+    *   Fixed `ContextMenu` to receive proper `options` array instead of individual props
+*   **Bug Fixes:**
+    *   Fixed context menu not displaying options (was passing `file` and `onDelete` props instead of `options` array)
+    *   Fixed create modal not opening (was missing proper state management)
+
+**Impact:** These changes restore full authentication functionality across all pages, fix the search bar, enable the long-press context menu on file tiles, and ensure the create button properly opens the modal.
+
+**Reflection:**
+
+*   **Most Challenging:** The most challenging aspect was identifying that the root cause was in the utility function rather than in individual components. The authentication was working in some contexts but failing in others, which initially pointed to routing or state management issues.
+*   **Key Learning:** This reinforces the importance of having a centralized, well-documented utility function for common operations like API calls. When `credentials: 'include'` is needed for authentication, it should be the default behavior rather than something that needs to be explicitly added to each call.
+*   **Advice for Next Agent:** The `fetchJson` utility now handles credentials automatically. If you need to make API calls that should NOT send cookies (rare), you would need to explicitly override this. The create/delete file operations now properly flow through the page component's state management, which is the correct React/Preact pattern.
+
+---
+
 ### **v0.1.13: 2025-11-06 (Jules #147 File Explorer Stability Fix)**
 
 **Author:** Jules #147
