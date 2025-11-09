@@ -7,11 +7,15 @@ import { LoginPage } from './pages/LoginPage';
 import { RepoSelectPage } from './pages/RepoSelectPage';
 import { FileExplorerPage } from './pages/FileExplorerPage';
 import { CallbackPage } from './pages/CallbackPage';
-import AuthDebugMonitor from './components/AuthDebugMonitor'; // Corrected import
+import AuthDebugMonitor from './components/AuthDebugMonitor';
 
 const AppContent = () => {
-  const { isLoading } = useAuth();
+  const { isLoading, isAuthenticated } = useAuth();
   const { headerContent } = useHeader();
+  const [router] = useRouter();
+
+  // Determine if the current route is the main login page (and not a callback)
+  const isLoginPage = !isAuthenticated && router.url === '/';
 
   return (
     <div
@@ -24,7 +28,7 @@ const AppContent = () => {
         <div className="orb orb-white orb-3"></div>
       </div>
 
-      <main className="relative z-10 p-6 md:p-10">
+      <main className={`relative z-10 ${isLoginPage ? '' : 'p-6 md:p-10'}`}>
         {headerContent && (
           <header className="flex justify-between items-center pb-8 h-16">
             {headerContent}
@@ -32,15 +36,17 @@ const AppContent = () => {
         )}
 
         {isLoading ? (
-          <div className="flex justify-center items-center h-full">
-            <p>Loading application...</p>
+          <div className="flex justify-center items-center h-full pt-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-lime"></div>
           </div>
         ) : (
           <Router>
-            <LoginPage path="/" />
-            <CallbackPage path="/login" />
+            {/* The CallbackPage now handles the root path and decides where to go. */}
+            <CallbackPage path="/" />
             <RepoSelectPage path="/repo-select" />
             <FileExplorerPage path="/explorer" />
+            {/* Add a default route for any invalid paths */}
+            <LoginPage default />
           </Router>
         )}
       </main>
