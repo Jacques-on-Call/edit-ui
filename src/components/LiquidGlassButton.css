@@ -85,7 +85,6 @@
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
   transform: translateY(1px);
   transition: color var(--transition-fast) ease, transform var(--transition-fast) ease;
-  /* Removed background and shadow to eliminate the square */
 }
 
 /* Small lime orb (top-left) */

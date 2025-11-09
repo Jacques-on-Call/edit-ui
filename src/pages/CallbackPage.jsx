@@ -1,24 +1,34 @@
 // easy-seo/src/pages/CallbackPage.jsx
-import { useEffect } from 'preact/compat';
+import { useEffect, useState } from 'preact/compat';
 import { useAuth } from '../contexts/AuthContext';
-import { route } from 'preact-router';
+import { route, useRouter } from 'preact-router';
 
 export function CallbackPage() {
-  const { isLoading, isAuthenticated } = useAuth();
+  const { checkAuthStatus, isAuthenticated } = useAuth();
+  const [isChecking, setIsChecking] = useState(true);
+  const [router] = useRouter();
 
   useEffect(() => {
-    // This effect will run whenever the loading or authentication state changes.
-    // We wait until the initial authentication check is complete (!isLoading).
-    if (!isLoading) {
-      if (isAuthenticated) {
-        // If authenticated, go to the repository selection page.
-        route('/repo-select', true);
-      } else {
-        // If not authenticated, go back to the main login screen.
-        route('/', true);
-      }
+    const params = new URLSearchParams(router.url.split('?')[1] || '');
+    if (params.get('login') === 'success') {
+      // A login has just happened. Let's re-verify auth state.
+      checkAuthStatus().then((isAuth) => {
+        if (isAuth) {
+          route('/repo-select', true);
+        } else {
+          // If auth fails even after a "successful" login, there's a problem.
+          // Go to the login page with an error.
+          route('/?error=auth_failed', true);
+        }
+      });
+    } else if (isAuthenticated) {
+      // If we land here and are already authenticated, go to the explorer.
+      route('/repo-select', true);
+    } else {
+      // If no login happened and not authenticated, go home.
+      route('/', true);
     }
-  }, [isLoading, isAuthenticated]); // Dependencies ensure this runs when state is updated
+  }, [checkAuthStatus, isAuthenticated, router.url]);
 
   return (
     <div className="flex items-center justify-center h-screen">
