@@ -4,6 +4,7 @@ import Icon from './Icon';
 import FileTile from './FileTile';
 import ReadmeDisplay from './ReadmeDisplay';
 import CreateModal from './CreateModal';
+import ContextMenu from './ContextMenu';
 import SearchResult from './SearchResult';
 import { useSearch } from '../hooks/useSearch';
 import { useFileManifest } from '../hooks/useFileManifest';
@@ -22,7 +23,17 @@ function FileExplorer({ repo, searchQuery }) {
   const [isReadmeLoading, setReadmeLoading] = useState(false);
   const [isReadmeVisible, setReadmeVisible] = useState(true);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [contextMenu, setContextMenu] = useState(null);
   const { searchResults, performSearch, isSearching } = useSearch(repo, fileManifest);
+
+  const handleLongPress = (file, event) => {
+    event.preventDefault();
+    setContextMenu({ x: event.clientX, y: event.clientY, file });
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
 
   useEffect(() => {
     performSearch(searchQuery);
@@ -188,27 +199,7 @@ function FileExplorer({ repo, searchQuery }) {
 
   const handleToggleReadme = () => setReadmeVisible(prev => !prev);
 
-  const [filteredFiles, setFilteredFiles] = useState([]);
-
-  useEffect(() => {
-    const baseFiltered = files.filter(file => file.type === 'dir' || file.name.endsWith('.astro'));
-
-    if (!searchQuery || !searchQuery.trim()) {
-      setFilteredFiles(baseFiltered);
-      return;
-    }
-
-    const q = searchQuery.toLowerCase();
-    const searchFiltered = baseFiltered.filter((f) => {
-      const name = (f.name || '').toLowerCase();
-      const path = (f.path || '').toLowerCase();
-      return name.includes(q) || path.includes(q);
-    });
-
-    setFilteredFiles(searchFiltered);
-  }, [files, searchQuery]);
-
-  const filesToDisplay = filteredFiles;
+  const filesToDisplay = searchQuery ? searchResults : files;
 
   if (loading) {
     return <div className="flex items-center justify-center h-full"><div className="text-center p-8 text-gray-500 animate-pulse">Loading files...</div></div>;
@@ -264,9 +255,19 @@ function FileExplorer({ repo, searchQuery }) {
                   onClick={handleFileClick}
                   onDoubleClick={handleFileDoubleClick}
                   onDelete={handleDelete}
+                  onLongPress={(e) => handleLongPress(file, e)}
                 />
               ))}
             </div>
+            {contextMenu && (
+              <ContextMenu
+                x={contextMenu.x}
+                y={contextMenu.y}
+                file={contextMenu.file}
+                onClose={handleCloseContextMenu}
+                onDelete={handleDelete}
+              />
+            )}
             {isReadmeLoading && <div className="text-center text-gray-400 my-8">Loading README...</div>}
             {readmeContent && !isReadmeLoading && (
               <div className="w-full">

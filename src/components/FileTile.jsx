@@ -23,8 +23,7 @@ function getIconForFile(fileName) {
   return 'File';
 }
 
-function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete }) {
-  const [contextMenu, setContextMenu] = useState({ x: null, y: null });
+function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete, onLongPress }) {
   const longPressTimer = useRef();
   const isLongPress = useRef(false);
 
@@ -33,9 +32,9 @@ function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete
     longPressTimer.current = setTimeout(() => {
       isLongPress.current = true;
       e.preventDefault();
-      setContextMenu({ x: e.pageX, y: e.pageY });
+      onLongPress?.(e);
     }, 500);
-  }, []);
+  }, [onLongPress]);
 
   const handleMouseUp = useCallback(() => {
     clearTimeout(longPressTimer.current);
@@ -47,9 +46,9 @@ function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete
       isLongPress.current = true;
       e.preventDefault();
       const touch = e.touches[0];
-      setContextMenu({ x: touch.pageX, y: touch.pageY });
+      onLongPress?.({ clientX: touch.pageX, clientY: touch.pageY });
     }, 500);
-  }, []);
+  }, [onLongPress]);
 
   const handleTouchEnd = useCallback(() => {
     clearTimeout(longPressTimer.current);
@@ -65,17 +64,8 @@ function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete
 
   const handleContextMenu = (e) => {
     e.preventDefault();
-    setContextMenu({ x: e.pageX, y: e.pageY });
+    onLongPress?.(e);
   };
-
-  const closeContextMenu = () => {
-    setContextMenu({ x: null, y: null });
-  };
-
-  const menuOptions = [
-    { label: 'Open', action: () => onDoubleClick(file) },
-    { label: 'Delete', action: () => onDelete?.(file) },
-  ];
 
   const isDir = file.type === 'dir';
   const iconName = isDir ? 'Folder' : getIconForFile(file.name);
@@ -120,14 +110,6 @@ function FileTile({ file, isSelected, metadata, onClick, onDoubleClick, onDelete
           </div>
         )}
       </div>
-      {contextMenu.x !== null && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          options={menuOptions}
-          onClose={closeContextMenu}
-        />
-      )}
     </>
   );
 }
