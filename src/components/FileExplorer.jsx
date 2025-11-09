@@ -300,7 +300,6 @@ function FileExplorer({ repo, searchQuery }) {
               onClick={() => setCreateModalOpen(true)}
               title="Create a new file or folder"
             >
-              <div className="rim-glow"></div>
               <div className="orb"></div>
               <span className="plus">+</span>
             </button>
