@@ -1,7 +1,6 @@
 // easy-seo/src/pages/CallbackPage.jsx
 import { useEffect } from 'preact/compat';
 import { useAuth } from '../contexts/AuthContext';
-import { route } from 'preact-router';
 import { LoginPage } from './LoginPage';
 
 export function CallbackPage(props) {
@@ -16,21 +15,22 @@ export function CallbackPage(props) {
     // If user just logged in successfully and is now authenticated, redirect
     if (loginParam === 'success' && isAuthenticated) {
       console.log('[CallbackPage] Login successful, redirecting to repo-select');
-      route('/repo-select', true);
+      // USE NATIVE NAVIGATION INSTEAD OF route()
+      window.location.href = '/repo-select';
       return;
     }
 
     // If already authenticated (returning user), redirect
     if (isAuthenticated && !loginParam) {
       console.log('[CallbackPage] Already authenticated, redirecting to repo-select');
-      route('/repo-select', true);
+      window.location.href = '/repo-select';
       return;
     }
 
     // If auth failed after login redirect, show error
     if (loginParam === 'success' && !isAuthenticated && !isLoading) {
       console.error('[CallbackPage] Authentication failed after login redirect');
-      route('/?error=auth_failed', true);
+      window.location.href = '/?error=auth_failed';
     }
   }, [isAuthenticated, isLoading, loginParam]);
 
@@ -45,6 +45,5 @@ export function CallbackPage(props) {
   }
 
   // If we get here, user is not authenticated and not in a login flow
-  // Show the login page
   return <LoginPage {...props} />;
 }
