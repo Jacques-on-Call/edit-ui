@@ -1,5 +1,6 @@
 // easy-seo/src/contexts/AuthContext.jsx
 import { createContext, useState, useEffect, useContext, useCallback, useRef } from 'preact/compat';
+import { fetchJson } from '../lib/fetchJson'; // ADD THIS
 
 const AuthContext = createContext();
 
@@ -28,32 +29,21 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/me', {
-        credentials: 'include',
-      });
+      // CHANGE THIS:
+      const userData = await fetchJson('/api/me');
+      setUser(userData);
+      setIsAuthenticated(true);
 
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        setIsAuthenticated(true);
+      const reposData = await fetchJson('/api/repos');
+      setRepositories(reposData);
+      return true;
 
-        const reposResponse = await fetch('/api/repos', { credentials: 'include' });
-        if (reposResponse.ok) {
-          setRepositories(await reposResponse.json());
-        }
-        return true;
-      } else {
-        console.warn('[AuthContext] /api/me returned', response.status);
-        setUser(null);
-        setIsAuthenticated(false);
-        setRepositories([]);
-        return false;
-      }
     } catch (error) {
       console.error('[AuthContext] Auth check failed:', error);
       setUser(null);
       setIsAuthenticated(false);
       setRepositories([]);
+      return false;
     } finally {
       setIsLoading(false);
       authCheckInProgress.current = false;
