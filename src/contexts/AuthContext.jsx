@@ -1,6 +1,6 @@
 // easy-seo/src/contexts/AuthContext.jsx
 import { createContext, useState, useEffect, useContext, useCallback, useRef } from 'preact/compat';
-import { fetchJson } from '../lib/fetchJson'; // ADD THIS
+import { fetchJson } from '../lib/fetchJson';
 
 const AuthContext = createContext();
 
@@ -11,15 +11,14 @@ export const AuthProvider = ({ children }) => {
   const [repositories, setRepositories] = useState([]);
   const [selectedRepo, setSelectedRepo] = useState(null);
 
-  // NEW: Prevent concurrent auth checks
   const authCheckInProgress = useRef(false);
+  const hasInitialized = useRef(false); // NEW: Track initialization
 
   const selectRepo = (repo) => {
     setSelectedRepo(repo);
   };
 
   const checkAuthStatus = useCallback(async () => {
-    // Prevent multiple simultaneous calls
     if (authCheckInProgress.current) {
       console.log('[AuthContext] Auth check already in progress, skipping');
       return;
@@ -29,7 +28,6 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
 
     try {
-      // CHANGE THIS:
       const userData = await fetchJson('/api/me');
       setUser(userData);
       setIsAuthenticated(true);
@@ -51,8 +49,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    checkAuthStatus();
-  }, []); // Empty deps - only run once on mount
+    // Only run once on initial mount
+    if (!hasInitialized.current) {
+      hasInitialized.current = true;
+      checkAuthStatus();
+    }
+  }, []); // Empty deps - only run on mount/unmount
 
   const value = { user, isAuthenticated, isLoading, repositories, selectedRepo, selectRepo, checkAuthStatus };
 
