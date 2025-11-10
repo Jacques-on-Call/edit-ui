@@ -1,38 +1,41 @@
 // easy-seo/src/pages/CallbackPage.jsx
-import { useEffect, useRef } from 'preact/compat';
+import { useEffect } from 'preact/compat';
 import { useAuth } from '../contexts/AuthContext';
 import { route } from 'preact-router';
 import { LoginPage } from './LoginPage';
 
 export function CallbackPage(props) {
-  const { checkAuthStatus, isAuthenticated, isLoading } = useAuth();
-  const params = new URLSearchParams(props.matches?.login ? `login=${props.matches.login}` : (location.search || ''));
-  const callbackHandled = useRef(false); // NEW: Track if we've processed the callback
+  const { isAuthenticated, isLoading } = useAuth();
+  const params = new URLSearchParams(location.search || '');
+  const loginParam = params.get('login');
 
   useEffect(() => {
+    // Wait for initial auth check to complete
     if (isLoading) return;
 
-    const loginParam = params.get('login');
-
-    if (loginParam === 'success' && !callbackHandled.current) {
-      callbackHandled.current = true; // Mark as handled immediately
-
-      checkAuthStatus().then((isAuth) => {
-        if (isAuth) {
-          route('/repo-select', true);
-        } else {
-          console.error("Authentication check failed after login redirect.");
-          route('/?error=auth_failed', true);
-        }
-      });
-    } else if (isAuthenticated && !callbackHandled.current) {
-      // Already authenticated, send to repo selection.
+    // If user just logged in successfully and is now authenticated, redirect
+    if (loginParam === 'success' && isAuthenticated) {
+      console.log('[CallbackPage] Login successful, redirecting to repo-select');
       route('/repo-select', true);
+      return;
     }
-  }, [isAuthenticated, isLoading]); // Original dependencies
 
-  // While loading or redirecting, show a spinner.
-  if (isLoading || (params.get('login') === 'success' && !callbackHandled.current)) {
+    // If already authenticated (returning user), redirect
+    if (isAuthenticated && !loginParam) {
+      console.log('[CallbackPage] Already authenticated, redirecting to repo-select');
+      route('/repo-select', true);
+      return;
+    }
+
+    // If auth failed after login redirect, show error
+    if (loginParam === 'success' && !isAuthenticated && !isLoading) {
+      console.error('[CallbackPage] Authentication failed after login redirect');
+      route('/?error=auth_failed', true);
+    }
+  }, [isAuthenticated, isLoading, loginParam]);
+
+  // Show loading spinner while auth check is in progress
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent-lime"></div>
@@ -41,6 +44,7 @@ export function CallbackPage(props) {
     );
   }
 
-  // If not authenticated and not in a login flow, render the actual login page.
+  // If we get here, user is not authenticated and not in a login flow
+  // Show the login page
   return <LoginPage {...props} />;
 }
