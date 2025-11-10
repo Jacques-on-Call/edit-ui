@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'preact/compat';
 import { route } from 'preact-router';
+import matter from 'gray-matter';
 import Icon from './Icon';
 import FileTile from './FileTile';
 import ReadmeDisplay from './ReadmeDisplay';
@@ -48,36 +49,38 @@ performSearch(searchQuery);
 }, [searchQuery, performSearch]);
 
 const fetchDetailsForFile = useCallback(async (file) => {
-if (file.type === 'dir') return;
-try {
-// Use the new, dedicated endpoint for fetching decoded and parsed file content
-const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
-const fileData = await fetchJson(url);
+    if (file.type === 'dir') return;
+    try {
+      const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
+      const response = await fetchJson(url);
 
-if (!fileData || typeof fileData.frontmatter !== 'object') {
-console.error('Unexpected file detail response', fileData);
-setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Missing or invalid frontmatter' } }));
-return;
-}
+      if (!response || typeof response.content !== 'string') {
+        console.error('Unexpected file detail response', response);
+        setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Missing or invalid content' } }));
+        return;
+      }
 
-// Fetch commit data separately
-const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`);
-const lastCommit = commitData[0];
+      // Parse the raw content on the client
+      const { data: frontmatter, content: body } = matter(response.content);
 
-const metadata = {
-...fileData.frontmatter,
-lastEditor: lastCommit?.commit?.author?.name,
-lastModified: lastCommit?.commit?.author?.date,
-};
+      // Fetch commit data separately
+      const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`);
+      const lastCommit = commitData[0];
 
-if (metadata) {
-setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
-}
-} catch (err) {
-console.error(`Failed to fetch details for ${file.path}:`, err.message);
-setMetadataCache(prev => ({ ...prev, [file.sha]: { error: err.message } }));
-}
-}, [repo]);
+      const metadata = {
+        ...frontmatter,
+        lastEditor: lastCommit?.commit?.author?.name,
+        lastModified: lastCommit?.commit?.author?.date,
+      };
+
+      if (metadata) {
+        setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
+      }
+    } catch (err) {
+      console.error(`Failed to fetch details for ${file.path}:`, err);
+      setMetadataCache(prev => ({ ...prev, [file.sha]: { error: err.message } }));
+    }
+  }, [repo]);
 
 const fetchFiles = useCallback(async () => {
 setLoading(true);
