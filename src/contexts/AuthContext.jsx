@@ -12,10 +12,13 @@ export const AuthProvider = ({ children }) => {
   const [selectedRepo, setSelectedRepo] = useState(null);
 
   const authCheckInProgress = useRef(false);
-  const hasInitialized = useRef(false); // NEW: Track initialization
+  const hasInitialized = useRef(false);
 
   const selectRepo = (repo) => {
     setSelectedRepo(repo);
+    // Persist to localStorage
+    localStorage.setItem('selectedRepo', repo.full_name);
+    console.log('[AuthContext] Selected repo saved:', repo.full_name);
   };
 
   const checkAuthStatus = useCallback(async () => {
@@ -54,7 +57,20 @@ export const AuthProvider = ({ children }) => {
       hasInitialized.current = true;
       checkAuthStatus();
     }
-  }, []); // Empty deps - only run on mount/unmount
+  }, []);
+
+  // Load selected repo from localStorage on mount
+  useEffect(() => {
+    const savedRepo = localStorage.getItem('selectedRepo');
+    if (savedRepo && repositories.length > 0) {
+      // Find the full repo object from the repositories list
+      const repoObj = repositories.find(r => r.full_name === savedRepo);
+      if (repoObj) {
+        setSelectedRepo(repoObj);
+        console.log('[AuthContext] Restored repo from localStorage:', savedRepo);
+      }
+    }
+  }, [repositories]);
 
   const value = { user, isAuthenticated, isLoading, repositories, selectedRepo, selectRepo, checkAuthStatus };
 

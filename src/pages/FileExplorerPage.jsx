@@ -4,7 +4,6 @@ import { useHeader } from '../contexts/HeaderContext';
 import { useEffect, useState } from 'preact/hooks';
 import { theme } from '../themes/theme';
 import { AlertTriangle } from 'lucide-preact';
-import { route } from 'preact-router';
 import FileExplorer from '../components/FileExplorer';
 import SearchBar from '../components/SearchBar';
 import CreateModal from '../components/CreateModal';
@@ -24,6 +23,9 @@ export function FileExplorerPage() {
     return () => setHeaderContent(null);
   }, [setHeaderContent]);
 
+  // Fallback to localStorage if context is empty
+  const repoName = selectedRepo?.full_name || localStorage.getItem('selectedRepo');
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center pt-24">
@@ -35,18 +37,20 @@ export function FileExplorerPage() {
 
   if (!isAuthenticated) {
     // Redirect to login if not authenticated
-    route('/login', true);
+    window.location.href = '/';
     return null;
   }
 
-  if (!selectedRepo) {
+  if (!repoName) {
     return (
-      <div className="flex flex-col items-center justify-center pt-24 text-center">
-        <AlertTriangle size={48} className="text-warning mb-4" />
-        <h2 className={theme.typography.h2}>No Repository Selected</h2>
-        <p className="text-textSecondary mt-2">Please go back and select a repository to view its files.</p>
-        <button onClick={() => route('/repo-select')} className="mt-4 bg-primary text-white font-bold py-2 px-4 rounded">
-          Select Repository
+      <div className="flex flex-col items-center justify-center h-screen text-center">
+        <AlertTriangle size={48} className="text-yellow-400 mb-4" />
+        <h1 className="text-2xl font-bold mb-4">No Repository Selected</h1>
+        <button
+          onClick={() => window.location.href = '/repo-select'}
+          className="bg-accent-lime text-black px-6 py-3 rounded-lg font-bold"
+        >
+          Select a Repository
         </button>
       </div>
     );
@@ -55,12 +59,12 @@ export function FileExplorerPage() {
   const handleCreate = async (name, type) => {
     try {
       const fullPath = `${currentPath}/${name}`;
-      let body = { repo: selectedRepo.full_name, path: fullPath, type };
+      let body = { repo: repoName, path: fullPath, type };
 
       // For files, add some default, base64 encoded content
       if (type === 'file') {
         try {
-          const templateUrl = `/api/files?repo=${encodeURIComponent(selectedRepo.full_name)}&path=${encodeURIComponent('src/pages/_template.astro')}`;
+          const templateUrl = `/api/files?repo=${encodeURIComponent(repoName)}&path=${encodeURIComponent('src/pages/_template.astro')}`;
           const templateData = await fetchJson(templateUrl);
           const content = atob(templateData.content);
           body.content = btoa(content);
@@ -87,7 +91,7 @@ export function FileExplorerPage() {
   return (
     <div className="h-screen">
       <FileExplorer 
-        repo={selectedRepo.full_name} 
+        repo={repoName}
         searchQuery={searchQuery}
         onShowCreate={() => setCreateOpen(true)}
         onPathChange={setCurrentPath}
@@ -96,7 +100,7 @@ export function FileExplorerPage() {
 
       <CreateModal
         isOpen={isCreateOpen}
-        repo={selectedRepo.full_name}
+        repo={repoName}
         path={currentPath}
         onClose={() => setCreateOpen(false)}
         onCreate={handleCreate}
