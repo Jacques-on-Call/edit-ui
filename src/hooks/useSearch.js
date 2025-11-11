@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'preact/hooks';
-import matter from 'gray-matter';
-import { fetchJson } from '/src/lib/fetchJson.js';
+// easy-seo/src/hooks/useSearch.js
+import { useState, useCallback } from 'preact/compat';
+import { fetchJson } from '../lib/fetchJson';
 
 export function useSearch(repo, files) {
   const [searchResults, setSearchResults] = useState([]);
@@ -15,8 +15,9 @@ export function useSearch(repo, files) {
       return '';
     }
     try {
-      const data = await fetchJson(`/api/files?repo=${repo}&path=${file.path}`);
-      const content = atob(data.content);
+      // Use new endpoint that returns decoded content
+      const data = await fetchJson(`/api/get-file-content?repo=${repo}&path=${file.path}`);
+      const content = data.content; // Already decoded by worker
       setFileContentCache(prev => ({ ...prev, [file.sha]: content }));
       return content;
     } catch (error) {
@@ -26,29 +27,39 @@ export function useSearch(repo, files) {
   }, [repo, fileContentCache]);
 
   const performSearch = useCallback(async (query) => {
-    if (!query) {
+    console.log('[useSearch] Query:', query);
+    if (!query || !query.trim()) {
       setSearchResults([]);
       setIsSearching(false);
       return;
     }
 
     setIsSearching(true);
-    const lowerCaseQuery = query.toLowerCase();
+    const lowerQuery = query.toLowerCase();
     const results = [];
 
-    for (const file of files) {
-      const content = await fetchContent(file);
-      const fileNameMatch = file.name.toLowerCase().includes(lowerCaseQuery);
-      const contentMatch = content.toLowerCase().includes(lowerCaseQuery);
+    // Only search through actual files, not directories
+    const searchableFiles = (files || []).filter(f => f.type === 'file');
+    console.log('[useSearch] Files to search:', searchableFiles?.length);
 
-      if (fileNameMatch || contentMatch) {
-        results.push({
-          ...file,
-          content: content,
-        });
+    for (const file of searchableFiles) {
+      try {
+        // Search in filename first
+        if (file.name.toLowerCase().includes(lowerQuery)) {
+          results.push({ ...file, matchType: 'filename' });
+          continue;
+        }
+
+        // Then search in content
+        const content = await fetchContent(file);
+        if (content.toLowerCase().includes(lowerQuery)) {
+          results.push({ ...file, matchType: 'content' });
+        }
+      } catch (error) {
+        console.error(`Search error for ${file.path}:`, error);
       }
     }
-
+    console.log('[useSearch] Results:', results.length);
     setSearchResults(results);
     setIsSearching(false);
   }, [files, fetchContent]);
