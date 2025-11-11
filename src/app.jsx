@@ -51,7 +51,7 @@ const AppContent = () => {
             {/* The CallbackPage now handles the root path and decides where to go. */}
             <CallbackPage path="/" />
             <RepoSelectPage path="/repo-select" />
-            <FileExplorerPage path="/explorer" />
+            <FileExplorerPage path="/explorer" searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
             {/* Add a default route for any invalid paths */}
             <LoginPage default />
           </Router>

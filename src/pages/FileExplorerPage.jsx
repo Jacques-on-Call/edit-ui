@@ -1,6 +1,5 @@
 // easy-seo/src/pages/FileExplorerPage.jsx
 import { useAuth } from '../contexts/AuthContext';
-import { useHeader } from '../contexts/HeaderContext';
 import { useEffect, useState } from 'preact/hooks';
 import { theme } from '../themes/theme';
 import { AlertTriangle } from 'lucide-preact';
@@ -8,12 +7,10 @@ import FileExplorer from '../components/FileExplorer';
 import CreateModal from '../components/CreateModal';
 import { fetchJson } from '../lib/fetchJson';
 
-export function FileExplorerPage() {
+export function FileExplorerPage({ searchQuery, setSearchQuery }) {
   const { isAuthenticated, isLoading, selectedRepo } = useAuth();
-  // Get the shared search query from the context.
-  const { searchQuery, setSearchQuery } = useHeader();
 
-  console.log(`[FileExplorerPage.jsx] searchQuery from context: "${searchQuery}"`);
+  console.log(`[FileExplorerPage.jsx] searchQuery prop: "${searchQuery}"`);
 
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState('src/pages');
