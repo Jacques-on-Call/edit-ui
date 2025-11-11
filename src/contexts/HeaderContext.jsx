@@ -8,9 +8,17 @@ export const useHeader = () => useContext(HeaderContext);
 
 export const HeaderProvider = ({ children }) => {
   const [headerContent, setHeaderContent] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const value = {
+    headerContent,
+    setHeaderContent,
+    searchQuery,
+    setSearchQuery,
+  };
 
   return (
-    <HeaderContext.Provider value={{ headerContent, setHeaderContent }}>
+    <HeaderContext.Provider value={value}>
       {children}
     </HeaderContext.Provider>
   );

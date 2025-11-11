@@ -11,23 +11,23 @@ import { fetchJson } from '../lib/fetchJson';
 
 export function FileExplorerPage() {
   const { isAuthenticated, isLoading, selectedRepo } = useAuth();
-  const { setHeaderContent } = useHeader();
-  const [searchQuery, setSearchQuery] = useState('');
+  // Get search state and setters from the HeaderContext
+  const { setHeaderContent, searchQuery, setSearchQuery } = useHeader();
+
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState('src/pages');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Memoize the onSearch callback to ensure it has a stable identity
-  const handleSearch = useCallback((query) => {
-    setSearchQuery(query);
-  }, []); // setSearchQuery is guaranteed to be stable
-
   useEffect(() => {
-    // Pass the stable, memoized callback to the SearchBar
-    setHeaderContent(<SearchBar onSearch={handleSearch} />);
-    // Clear the header when the component unmounts
-    return () => setHeaderContent(null);
-  }, [setHeaderContent, handleSearch]);
+    // Pass the context's setSearchQuery function directly to the SearchBar
+    setHeaderContent(<SearchBar onSearch={setSearchQuery} />);
+
+    // Clear the header and the search query when the component unmounts
+    return () => {
+      setHeaderContent(null);
+      setSearchQuery('');
+    };
+  }, [setHeaderContent, setSearchQuery]);
 
   // Fallback to localStorage if context is empty
   const repoName = selectedRepo?.full_name || localStorage.getItem('selectedRepo');
@@ -98,7 +98,7 @@ export function FileExplorerPage() {
     <div className="h-screen">
       <FileExplorer 
         repo={repoName}
-        searchQuery={searchQuery}
+        searchQuery={searchQuery} // Pass the searchQuery from the context
         onShowCreate={() => setCreateOpen(true)}
         onPathChange={setCurrentPath}
         refreshTrigger={refreshTrigger}
