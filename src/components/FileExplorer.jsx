@@ -17,6 +17,7 @@ import { fetchJson } from '/src/lib/fetchJson.js';
 import './LiquidGlassButton.css';
 
 function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTrigger }) {
+  console.log(`[FileExplorer.jsx] searchQuery prop: "${searchQuery}"`);
 const { fileManifest } = useFileManifest(repo);
 const [files, setFiles] = useState([]);
 const [path, setPath] = useState('src/pages');
