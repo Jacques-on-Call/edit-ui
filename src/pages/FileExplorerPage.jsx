@@ -13,8 +13,6 @@ export function FileExplorerPage() {
   // Get the shared search query from the context.
   const { searchQuery, setSearchQuery } = useHeader();
 
-  console.log(`[FileExplorerPage.jsx] searchQuery from context: "${searchQuery}"`);
-
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState('src/pages');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
