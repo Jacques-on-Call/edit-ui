@@ -49,38 +49,51 @@ performSearch(searchQuery);
 }, [searchQuery, performSearch]);
 
 const fetchDetailsForFile = useCallback(async (file) => {
-    if (file.type === 'dir') return;
-    try {
-      const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
-      const response = await fetchJson(url);
+  if (file.type === 'dir') return;
+  try {
+    const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
 
-      if (!response || typeof response.content !== 'string') {
-        console.error('Unexpected file detail response', response);
-        setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Missing or invalid content' } }));
-        return;
-      }
+    // Add detailed logging
+    console.log(`[FileExplorer] Fetching content for: ${file.path}`);
+    const response = await fetchJson(url);
 
-      // Parse the raw content on the client
-      const { data: frontmatter, content: body } = matter(response.content);
+    // LOG THE FULL RESPONSE
+    console.log(`[FileExplorer] Response for ${file.path}:`, response);
+    console.log(`[FileExplorer] Response type:`, typeof response);
+    console.log(`[FileExplorer] Has content?:`, response?.content !== undefined);
+    console.log(`[FileExplorer] Content type:`, typeof response?.content);
 
-      // Fetch commit data separately
-      const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`);
-      const lastCommit = commitData[0];
-
-      const metadata = {
-        ...frontmatter,
-        lastEditor: lastCommit?.commit?.author?.name,
-        lastModified: lastCommit?.commit?.author?.date,
-      };
-
-      if (metadata) {
-        setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
-      }
-    } catch (err) {
-      console.error(`Failed to fetch details for ${file.path}:`, err);
-      setMetadataCache(prev => ({ ...prev, [file.sha]: { error: err.message } }));
+    if (!response || typeof response.content !== 'string') {
+      console.error('Unexpected file detail response', response);
+      setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Missing or invalid content' } }));
+      return;
     }
-  }, [repo]);
+
+    // Parse the raw content on the client
+    console.log(`[FileExplorer] Parsing content for ${file.path}, length: ${response.content.length}`);
+    const { data: frontmatter, content: body } = matter(response.content);
+    console.log(`[FileExplorer] Parsed frontmatter:`, frontmatter);
+
+    // Fetch commit data separately
+    const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`);
+    const lastCommit = commitData[0];
+
+    const metadata = {
+      ...frontmatter,
+      lastEditor: lastCommit?.commit?.author?.name,
+      lastModified: lastCommit?.commit?.author?.date,
+    };
+
+    if (metadata) {
+      setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
+    }
+  } catch (err) {
+    console.error(`Failed to fetch details for ${file.path}:`, err);
+    console.error(`Error stack:`, err.stack);
+    console.error(`Error message:`, err.message);
+    setMetadataCache(prev => ({ ...prev, [file.sha]: { error: err.message } }));
+  }
+}, [repo]);
 
 const fetchFiles = useCallback(async () => {
 setLoading(true);
