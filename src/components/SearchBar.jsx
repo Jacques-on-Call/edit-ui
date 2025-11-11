@@ -9,7 +9,6 @@ const SearchBar = ({ onSearch }) => {
     () =>
       debounce((searchQuery) => {
         try {
-          console.log(`[SearchBar] Calling onSearch with query: "${searchQuery}"`);
           onSearch(searchQuery);
         } catch (err) {
           // avoid breaking events
