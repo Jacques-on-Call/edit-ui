@@ -16,6 +16,8 @@ const AppContent = () => {
   const { headerContent, searchQuery, setSearchQuery } = useHeader();
   const [router] = useRouter();
 
+  console.log(`[App.jsx] searchQuery from context: "${searchQuery}"`);
+
   // Determine if the current route is the main login page (and not a callback)
   const isLoginPage = !isAuthenticated && router.url === '/';
   const showSearchBar = router.url.startsWith('/explorer');
