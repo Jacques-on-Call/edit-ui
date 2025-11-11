@@ -1,7 +1,7 @@
 // easy-seo/src/pages/FileExplorerPage.jsx
 import { useAuth } from '../contexts/AuthContext';
 import { useHeader } from '../contexts/HeaderContext';
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useState, useCallback } from 'preact/hooks';
 import { theme } from '../themes/theme';
 import { AlertTriangle } from 'lucide-preact';
 import FileExplorer from '../components/FileExplorer';
@@ -17,11 +17,17 @@ export function FileExplorerPage() {
   const [currentPath, setCurrentPath] = useState('src/pages');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Memoize the onSearch callback to ensure it has a stable identity
+  const handleSearch = useCallback((query) => {
+    setSearchQuery(query);
+  }, []); // setSearchQuery is guaranteed to be stable
+
   useEffect(() => {
-    setHeaderContent(<SearchBar onSearch={setSearchQuery} />);
+    // Pass the stable, memoized callback to the SearchBar
+    setHeaderContent(<SearchBar onSearch={handleSearch} />);
     // Clear the header when the component unmounts
     return () => setHeaderContent(null);
-  }, [setHeaderContent, setSearchQuery]);
+  }, [setHeaderContent, handleSearch]);
 
   // Fallback to localStorage if context is empty
   const repoName = selectedRepo?.full_name || localStorage.getItem('selectedRepo');
