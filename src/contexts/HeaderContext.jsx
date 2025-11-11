@@ -1,5 +1,5 @@
 import { createContext } from 'preact';
-import { useState } from 'preact/hooks';
+import { useState, useContext } from 'preact/hooks';
 
 export const HeaderContext = createContext({
   searchQuery: '',
@@ -7,6 +7,8 @@ export const HeaderContext = createContext({
   headerContent: null,
   setHeaderContent: () => {}
 });
+
+export const useHeader = () => useContext(HeaderContext);
 
 export function HeaderProvider({ children }) {
   const [searchQuery, setSearchQuery] = useState('');
