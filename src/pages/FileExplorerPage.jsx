@@ -21,7 +21,7 @@ export function FileExplorerPage() {
     setHeaderContent(<SearchBar onSearch={setSearchQuery} />);
     // Clear the header when the component unmounts
     return () => setHeaderContent(null);
-  }, [setHeaderContent]);
+  }, [setHeaderContent, setSearchQuery]);
 
   // Fallback to localStorage if context is empty
   const repoName = selectedRepo?.full_name || localStorage.getItem('selectedRepo');
