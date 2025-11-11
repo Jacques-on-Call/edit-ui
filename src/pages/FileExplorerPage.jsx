@@ -1,33 +1,28 @@
 // easy-seo/src/pages/FileExplorerPage.jsx
 import { useAuth } from '../contexts/AuthContext';
 import { useHeader } from '../contexts/HeaderContext';
-import { useEffect, useState, useCallback } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { theme } from '../themes/theme';
 import { AlertTriangle } from 'lucide-preact';
 import FileExplorer from '../components/FileExplorer';
-import SearchBar from '../components/SearchBar';
 import CreateModal from '../components/CreateModal';
 import { fetchJson } from '../lib/fetchJson';
 
 export function FileExplorerPage() {
   const { isAuthenticated, isLoading, selectedRepo } = useAuth();
-  // Get search state and setters from the HeaderContext
-  const { setHeaderContent, searchQuery, setSearchQuery } = useHeader();
+  // Get the shared search query from the context.
+  const { searchQuery, setSearchQuery } = useHeader();
 
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState('src/pages');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Clear the search query when the component unmounts
   useEffect(() => {
-    // Pass the context's setSearchQuery function directly to the SearchBar
-    setHeaderContent(<SearchBar onSearch={setSearchQuery} />);
-
-    // Clear the header and the search query when the component unmounts
     return () => {
-      setHeaderContent(null);
       setSearchQuery('');
     };
-  }, [setHeaderContent, setSearchQuery]);
+  }, [setSearchQuery]);
 
   // Fallback to localStorage if context is empty
   const repoName = selectedRepo?.full_name || localStorage.getItem('selectedRepo');

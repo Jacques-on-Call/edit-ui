@@ -9,13 +9,16 @@ import { FileExplorerPage } from './pages/FileExplorerPage';
 import { CallbackPage } from './pages/CallbackPage';
 import AuthDebugMonitor from './components/AuthDebugMonitor';
 
+import SearchBar from './components/SearchBar'; // Import SearchBar
+
 const AppContent = () => {
   const { isLoading, isAuthenticated } = useAuth();
-  const { headerContent } = useHeader();
+  const { headerContent, searchQuery, setSearchQuery } = useHeader();
   const [router] = useRouter();
 
   // Determine if the current route is the main login page (and not a callback)
   const isLoginPage = !isAuthenticated && router.url === '/';
+  const showSearchBar = router.url.startsWith('/explorer');
 
   return (
     <div
@@ -29,11 +32,13 @@ const AppContent = () => {
       </div>
 
       <main className={`relative z-10 ${isLoginPage ? '' : 'p-6 md:p-10'}`}>
-        {headerContent && (
-          <header className="flex justify-between items-center pb-8 h-16">
-            {headerContent}
-          </header>
-        )}
+        <header className="flex justify-between items-center pb-8 h-16">
+          {showSearchBar ? (
+            <SearchBar onSearch={setSearchQuery} />
+          ) : (
+            headerContent
+          )}
+        </header>
 
         {isLoading ? (
           <div className="flex justify-center items-center h-full pt-20">

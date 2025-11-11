@@ -1,25 +1,20 @@
-// easy-seo/src/contexts/HeaderContext.jsx
 import { createContext } from 'preact';
-import { useState, useContext } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 
-const HeaderContext = createContext();
+export const HeaderContext = createContext({
+  searchQuery: '',
+  setSearchQuery: () => {},
+  headerContent: null,
+  setHeaderContent: () => {}
+});
 
-export const useHeader = () => useContext(HeaderContext);
-
-export const HeaderProvider = ({ children }) => {
-  const [headerContent, setHeaderContent] = useState(null);
+export function HeaderProvider({ children }) {
   const [searchQuery, setSearchQuery] = useState('');
-
-  const value = {
-    headerContent,
-    setHeaderContent,
-    searchQuery,
-    setSearchQuery,
-  };
+  const [headerContent, setHeaderContent] = useState(null);
 
   return (
-    <HeaderContext.Provider value={value}>
+    <HeaderContext.Provider value={{ searchQuery, setSearchQuery, headerContent, setHeaderContent }}>
       {children}
     </HeaderContext.Provider>
   );
-};
+}
