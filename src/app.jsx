@@ -18,6 +18,11 @@ const AppContent = () => {
 
   console.log(`[App.jsx] searchQuery from context: "${searchQuery}"`);
 
+  const handleSearch = (query) => {
+    console.log(`[App.jsx] handleSearch called with query: "${query}"`);
+    setSearchQuery(query);
+  };
+
   // Determine if the current route is the main login page (and not a callback)
   const isLoginPage = !isAuthenticated && router.url === '/';
   const showSearchBar = router.url.startsWith('/explorer');
@@ -36,7 +41,7 @@ const AppContent = () => {
       <main className={`relative z-10 ${isLoginPage ? '' : 'p-6 md:p-10'}`}>
         <header className="flex justify-between items-center pb-8 h-16">
           {showSearchBar ? (
-            <SearchBar onSearch={setSearchQuery} />
+            <SearchBar onSearch={handleSearch} />
           ) : (
             headerContent
           )}

@@ -1,20 +1,46 @@
-import { useState } from 'preact/hooks';
+import { useState, useMemo, useEffect } from 'preact/hooks';
+import { debounce } from 'lodash-es';
 import Icon from './Icon';
 
 const SearchBar = ({ onSearch }) => {
   const [query, setQuery] = useState('');
 
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((searchQuery) => {
+        try {
+          console.log(`[SearchBar] Calling onSearch with query: "${searchQuery}"`);
+          onSearch(searchQuery);
+        } catch (err) {
+          // avoid breaking events
+          // eslint-disable-next-line no-console
+          console.error('onSearch handler error:', err);
+        }
+      }, 300),
+    [onSearch]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (debouncedSearch && debouncedSearch.cancel) debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
   const handleChange = (e) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
-    console.log(`[SearchBar] Calling onSearch with query: "${newQuery}"`);
-    onSearch(newQuery);
+    debouncedSearch(newQuery);
   };
 
   const handleKeyDown = (e) => {
-    // Optional: Keep Enter key functionality for immediate search
     if (e.key === 'Enter') {
-      onSearch(query);
+      if (debouncedSearch && debouncedSearch.cancel) debouncedSearch.cancel();
+      try {
+        onSearch(query);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('onSearch immediate call error:', err);
+      }
     }
   };
 
