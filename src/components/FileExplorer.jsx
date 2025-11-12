@@ -55,6 +55,15 @@ performSearch(searchQuery);
 
 const fetchDetailsForFile = useCallback(async (file) => {
     if (file.type === 'dir') return;
+
+    // --- Defensive Gate ---
+    // Don't try to parse frontmatter from non-text files
+    const nonTextExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico'];
+    if (nonTextExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
+      return;
+    }
+    // --- End Defensive Gate ---
+
     try {
       const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
       const response = await fetchJson(url);
@@ -273,38 +282,6 @@ onClose={handleCloseContextMenu}
 </>
 )}
 </main>
-      <footer className="fixed bottom-0 left-0 right-0 bg-black/30 backdrop-blur-sm border-t border-white/10 z-10">
-        <div className="w-full max-w-2xl mx-auto flex justify-around items-center p-2">
-<button
-            className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg text-white/80 hover:bg-white/10 transition-colors disabled:opacity-40"
-onClick={handleGoHome}
-disabled={path === 'src/pages'}
-title="Go to root directory"
->
-<Icon name="Home" className="w-5 h-5" />
-            <span className="text-xs sm:text-sm font-semibold">Home</span>
-</button>
-          <div className="flex-shrink-0 mx-2">
-<button
-              className="liquid-btn"
-aria-label="Create"
-              onClick={(e) => { e.stopPropagation(); onShowCreate(); }}
-title="Create a new file or folder"
->
-              <div className="orb pointer-events-none"></div>
-              <span className="plus pointer-events-none">+</span>
-</button>
-          </div>
-<button
-            className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg text-white/80 hover:bg-white/10 transition-colors"
-title="Back to repository selection"
-onClick={() => route('/repo-select')}
->
-<Icon name="ArrowLeft" className="w-5 h-5" />
-            <span className="text-xs sm:text-sm font-semibold">Back</span>
-</button>
-        </div>
-</footer>
 </div>
 );
 }

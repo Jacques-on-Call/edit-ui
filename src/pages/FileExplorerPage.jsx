@@ -92,7 +92,7 @@ export function FileExplorerPage() {
   };
 
   return (
-    <div className="h-screen">
+    <div className="h-full">
       <FileExplorer 
         repo={repoName}
         searchQuery={searchQuery} // Pass the searchQuery from the context
