@@ -68,7 +68,6 @@ function FileTile({ file, isSelected, metadata, onOpen, onShowActions }) {
 
   const isDir = file.type === 'dir';
   const iconName = isDir ? 'Folder' : getIconForFile(file.name);
-  console.log(`[FileTile] file: ${file.name}, icon: ${iconName}`);
 
   const tileClassName = `
     relative p-3 rounded-xl cursor-pointer transition-all duration-300 text-center
@@ -91,7 +90,6 @@ function FileTile({ file, isSelected, metadata, onOpen, onShowActions }) {
         onMouseLeave={handleMouseUp}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
         onContextMenu={handleContextMenu}
       >
         <div className="flex-grow flex flex-col items-center justify-center text-center w-full">
