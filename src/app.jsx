@@ -13,7 +13,6 @@ import SearchBar from './components/SearchBar'; // Import SearchBar
 
 const AppContent = () => {
   const { isLoading, isAuthenticated } = useAuth();
-  // We still get the state and setter from the context here at the top level
   const { headerContent, searchQuery, setSearchQuery } = useHeader();
   const [router] = useRouter();
 
@@ -52,16 +51,12 @@ const AppContent = () => {
             {/* The CallbackPage now handles the root path and decides where to go. */}
             <CallbackPage path="/" />
             <RepoSelectPage path="/repo-select" />
-
-            {/* --- MODIFICATION START --- */}
-            {/* We are now passing the search state down as props */}
             <FileExplorerPage
               path="/explorer"
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
+              key={searchQuery}
             />
-            {/* --- MODIFICATION END --- */}
-
             {/* Add a default route for any invalid paths */}
             <LoginPage default />
           </Router>

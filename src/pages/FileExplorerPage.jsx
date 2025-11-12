@@ -1,7 +1,5 @@
 // easy-seo/src/pages/FileExplorerPage.jsx
 import { useAuth } from '../contexts/AuthContext';
-// We no longer need useHeader in this file
-// import { useHeader } from '../contexts/HeaderContext';
 import { useEffect, useState } from 'preact/hooks';
 import { theme } from '../themes/theme';
 import { AlertTriangle } from 'lucide-preact';
@@ -9,15 +7,8 @@ import FileExplorer from '../components/FileExplorer';
 import CreateModal from '../components/CreateModal';
 import { fetchJson } from '../lib/fetchJson';
 
-// --- MODIFICATION START ---
-// The component now accepts props passed from the router in app.jsx
 export function FileExplorerPage({ searchQuery, setSearchQuery }) {
-// --- MODIFICATION END ---
-
   const { isAuthenticated, isLoading, selectedRepo } = useAuth();
-
-  // We no longer get these from the context in this file
-  // const { searchQuery, setSearchQuery } = useHeader();
 
   console.log(`[FileExplorerPage.jsx] searchQuery from PROPS: "${searchQuery}"`);
 
@@ -25,13 +16,10 @@ export function FileExplorerPage({ searchQuery, setSearchQuery }) {
   const [currentPath, setCurrentPath] = useState('src/pages');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Clear the search query when the component unmounts. This still works.
+  // Clear the search query when the component unmounts
   useEffect(() => {
     return () => {
-      // Ensure setSearchQuery is a function before calling it
-      if (typeof setSearchQuery === 'function') {
-        setSearchQuery('');
-      }
+      setSearchQuery('');
     };
   }, [setSearchQuery]);
 
@@ -104,7 +92,7 @@ export function FileExplorerPage({ searchQuery, setSearchQuery }) {
     <div className="h-screen">
       <FileExplorer 
         repo={repoName}
-        searchQuery={searchQuery} // Pass the searchQuery from the props
+        searchQuery={searchQuery} // Pass the searchQuery from the context
         onShowCreate={() => setCreateOpen(true)}
         onPathChange={setCurrentPath}
         refreshTrigger={refreshTrigger}
