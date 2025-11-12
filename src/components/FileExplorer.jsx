@@ -252,8 +252,8 @@ onClose={handleCloseContextMenu}
 )}
             {isReadmeLoading && <div className="text-center text-gray-400 my-8">Loading README...</div>}
             {readmeContent && !isReadmeLoading && (
-              <div className="w-full mt-8">
-                 <div className="bg-black/20 p-4 sm:p-6 rounded-lg border border-white/10">
+              <div className="w-full max-w-screen-md mx-auto mt-8">
+                <div className="bg-black/20 p-2 sm:p-6 rounded-lg border border-white/10">
                     <ReadmeDisplay
                       content={readmeContent}
                       isVisible={isReadmeVisible}
