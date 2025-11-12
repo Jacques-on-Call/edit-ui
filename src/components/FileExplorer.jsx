@@ -1,8 +1,14 @@
 
+import { Buffer } from 'buffer';
+if (typeof window !== 'undefined' && typeof window.Buffer === 'undefined') {
+  window.Buffer = Buffer;
+}
 import { useState, useEffect, useCallback } from 'preact/compat';
 import { useFileManifest } from '../hooks/useFileManifest';
+import { useSearch } from '../hooks/useSearch';
 import { fetchJson } from '/src/lib/fetchJson.js';
 import FileTile from './FileTile';
+import SearchResult from './SearchResult';
 import matter from 'gray-matter';
 
 function FileExplorer({ repo, searchQuery }) {
@@ -14,20 +20,21 @@ function FileExplorer({ repo, searchQuery }) {
   const [error, setError] = useState(null);
   const [path, setPath] = useState('src/pages');
   const [metadataCache, setMetadataCache] = useState({});
+  const { searchResults, performSearch, isSearching } = useSearch(repo, fileManifest);
 
   const fetchDetailsForFile = useCallback(async (file) => {
-      if (file.type === 'dir') return;
-      try {
-        const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
-        const response = await fetchJson(url);
-        const { data: frontmatter } = matter(response.content);
-        if (frontmatter) {
-          setMetadataCache(prev => ({ ...prev, [file.sha]: frontmatter }));
-        }
-      } catch (err) {
-        console.error(`Failed to fetch details for ${file.path}:`, err);
+    if (file.type === 'dir') return;
+    try {
+      const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
+      const response = await fetchJson(url);
+      const { data: frontmatter } = matter(atob(response.content));
+      if (frontmatter) {
+        setMetadataCache(prev => ({ ...prev, [file.sha]: frontmatter }));
       }
-    }, [repo]);
+    } catch (err) {
+      console.error(`Failed to fetch details for ${file.path}:`, err);
+    }
+  }, [repo]);
 
   const fetchFiles = useCallback(async () => {
     setLoading(true);
@@ -52,25 +59,50 @@ function FileExplorer({ repo, searchQuery }) {
     fetchFiles();
   }, [fetchFiles]);
 
+  useEffect(() => {
+    performSearch(searchQuery);
+  }, [searchQuery, performSearch]);
+
+  const showSearchResults = searchQuery && searchQuery.trim().length > 0;
+
   if (loading) return <p>Loading files...</p>;
   if (error) return <p>Error: {error}</p>;
 
   return (
     <div>
-      <h1>File Explorer (File Fetching Test)</h1>
+      <h1>File Explorer (Integrated Test)</h1>
       <p>Current search query: {searchQuery}</p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
-        {files.map(file => (
-          <FileTile
-            key={file.sha}
-            file={file}
-            metadata={metadataCache[file.sha]}
-            isSelected={false}
-            onOpen={() => {}}
-            onShowActions={() => {}}
-          />
-        ))}
-      </div>
+
+      {showSearchResults ? (
+        <div>
+          <h2 className="text-xl font-bold p-4">Search Results</h2>
+          {isSearching ? (
+            <p className="p-4">Searching...</p>
+          ) : (
+            searchResults.map(file => (
+              <SearchResult
+                key={file.sha}
+                file={file}
+                searchQuery={searchQuery}
+                onSelect={() => {}}
+              />
+            ))
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 p-4">
+          {files.map(file => (
+            <FileTile
+              key={file.sha}
+              file={file}
+              metadata={metadataCache[file.sha]}
+              isSelected={false}
+              onOpen={() => {}}
+              onShowActions={() => {}}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
