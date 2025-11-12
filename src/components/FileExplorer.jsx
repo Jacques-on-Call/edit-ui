@@ -10,7 +10,6 @@ import FileTile from './FileTile';
 import ReadmeDisplay from './ReadmeDisplay';
 import CreateModal from './CreateModal';
 import ContextMenu from './ContextMenu';
-import SearchResult from './SearchResult';
 import { useSearch } from '../hooks/useSearch';
 import { useFileManifest } from '../hooks/useFileManifest';
 import { fetchJson } from '/src/lib/fetchJson.js';
@@ -56,14 +55,6 @@ performSearch(searchQuery);
 const fetchDetailsForFile = useCallback(async (file) => {
     if (file.type === 'dir') return;
 
-    // --- Defensive Gate ---
-    // Don't try to parse frontmatter from non-text files
-    const nonTextExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico'];
-    if (nonTextExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
-      return;
-    }
-    // --- End Defensive Gate ---
-
     try {
       const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
       const response = await fetchJson(url);
@@ -74,15 +65,21 @@ const fetchDetailsForFile = useCallback(async (file) => {
         return;
       }
 
-      // Parse the raw content on the client
+      let decodedContent;
+      try {
+        decodedContent = atob(response.content);
+      } catch (e) {
+        console.warn(`Could not decode content for ${file.path}. It may be a binary file. Skipping frontmatter parsing.`);
+        return;
+      }
+
       let frontmatter, body;
       try {
-        ({ data: frontmatter, content: body } = matter(atob(response.content)));
+        ({ data: frontmatter, content: body } = matter(decodedContent));
       } catch (e) {
         console.error(`Error parsing frontmatter for ${file.path}:`, e);
-        // Set an error state for this specific file so the UI can reflect it
         setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Failed to parse content' } }));
-        return; // Stop processing this file
+        return;
       }
 
       // Fetch commit data separately
@@ -199,7 +196,7 @@ const handleGoHome = () => setPath('src/pages');
 
 const handleToggleReadme = () => setReadmeVisible(prev => !prev);
 
-const filesToDisplay = searchQuery ? searchResults : files;
+const filesToDisplay = showSearchResults ? searchResults : files;
 
 if (loading) {
 return <div className="flex items-center justify-center h-full"><div className="text-center p-8 text-gray-500 animate-pulse">Loading files...</div></div>;
@@ -220,36 +217,31 @@ return (
 return (
     <div className="flex flex-col h-full" onClick={handleCloseContextMenu}>
       <main className="flex-grow overflow-y-auto p-4 pb-24">
-{showSearchResults ? (
-<div>
-<h2 className="text-xl font-bold mb-4">Search Results</h2>
-{isSearching ? (
-<p>Searching...</p>
-) : (
-searchResults.map(file => (
-<SearchResult
-key={file.sha}
-file={file}
-searchQuery={searchQuery}
-onSelect={handleOpen}
-/>
-))
-)}
-</div>
-) : (
-<>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-{Array.isArray(filesToDisplay) && filesToDisplay.filter(file => !file.name.startsWith('.') && file.name.toLowerCase() !== 'readme.md').map(file => (
-<FileTile
-key={file.sha}
-file={file}
-metadata={metadataCache[file.sha]}
-isSelected={selectedFile && selectedFile.sha === file.sha}
-onOpen={handleOpen}
-onShowActions={handleLongPress}
-/>
-))}
-</div>
+        {showSearchResults && (
+          <h2 className="text-xl font-bold mb-4">Search Results</h2>
+        )}
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          {isSearching ? (
+            <p>Searching...</p>
+          ) : (
+            Array.isArray(filesToDisplay) && filesToDisplay
+              .filter(file => !file.name.startsWith('.') && file.name.toLowerCase() !== 'readme.md')
+              .map(file => (
+                <FileTile
+                  key={file.sha}
+                  file={file}
+                  metadata={metadataCache[file.sha]}
+                  isSelected={selectedFile && selectedFile.sha === file.sha}
+                  onOpen={handleOpen}
+                  onShowActions={handleLongPress}
+                />
+              ))
+          )}
+        </div>
+
+        {!showSearchResults && (
+          <>
 {contextMenu && (
 <ContextMenu
 x={contextMenu.x}
