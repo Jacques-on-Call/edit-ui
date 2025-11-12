@@ -90,6 +90,7 @@ function FileTile({ file, isSelected, metadata, onOpen, onShowActions }) {
         onMouseLeave={handleMouseUp}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
         onContextMenu={handleContextMenu}
       >
         <div className="flex-grow flex flex-col items-center justify-center text-center w-full">
