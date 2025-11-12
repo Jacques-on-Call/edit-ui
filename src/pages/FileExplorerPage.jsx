@@ -1,6 +1,7 @@
 // easy-seo/src/pages/FileExplorerPage.jsx
 import { useAuth } from '../contexts/AuthContext';
-import { useHeader } from '../contexts/HeaderContext';
+// We no longer need useHeader in this file
+// import { useHeader } from '../contexts/HeaderContext';
 import { useEffect, useState } from 'preact/hooks';
 import { theme } from '../themes/theme';
 import { AlertTriangle } from 'lucide-preact';
@@ -8,21 +9,29 @@ import FileExplorer from '../components/FileExplorer';
 import CreateModal from '../components/CreateModal';
 import { fetchJson } from '../lib/fetchJson';
 
-export function FileExplorerPage() {
-  const { isAuthenticated, isLoading, selectedRepo } = useAuth();
-  // Get the shared search query from the context.
-  const { searchQuery, setSearchQuery } = useHeader();
+// --- MODIFICATION START ---
+// The component now accepts props passed from the router in app.jsx
+export function FileExplorerPage({ searchQuery, setSearchQuery }) {
+// --- MODIFICATION END ---
 
-  console.log(`[FileExplorerPage.jsx] searchQuery from context: "${searchQuery}"`);
+  const { isAuthenticated, isLoading, selectedRepo } = useAuth();
+
+  // We no longer get these from the context in this file
+  // const { searchQuery, setSearchQuery } = useHeader();
+
+  console.log(`[FileExplorerPage.jsx] searchQuery from PROPS: "${searchQuery}"`);
 
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState('src/pages');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Clear the search query when the component unmounts
+  // Clear the search query when the component unmounts. This still works.
   useEffect(() => {
     return () => {
-      setSearchQuery('');
+      // Ensure setSearchQuery is a function before calling it
+      if (typeof setSearchQuery === 'function') {
+        setSearchQuery('');
+      }
     };
   }, [setSearchQuery]);
 
@@ -95,7 +104,7 @@ export function FileExplorerPage() {
     <div className="h-screen">
       <FileExplorer 
         repo={repoName}
-        searchQuery={searchQuery} // Pass the searchQuery from the context
+        searchQuery={searchQuery} // Pass the searchQuery from the props
         onShowCreate={() => setCreateOpen(true)}
         onPathChange={setCurrentPath}
         refreshTrigger={refreshTrigger}

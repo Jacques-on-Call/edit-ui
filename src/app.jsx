@@ -13,15 +13,11 @@ import SearchBar from './components/SearchBar'; // Import SearchBar
 
 const AppContent = () => {
   const { isLoading, isAuthenticated } = useAuth();
+  // We still get the state and setter from the context here at the top level
   const { headerContent, searchQuery, setSearchQuery } = useHeader();
   const [router] = useRouter();
 
   console.log(`[App.jsx] searchQuery from context: "${searchQuery}"`);
-
-  const handleSearch = (query) => {
-    console.log(`[App.jsx] handleSearch called with query: "${query}"`);
-    setSearchQuery(query);
-  };
 
   // Determine if the current route is the main login page (and not a callback)
   const isLoginPage = !isAuthenticated && router.url === '/';
@@ -41,7 +37,7 @@ const AppContent = () => {
       <main className={`relative z-10 ${isLoginPage ? '' : 'p-6 md:p-10'}`}>
         <header className="flex justify-between items-center pb-8 h-16">
           {showSearchBar ? (
-            <SearchBar onSearch={handleSearch} />
+            <SearchBar onSearch={setSearchQuery} />
           ) : (
             headerContent
           )}
@@ -56,7 +52,16 @@ const AppContent = () => {
             {/* The CallbackPage now handles the root path and decides where to go. */}
             <CallbackPage path="/" />
             <RepoSelectPage path="/repo-select" />
-            <FileExplorerPage path="/explorer" />
+
+            {/* --- MODIFICATION START --- */}
+            {/* We are now passing the search state down as props */}
+            <FileExplorerPage
+              path="/explorer"
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+            />
+            {/* --- MODIFICATION END --- */}
+
             {/* Add a default route for any invalid paths */}
             <LoginPage default />
           </Router>
