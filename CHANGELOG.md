@@ -1,5 +1,41 @@
 # Project Change Log
 
+Jules #149, The Debugging Dynamo
+Date: 2025-11-12
+Summary:
+Resolved a critical, non-obvious bug where the search query state would not propagate to the FileExplorer component.
+Implemented a series of related fixes to improve UI responsiveness, mobile usability, and touch interactions.
+Details:
+The "Zombie Component" Bug: The root cause of the search failure was a silent DOMException being thrown within the fetchDetailsForFile function in FileExplorer.jsx. When parsing certain files (like images or binary files), the TextDecoder would fail, throwing an exception that was not caught. This error put the component into a "zombie" state where it would no longer re-render in response to new props, such as the updated searchQuery. The fix was to wrap the parsing logic in a robust try...catch block, ensuring that file parsing errors are handled gracefully without crashing the component's render lifecycle.
+Responsive UI: Fixed the layout of the FileExplorer page to prevent the Readme component from overflowing and causing horizontal scrolling on smaller screens.
+Mobile UX:
+Re-enabled and fixed the long-press/touch interaction on FileTile components for mobile devices.
+Fixed the "Create" button in the bottom toolbar, which was unresponsive on mobile.
+Restored file and folder icons that were missing on mobile, which was a side-effect of the main "zombie component" bug.
+Impact: The file explorer is now fully functional and robust. The search feature works reliably, the UI is responsive across all screen sizes, and the mobile user experience is significantly improved. The application is more resilient to unexpected file types.
+Reflection:
+Challenge: This was a classic "heisenbug." The component wasn't crashing loudly; it was silently breaking its own render loop. The breakthrough came from methodical, "scorched earth" debugging—stripping the component down to its bare essentials and rebuilding it piece by piece until the faulty function was isolated.
+Discovery: A component can fail in a way that stops it from receiving new props without crashing the entire app. Uncaught exceptions inside async utility functions called from useEffect can be particularly dangerous.
+Advice: When state stops propagating, look for silent errors. Check the browser console for exceptions that might not seem fatal but could be interrupting the render cycle. Also, when debugging a component, systematically removing its children is a powerful way to isolate the source of a problem.
+This document records significant changes, architectural decisions, and critical bug fixes for the project.
+
+Note for Developers: This is a monorepo. When working within a specific application directory (e.g., easy-seo/,priority-engine/), please consult the documentation within that directory (e.g., easy-seo/docs/) for the most detailed and relevant information.
+
+Jules #148, Security Virtuoso
+Date: 2025-11-07
+Summary:
+Fixed a critical "Buffer is not defined" runtime error in the file explorer by implementing a correct "translator" architectural pattern.
+Details:
+The root cause of the issue was that the client-side FileExplorer.jsx component was using the gray-matter library to parse file frontmatter. This library has a dependency on the Node.js Buffer object, which is not available in the browser environment, causing a fatal runtime error.
+The fix involved moving the parsing logic to the server. The handleGetFileContentRequest handler in cloudflare-worker-src/routes/content.js was enhanced to use the gray-matter library on the server, after decoding the file content.
+The FileExplorer.jsx component was then refactored to remove the gray-matter dependency and all client-side parsing logic. The component now directly consumes the pre-parsed frontmatter and body from the API response.
+Impact: This new architecture permanently resolves the runtime error, restores full functionality to the file explorer, and creates a more stable, robust, and architecturally sound application.
+Reflection:
+Challenge: The most challenging part was correctly diagnosing the root cause of the "Buffer is not defined" error. My initial attempts to fix the problem with polyfills were incorrect because they treated the symptom, not the underlying architectural flaw.
+Discovery: I was reminded of the importance of the "translator" pattern. The server should be responsible for providing the client with data in the exact shape it needs, rather than forcing the client to perform complex parsing or data manipulation.
+Advice: The next agent should be mindful of where parsing logic is placed. Any library that has Node.js dependencies should be used on the server, not the client. The API should act as a "translator" to simplify the client-side code.
+
+
 ### **v0.1.14: 2025-11-09 (Fix Missing gh_session Token and UI Issues)**
 
 **Author:** GitHub Copilot
