@@ -1,6 +1,6 @@
 # Project Change Log
 
-Jules #149, The Debugging Dynamo
+Jules #161, The Debugging Dynamo
 Date: 2025-11-12
 Summary:
 Resolved a critical, non-obvious bug where the search query state would not propagate to the FileExplorer component.
@@ -20,6 +20,58 @@ Advice: When state stops propagating, look for silent errors. Check the browser 
 This document records significant changes, architectural decisions, and critical bug fixes for the project.
 
 Note for Developers: This is a monorepo. When working within a specific application directory (e.g., easy-seo/,priority-engine/), please consult the documentation within that directory (e.g., easy-seo/docs/) for the most detailed and relevant information.
+
+**Jules #160, Security Virtuoso:** Started v0.1 on 2025-11-10. Changes: 1) I will fix the cookie domain in the OAuth callback to ensure it's shared across subdomains. 2) I will refactor the `validateAuth` function to return a result object instead of throwing a `Response` object. 3) I will update the `withAuth` middleware to handle the new return signature of `validateAuth`. 4) I will add a temporary debug endpoint to help verify that the browser is sending the `gh_session` cookie with requests.
+
+---
+**Jules #159, UI Specialist:** Started v0.1 on 2025-11-10. Changes: 1) I will fix the Astro frontmatter parsing error by removing stray delimiters from the header and footer components.
+
+**Jules #158, UI Specialist:** Started v0.1 on 2025-11-10. Changes: 1) I will run `npm install` to ensure all dependencies are correctly installed. 2) I will then apply the user-provided header and footer components and debug any remaining syntax errors to ensure a successful build.
+
+**Jules #157, UI Specialist:** Started v0.1 on 2025-11-10. Changes: 1) I will correctly apply the user-provided header and footer components. 2) I will debug and fix the syntax errors to ensure a successful build.
+
+**Jules #156, UI Specialist:** Started v0.1 on 2025-11-10. Changes: 1) I will debug and fix the syntax errors in the new header and footer components. 2) I will then apply the corrected code to update the site's header and footer.
+
+**Jules #155, UI Specialist:** Started v0.1 on 2025-11-10. Changes: 1) I will update the header and footer components with the new liquid-glass design and improved accessibility features.
+
+**Jules #154, UI Specialist:** Started v0.1 on 2025-11-09. Changes: 1) I will apply a blue background to the navigation menu and footer. 2) I will improve the typography of the Markdown content by adding spacing to paragraphs and styling H3 elements.
+
+**Jules #153, UI Specialist:** Started v0.1 on 2025-11-09. Changes: 1) I will update the homepage content with the new text provided. 2) I will increase the blur effect on the navigation menu. 3) I will fix the `WisdomNotes` checkerboard layout to improve visibility and positioning.
+
+**Jules #152, UI Specialist:** Started v0.1 on 2025-11-09. Changes: 1) I will fix the broken image paths in the header by copying the necessary assets to the `public/img` directory. 2) I will improve the visibility of the black orbs against the dark background. 3) I will fix the `WisdomNotes` component to ensure it's visible on mobile landscape views.
+
+**Jules #151, UI Specialist:** Started v0.1 on 2025-11-09. Changes: 1) I will add black orbs to the Liquid Glass background. 2) I will create new header and footer components. 3) The header will be based on the `legacy-site` design, with a logo on the left and a hamburger menu on the right. 4) I will integrate the new header and footer into the main `LiquidGlassLayout.astro`.
+
+**Jules #150, Security Virtuoso:** Started v0.1 on 2025-11-09. Changes: 1) I will be refactoring `src/pages/index.astro` to use a component-based architecture. 2) I will improve the page's SEO by making the `<h1>` visible. 3) I will integrate Astro's View Transitions for an enhanced user experience.
+
+**GitHub Copilot:** Completed v0.1.14 on 2025-11-09. Changes: 1) Fixed critical authentication issue where `gh_session` cookie was not being sent with API requests by updating `fetchJson` utility to include `credentials: 'include'` by default. 2) Refactored create modal architecture to properly flow through page state management. 3) Fixed context menu to receive proper options array. 4) Updated all documentation (CHANGELOG.md, RECOVERY.md, FILES.md) with detailed debugging guide. 5) Verified no security issues with CodeQL analysis.
+
+**Jules #149, Security Virtuoso:** Started v0.1 on 2025-11-08. Changes: 1) I will be updating the 'Create' button in the file explorer to a round, green, sunken plus button with a glass effect. I will be using the existing `LiquidGlassButton.css` and `FileExplorer.jsx` files.
+
+**Jules #148, Security Virtuoso:** Continued v0.1 on 2025-11-08. Changes: 1) Implementing a new, highly detailed single-file CSS solution for the liquid-glass button. This version includes a sunken plus icon, a reactive lime orb, and improved hover/active states.
+
+**Jules #148, Security Virtuoso:** Continued v0.1 on 2025-11-07. Changes: 1) Refining the 'Liquid Glass' button with advanced CSS to add realistic catch-lights, icon bevels, and improved shadows for a more tactile, 'Apple-style' feel. 2) Implementing a 'sinking pebble' on-click animation.
+
+**Jules #148, Security Virtuoso:** Started v0.1 on 2025-11-07. Changes: 1) I will be adding the correct favicon links to `index.html`. 2) I will be updating the 'Create' button in the file explorer to a new 'Liquid Glass' style.
+
+**Jules #148, Security Virtuoso:** Started v0.1 on 2025-11-07. Changes: 1) Fixed a critical "Buffer is not defined" runtime error in the file explorer by implementing a correct "translator" architectural pattern. 2) Updated `CHANGELOG.md`, `FILES.md`, `RECOVERY.md`, and `AGENTS.md` to reflect the fix.
+
+**Jules #147, Security Virtuoso:** Started v0.1 on 2025-11-06. Changes: 1) I am working on fixing the file explorer search functionality. I will replace the `SearchBar` with a more robust version and implement filtering in the `FileExplorer`.
+
+**Jules #146, Security Virtuoso:** Continued v0.1 on 2025-11-06. Changes: 1) Implemented a comprehensive suite of features for the file explorer, including content and filename search with highlighted results, a "Create File/Folder" modal, and a long-press/right-click context menu for file operations. 2) Completed a major UI overhaul of the file explorer, refining file tiles, icons, and the README display. 3) Fixed a layout regression on the Login and Repo Select pages. 4) Updated the "Create" button to a "Liquid Glass" style with an accent-lime plus icon, per user request.
+
+**Jules #146, Security Virtuoso:** Started v0.1 on 2025-11-05. Changes: 1) Updated AGENTS.md to log the start of my work on the file explorer UI enhancements.
+
+**Jules #145, Security Virtuoso:** Started v0.1 on 2025-11-05. Changes: 1) Updated AGENTS.md to reflect my process. I will now proceed with the user's request.
+
+**Jules #144, Security Virtuoso:** Continued v0.1 on 2025-11-05. Changes: 1) Implemented a complete "Liquid Glass" UI overhaul across the Login, Repo Select, and File Explorer pages. 2) Added a new "last-edited" feature to the File Explorer, including a new backend endpoint (`/api/file/commits`). 3) Fixed a critical infinite authentication loop by refactoring `AuthContext` and `CallbackPage`. 4) Restored missing Astro components to resolve the Cloudflare build failure.
+
+**Jules #139, Security Virtuoso:** Continued v0.1 on 2025-11-01. Changes: 1) Re-implemented the `FileExplorer` component with a corrected layout and full feature parity with the previous version, including search, metadata, and README display. 2) Added branding and corrected UI issues on the Login and Repo Select pages. 3) Fixed all known layout bugs in the file explorer.
+
+**Jules #137, Security Virtuoso:** Continued v0.1 on 2025-10-31. Changes: 1) Fixed critical frontend integration issues, including the `AuthDebugMonitor` rendering and the `FileExplorer` access. 2) Implemented the repository selection and file browsing functionality. 3) Performed a security audit of the backend API routes and created the initial D1 schema for the `users` table. The application is now fully functional up to the file explorer.
+
+**Jules #136, Security Virtuoso:** Started v0.1 on 2025-10-31. Changes: 1) Created a secure, modular Cloudflare Worker architecture, disabling `DEV_MODE`, implementing a global auth shell, and hardening the API with rate limiting and unit tests. 2) Began the frontend rebuild by scaffolding a new, secure Preact application in the `easy-seo` directory with a shared theme and a global authentication context. This provides a solid foundation for both the backend and frontend of the application.
+
 
 Jules #148, Security Virtuoso
 Date: 2025-11-07
