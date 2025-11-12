@@ -66,7 +66,15 @@ const fetchDetailsForFile = useCallback(async (file) => {
       }
 
       // Parse the raw content on the client
-      const { data: frontmatter, content: body } = matter(atob(response.content));
+      let frontmatter, body;
+      try {
+        ({ data: frontmatter, content: body } = matter(atob(response.content)));
+      } catch (e) {
+        console.error(`Error parsing frontmatter for ${file.path}:`, e);
+        // Set an error state for this specific file so the UI can reflect it
+        setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Failed to parse content' } }));
+        return; // Stop processing this file
+      }
 
       // Fetch commit data separately
       const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`);
