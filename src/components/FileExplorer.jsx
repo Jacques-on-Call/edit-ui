@@ -283,8 +283,8 @@ aria-label="Create"
               onClick={(e) => { e.stopPropagation(); onShowCreate(); }}
 title="Create a new file or folder"
 >
-              <div className="orb"></div>
-              <span className="plus">+</span>
+              <div className="orb pointer-events-none"></div>
+              <span className="plus pointer-events-none">+</span>
 </button>
           </div>
 <button
