@@ -10,6 +10,7 @@ import FileTile from './FileTile';
 import ReadmeDisplay from './ReadmeDisplay';
 import CreateModal from './CreateModal';
 import ContextMenu from './ContextMenu';
+import { SearchResultItem } from './SearchResultItem';
 import { useSearch } from '../hooks/useSearch';
 import { useFileManifest } from '../hooks/useFileManifest';
 import { fetchJson } from '/src/lib/fetchJson.js';
@@ -217,35 +218,39 @@ return (
 return (
     <div className="flex flex-col h-full" onClick={handleCloseContextMenu}>
       <main className="flex-grow overflow-y-auto p-4 pb-24">
-        {showSearchResults && (
-          <h2 className="text-xl font-bold mb-4">Search Results</h2>
-        )}
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {isSearching ? (
-            <p>Searching...</p>
-          ) : (
-            Array.isArray(filesToDisplay) && filesToDisplay
-              .filter(file => !file.name.startsWith('.') && file.name.toLowerCase() !== 'readme.md')
-              .map(file => (
-                <FileTile
-                  key={file.sha}
-                  file={file}
-                  metadata={metadataCache[file.sha]}
-                  isSelected={selectedFile && selectedFile.sha === file.sha}
-                  onOpen={handleOpen}
-                  onShowActions={handleLongPress}
-                />
-              ))
-          )}
-        </div>
-
-        {!showSearchResults && (
+        {showSearchResults ? (
+          <div>
+            <h2 className="text-xl font-bold mb-4">Search Results</h2>
+            {isSearching ? (
+              <p>Searching...</p>
+            ) : (
+              <div>
+                {searchResults.map(result => (
+                  <SearchResultItem key={result.path} result={result} query={searchQuery} />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
           <>
-{contextMenu && (
-<ContextMenu
-x={contextMenu.x}
-y={contextMenu.y}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {Array.isArray(filesToDisplay) && filesToDisplay
+                .filter(file => !file.name.startsWith('.') && file.name.toLowerCase() !== 'readme.md')
+                .map(file => (
+                  <FileTile
+                    key={file.sha}
+                    file={file}
+                    metadata={metadataCache[file.sha]}
+                    isSelected={selectedFile && selectedFile.sha === file.sha}
+                    onOpen={handleOpen}
+                    onShowActions={handleLongPress}
+                  />
+                ))}
+            </div>
+            {contextMenu && (
+              <ContextMenu
+                x={contextMenu.x}
+                y={contextMenu.y}
 options={[
 {
 label: 'Open',
