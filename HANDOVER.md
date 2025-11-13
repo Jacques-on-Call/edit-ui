@@ -22,7 +22,7 @@ The user has identified the following issues that need to be addressed:
 
 1.  **Search Snippet Display:**
     -   Investigate why the search results are not being displayed correctly.
-    -   Ensure that the search results are rendered in a user-friendly format, with the search term highlighted.
+    -   Ensure that the search results are rendered in a user-friendly format, with the search term highlighted and a few words of context so user can find it within identified document.
 2.  **File/Folder Selection Style:**
     -   Update the styling of the `FileTile` component to use a thin border with the same color as the icon when a file or folder is selected.
 3.  **Content and UI Updates:**
