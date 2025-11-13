@@ -119,9 +119,14 @@ const fetchDetailsForFile = useCallback(async (file) => {
         const response = await fetchJson(url);
 
         if (response && typeof response.content === 'string') {
-          const decodedContent = atob(response.content);
-          const { data: frontmatter } = matter(decodedContent);
-          metadata = { ...metadata, ...frontmatter };
+          try {
+            const decodedContent = atob(response.content);
+            const { data: frontmatter } = matter(decodedContent);
+            metadata = { ...metadata, ...frontmatter };
+          } catch (e) {
+            console.error(`Error decoding or parsing frontmatter for ${file.path}:`, e);
+            metadata.error = 'Invalid content';
+          }
         } else {
           metadata.error = 'Missing or invalid content';
         }

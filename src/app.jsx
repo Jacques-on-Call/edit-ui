@@ -8,7 +8,7 @@ import { RepoSelectPage } from './pages/RepoSelectPage';
 import { FileExplorerPage } from './pages/FileExplorerPage';
 import { CallbackPage } from './pages/CallbackPage';
 import AuthDebugMonitor from './components/AuthDebugMonitor';
-
+import { BottomToolbar } from './components/BottomToolbar';
 import SearchBar from './components/SearchBar'; // Import SearchBar
 
 const AppContent = () => {
@@ -55,6 +55,8 @@ const AppContent = () => {
           </Router>
         )}
       </main>
+
+      {isExplorerLayout && <BottomToolbar />}
 
       {import.meta.env.DEV && <AuthDebugMonitor />}
     </div>
