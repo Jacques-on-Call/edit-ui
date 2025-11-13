@@ -18,9 +18,9 @@ import './LiquidGlassButton.css';
 
 function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTrigger }) {
   console.log(`[FileExplorer.jsx] searchQuery prop: "${searchQuery}"`);
-const { fileManifest } = useFileManifest(repo);
-const [files, setFiles] = useState([]);
-const [path, setPath] = useState('src/pages');
+  const { fileManifest } = useFileManifest(repo);
+  const [files, setFiles] = useState([]);
+  const [path, setPath] = useState('src/pages');
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState(null);
 const [selectedFile, setSelectedFile] = useState(null);
@@ -53,59 +53,47 @@ useEffect(() => {
 performSearch(searchQuery);
 }, [searchQuery, performSearch]);
 
+const RELEVANT_EXTENSIONS = ['.md', '.mdx', '.astro'];
+
 const fetchDetailsForFile = useCallback(async (file) => {
     if (file.type === 'dir') return;
 
+    let metadata = {};
     try {
-      const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
-      const response = await fetchJson(url);
-
-      if (!response || typeof response.content !== 'string') {
-        console.error('Unexpected file detail response', response);
-        setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Missing or invalid content' } }));
-        return;
-      }
-
-      let decodedContent;
+      // First, try to get commit data for all file types
       try {
-        console.log(`[Diag] Attempting atob for ${file.path}`);
-        decodedContent = atob(response.content);
-        console.log(`[Diag] Success atob for ${file.path}`);
-      } catch (e) {
-        console.error(`[Diag] CRITICAL: atob decoding failed for ${file.path}.`, e);
-        // Set an error and stop processing this file
-        setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Content decoding failed' } }));
-        return;
+        const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`);
+        const lastCommit = commitData[0];
+        if (lastCommit) {
+          metadata.lastEditor = lastCommit.commit?.author?.name;
+          metadata.lastModified = lastCommit.commit?.author?.date;
+        }
+      } catch (commitErr) {
+        console.warn(`Could not fetch commits for ${file.path}:`, commitErr);
       }
 
-      let frontmatter, body;
-      try {
-        console.log(`[Diag] Attempting gray-matter for ${file.path}`);
-        ({ data: frontmatter, content: body } = matter(decodedContent));
-        console.log(`[Diag] Success gray-matter for ${file.path}`);
-      } catch (e) {
-        console.error(`[Diag] CRITICAL: Frontmatter parsing failed for ${file.path}.`, e);
-        // Set an error and stop processing this file, but don't crash
-        setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Failed to parse content' } }));
-        return;
+      // Then, only attempt to parse content for relevant file types
+      const fileExtension = file.name.substring(file.name.lastIndexOf('.'));
+      if (RELEVANT_EXTENSIONS.includes(fileExtension)) {
+        const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
+        const response = await fetchJson(url);
+
+        if (response && typeof response.content === 'string') {
+          const decodedContent = atob(response.content);
+          const { data: frontmatter } = matter(decodedContent);
+          metadata = { ...metadata, ...frontmatter };
+        } else {
+          metadata.error = 'Missing or invalid content';
+        }
       }
 
-      // Fetch commit data separately
-      const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`);
-      const lastCommit = commitData[0];
+      setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
 
-      const metadata = {
-        ...frontmatter,
-        lastEditor: lastCommit?.commit?.author?.name,
-        lastModified: lastCommit?.commit?.author?.date,
-      };
-
-      if (metadata) {
-        setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
-      }
     } catch (err) {
-      console.error(`Failed to fetch details for ${file.path}:`, err);
-      setMetadataCache(prev => ({ ...prev, [file.sha]: { error: err.message } }));
+      // This is the global catch block for the entire process
+      console.error(`CRITICAL: An unexpected error occurred while processing ${file.path}:`, err);
+      metadata.error = 'Processing failed';
+      setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
     }
   }, [repo]);
 

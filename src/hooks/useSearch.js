@@ -4,12 +4,10 @@ import { fetchJson } from '../lib/fetchJson';
 async function fetchAllFiles(repo) {
   try {
     const allFiles = await fetchJson(`/api/files/all?repo=${encodeURIComponent(repo)}`);
-    console.log('[useSearch] Raw response from /api/files/all:', allFiles); // Diagnostic log
 
-    // Defensive coding: ensure allFiles is an array before filtering
     if (!Array.isArray(allFiles)) {
       console.error('[useSearch] API response is not an array. Received:', allFiles);
-      return []; // Return an empty array to prevent downstream errors
+      return [];
     }
 
     return allFiles.filter(file => file && file.path && file.path.startsWith('src/pages/') && file.type === 'file');
@@ -19,11 +17,27 @@ async function fetchAllFiles(repo) {
   }
 }
 
+import matter from 'gray-matter';
+
+const RELEVANT_EXTENSIONS = ['.md', '.mdx', '.astro'];
+
 async function fetchAndProcessFile(file, query, repo) {
+  const fileExtension = file.name.substring(file.name.lastIndexOf('.'));
+  if (!RELEVANT_EXTENSIONS.includes(fileExtension)) {
+    return null; // Skip files that aren't text-based content
+  }
+
   try {
     const fileContentResponse = await fetchJson(`/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`);
-    const fileContent = atob(fileContentResponse.content);
-    const lines = fileContent.split('\n');
+    if (!fileContentResponse || !fileContentResponse.content) {
+      console.warn(`No content for ${file.path}`);
+      return null;
+    }
+
+    const decodedContent = atob(fileContentResponse.content);
+    const { content: body } = matter(decodedContent); // Parse frontmatter and get only the body
+
+    const lines = body.split('\n');
     const snippets = [];
     const queryLower = query.toLowerCase();
 
