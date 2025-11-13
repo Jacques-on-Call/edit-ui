@@ -36,6 +36,7 @@
   user-select: none;
   backdrop-filter: blur(var(--glass-blur-val)) saturate(var(--glass-saturation));
   -webkit-backdrop-filter: blur(var(--glass-blur-val)) saturate(var(--glass-saturation));
+  transform: translateZ(0);
   box-shadow: 0 10px 30px -10px var(--shadow-color-dark),
     inset 0 6px 12px -8px rgba(255, 255, 255, 0.06),
     inset 0 -18px 40px -20px var(--inner-shadow-color);

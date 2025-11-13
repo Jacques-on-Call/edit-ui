@@ -1,19 +1,16 @@
 import { h } from 'preact';
 import { Plus } from 'lucide-preact';
+import './LiquidGlassButton.css';
 
-export default function LiquidGlassButton({ onClick, ariaLabel = 'Create new file or folder' }) {
+export default function LiquidGlassButton({ onClick, ariaLabel = 'Create new file or folder', children }) {
   return (
     <button
       onClick={onClick}
       aria-label={ariaLabel}
-      className="button"
+      className="liquid-btn"
     >
-      <div className="base"></div>
-      <div className="body"></div>
-      <div className="surface"></div>
-      <div className="icon">
-        <Plus size={42} strokeWidth={3} />
-      </div>
+      <div className="orb"></div>
+      {children}
     </button>
   );
 }

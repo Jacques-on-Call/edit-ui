@@ -76,7 +76,7 @@ function FileTile({ file, isSelected, metadata, onOpen, onShowActions }) {
     flex flex-col items-center justify-between h-36 w-full
     bg-white/5
     hover:bg-white/10 hover:-translate-y-1 hover:shadow-xl
-    ${isSelected ? `border ${borderColor} shadow-lg` : 'border border-transparent shadow-md'}
+    border-2 ${isSelected ? borderColor : 'border-white/5'}
     select-none touch-manipulation
   `;
 

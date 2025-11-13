@@ -8,14 +8,14 @@ export function BottomToolbar() {
 
   return (
     <footer
-      className="fixed bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black to-midnight-blue border-t border-blue-400/50 shadow-2xl"
+      className="fixed bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black to-midnight-blue border-t border-blue-400/50 shadow-2xl z-20"
       style={{
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         backgroundColor: 'rgba(0, 0, 10, 0.7)',
       }}
     >
-      <div className="flex items-center justify-between h-full px-4 max-w-screen-xl mx-auto">
+      <div className="flex items-center justify-around h-full px-4 max-w-screen-xl mx-auto">
         <button
           onClick={() => route('/')}
           className="p-3 text-white transition-transform duration-150 ease-in-out rounded-full hover:bg-white/10 active:scale-90"
@@ -24,6 +24,10 @@ export function BottomToolbar() {
           <Home size={24} />
         </button>
 
+        <LiquidGlassButton onClick={() => setCreateOpen(true)}>
+          <Plus size={32} />
+        </LiquidGlassButton>
+
         <button
           onClick={() => window.history.back()}
           className="p-3 text-white transition-transform duration-150 ease-in-out rounded-full hover:bg-white/10 active:scale-90"
@@ -31,16 +35,6 @@ export function BottomToolbar() {
         >
           <ArrowLeft size={24} />
         </button>
-
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <LiquidGlassButton onClick={() => setCreateOpen(true)}>
-            <Plus size={32} />
-          </LiquidGlassButton>
-        </div>
-
-        {/* Placeholder for potential right-side icons */}
-        <div className="w-12"></div>
-        <div className="w-12"></div>
       </div>
     </footer>
   );
