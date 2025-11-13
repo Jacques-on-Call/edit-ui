@@ -5,9 +5,10 @@ const UIContext = createContext();
 
 export const UIProvider = ({ children }) => {
   const [isCreateOpen, setCreateOpen] = useState(false);
+  const [handleGoHome, setHandleGoHome] = useState(() => () => {});
 
   return (
-    <UIContext.Provider value={{ isCreateOpen, setCreateOpen }}>
+    <UIContext.Provider value={{ isCreateOpen, setCreateOpen, handleGoHome, setHandleGoHome }}>
       {children}
     </UIContext.Provider>
   );

@@ -23,7 +23,8 @@ function getIconForFile(fileName) {
   return 'File';
 }
 
-function FileTile({ file, isSelected, metadata, onOpen, onShowActions }) {
+function FileTile(props) {
+  const { file, isSelected, metadata, onOpen, onShowActions } = props;
   const longPressTimer = useRef();
   const isLongPress = useRef(false);
 
@@ -69,33 +70,20 @@ function FileTile({ file, isSelected, metadata, onOpen, onShowActions }) {
   const isDir = file.type === 'dir';
   const iconName = isDir ? 'Folder' : getIconForFile(file.name);
   const iconColor = isDir ? 'text-accent-lime' : 'text-cyan-400';
-  const borderColor = isDir ? 'border-accent-lime' : 'border-cyan-400';
 
-  const shadowColor = isDir ? 'shadow-accent-lime' : 'shadow-cyan-400';
-
-  const tileClassName = `
-    relative p-3 rounded-xl cursor-pointer transition-all duration-300 text-center
-    flex flex-col items-center justify-between h-36 w-full
-    bg-white/5
-    hover:bg-white/10 hover:-translate-y-1
-    ${isSelected ? `shadow-lg ${shadowColor}` : 'shadow-md'}
-    select-none touch-manipulation
-  `;
+  const selectedClass = isSelected ? 'ring-2 ring-accent-lime border-accent-lime' : 'border-transparent';
 
   return (
-    <>
-      <div
-        className={tileClassName}
-        onClick={handleClick}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
-        onContextMenu={handleContextMenu}
-      >
-        <div className="flex-grow flex flex-col items-center justify-center text-center w-full">
+    <div
+      className={`relative flex flex-col items-start p-3 rounded-lg border ${selectedClass} bg-slate-800/60`}
+      onClick={(e) => props.onClick ? props.onClick(props.file) : (onOpen && onOpen(props.file))}
+      onDoubleClick={(e) => props.onDoubleClick ? props.onDoubleClick(props.file) : (onOpen && onOpen(props.file))}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        if (props.onShowActions) props.onShowActions(props.file, e);
+      }}
+    >
+      <div className="flex-grow flex flex-col items-center justify-center text-center w-full">
           <div className="mb-2">
             <Icon name={iconName} className={`w-12 h-12 ${iconColor} transition-colors`} />
           </div>
@@ -110,8 +98,7 @@ function FileTile({ file, isSelected, metadata, onOpen, onShowActions }) {
             {metadata.lastEditor} - {formatRelativeDate(metadata.lastModified)}
           </div>
         )}
-      </div>
-    </>
+    </div>
   );
 }
 

@@ -17,21 +17,21 @@ import { useFileManifest } from '../hooks/useFileManifest';
 import { fetchJson } from '/src/lib/fetchJson.js';
 import './LiquidGlassButton.css';
 
-function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTrigger }) {
-  console.log(`[FileExplorer.jsx] searchQuery prop: "${searchQuery}"`);
+function FileExplorer({ repo, searchQuery, onPathChange, refreshTrigger }) {
   const { fileManifest } = useFileManifest(repo);
   const [files, setFiles] = useState([]);
   const [path, setPath] = useState('src/pages');
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState(null);
-const [selectedFile, setSelectedFile] = useState(null);
-const [metadataCache, setMetadataCache] = useState({});
-const [readmeContent, setReadmeContent] = useState(null);
-const [isReadmeLoading, setReadmeLoading] = useState(false);
-const [isReadmeVisible, setReadmeVisible] = useState(true);
-const [contextMenu, setContextMenu] = useState(null);
-const [moveFile, setMoveFile] = useState(null);
-const { searchResults, performSearch, isSearching } = useSearch(repo, fileManifest);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [metadataCache, setMetadataCache] = useState({});
+  const [readmeContent, setReadmeContent] = useState(null);
+  const [isReadmeLoading, setReadmeLoading] = useState(false);
+  const [isReadmeVisible, setReadmeVisible] = useState(true);
+  const [contextMenu, setContextMenu] = useState(null);
+  const [moveFile, setMoveFile] = useState(null);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const { searchResults, performSearch, isSearching } = useSearch(repo, fileManifest);
 
 // Notify parent of path changes
 useEffect(() => {
@@ -50,6 +50,60 @@ setContextMenu({ x, y, file });
 const handleCloseContextMenu = useCallback(() => {
 setContextMenu(null);
 }, []);
+
+const handleCreate = async (name, type) => {
+  try {
+    // Build the target path
+    const targetName = name.trim();
+    if (!targetName) throw new Error('Name is required');
+
+    const targetPath = path ? `${path}/${targetName}` : targetName;
+
+    if (type === 'folder') {
+      // Create a placeholder file inside the folder so git/GitHub will create the folder
+      const placeholderPath = `${targetPath}/.gitkeep`;
+      const body = {
+        repo,
+        path: placeholderPath,
+        content: btoa(''), // empty file
+        message: `chore: create folder ${targetPath}`
+      };
+      const res = await fetch('/api/file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        credentials: 'include'
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || JSON.stringify(json));
+    } else {
+      // Create a file with a minimal template (adjust template as needed)
+      const initialContent = `---\ntitle: ${targetName}\n---\n\n`;
+      const body = {
+        repo,
+        path: targetPath,
+        content: btoa(unescape(encodeURIComponent(initialContent))),
+        message: `feat: create ${targetPath}`
+      };
+      const res = await fetch('/api/file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        credentials: 'include'
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || JSON.stringify(json));
+    }
+
+    // close modal and refresh listing
+    setCreateModalOpen(false);
+    await fetchFiles();
+  } catch (err) {
+    console.error('Failed to create item:', err);
+    setError(`Failed to create item: ${err.message || String(err)}`);
+    // Keep modal open so user sees error; you can also show inline modal error
+  }
+};
 
 const handleContextMenuAction = (action, file) => {
   switch (action) {
@@ -274,8 +328,6 @@ console.log(`Navigating to editor for: ${file.path}`);
 }
 };
 
-const handleGoHome = () => setPath('src/pages');
-
 const handleToggleReadme = () => setReadmeVisible(prev => !prev);
 
 const filesToDisplay = showSearchResults ? searchResults : files;
@@ -358,6 +410,14 @@ return (
           repo={repo}
           onClose={() => setMoveFile(null)}
           onMove={handleMove}
+        />
+      )}
+      {isCreateModalOpen && (
+        <CreateModal
+          path={path}
+          repo={repo}
+          onClose={() => setCreateModalOpen(false)}
+          onCreate={handleCreate}
         />
       )}
 </div>

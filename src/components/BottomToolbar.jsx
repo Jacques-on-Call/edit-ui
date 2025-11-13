@@ -4,7 +4,7 @@ import LiquidGlassButton from './LiquidGlassButton';
 import { useUI } from '../contexts/UIContext';
 
 export function BottomToolbar() {
-  const { setCreateOpen } = useUI();
+  const { setCreateOpen, handleGoHome } = useUI();
 
   return (
     <footer
@@ -17,7 +17,7 @@ export function BottomToolbar() {
     >
       <div className="flex items-center justify-around h-full px-4 max-w-screen-xl mx-auto">
         <button
-          onClick={() => route('/explorer')}
+          onClick={handleGoHome}
           className="p-3 text-white transition-transform duration-150 ease-in-out rounded-full hover:bg-white/10 active:scale-90"
           aria-label="Go home"
         >
