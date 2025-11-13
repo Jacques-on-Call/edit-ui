@@ -17,21 +17,21 @@ import { useFileManifest } from '../hooks/useFileManifest';
 import { fetchJson } from '/src/lib/fetchJson.js';
 import './LiquidGlassButton.css';
 
-function FileExplorer({ repo, searchQuery, onPathChange, refreshTrigger }) {
+function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTrigger }) {
+  console.log(`[FileExplorer.jsx] searchQuery prop: "${searchQuery}"`);
   const { fileManifest } = useFileManifest(repo);
   const [files, setFiles] = useState([]);
   const [path, setPath] = useState('src/pages');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [metadataCache, setMetadataCache] = useState({});
-  const [readmeContent, setReadmeContent] = useState(null);
-  const [isReadmeLoading, setReadmeLoading] = useState(false);
-  const [isReadmeVisible, setReadmeVisible] = useState(true);
-  const [contextMenu, setContextMenu] = useState(null);
-  const [moveFile, setMoveFile] = useState(null);
-  const { isCreateModalOpen, setCreateModalOpen } = useUI();
-  const { searchResults, performSearch, isSearching } = useSearch(repo, fileManifest);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState(null);
+const [selectedFile, setSelectedFile] = useState(null);
+const [metadataCache, setMetadataCache] = useState({});
+const [readmeContent, setReadmeContent] = useState(null);
+const [isReadmeLoading, setReadmeLoading] = useState(false);
+const [isReadmeVisible, setReadmeVisible] = useState(true);
+const [contextMenu, setContextMenu] = useState(null);
+const [moveFile, setMoveFile] = useState(null);
+const { searchResults, performSearch, isSearching } = useSearch(repo, fileManifest);
 
 // Notify parent of path changes
 useEffect(() => {
@@ -50,60 +50,6 @@ setContextMenu({ x, y, file });
 const handleCloseContextMenu = useCallback(() => {
 setContextMenu(null);
 }, []);
-
-const handleCreate = async (name, type) => {
-  try {
-    // Build the target path
-    const targetName = name.trim();
-    if (!targetName) throw new Error('Name is required');
-
-    const targetPath = path ? `${path}/${targetName}` : targetName;
-
-    if (type === 'folder') {
-      // Create a placeholder file inside the folder so git/GitHub will create the folder
-      const placeholderPath = `${targetPath}/.gitkeep`;
-      const body = {
-        repo,
-        path: placeholderPath,
-        content: btoa(''), // empty file
-        message: `chore: create folder ${targetPath}`
-      };
-      const res = await fetch('/api/file', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        credentials: 'include'
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || JSON.stringify(json));
-    } else {
-      // Create a file with a minimal template (adjust template as needed)
-      const initialContent = `---\ntitle: ${targetName}\n---\n\n`;
-      const body = {
-        repo,
-        path: targetPath,
-        content: btoa(unescape(encodeURIComponent(initialContent))),
-        message: `feat: create ${targetPath}`
-      };
-      const res = await fetch('/api/file', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        credentials: 'include'
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || JSON.stringify(json));
-    }
-
-    // close modal and refresh listing
-    setCreateModalOpen(false);
-    await fetchFiles();
-  } catch (err) {
-    console.error('Failed to create item:', err);
-    setError(`Failed to create item: ${err.message || String(err)}`);
-    // Keep modal open so user sees error; you can also show inline modal error
-  }
-};
 
 const handleContextMenuAction = (action, file) => {
   switch (action) {
@@ -128,14 +74,11 @@ const handleDuplicate = async (file) => {
       path: file.path,
     };
 
-    const res = await fetch('/api/files/duplicate', {
+    const newFile = await fetchJson('/api/files/duplicate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      credentials: 'include'
     });
-    const newFile = await res.json();
-    if (!res.ok) throw new Error(newFile.message || JSON.stringify(newFile));
 
     // Add the new file to the UI
     setFiles(prevFiles => [...prevFiles, newFile.content]);
@@ -159,9 +102,7 @@ const fetchDetailsForFile = useCallback(async (file) => {
     try {
       // First, try to get commit data for all file types
       try {
-        const res = await fetch(`/api/file/commits?repo=${repo}&path=${file.path}`, { credentials: 'include' });
-        const commitData = await res.json();
-        if (!res.ok) throw new Error(commitData.message || JSON.stringify(commitData));
+        const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`);
         const lastCommit = commitData[0];
         if (lastCommit) {
           metadata.lastEditor = lastCommit.commit?.author?.name;
@@ -206,9 +147,7 @@ setLoading(true);
 setError(null);
 
 try {
-let res = await fetch(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' });
-let data = await res.json();
-if (!res.ok) throw new Error(data.message || JSON.stringify(data));
+let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`);
 
 const sortedData = data.sort((a, b) => {
 if (a.type === 'dir' && b.type !== 'dir') return -1;
@@ -279,16 +218,11 @@ const handleDelete = async (file) => {
         sha: file.sha, // Required for deleting files
       };
 
-      const res = await fetch('/api/files', {
+      await fetchJson('/api/files', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
-        credentials: 'include'
       });
-      if (!res.ok) {
-        const json = await res.json();
-        throw new Error(json.message || JSON.stringify(json));
-      }
 
       // Optimistically remove the file from the UI
       setFiles(prevFiles => prevFiles.filter(f => f.sha !== file.sha));
@@ -313,16 +247,11 @@ const handleMove = async (file, destinationPath) => {
       sha: file.sha,
     };
 
-    const res = await fetch('/api/files/move', {
+    await fetchJson('/api/files/move', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      credentials: 'include'
     });
-    if (!res.ok) {
-      const json = await res.json();
-      throw new Error(json.message || JSON.stringify(json));
-    }
 
     setFiles(prevFiles => prevFiles.filter(f => f.sha !== file.sha));
     setMoveFile(null);
@@ -345,10 +274,7 @@ console.log(`Navigating to editor for: ${file.path}`);
 }
 };
 
-const handleGoHome = (e) => {
-  if (e && e.preventDefault) e.preventDefault();
-  setPath('src/pages');
-};
+const handleGoHome = () => setPath('src/pages');
 
 const handleToggleReadme = () => setReadmeVisible(prev => !prev);
 
@@ -432,14 +358,6 @@ return (
           repo={repo}
           onClose={() => setMoveFile(null)}
           onMove={handleMove}
-        />
-      )}
-      {isCreateModalOpen && (
-        <CreateModal
-          path={path}
-          repo={repo}
-          onClose={() => setCreateModalOpen(false)}
-          onCreate={handleCreate}
         />
       )}
 </div>

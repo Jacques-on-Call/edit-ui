@@ -4,11 +4,10 @@ import { useContext, useState } from 'preact/hooks';
 const UIContext = createContext();
 
 export const UIProvider = ({ children }) => {
-  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const [handleGoHome, setHandleGoHome] = useState(() => () => {});
+  const [isCreateOpen, setCreateOpen] = useState(false);
 
   return (
-    <UIContext.Provider value={{ isCreateModalOpen, setCreateModalOpen, handleGoHome, setHandleGoHome }}>
+    <UIContext.Provider value={{ isCreateOpen, setCreateOpen }}>
       {children}
     </UIContext.Provider>
   );
