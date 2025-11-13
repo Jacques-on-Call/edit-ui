@@ -9,7 +9,8 @@ import Icon from './Icon';
 import FileTile from './FileTile';
 import ReadmeDisplay from './ReadmeDisplay';
 import CreateModal from './CreateModal';
-import ContextMenu from './ContextMenu';
+import { FileContextMenu } from './FileContextMenu';
+import { MoveModal } from './MoveModal';
 import { SearchResultItem } from './SearchResultItem';
 import { useSearch } from '../hooks/useSearch';
 import { useFileManifest } from '../hooks/useFileManifest';
@@ -29,6 +30,7 @@ const [readmeContent, setReadmeContent] = useState(null);
 const [isReadmeLoading, setReadmeLoading] = useState(false);
 const [isReadmeVisible, setReadmeVisible] = useState(true);
 const [contextMenu, setContextMenu] = useState(null);
+const [moveFile, setMoveFile] = useState(null);
 const { searchResults, performSearch, isSearching } = useSearch(repo, fileManifest);
 
 // Notify parent of path changes
@@ -48,6 +50,44 @@ setContextMenu({ x, y, file });
 const handleCloseContextMenu = useCallback(() => {
 setContextMenu(null);
 }, []);
+
+const handleContextMenuAction = (action, file) => {
+  switch (action) {
+    case 'delete':
+      handleDelete(file);
+      break;
+    case 'duplicate':
+      handleDuplicate(file);
+      break;
+    case 'move':
+      setMoveFile(file);
+      break;
+    default:
+      console.warn(`Unknown context menu action: ${action}`);
+  }
+};
+
+const handleDuplicate = async (file) => {
+  try {
+    const body = {
+      repo: repo,
+      path: file.path,
+    };
+
+    const newFile = await fetchJson('/api/files/duplicate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    // Add the new file to the UI
+    setFiles(prevFiles => [...prevFiles, newFile.content]);
+
+  } catch (err) {
+    console.error('Failed to duplicate file:', err);
+    setError(`Failed to duplicate ${file.name}: ${err.message}.`);
+  }
+};
 
 useEffect(() => {
 performSearch(searchQuery);
@@ -165,16 +205,57 @@ handleOpen(file);
 
 
 const handleDelete = async (file) => {
-if (confirm(`Are you sure you want to delete ${file.name}?`)) {
-try {
-await fetchJson(`/api/files?repo=${repo}&path=${file.path}`, {
-method: 'DELETE',
-});
-fetchFiles();
-} catch (err) {
-setError(`Failed to delete file: ${err.message}`);
-}
-}
+  if (confirm(`Are you sure you want to delete ${file.name}? This action cannot be undone.`)) {
+    try {
+      const body = {
+        repo: repo,
+        path: file.path,
+        sha: file.sha, // Required for deleting files
+      };
+
+      await fetchJson('/api/files', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      // Optimistically remove the file from the UI
+      setFiles(prevFiles => prevFiles.filter(f => f.sha !== file.sha));
+
+      // Optionally, show a success notification here
+
+    } catch (err) {
+      console.error(`Failed to delete ${file.type}:`, err);
+      setError(`Failed to delete ${file.name}: ${err.message}. Please refresh and try again.`);
+      // Optionally, show an error notification here
+    }
+  }
+};
+
+const handleMove = async (file, destinationPath) => {
+  const newPath = `${destinationPath}/${file.name}`;
+  try {
+    const body = {
+      repo: repo,
+      path: file.path,
+      newPath: newPath,
+      sha: file.sha,
+    };
+
+    await fetchJson('/api/files/move', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    setFiles(prevFiles => prevFiles.filter(f => f.sha !== file.sha));
+    setMoveFile(null);
+
+  } catch (err) {
+    console.error(`Failed to move file:`, err);
+    setError(`Failed to move ${file.name}: ${err.message}.`);
+    setMoveFile(null); // Close modal on error
+  }
 };
 
 const handleOpen = (fileToOpen) => {
@@ -243,22 +324,14 @@ return (
                 ))}
             </div>
             {contextMenu && (
-              <ContextMenu
+              <FileContextMenu
                 x={contextMenu.x}
                 y={contextMenu.y}
-options={[
-{
-label: 'Open',
-action: () => handleOpen(contextMenu.file)
-},
-{
-label: 'Delete',
-action: () => handleDelete(contextMenu.file)
-}
-]}
-onClose={handleCloseContextMenu}
-/>
-)}
+                file={contextMenu.file}
+                onClose={handleCloseContextMenu}
+                onAction={handleContextMenuAction}
+              />
+            )}
             {isReadmeLoading && <div className="text-center text-gray-400 my-8">Loading README...</div>}
             {readmeContent && !isReadmeLoading && (
               <div className="w-full max-w-screen-md mx-auto mt-8">
@@ -274,6 +347,14 @@ onClose={handleCloseContextMenu}
 </>
 )}
 </main>
+      {moveFile && (
+        <MoveModal
+          file={moveFile}
+          repo={repo}
+          onClose={() => setMoveFile(null)}
+          onMove={handleMove}
+        />
+      )}
 </div>
 );
 }
