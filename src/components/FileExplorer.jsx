@@ -68,17 +68,24 @@ const fetchDetailsForFile = useCallback(async (file) => {
 
       let decodedContent;
       try {
+        console.log(`[Diag] Attempting atob for ${file.path}`);
         decodedContent = atob(response.content);
+        console.log(`[Diag] Success atob for ${file.path}`);
       } catch (e) {
-        console.warn(`Could not decode content for ${file.path}. It may be a binary file. Skipping frontmatter parsing.`);
+        console.error(`[Diag] CRITICAL: atob decoding failed for ${file.path}.`, e);
+        // Set an error and stop processing this file
+        setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Content decoding failed' } }));
         return;
       }
 
       let frontmatter, body;
       try {
+        console.log(`[Diag] Attempting gray-matter for ${file.path}`);
         ({ data: frontmatter, content: body } = matter(decodedContent));
+        console.log(`[Diag] Success gray-matter for ${file.path}`);
       } catch (e) {
-        console.error(`Error parsing frontmatter for ${file.path}:`, e);
+        console.error(`[Diag] CRITICAL: Frontmatter parsing failed for ${file.path}.`, e);
+        // Set an error and stop processing this file, but don't crash
         setMetadataCache(prev => ({ ...prev, [file.sha]: { error: 'Failed to parse content' } }));
         return;
       }
