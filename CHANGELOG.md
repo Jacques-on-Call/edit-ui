@@ -1,5 +1,19 @@
 # Project Change Log
 
+Jules #162, The Finisher
+Date: 2025-11-13
+Summary:
+Addressed several UI and backend issues, including fixing search snippet generation, refining the bottom toolbar's style and functionality, and enhancing the UI for selected files.
+Details:
+Search Snippets: Fixed a bug where search result snippets incorrectly included frontmatter. The backend now uses a robust line-by-line parser to strip frontmatter before generating snippets.
+Bottom Toolbar: Restyled the toolbar with a top-to-bottom dark blue to black gradient and increased backdrop blur. Added functional Home, Back, and an animated "Create" button.
+UI Polish: Enhanced the selected state of files and folders with a thin border for better visual feedback.
+Impact: The search feature is now more reliable, and the UI is more polished and functional.
+Reflection:
+Challenge: The main challenge was ensuring all the small UI tweaks and bug fixes were implemented correctly and didn't introduce any regressions.
+Discovery: A well-structured component system makes it easy to apply consistent styling and behavior across the application.
+Advice: When making a series of small changes, it's important to test each one individually to ensure it's working as expected before moving on to the next.
+
 Jules #161, The Debugging Dynamo
 Date: 2025-11-12
 Summary:
