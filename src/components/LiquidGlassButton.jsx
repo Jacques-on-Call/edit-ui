@@ -9,8 +9,10 @@ export default function LiquidGlassButton({ onClick, ariaLabel = 'Create new fil
       aria-label={ariaLabel}
       className="liquid-btn"
     >
-      <div className="orb"></div>
-      {children}
+      <div className="orb" />
+      <div className="plus text-white">
+        {children}
+      </div>
     </button>
   );
 }
