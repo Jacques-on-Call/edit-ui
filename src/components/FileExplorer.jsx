@@ -30,7 +30,7 @@ function FileExplorer({ repo, searchQuery, onPathChange, refreshTrigger }) {
   const [isReadmeVisible, setReadmeVisible] = useState(true);
   const [contextMenu, setContextMenu] = useState(null);
   const [moveFile, setMoveFile] = useState(null);
-  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const { isCreateModalOpen, setCreateModalOpen } = useUI();
   const { searchResults, performSearch, isSearching } = useSearch(repo, fileManifest);
 
 // Notify parent of path changes
@@ -128,11 +128,14 @@ const handleDuplicate = async (file) => {
       path: file.path,
     };
 
-    const newFile = await fetchJson('/api/files/duplicate', {
+    const res = await fetch('/api/files/duplicate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      credentials: 'include'
     });
+    const newFile = await res.json();
+    if (!res.ok) throw new Error(newFile.message || JSON.stringify(newFile));
 
     // Add the new file to the UI
     setFiles(prevFiles => [...prevFiles, newFile.content]);
@@ -156,7 +159,9 @@ const fetchDetailsForFile = useCallback(async (file) => {
     try {
       // First, try to get commit data for all file types
       try {
-        const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`);
+        const res = await fetch(`/api/file/commits?repo=${repo}&path=${file.path}`, { credentials: 'include' });
+        const commitData = await res.json();
+        if (!res.ok) throw new Error(commitData.message || JSON.stringify(commitData));
         const lastCommit = commitData[0];
         if (lastCommit) {
           metadata.lastEditor = lastCommit.commit?.author?.name;
@@ -201,7 +206,9 @@ setLoading(true);
 setError(null);
 
 try {
-let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`);
+let res = await fetch(`/api/files?repo=${repo}&path=${path}`, { credentials: 'include' });
+let data = await res.json();
+if (!res.ok) throw new Error(data.message || JSON.stringify(data));
 
 const sortedData = data.sort((a, b) => {
 if (a.type === 'dir' && b.type !== 'dir') return -1;
@@ -272,11 +279,16 @@ const handleDelete = async (file) => {
         sha: file.sha, // Required for deleting files
       };
 
-      await fetchJson('/api/files', {
+      const res = await fetch('/api/files', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        credentials: 'include'
       });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.message || JSON.stringify(json));
+      }
 
       // Optimistically remove the file from the UI
       setFiles(prevFiles => prevFiles.filter(f => f.sha !== file.sha));
@@ -301,11 +313,16 @@ const handleMove = async (file, destinationPath) => {
       sha: file.sha,
     };
 
-    await fetchJson('/api/files/move', {
+    const res = await fetch('/api/files/move', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      credentials: 'include'
     });
+    if (!res.ok) {
+      const json = await res.json();
+      throw new Error(json.message || JSON.stringify(json));
+    }
 
     setFiles(prevFiles => prevFiles.filter(f => f.sha !== file.sha));
     setMoveFile(null);
@@ -326,6 +343,11 @@ setPath(file.path);
 } else {
 console.log(`Navigating to editor for: ${file.path}`);
 }
+};
+
+const handleGoHome = (e) => {
+  if (e && e.preventDefault) e.preventDefault();
+  setPath('src/pages');
 };
 
 const handleToggleReadme = () => setReadmeVisible(prev => !prev);

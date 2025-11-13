@@ -1,6 +1,5 @@
-import { useState, useRef, useCallback } from 'preact/hooks';
+import { useRef, useCallback } from 'preact/hooks';
 import Icon from './Icon.jsx';
-import ContextMenu from './ContextMenu.jsx';
 
 function formatRelativeDate(dateString) {
   if (!dateString) return '';
@@ -25,47 +24,6 @@ function getIconForFile(fileName) {
 
 function FileTile(props) {
   const { file, isSelected, metadata, onOpen, onShowActions } = props;
-  const longPressTimer = useRef();
-  const isLongPress = useRef(false);
-
-  const handleMouseDown = useCallback((e) => {
-    isLongPress.current = false;
-    longPressTimer.current = setTimeout(() => {
-      isLongPress.current = true;
-      e.preventDefault();
-      onShowActions?.(file, e);
-    }, 500);
-  }, [file, onShowActions]);
-
-  const handleMouseUp = useCallback(() => {
-    clearTimeout(longPressTimer.current);
-  }, []);
-
-  const handleTouchStart = useCallback((e) => {
-    isLongPress.current = false;
-    longPressTimer.current = setTimeout(() => {
-      isLongPress.current = true;
-      e.preventDefault();
-      onShowActions?.(file, e);
-    }, 500);
-  }, [file, onShowActions]);
-
-  const handleTouchEnd = useCallback(() => {
-    clearTimeout(longPressTimer.current);
-  }, []);
-
-  const handleClick = (e) => {
-    if (isLongPress.current) {
-      e.preventDefault();
-      return;
-    }
-    onOpen?.(file);
-  };
-
-  const handleContextMenu = (e) => {
-    e.preventDefault();
-    onShowActions?.(file, e);
-  };
 
   const isDir = file.type === 'dir';
   const iconName = isDir ? 'Folder' : getIconForFile(file.name);

@@ -4,7 +4,7 @@ import LiquidGlassButton from './LiquidGlassButton';
 import { useUI } from '../contexts/UIContext';
 
 export function BottomToolbar() {
-  const { setCreateOpen, handleGoHome } = useUI();
+  const { setCreateModalOpen, handleGoHome } = useUI();
 
   return (
     <footer
@@ -24,7 +24,7 @@ export function BottomToolbar() {
           <Home size={24} />
         </button>
 
-        <LiquidGlassButton onClick={() => setCreateOpen(true)}>
+        <LiquidGlassButton onClick={() => setCreateModalOpen(true)}>
           <Plus size={32} />
         </LiquidGlassButton>
 
