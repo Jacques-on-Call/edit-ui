@@ -63,11 +63,15 @@ const AppContent = () => {
   );
 };
 
+import { UIProvider } from './contexts/UIContext';
+
 export function App() {
   return (
     <AuthProvider>
       <HeaderProvider>
-        <AppContent />
+        <UIProvider>
+          <AppContent />
+        </UIProvider>
       </HeaderProvider>
     </AuthProvider>
   );

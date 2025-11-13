@@ -68,17 +68,17 @@ function FileTile({ file, isSelected, metadata, onOpen, onShowActions }) {
 
   const isDir = file.type === 'dir';
   const iconName = isDir ? 'Folder' : getIconForFile(file.name);
+  const iconColor = isDir ? 'text-accent-lime' : 'text-cyan-400';
+  const borderColor = isDir ? 'border-accent-lime' : 'border-cyan-400';
 
   const tileClassName = `
     relative p-3 rounded-xl cursor-pointer transition-all duration-300 text-center
     flex flex-col items-center justify-between h-36 w-full
-    bg-white/5 border
+    bg-white/5
     hover:bg-white/10 hover:-translate-y-1 hover:shadow-xl
-    ${isSelected ? 'border-lime-400 shadow-lg' : 'border-white/10 shadow-md'}
+    ${isSelected ? `border ${borderColor} shadow-lg` : 'border border-transparent shadow-md'}
     select-none touch-manipulation
   `;
-
-  const iconColor = isDir ? 'text-accent-lime' : 'text-cyan-400';
 
   return (
     <>

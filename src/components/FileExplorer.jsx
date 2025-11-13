@@ -8,7 +8,7 @@ import matter from 'gray-matter';
 import Icon from './Icon';
 import FileTile from './FileTile';
 import ReadmeDisplay from './ReadmeDisplay';
-import CreateModal from './CreateModal';
+import { CreateModal } from './CreateModal';
 import { FileContextMenu } from './FileContextMenu';
 import { MoveModal } from './MoveModal';
 import { SearchResultItem } from './SearchResultItem';

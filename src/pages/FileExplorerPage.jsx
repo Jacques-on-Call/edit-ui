@@ -1,21 +1,19 @@
 // easy-seo/src/pages/FileExplorerPage.jsx
 import { useAuth } from '../contexts/AuthContext';
 import { useHeader } from '../contexts/HeaderContext';
+import { useUI } from '../contexts/UIContext';
 import { useEffect, useState } from 'preact/hooks';
 import { theme } from '../themes/theme';
 import { AlertTriangle } from 'lucide-preact';
 import FileExplorer from '../components/FileExplorer';
-import CreateModal from '../components/CreateModal';
+import { CreateModal } from '../components/CreateModal';
 import { fetchJson } from '../lib/fetchJson';
 
 export function FileExplorerPage() {
   const { isAuthenticated, isLoading, selectedRepo } = useAuth();
-  // Get the shared search query from the context.
   const { searchQuery, setSearchQuery } = useHeader();
+  const { isCreateOpen, setCreateOpen } = useUI();
 
-  console.log(`[FileExplorerPage.jsx] searchQuery from context: "${searchQuery}"`);
-
-  const [isCreateOpen, setCreateOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState('src/pages');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -96,7 +94,6 @@ export function FileExplorerPage() {
       <FileExplorer 
         repo={repoName}
         searchQuery={searchQuery} // Pass the searchQuery from the context
-        onShowCreate={() => setCreateOpen(true)}
         onPathChange={setCurrentPath}
         refreshTrigger={refreshTrigger}
       />

@@ -1,57 +1,47 @@
-import { useState } from 'preact/hooks';
 import { route } from 'preact-router';
 import { Home, ArrowLeft, Plus } from 'lucide-preact';
-import { CreateModal } from './CreateModal';
-import { LiquidGlassButton } from './LiquidGlassButton';
+import LiquidGlassButton from './LiquidGlassButton';
+import { useUI } from '../contexts/UIContext';
 
 export function BottomToolbar() {
-  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-
-  const handleCreateNew = () => {
-    setCreateModalOpen(true);
-  };
+  const { setCreateOpen } = useUI();
 
   return (
-    <>
-      <footer
-        className="fixed bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-blue-900 to-black border-t border-blue-400"
-        style={{
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          backgroundColor: 'rgba(0, 0, 10, 0.5)', // Slightly bluer transparent fallback
-        }}
-      >
-        <div className="flex items-center justify-between h-full px-4">
-          {/* Back Button */}
-          <button
-            onClick={() => window.history.back()}
-            className="p-2 text-white transition-transform duration-150 ease-in-out rounded-full hover:bg-white/10 active:scale-90"
-            aria-label="Go back"
-          >
-            <ArrowLeft size={24} />
-          </button>
+    <footer
+      className="fixed bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black to-midnight-blue border-t border-blue-400/50 shadow-2xl"
+      style={{
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        backgroundColor: 'rgba(0, 0, 10, 0.7)',
+      }}
+    >
+      <div className="flex items-center justify-between h-full px-4 max-w-screen-xl mx-auto">
+        <button
+          onClick={() => route('/')}
+          className="p-3 text-white transition-transform duration-150 ease-in-out rounded-full hover:bg-white/10 active:scale-90"
+          aria-label="Go home"
+        >
+          <Home size={24} />
+        </button>
 
-          {/* Create New Button */}
-          <LiquidGlassButton onClick={handleCreateNew}>
+        <button
+          onClick={() => window.history.back()}
+          className="p-3 text-white transition-transform duration-150 ease-in-out rounded-full hover:bg-white/10 active:scale-90"
+          aria-label="Go back"
+        >
+          <ArrowLeft size={24} />
+        </button>
+
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <LiquidGlassButton onClick={() => setCreateOpen(true)}>
             <Plus size={32} />
           </LiquidGlassButton>
-
-          {/* Home Button */}
-          <button
-            onClick={() => route('/')}
-            className="p-2 text-white transition-transform duration-150 ease-in-out rounded-full hover:bg-white/10 active:scale-90"
-            aria-label="Go home"
-          >
-            <Home size={24} />
-          </button>
         </div>
-      </footer>
-      {isCreateModalOpen && (
-        <CreateModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setCreateModalOpen(false)}
-        />
-      )}
-    </>
+
+        {/* Placeholder for potential right-side icons */}
+        <div className="w-12"></div>
+        <div className="w-12"></div>
+      </div>
+    </footer>
   );
 }
