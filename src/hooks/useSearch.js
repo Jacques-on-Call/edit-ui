@@ -4,7 +4,15 @@ import { fetchJson } from '../lib/fetchJson';
 async function fetchAllFiles(repo) {
   try {
     const allFiles = await fetchJson(`/api/files/all?repo=${encodeURIComponent(repo)}`);
-    return allFiles.filter(file => file.path.startsWith('src/pages/') && file.type === 'file');
+    console.log('[useSearch] Raw response from /api/files/all:', allFiles); // Diagnostic log
+
+    // Defensive coding: ensure allFiles is an array before filtering
+    if (!Array.isArray(allFiles)) {
+      console.error('[useSearch] API response is not an array. Received:', allFiles);
+      return []; // Return an empty array to prevent downstream errors
+    }
+
+    return allFiles.filter(file => file && file.path && file.path.startsWith('src/pages/') && file.type === 'file');
   } catch (error) {
     console.error('Failed to fetch file manifest:', error);
     return [];
