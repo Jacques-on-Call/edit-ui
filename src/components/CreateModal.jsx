@@ -85,4 +85,4 @@ function CreateModal({ isOpen, onClose, onCreate, path, repo }) {
   );
 }
 
-export default CreateModal;
+export { CreateModal };

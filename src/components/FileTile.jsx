@@ -72,9 +72,9 @@ function FileTile({ file, isSelected, metadata, onOpen, onShowActions }) {
   const tileClassName = `
     relative p-3 rounded-xl cursor-pointer transition-all duration-300 text-center
     flex flex-col items-center justify-between h-36 w-full
-    bg-white/5 border border-white/10
+    bg-white/5 border
     hover:bg-white/10 hover:-translate-y-1 hover:shadow-xl
-    ${isSelected ? 'bg-accent-lime/20 border-accent-lime/50 shadow-lg' : 'shadow-md'}
+    ${isSelected ? 'border-lime-400 shadow-lg' : 'border-white/10 shadow-md'}
     select-none touch-manipulation
   `;
 
