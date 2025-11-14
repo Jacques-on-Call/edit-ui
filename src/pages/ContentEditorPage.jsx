@@ -1,12 +1,11 @@
 // easy-seo/src/pages/ContentEditorPage.jsx
 import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
 import { useAutosave } from '../hooks/useAutosave';
-import { fetchPageJson, saveDraft } from '../lib/mockApi';
+import * as mockApi from '../lib/mockApi';
 
 import EditorHeader from '../components/EditorHeader';
 import BottomActionBar from '../components/BottomActionBar';
 import BlockTree from '../components/BlockTree';
-import Icon from '../components/Icon';
 
 const ContentEditorPage = ({ pageId }) => {
   const [pageJson, setPageJson] = useState(null);
@@ -19,10 +18,11 @@ const ContentEditorPage = ({ pageId }) => {
 
   // --- Data Fetching ---
   useEffect(() => {
-    console.log('[ContentEditor] Loading mock page.json...');
+    console.log(`[ContentEditor] Loading page: ${pageId}`);
     setIsLoading(true);
-    fetchPageJson(pageId).then(data => {
-      console.log('[ContentEditor] page.json loaded:', data);
+    mockApi.fetchPageJson(pageId).then(data => {
+      const pj = JSON.stringify(data);
+      console.log(`[ContentEditor] page.json loaded: ${pj}`);
       setPageJson(data);
       setContent(data.meta.initialContent || '');
       setIsLoading(false);
@@ -31,32 +31,33 @@ const ContentEditorPage = ({ pageId }) => {
 
   // --- Autosave ---
   const handleSave = useCallback(async () => {
-    console.log('[ContentEditor] autosave start');
-    const result = await saveDraft(pageId, content);
-    if (result.ok) {
-      console.log('[ContentEditor] autosave success');
-      // Send message to preview iframe
-      if (iframeRef.current && iframeRef.current.contentWindow) {
-        const message = { type: 'preview-patch', payload: { html: content } };
-        console.log('[ContentEditor] sending postMessage to preview iframe:', message);
-        try {
-          iframeRef.current.contentWindow.postMessage(message, '*');
-        } catch (error) {
-          console.error('[ContentEditor] postMessage failed:', error);
+    console.log("[ContentEditor] autosave onSave handler triggered");
+    try {
+      const result = await mockApi.saveDraft(pageId, content);
+      if (result.ok) {
+        console.log('[ContentEditor] autosave success');
+        if (iframeRef.current && iframeRef.current.contentWindow) {
+          const msg = { type: 'preview-patch', payload: { html: content } };
+          console.log(`[ContentEditor] sending postMessage to preview iframe: ${JSON.stringify(msg)}`);
+          iframeRef.current.contentWindow.postMessage(msg, '*');
         }
+      } else {
+        throw new Error(result.error);
       }
-    } else {
-      console.error('[ContentEditor] autosave failure:', result.error);
+    } catch (err) {
+      console.error(`[ContentEditor] autosave failed: ${err}`);
     }
   }, [pageId, content]);
 
-  const { scheduleSave, isSaving } = useAutosave(handleSave, 1500);
+  const { scheduleSave, isSaving } = useAutosave(handleSave, 1500, "autosave");
 
   // --- Iframe Communication ---
   useEffect(() => {
     const handleMessage = (event) => {
+      // Basic security: check origin in a real app
+      // if (event.origin !== 'YOUR_PREVIEW_ORIGIN') return;
       if (event.source === iframeRef.current?.contentWindow) {
-         console.log('[ContentEditor] received message from preview iframe:', event.data);
+         console.log(`[ContentEditor] received message from preview iframe: ${JSON.stringify(event.data)}`);
       }
     };
     window.addEventListener('message', handleMessage);
@@ -67,23 +68,33 @@ const ContentEditorPage = ({ pageId }) => {
   const handleContentChange = (e) => {
     const newContent = e.currentTarget.innerHTML;
     setContent(newContent);
-    console.log(`[ContentEditor] content changed, length: ${newContent.length}`);
+    const n = newContent.length;
+    console.log(`[ContentEditor] content changed, length: ${n}`);
     scheduleSave();
   };
 
-  const handleTabChange = (tab) => {
-    console.log(`[ContentEditor] tab -> ${tab}`);
-    setActiveTab(tab);
-  };
+  const handleTabChange = (tab) => setActiveTab(tab);
 
-  const handleSelectBlock = (blockId) => {
-    setSelectedBlockId(blockId);
-    console.log(`[ContentEditor] selected block: ${blockId}`);
+  const handleSelectBlock = (id) => {
+    console.log(`[BlockTree] node clicked: ${id}`);
+    setSelectedBlockId(id);
+    console.log(`[ContentEditor] selected block: ${id}`);
   };
 
   const handlePublish = () => {
-    console.log('[ContentEditor] publish requested, current content:', content);
-    alert('Publish functionality is a stub for Sprint 1.');
+    const slug = pageJson?.meta?.slug;
+    console.log(`[ContentEditor] publish requested for page: ${slug}`);
+    console.log('[BottomBar] Publish clicked');
+  };
+
+  const handleHomeClick = () => {
+    console.log('[BottomBar] Home clicked');
+    // Implement navigation to home
+  };
+
+  const handleAddClick = () => {
+    console.log('[BottomBar] Add clicked');
+    // Implement add functionality
   };
 
   if (isLoading) {
@@ -91,7 +102,7 @@ const ContentEditorPage = ({ pageId }) => {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-screen overflow-hidden">
       <EditorHeader
         title={pageJson?.meta?.title}
         activeTab={activeTab}
@@ -99,8 +110,7 @@ const ContentEditorPage = ({ pageId }) => {
         onPublish={handlePublish}
         isSaving={isSaving}
       />
-      <main className="flex-grow flex pb-16">
-        {/* Left Panel: BlockTree (Visible on 'visual' tab) */}
+      <main className="flex-grow flex pb-16 overflow-hidden">
         {activeTab === 'visual' && (
           <div className="w-1/4 bg-black/20 border-r border-white/10 overflow-y-auto">
             <BlockTree
@@ -111,16 +121,13 @@ const ContentEditorPage = ({ pageId }) => {
           </div>
         )}
 
-        {/* Center Panel: Content or Visual Editor */}
-        <div className="flex-grow flex flex-col">
+        <div className="flex-grow flex flex-col overflow-y-auto">
           {activeTab === 'content' ? (
             <div
               contentEditable
               onInput={handleContentChange}
               dangerouslySetInnerHTML={{ __html: content }}
               className="flex-grow p-8 text-white bg-transparent focus:outline-none"
-              role="textbox"
-              aria-multiline="true"
             />
           ) : (
             <div className="flex-grow p-8 text-gray-400">
@@ -129,7 +136,6 @@ const ContentEditorPage = ({ pageId }) => {
           )}
         </div>
 
-        {/* Right Panel: Inspector and Preview */}
         <div className="w-1/3 bg-black/20 border-l border-white/10 flex flex-col">
           <div className="p-4 border-b border-white/10">
             <h3 className="font-bold text-lg">Inspector</h3>
@@ -150,7 +156,7 @@ const ContentEditorPage = ({ pageId }) => {
           </div>
         </div>
       </main>
-      <BottomActionBar onPublish={handlePublish} />
+      <BottomActionBar onPublish={handlePublish} onHome={handleHomeClick} onAdd={handleAddClick} />
     </div>
   );
 };
