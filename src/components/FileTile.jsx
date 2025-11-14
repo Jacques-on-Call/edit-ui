@@ -71,14 +71,12 @@ function FileTile({ file, isSelected, metadata, onOpen, onShowActions }) {
   const iconColor = isDir ? 'text-accent-lime' : 'text-cyan-400';
   const borderColor = isDir ? 'border-accent-lime' : 'border-cyan-400';
 
-  const shadowColor = isDir ? 'shadow-accent-lime' : 'shadow-cyan-400';
-
   const tileClassName = `
     relative p-3 rounded-xl cursor-pointer transition-all duration-300 text-center
     flex flex-col items-center justify-between h-36 w-full
     bg-white/5
-    hover:bg-white/10 hover:-translate-y-1
-    ${isSelected ? `shadow-lg ${shadowColor}` : 'shadow-md'}
+    hover:bg-white/10 hover:-translate-y-1 hover:shadow-xl
+    border-2 ${isSelected ? borderColor : 'border-white/5'}
     select-none touch-manipulation
   `;
 
