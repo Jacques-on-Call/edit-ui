@@ -1,22 +1,6 @@
 # Project Change Log
 
-Jules #164 - Sprint 1: Content Editor Shell
-Date: 2025-11-14
-Summary:
-Delivered a fully instrumented `ContentEditorPage` shell, reachable from the File Explorer. This sprint focused on implementing the editor's core structure, including robust navigation, mock data fetching, autosaving to `localStorage`, and `postMessage`-based communication with a preview iframe. All key events are logged with precise prefixes for QA validation.
-Details:
-- **New Route:** Added a new route for `/editor/:pageId` in `app.jsx`.
-- **Robust Navigation:** Implemented a resilient navigation strategy in `FileExplorer.jsx` that uses `preact-router`'s `route()` function with a `history.pushState` fallback to prevent full-page reloads.
-- **Mock API & Autosave:** Created a `mockApi.js` to simulate fetching and saving page data. Integrated a `useAutosave` hook to automatically save drafts to `localStorage` with a 1.5s debounce.
-- **Preview Iframe:** Implemented a one-way communication channel from the editor to a static preview iframe using `postMessage`. The iframe sends back an acknowledgment (`preview-ack`) message.
-- **Instrumentation:** Added extensive and precise console logging throughout the navigation, page load, autosave, and preview communication flows to meet the exact requirements for QA verification.
-Impact: The foundational shell for the content editor is now in place, allowing for the integration of a full-fledged editor (like Lexical) in Sprint 2. The robust navigation and detailed logging will make future development and debugging more efficient.
-Reflection:
-- **Hardest Part:** The most challenging part was ensuring the console log messages were *exactly* as specified in the brief. This required careful attention to detail and multiple passes over the code.
-- **Surprising Discovery:** I was surprised to find that much of the boilerplate for the editor components already existed. This saved a significant amount of time and allowed me to focus on the core logic and instrumentation.
-- **Advice for Next Agent:** The `ContentEditorPage` is now fully wired up for autosaving and previewing. When integrating a rich text editor in Sprint 2, you can reuse the existing `useAutosave` hook and `postMessage` plumbing without modification. Just focus on replacing the `contenteditable` div with the new editor component.
-
-Jacques reset to restore crital failure due to a bad edit choice.
+jacques 2025-11-14 reset to restore after critical crash due to ab edit that has grave results on the app starting login page!
 GitHub Copilot - Create Modal Fix
 Date: 2025-11-13
 Summary:

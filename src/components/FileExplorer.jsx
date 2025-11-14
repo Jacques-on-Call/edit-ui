@@ -263,6 +263,7 @@ const handleMove = async (file, destinationPath) => {
   }
 };
 
+// UPDATED: when opening a non-dir file, route to /editor/:slug with robust fallback
 const handleOpen = (fileToOpen) => {
   const file = fileToOpen || selectedFile;
   if (!file) return;
@@ -272,42 +273,54 @@ const handleOpen = (fileToOpen) => {
     return;
   }
 
-  // inside handleOpen(fileToOpen) — robust navigation with logs
+  // derive a slug from filename (strip extension)
   const slug = (file.name || file.path || '').replace(/\.[^/.]+$/, '');
   const target = `/editor/${encodeURIComponent(slug)}`;
 
   console.log(`[FileExplorer] navigate attempt -> ${file.path} -> slug: ${slug} -> target: ${target}`);
 
   try {
-    console.log('[FileExplorer] trying preact-router route()');
-    route(target);
-  } catch (err) {
-    console.warn('[FileExplorer] route() threw an error:', err);
-  }
-
-  const normalizedPathname = decodeURI(window.location.pathname || '');
-  const expectedPathname = decodeURI(new URL(target, window.location.origin).pathname);
-
-  if (normalizedPathname !== expectedPathname) {
-    console.warn('[FileExplorer] route() did not change location. Trying history.pushState + popstate fallback.');
+    // 1) Preferred SPA navigation
     try {
-      window.history.pushState({}, '', target);
-      window.dispatchEvent(new Event('popstate'));
-      setTimeout(() => {
-        const nowPath = decodeURI(window.location.pathname || '');
-        if (nowPath === expectedPathname) {
-          console.log('[FileExplorer] navigation succeeded via pushState + popstate.');
-        } else {
-          console.error('[FileExplorer] pushState fallback did not work; falling back to full reload.');
-          window.location.href = target;
-        }
-      }, 50);
+      console.log('[FileExplorer] trying preact-router route()');
+      route(target);
     } catch (err) {
-      console.error('[FileExplorer] pushState fallback threw:', err, '- attempting full reload.');
-      window.location.href = target;
+      console.warn('[FileExplorer] route() threw an error:', err);
     }
-  } else {
-    console.log('[FileExplorer] route() appears to have succeeded (location updated).');
+
+    // If route() worked, router should update app state and location.pathname will match target.
+    // But route() can silently fail in some environments. Detect whether navigation occurred:
+    const normalizedPathname = decodeURI(window.location.pathname || '');
+    const expectedPathname = decodeURI(new URL(target, window.location.origin).pathname);
+
+    if (normalizedPathname !== expectedPathname) {
+      // 2) Fallback: pushState + trigger popstate so SPA routers (or listeners) can react
+      console.warn('[FileExplorer] route() did not change location. Trying history.pushState + popstate fallback.');
+      try {
+        window.history.pushState({}, '', target);
+        // Notify listeners (some routers re-render on popstate)
+        window.dispatchEvent(new Event('popstate'));
+        // Small delay to allow route handling; log outcome
+        setTimeout(() => {
+          const nowPath = decodeURI(window.location.pathname || '');
+          if (nowPath === expectedPathname) {
+            console.log('[FileExplorer] navigation succeeded via pushState + popstate.');
+          } else {
+            // 3) Last-resort: full reload navigation
+            console.error('[FileExplorer] pushState fallback did not work; falling back to full reload.');
+            window.location.href = target;
+          }
+        }, 50);
+      } catch (err) {
+        console.error('[FileExplorer] pushState fallback threw:', err, '- attempting full reload.');
+        window.location.href = target;
+      }
+    } else {
+      console.log('[FileExplorer] route() appears to have succeeded (location updated).');
+    }
+  } catch (err) {
+    console.error('[FileExplorer] unexpected error while navigating:', err, ' — using window.location.href fallback.');
+    window.location.href = target;
   }
 };
 

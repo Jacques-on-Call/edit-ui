@@ -26,22 +26,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/components/CreateModal.jsx`**: Renders a modal for creating new files and folders. Accepts callbacks from parent component for file creation.
 -   **`src/components/SearchBar.jsx`**: A debounced search input component for filtering files.
 
-### **Components (Editor)**
-
--   **`src/components/EditorHeader.jsx`**: The header for the content editor, containing tabs and publish actions.
--   **`src/components/BlockTree.jsx`**: A component for displaying the block structure of a page.
--   **`src/components/BottomActionBar.jsx`**: The bottom action bar for the editor.
-
 ### **Hooks**
 
 -   **`src/hooks/useFileManifest.js`**: Custom hook for fetching and managing the complete file manifest of a repository.
 -   **`src/hooks/useSearch.js`**: Custom hook for performing client-side search across file names and content.
--   **`src/hooks/useAutosave.js`**: A custom hook for debounced autosaving.
-
-### **Utilities (Editor)**
-
--   **`src/lib/mockApi.js`**: A mock API for fetching and saving page data during development.
-
-### **Public Assets**
-
--   **`public/preview/mock-preview.html`**: A static HTML file used as the target for the editor's preview iframe.

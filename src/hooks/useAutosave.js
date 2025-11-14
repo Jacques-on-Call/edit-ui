@@ -1,52 +1,62 @@
 // easy-seo/src/hooks/useAutosave.js
 import { useState, useRef, useEffect, useCallback } from 'preact/hooks';
 
-export const useAutosave = (onSave, delay = 1500, debugLabel = 'autosave') => {
+/**
+ * A custom hook for debounced autosaving.
+ * @param {function} onSave - The async function to call on save.
+ * @param {number} delay - The debounce delay in milliseconds.
+ * @returns {{scheduleSave: function, isSaving: boolean, cancel: function}}
+ */
+export const useAutosave = (onSave, delay = 1500) => {
   const [isSaving, setIsSaving] = useState(false);
   const timerRef = useRef(null);
   const onSaveRef = useRef(onSave);
 
+  // Keep the onSave callback fresh without re-triggering effects.
   useEffect(() => {
     onSaveRef.current = onSave;
   }, [onSave]);
 
+  // Cleanup timer on unmount. This is critical.
   useEffect(() => {
     return () => {
       if (timerRef.current) {
+        console.log('[autosave] cleanup - clearing timer');
         clearTimeout(timerRef.current);
       }
     };
   }, []);
 
   const runSave = useCallback(async (...args) => {
-    console.log(`[${debugLabel}] autosave start`);
     setIsSaving(true);
     try {
       await onSaveRef.current(...args);
     } catch (error) {
-      console.error(`[${debugLabel}] onSave callback failed:`, error);
+      console.error('[autosave] onSave callback failed:', error);
+      // Let the caller handle UI feedback for the error.
     } finally {
       setIsSaving(false);
     }
-  }, [debugLabel]);
+  }, []);
 
   const scheduleSave = useCallback((...args) => {
+    // Clear any existing timer to reset the debounce period.
     if (timerRef.current) {
       clearTimeout(timerRef.current);
-      console.log(`[${debugLabel}] scheduleSave - reset timer`);
-    } else {
-      console.log(`[${debugLabel}] scheduleSave - start timer`);
+      console.log('[autosave] scheduleSave - reset timer');
     }
 
+    console.log('[autosave] scheduleSave - start timer');
     timerRef.current = setTimeout(() => {
       runSave(...args);
     }, delay);
-  }, [delay, runSave, debugLabel]);
+  }, [delay, runSave]);
 
   const cancel = useCallback(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
+      console.log('[autosave] save cancelled');
     }
   }, []);
 
