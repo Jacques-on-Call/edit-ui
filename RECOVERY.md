@@ -4,6 +4,63 @@ This document serves as a debug diary for the `easy-seo` project. It records com
 
 ---
 
+## **Bug: Create Modal Fails with "Not Found" Error**
+
+**Date:** 2025-11-13
+**Agent:** GitHub Copilot
+
+### **Symptoms:**
+
+When attempting to create files or folders in the file explorer using the create modal:
+- User enters a name (e.g., "test") and clicks the "Create" button
+- Operation fails with error message: "Failed to create item: Not Found"
+- Browser network tab shows a 404 error for POST request to `/api/files`
+
+### **Root Cause:**
+
+The frontend was making a POST request to `/api/files` (plural), but the backend only has a POST endpoint at `/api/file` (singular). This is an endpoint mismatch that results in a 404 Not Found error.
+
+Additionally, the frontend had two other issues:
+1. It was sending base64-encoded content, but the backend expects plain text and handles the base64 encoding internally
+2. For folder creation, it wasn't creating any content, but GitHub doesn't support empty folders
+
+### **Solution:**
+
+The fix involved three changes to `easy-seo/src/pages/FileExplorerPage.jsx`:
+
+1. **Changed the endpoint** from `/api/files` to `/api/file`:
+   ```javascript
+   await fetchJson('/api/file', {  // Changed from '/api/files'
+     method: 'POST',
+     body: JSON.stringify(body),
+   });
+   ```
+
+2. **Removed base64 encoding** - send plain text content instead:
+   ```javascript
+   body.content = content;  // Changed from btoa(content)
+   ```
+
+3. **Fixed folder creation** - create a `.gitkeep` file inside the folder:
+   ```javascript
+   if (type === 'folder') {
+     fullPath = `${currentPath}/${name}/.gitkeep`;
+     body.path = fullPath;
+     body.content = '';
+   }
+   ```
+
+### **Key Takeaway:**
+
+When debugging API errors, always check the browser's network tab to see:
+- The exact endpoint being called
+- The HTTP status code (404 = endpoint not found, 401 = unauthorized, 400 = bad request, etc.)
+- The request/response payloads
+
+A "Not Found" error in an error message often indicates an endpoint mismatch (404) rather than a missing file or permission issue (which would typically be 403 or 400).
+
+---
+
 ## **Bug: Missing gh_session Token Causes Authentication Failures**
 
 **Date:** 2025-11-09

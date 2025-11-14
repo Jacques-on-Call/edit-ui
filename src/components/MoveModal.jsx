@@ -13,9 +13,15 @@ function FolderTree({ repo, onSelectPath, currentPath }) {
 
   useEffect(() => {
     async function buildTree() {
-      const rootFolders = await fetchFolders('');
-      setTree({ path: '', children: rootFolders, name: repo.split('/')[1] });
-      setExpandedPaths(new Set(['']));
+      const rootFolders = await fetchFolders('src/pages');
+      // Convert the flat list of folders into tree nodes with proper structure
+      const children = rootFolders.map(folder => ({
+        path: folder.path,
+        name: folder.name,
+        children: null, // Will be loaded on expand
+      }));
+      setTree({ path: 'src/pages', children, name: 'pages' });
+      setExpandedPaths(new Set(['src/pages']));
     }
     buildTree();
   }, [fetchFolders, repo]);
@@ -26,7 +32,22 @@ function FolderTree({ repo, onSelectPath, currentPath }) {
       newExpandedPaths.delete(path);
     } else {
       newExpandedPaths.add(path);
-      // You might need to fetch children here if not already loaded
+      // Lazy load children if not already loaded
+      const updateNodeChildren = (node) => {
+        if (node.path === path && node.children === null) {
+          fetchFolders(path).then(folders => {
+            node.children = folders.map(folder => ({
+              path: folder.path,
+              name: folder.name,
+              children: null,
+            }));
+            setTree({ ...tree }); // Trigger re-render
+          });
+        } else if (node.children) {
+          node.children.forEach(updateNodeChildren);
+        }
+      };
+      if (tree) updateNodeChildren(tree);
     }
     setExpandedPaths(newExpandedPaths);
   };

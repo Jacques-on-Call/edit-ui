@@ -1,5 +1,59 @@
 # Project Change Log
 
+GitHub Copilot - Fix Bottom Toolbar Navigation
+Date: 2025-11-14
+Summary:
+Fixed the bottom toolbar's Home and Back buttons to properly navigate the file tree instead of going to the repository selection page or using browser history.
+Details:
+Root Cause: The Home button was using `route('/explorer')` which reloaded the page and went back to repository selection. The Back button was using `window.history.back()` which navigated through browser history instead of the folder tree structure.
+Changes Made:
+1. Extended UIContext to manage the current path state for the file explorer.
+2. Added three navigation functions to UIContext:
+   - `navigateToPath(newPath)`: Navigate to a specific folder path
+   - `navigateBack()`: Navigate up one folder level in the directory tree
+   - `navigateHome()`: Navigate to the root folder (src/pages)
+3. Updated FileExplorer component to use `currentPath` from UIContext instead of local state.
+4. Updated BottomToolbar to use the new navigation functions instead of routing or browser history.
+5. Improved accessibility by updating button aria-labels to be more descriptive.
+Impact: Users can now properly navigate the file tree using the bottom toolbar. The Home button takes them to the src/pages folder, and the Back button moves up one directory level, making file navigation much more intuitive.
+Reflection:
+Challenge: The most challenging part was deciding between tracking navigation history (like browser back) versus simple parent folder navigation. The simpler approach of just going up one level in the directory tree proved to be more intuitive for file browsing.
+Discovery: Centralizing navigation state in a context provider makes it easy for different components (FileExplorer and BottomToolbar) to coordinate without prop drilling.
+Advice: When building file navigation UIs, users expect folder-based navigation (up/down the tree) rather than history-based navigation. The Home and Back buttons should work relative to the folder structure, not the browsing history.
+
+GitHub Copilot - Fix File Tree Structure in Move Modal
+Date: 2025-11-14
+Summary:
+Fixed the file tree in the Move Modal to only show the src/pages directory structure instead of the entire repository.
+Details:
+Root Cause: The FolderTree component in MoveModal was fetching folders from the root directory ('') instead of starting from 'src/pages', causing the entire repository structure to be displayed when users tried to move files.
+Changes Made:
+1. Updated the initial tree fetch in FolderTree to start from 'src/pages' instead of the root directory.
+2. Set the tree root to display as 'pages' with path 'src/pages'.
+3. Improved the folder expansion logic to support lazy loading of subdirectories.
+4. The tree structure now properly shows only the content within src/pages where users should be moving files.
+Impact: Users can now see only the relevant src/pages directory structure when moving files, making it much easier to navigate and select the correct destination folder.
+Reflection:
+Challenge: The most challenging part was understanding how the tree structure was being built and ensuring that the lazy loading of child folders would work correctly with the new root path.
+Discovery: The FolderTree component uses a recursive rendering approach that works well with lazy loading. By setting children to null initially, we can fetch them on demand when folders are expanded.
+Advice: When working with file tree components, always consider the scope of what users need to see. Limiting the view to relevant directories improves usability and reduces cognitive load. The lazy loading pattern is essential for performance when dealing with deep folder structures.
+
+GitHub Copilot - Create Modal Fix
+Date: 2025-11-13
+Summary:
+Fixed the create modal in the file explorer that was failing with "Failed to create item: Not Found" error.
+Details:
+Root Cause: The frontend was making a POST request to `/api/files` (plural), but the backend only has a POST endpoint at `/api/file` (singular). This resulted in a 404 Not Found error.
+Changes Made:
+1. Updated the frontend POST request from `/api/files` to `/api/file` to match the backend endpoint.
+2. Modified the content encoding to send plain text content instead of base64-encoded content (the backend handles base64 encoding).
+3. Improved folder creation logic to create a `.gitkeep` file inside the folder (GitHub doesn't support empty folders).
+Impact: Users can now successfully create both files and folders in the file explorer.
+Reflection:
+Challenge: The most challenging part was understanding that the error message "Not Found" was actually a 404 HTTP error indicating a missing endpoint, not a missing file or permission issue.
+Discovery: The backend's `/api/file` endpoint expects plain text content and handles base64 encoding internally, which is different from what the frontend was sending.
+Advice: When debugging API errors, always check the network tab in browser developer tools to see the exact HTTP status code and endpoint being called. A "Not Found" error often indicates an endpoint mismatch rather than a data issue.
+
 Jules #162, The Finisher
 Date: 2025-11-13
 Summary:

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mock Preview</title>
+  <style>
+    body { font-family: sans-serif; background-color: #f0f0f0; padding: 1rem; color: #333; }
+    #content { border: 1px dashed #ccc; padding: 1rem; background-color: white; min-height: 100px; }
+    h3 { margin-top: 2rem; }
+    #logs { font-family: monospace; font-size: 0.8rem; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Mock Preview</h1>
+  <div id="content">
+    <p>Waiting for initial content from the editor...</p>
+  </div>
+  <h3>Message Log:</h3>
+  <div id="logs"></div>
+
+  <script>
+    console.log('[mock-preview] Preview iframe loaded and ready.');
+
+    const contentEl = document.getElementById('content');
+    const logsEl = document.getElementById('logs');
+
+    window.addEventListener('message', (event) => {
+      // For Sprint 1, we won't check origin, but we'll log it.
+      console.log(`[mock-preview] Received message from origin: ${event.origin}`, event.data);
+
+      const { type, payload } = event.data;
+
+      const logMessage = `[${new Date().toLocaleTimeString()}] Received event: ${type}`;
+      logsEl.textContent = `${logMessage}\n${logsEl.textContent}`;
+
+      if (type === 'preview-patch' && payload && typeof payload.html === 'string') {
+        console.log(`[mock-preview] preview patched (length ${payload.html.length})`);
+        contentEl.innerHTML = payload.html;
+
+        // Acknowledge the patch
+        if (event.source) {
+          event.source.postMessage({ type: 'preview-ack', received: true }, event.origin);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

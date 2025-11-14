@@ -59,8 +59,8 @@ export function FileExplorerPage() {
 
   const handleCreate = async (name, type) => {
     try {
-      const fullPath = `${currentPath}/${name}`;
-      let body = { repo: repoName, path: fullPath, type };
+      let fullPath = `${currentPath}/${name}`;
+      let body = { repo: repoName, path: fullPath };
 
       // For files, add some default, base64 encoded content
       if (type === 'file') {
@@ -68,15 +68,21 @@ export function FileExplorerPage() {
           const templateUrl = `/api/files?repo=${encodeURIComponent(repoName)}&path=${encodeURIComponent('src/pages/_template.astro')}`;
           const templateData = await fetchJson(templateUrl);
           const content = atob(templateData.content);
-          body.content = btoa(content);
+          body.content = content;
         } catch (err) {
           console.error('Template fetch error:', err);
           // Continue without template
-          body.content = btoa('---\ntitle: New Page\n---\n<h1>New Page</h1>');
+          body.content = '---\ntitle: New Page\n---\n<h1>New Page</h1>';
         }
+      } else {
+        // For folders, create a .gitkeep file inside the folder
+        // GitHub doesn't support empty folders
+        fullPath = `${currentPath}/${name}/.gitkeep`;
+        body.path = fullPath;
+        body.content = '';
       }
 
-      await fetchJson('/api/files', {
+      await fetchJson('/api/file', {
         method: 'POST',
         body: JSON.stringify(body),
       });
