@@ -15,13 +15,14 @@ import { SearchResultItem } from './SearchResultItem';
 import { useSearch } from '../hooks/useSearch';
 import { useFileManifest } from '../hooks/useFileManifest';
 import { fetchJson } from '/src/lib/fetchJson.js';
+import { useUI } from '../contexts/UIContext';
 import './LiquidGlassButton.css';
 
 function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTrigger }) {
   console.log(`[FileExplorer.jsx] searchQuery prop: "${searchQuery}"`);
   const { fileManifest } = useFileManifest(repo);
+  const { currentPath: path, navigateToPath } = useUI();
   const [files, setFiles] = useState([]);
-  const [path, setPath] = useState('src/pages');
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState(null);
 const [selectedFile, setSelectedFile] = useState(null);
@@ -268,13 +269,17 @@ const file = fileToOpen || selectedFile;
 if (!file) return;
 
 if (file.type === 'dir') {
-setPath(file.path);
+navigateToPath(file.path);
 } else {
 console.log(`Navigating to editor for: ${file.path}`);
 }
 };
 
-const handleGoHome = () => setPath('src/pages');
+const handleGoHome = () => {
+// This function is no longer needed as navigation is handled by the context
+// But keeping it for backwards compatibility if called elsewhere
+navigateToPath('src/pages');
+};
 
 const handleToggleReadme = () => setReadmeVisible(prev => !prev);
 

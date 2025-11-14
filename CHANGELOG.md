@@ -1,5 +1,26 @@
 # Project Change Log
 
+GitHub Copilot - Fix Bottom Toolbar Navigation
+Date: 2025-11-14
+Summary:
+Fixed the bottom toolbar's Home and Back buttons to properly navigate the file tree instead of going to the repository selection page or using browser history.
+Details:
+Root Cause: The Home button was using `route('/explorer')` which reloaded the page and went back to repository selection. The Back button was using `window.history.back()` which navigated through browser history instead of the folder tree structure.
+Changes Made:
+1. Extended UIContext to manage the current path state for the file explorer.
+2. Added three navigation functions to UIContext:
+   - `navigateToPath(newPath)`: Navigate to a specific folder path
+   - `navigateBack()`: Navigate up one folder level in the directory tree
+   - `navigateHome()`: Navigate to the root folder (src/pages)
+3. Updated FileExplorer component to use `currentPath` from UIContext instead of local state.
+4. Updated BottomToolbar to use the new navigation functions instead of routing or browser history.
+5. Improved accessibility by updating button aria-labels to be more descriptive.
+Impact: Users can now properly navigate the file tree using the bottom toolbar. The Home button takes them to the src/pages folder, and the Back button moves up one directory level, making file navigation much more intuitive.
+Reflection:
+Challenge: The most challenging part was deciding between tracking navigation history (like browser back) versus simple parent folder navigation. The simpler approach of just going up one level in the directory tree proved to be more intuitive for file browsing.
+Discovery: Centralizing navigation state in a context provider makes it easy for different components (FileExplorer and BottomToolbar) to coordinate without prop drilling.
+Advice: When building file navigation UIs, users expect folder-based navigation (up/down the tree) rather than history-based navigation. The Home and Back buttons should work relative to the folder structure, not the browsing history.
+
 GitHub Copilot - Fix File Tree Structure in Move Modal
 Date: 2025-11-14
 Summary:
