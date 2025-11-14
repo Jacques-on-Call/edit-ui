@@ -1,5 +1,6 @@
 # Project Change Log
 
+jacques reset to restore critical login page not rendoring.
 GitHub Copilot - Fix Bottom Toolbar Navigation
 Date: 2025-11-14
 Summary:
