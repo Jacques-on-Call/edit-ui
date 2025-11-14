@@ -1,15 +1,13 @@
 // easy-seo/src/hooks/useAutosave.js
-import { useEffect, useRef, useCallback } from 'preact/hooks';
+import { useEffect, useRef, useCallback, useState } from 'preact/hooks';
 
-export const useAutosave = ({ onSave, data, debounceMs = 1500, debugLabel = 'autosave' }) => {
+export default function useAutosave({ onSave, delay = 1500, debugLabel = 'autosave' }) {
+  const [isSaving, setIsSaving] = useState(false);
   const timeoutRef = useRef(null);
-  const dataRef = useRef(data);
+  const dataRef = useRef(null);
 
-  useEffect(() => {
-    dataRef.current = data;
-  }, [data]);
-
-  const scheduleSave = useCallback(() => {
+  const scheduleSave = useCallback((payload) => {
+    dataRef.current = payload;
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       console.log(`[${debugLabel}] scheduleSave - reset timer`);
@@ -17,15 +15,23 @@ export const useAutosave = ({ onSave, data, debounceMs = 1500, debugLabel = 'aut
       console.log(`[${debugLabel}] scheduleSave - start timer`);
     }
 
-    timeoutRef.current = setTimeout(() => {
+    timeoutRef.current = setTimeout(async () => {
       console.log(`[${debugLabel}] autosave start`);
-      if (onSave) {
-        onSave(dataRef.current);
+      setIsSaving(true);
+      try {
+        if (onSave) {
+          await onSave(dataRef.current);
+        }
+      } catch (err) {
+        console.error(`[${debugLabel}] onSave error:`, err);
+      } finally {
+        setIsSaving(false);
+        timeoutRef.current = null;
       }
-      timeoutRef.current = null;
-    }, debounceMs);
-  }, [onSave, debounceMs, debugLabel]);
+    }, delay);
+  }, [onSave, delay, debugLabel]);
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -34,5 +40,5 @@ export const useAutosave = ({ onSave, data, debounceMs = 1500, debugLabel = 'aut
     };
   }, []);
 
-  return scheduleSave;
-};
+  return { scheduleSave, isSaving };
+}

@@ -1,0 +1,30 @@
+.editor-header {
+  height: var(--header-h);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 8px 12px;
+  background: rgba(2,10,30,0.6);
+  position: sticky;
+  top:0;
+  z-index:80;
+}
+
+.editor-header .left { display:flex; align-items:center; gap:12px; }
+.editor-header .page-title { font-size:1.25rem; margin:0; color:#e6f0ff; }
+
+.editor-header .center { display:flex; align-items:center; justify-content:center; flex:1; }
+.tabs .tab { background: rgba(255,255,255,0.03); border-radius:6px; padding:6px 10px; margin:0 6px; color:#cfe1ff; }
+.tabs .tab.active { background: rgba(255,255,255,0.09); }
+
+.right { display:flex; align-items:center; gap:10px; }
+
+.btn-icon { background: rgba(255,255,255,0.03); border: none; color: #cfe1ff; padding:6px 8px; border-radius:6px; font-size:16px; }
+.btn-primary { background: #1673ff; color:white; border-radius:8px; padding:8px 12px; border:none; }
+.btn-plain { background: none; border: none; color:#cfe1ff; }
+
+/* compact on mobile */
+@media(max-width:640px) {
+  .editor-header .page-title { font-size:1rem; }
+  .tabs { display:none; } /* hide tabs in header to save space; use compact UI instead */
+}

@@ -15,7 +15,9 @@ This document lists all significant files in the `easy-seo` project, along with 
 
 ### **Styling**
 
--   **`src/editor.css`**: Contains the responsive styles for the content editor, including the mobile-first grid layout and drawer animations.
+-   **`src/pages/ContentEditorPage.css`**: Contains the responsive styles for the content editor page, including the mobile-first grid layout and drawer animations.
+-   **`src/components/EditorHeader.css`**: Styles specific to the `EditorHeader` component.
+-   **`src/components/BottomActionBar.css`**: Styles specific to the `BottomActionBar` component.
 
 ### **Utilities**
 
@@ -39,7 +41,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 
 -   **`src/hooks/useFileManifest.js`**: Custom hook for fetching the file manifest of a repository.
 -   **`src/hooks/useSearch.js`**: Custom hook for performing client-side search.
--   **`src/hooks/useAutosave.js`**: A debounced autosave hook for the content editor.
+-   **`src/hooks/useAutosave.js`**: A debounced autosave hook for the content editor that also exposes an `isSaving` state.
 
 ### **Test & Verification Files**
 
