@@ -1,0 +1,55 @@
+/* easy-seo/src/editor.css */
+:root {
+  --header-h: 56px;
+  --bottom-bar-height: 64px;
+  --panel-bg: #1f2937; /* bg-gray-800 */
+}
+
+.editor-body {
+  display: grid;
+  grid-template-columns: 240px 1fr 300px;
+  gap: 0;
+}
+
+@media (max-width: 1023px) {
+  .editor-body {
+    grid-template-columns: 180px 1fr 260px;
+  }
+}
+
+@media (max-width: 639px) {
+  .editor-body {
+    grid-template-columns: 1fr;
+  }
+  .left-pane, .right-pane {
+    position: fixed;
+    top: var(--header-h);
+    bottom: var(--bottom-bar-height);
+    width: 84%;
+    z-index: 60;
+    background: var(--panel-bg);
+    transition: transform 0.25s ease-in-out;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  }
+  .left-pane {
+    transform: translateX(-100%);
+    left: 0;
+  }
+  .left-pane.open {
+    transform: translateX(0);
+  }
+  .right-pane {
+    right: 0;
+    transform: translateX(100%);
+  }
+  .right-pane.open {
+    transform: translateX(0);
+  }
+  .drawer-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(2px);
+  }
+}

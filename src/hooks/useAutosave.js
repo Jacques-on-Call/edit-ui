@@ -5,7 +5,6 @@ export const useAutosave = ({ onSave, data, debounceMs = 1500, debugLabel = 'aut
   const timeoutRef = useRef(null);
   const dataRef = useRef(data);
 
-  // Keep a ref to the latest data to avoid re-triggering the effect
   useEffect(() => {
     dataRef.current = data;
   }, [data]);
@@ -27,7 +26,6 @@ export const useAutosave = ({ onSave, data, debounceMs = 1500, debugLabel = 'aut
     }, debounceMs);
   }, [onSave, debounceMs, debugLabel]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {

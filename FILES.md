@@ -13,6 +13,10 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/pages/FileExplorerPage.jsx`**: The main file explorer page.
 -   **`src/pages/ContentEditorPage.jsx`**: The main shell for the content editor. Orchestrates the block tree, content area, inspector, and preview panes.
 
+### **Styling**
+
+-   **`src/editor.css`**: Contains the responsive styles for the content editor, including the mobile-first grid layout and drawer animations.
+
 ### **Utilities**
 
 -   **`src/lib/fetchJson.js`**: A robust, centralized utility for making `fetch` requests to the backend API.

@@ -270,22 +270,17 @@ const handleOpen = (fileToOpen) => {
   if (file.type === 'dir') {
     setPath(file.path);
   } else {
-    // robust navigation with logs
     const slug = (file.name || file.path || '').replace(/\.[^/.]+$/, '');
     const target = `/editor/${encodeURIComponent(slug)}`;
-
     console.log(`[FileExplorer] navigate attempt -> ${file.path} -> slug: ${slug} -> target: ${target}`);
-
     try {
       console.log('[FileExplorer] trying preact-router route()');
       route(target);
     } catch (err) {
       console.warn('[FileExplorer] route() threw an error:', err);
     }
-
     const normalizedPathname = decodeURI(window.location.pathname || '');
     const expectedPathname = decodeURI(new URL(target, window.location.origin).pathname);
-
     if (normalizedPathname !== expectedPathname) {
       console.warn('[FileExplorer] route() did not change location. Trying history.pushState + popstate fallback.');
       try {

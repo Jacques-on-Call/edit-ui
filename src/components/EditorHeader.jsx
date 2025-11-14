@@ -1,10 +1,10 @@
 // easy-seo/src/components/EditorHeader.jsx
 import { h } from 'preact';
 
-const EditorHeader = () => {
+const EditorHeader = ({ children }) => {
   return (
-    <div class="p-2 bg-gray-800 border-b border-gray-700">
-      <h2 class="text-lg font-semibold">Editor Header</h2>
+    <div class="p-2 bg-gray-800 border-b border-gray-700 flex items-center" style={{ height: 'var(--header-h, 56px)' }}>
+      {children}
     </div>
   );
 };

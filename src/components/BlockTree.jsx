@@ -10,7 +10,7 @@ const BlockTree = ({ blocks, onSelectBlock }) => {
   };
 
   return (
-    <div class="p-2 bg-gray-800 border-r border-gray-700">
+    <div class="p-2">
       <h3 class="font-bold mb-2">Block Tree</h3>
       <ul>
         {(blocks || []).map(block => (

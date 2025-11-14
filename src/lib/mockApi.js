@@ -1,10 +1,4 @@
 // easy-seo/src/lib/mockApi.js
-
-/**
- * Fetches a mock page JSON structure.
- * @param {string} slug - The identifier for the page.
- * @returns {Promise<object>} A promise that resolves to the page data.
- */
 export const fetchPageJson = (slug) => {
   console.log(`[mockApi] fetchPageJson called for ${slug}`);
   return new Promise((resolve) => {
@@ -18,16 +12,9 @@ export const fetchPageJson = (slug) => {
           { id: 'block-2', type: 'paragraph', content: 'A paragraph of text.' },
         ],
       });
-    }, 500); // Simulate network delay
+    }, 200);
   });
 };
-
-/**
- * Saves a draft of the page content to localStorage.
- * @param {string} slug - The identifier for the page.
- * @param {object} payload - The content to save.
- * @returns {Promise<void>} A promise that resolves when the save is complete.
- */
 export const saveDraft = (slug, payload) => {
   const payloadString = JSON.stringify(payload);
   console.log(`[mockApi] saveDraft called ${slug} payload length ${payloadString.length}`);
