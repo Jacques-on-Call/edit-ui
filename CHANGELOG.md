@@ -1,5 +1,22 @@
 # Project Change Log
 
+GitHub Copilot - Fix File Tree Structure in Move Modal
+Date: 2025-11-14
+Summary:
+Fixed the file tree in the Move Modal to only show the src/pages directory structure instead of the entire repository.
+Details:
+Root Cause: The FolderTree component in MoveModal was fetching folders from the root directory ('') instead of starting from 'src/pages', causing the entire repository structure to be displayed when users tried to move files.
+Changes Made:
+1. Updated the initial tree fetch in FolderTree to start from 'src/pages' instead of the root directory.
+2. Set the tree root to display as 'pages' with path 'src/pages'.
+3. Improved the folder expansion logic to support lazy loading of subdirectories.
+4. The tree structure now properly shows only the content within src/pages where users should be moving files.
+Impact: Users can now see only the relevant src/pages directory structure when moving files, making it much easier to navigate and select the correct destination folder.
+Reflection:
+Challenge: The most challenging part was understanding how the tree structure was being built and ensuring that the lazy loading of child folders would work correctly with the new root path.
+Discovery: The FolderTree component uses a recursive rendering approach that works well with lazy loading. By setting children to null initially, we can fetch them on demand when folders are expanded.
+Advice: When working with file tree components, always consider the scope of what users need to see. Limiting the view to relevant directories improves usability and reduces cognitive load. The lazy loading pattern is essential for performance when dealing with deep folder structures.
+
 GitHub Copilot - Create Modal Fix
 Date: 2025-11-13
 Summary:
