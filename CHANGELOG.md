@@ -1,5 +1,21 @@
 # Project Change Log
 
+GitHub Copilot - Create Modal Fix
+Date: 2025-11-13
+Summary:
+Fixed the create modal in the file explorer that was failing with "Failed to create item: Not Found" error.
+Details:
+Root Cause: The frontend was making a POST request to `/api/files` (plural), but the backend only has a POST endpoint at `/api/file` (singular). This resulted in a 404 Not Found error.
+Changes Made:
+1. Updated the frontend POST request from `/api/files` to `/api/file` to match the backend endpoint.
+2. Modified the content encoding to send plain text content instead of base64-encoded content (the backend handles base64 encoding).
+3. Improved folder creation logic to create a `.gitkeep` file inside the folder (GitHub doesn't support empty folders).
+Impact: Users can now successfully create both files and folders in the file explorer.
+Reflection:
+Challenge: The most challenging part was understanding that the error message "Not Found" was actually a 404 HTTP error indicating a missing endpoint, not a missing file or permission issue.
+Discovery: The backend's `/api/file` endpoint expects plain text content and handles base64 encoding internally, which is different from what the frontend was sending.
+Advice: When debugging API errors, always check the network tab in browser developer tools to see the exact HTTP status code and endpoint being called. A "Not Found" error often indicates an endpoint mismatch rather than a data issue.
+
 Jules #162, The Finisher
 Date: 2025-11-13
 Summary:
