@@ -4,6 +4,35 @@ This document serves as a debug diary for the `easy-seo` project. It records com
 
 ---
 
+## **Workaround: Robust Navigation Fallback for `preact-router`**
+
+**Date:** 2025-11-14
+**Agent:** Jules #164
+
+### **Symptoms:**
+
+In some development environments, particularly when multiple instances of Preact or its context providers might be bundled, `preact-router`'s `route()` function can fail silently. It executes without throwing an error, but `window.location.pathname` does not update, leaving the user on the original page. This can break critical user flows, like navigating from the File Explorer to the Content Editor.
+
+### **Root Cause:**
+
+This is often a symptom of a misconfigured build or a dependency issue, where a component calling `route()` is pulling from a different instance of the router context than the one rendering the `<Router>` component. This can happen with duplicate `preact` versions in `node_modules` or incorrect aliasing in `vite.config.js`.
+
+### **Solution (Workaround):**
+
+Since diagnosing the root cause of duplicate dependencies can be time-consuming, a robust, multi-stage fallback was implemented directly into the navigation logic in `FileExplorer.jsx` to ensure navigation *always* completes.
+
+The logic follows these steps:
+1.  **Attempt `route()`:** The primary method is to call `preact-router`'s `route(target)` function. This is the cleanest and preferred method.
+2.  **Verify Location Change:** After calling `route()`, the code immediately compares the current `window.location.pathname` with the expected target pathname.
+3.  **Fallback to `history.pushState`:** If the pathname has not changed, it indicates `route()` failed. The code then falls back to using `window.history.pushState({}, '', target)` to manually change the URL in the browser's history, followed by `window.dispatchEvent(new Event('popstate'))`. This mimics a native browser navigation event and is often sufficient to get the router to pick up the change. A `setTimeout` is used to re-verify the URL after a short delay.
+4.  **Final Resort: Full Reload:** If the `pushState` method also fails to update the location, the code falls back to the last resort: `window.location.href = target`. This forces a full page reload, which is a heavier user experience but guarantees the user gets to the correct page.
+
+This entire process is instrumented with detailed console logs (`[FileExplorer] trying preact-router route()`, `[FileExplorer] route() did not change location...`, etc.) to make it clear which navigation method was successful.
+
+### **TODO:**
+The root cause of the silent `route()` failure should be investigated in the future. Check for duplicate Preact dependencies using `npm ls preact` and ensure `vite.config.js` has the correct `resolve.alias` settings. Once the root cause is fixed, this robust fallback can be simplified.
+
+---
 ## **Bug: Missing gh_session Token Causes Authentication Failures**
 
 **Date:** 2025-11-09

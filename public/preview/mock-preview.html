@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mock Preview</title>
+  <style>
+    body { font-family: sans-serif; background-color: #1a1a1a; color: #fff; padding: 1rem; }
+    #content { border: 1px dashed #555; padding: 1rem; min-height: 100px; }
+  </style>
+</head>
+<body>
+  <h1>Mock Preview</h1>
+  <div id="content">Waiting for content...</div>
+  <script>
+    console.log('mock preview ready');
+    window.addEventListener('message', (event) => {
+      // For security, you might check event.origin in a real app
+      const data = event.data;
+      if (data.type === 'preview-patch') {
+        console.log('preview patched', data.payload);
+        document.getElementById('content').innerHTML = `<strong>Patched:</strong><br>${JSON.stringify(data.payload, null, 2)}`;
+
+        // Send acknowledgement back to the parent
+        event.source.postMessage({ type: 'preview-ack', status: 'received' }, event.origin);
+      }
+    });
+  </script>
+</body>
+</html>

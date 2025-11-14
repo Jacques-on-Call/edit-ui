@@ -264,14 +264,50 @@ const handleMove = async (file, destinationPath) => {
 };
 
 const handleOpen = (fileToOpen) => {
-const file = fileToOpen || selectedFile;
-if (!file) return;
+  const file = fileToOpen || selectedFile;
+  if (!file) return;
 
-if (file.type === 'dir') {
-setPath(file.path);
-} else {
-console.log(`Navigating to editor for: ${file.path}`);
-}
+  if (file.type === 'dir') {
+    setPath(file.path);
+  } else {
+    // robust navigation with logs
+    const slug = (file.name || file.path || '').replace(/\.[^/.]+$/, '');
+    const target = `/editor/${encodeURIComponent(slug)}`;
+
+    console.log(`[FileExplorer] navigate attempt -> ${file.path} -> slug: ${slug} -> target: ${target}`);
+
+    try {
+      console.log('[FileExplorer] trying preact-router route()');
+      route(target);
+    } catch (err) {
+      console.warn('[FileExplorer] route() threw an error:', err);
+    }
+
+    const normalizedPathname = decodeURI(window.location.pathname || '');
+    const expectedPathname = decodeURI(new URL(target, window.location.origin).pathname);
+
+    if (normalizedPathname !== expectedPathname) {
+      console.warn('[FileExplorer] route() did not change location. Trying history.pushState + popstate fallback.');
+      try {
+        window.history.pushState({}, '', target);
+        window.dispatchEvent(new Event('popstate'));
+        setTimeout(() => {
+          const nowPath = decodeURI(window.location.pathname || '');
+          if (nowPath === expectedPathname) {
+            console.log('[FileExplorer] navigation succeeded via pushState + popstate.');
+          } else {
+            console.error('[FileExplorer] pushState fallback did not work; falling back to full reload.');
+            window.location.href = target;
+          }
+        }, 50);
+      } catch (err) {
+        console.error('[FileExplorer] pushState fallback threw:', err, '- attempting full reload.');
+        window.location.href = target;
+      }
+    } else {
+      console.log('[FileExplorer] route() appears to have succeeded (location updated).');
+    }
+  }
 };
 
 const handleGoHome = () => setPath('src/pages');
