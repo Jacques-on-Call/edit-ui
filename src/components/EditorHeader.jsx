@@ -7,7 +7,7 @@ export default function EditorHeader({ title, onPublish, isSaving, activeTab, on
     <header className="editor-header">
       <div className="left">
         <button className="btn-plain" onClick={() => { console.log('[EditorHeader] back clicked'); window.history.back(); }}>Back</button>
-        <h2 className="page-title">{title}</h2>
+        {!isMobile && <h2 className="page-title">{title}</h2>}
       </div>
 
       <div className="center">
@@ -18,6 +18,7 @@ export default function EditorHeader({ title, onPublish, isSaving, activeTab, on
       </div>
 
       <div className="right">
+        {isMobile && <h2 className="page-title-mobile">{title}</h2>}
         {/* Mobile: compact toggles for drawers */}
         {isMobile && (
           <>

@@ -17,7 +17,8 @@ const AppContent = () => {
   const { headerContent, searchQuery, setSearchQuery } = useHeader();
   const [router] = useRouter();
 
-  console.log(`[App.jsx] searchQuery from context: "${searchQuery}"`);
+  console.log(`[App.jsx] render - searchQuery: "${searchQuery}"`);
+  console.trace('[App.jsx] render trace');
 
   const isLoginPage = !isAuthenticated && router.url === '/';
   const isExplorerLayout = router.url.startsWith('/explorer');

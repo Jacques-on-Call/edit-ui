@@ -36,8 +36,14 @@ export default function ContentEditorPage(props) {
     if (typeof window === 'undefined' || !window.matchMedia) return;
     const mq = window.matchMedia('(max-width:640px)');
     const onChange = (e) => {
-      setIsMobile(e.matches);
-      console.log('[ContentEditor] isMobile changed ->', e.matches);
+      const newVal = !!e.matches;
+      if (newVal !== isMobile) {
+        setIsMobile(newVal);
+        console.log('[ContentEditor] isMobile changed ->', newVal);
+      } else {
+        // avoid setState if no change
+        console.log('[ContentEditor] isMobile change event ignored (no change).');
+      }
     };
     // use addEventListener for newer browsers, fallback to addListener
     if (mq.addEventListener) mq.addEventListener('change', onChange);
@@ -121,7 +127,12 @@ export default function ContentEditorPage(props) {
   }
 
   function handleEditorInput(e) {
-    setContent(e.currentTarget.innerHTML);
+    const val = e.currentTarget.innerHTML;
+    if (val !== content) {
+      setContent(val);
+    } else {
+      console.log('[ContentEditor] editor input ignored (same content)');
+    }
   }
 
   function handleSelectBlock(id) {
@@ -148,6 +159,13 @@ export default function ContentEditorPage(props) {
     setLeftOpen(false);
     setRightOpen(false);
   }, [pageId]);
+
+  useEffect(() => {
+    console.log('[ContentEditor] mounted');
+    return () => {
+      console.log('[ContentEditor] unmounted');
+    };
+  }, []);
 
   return (
     <div className="editor-shell">

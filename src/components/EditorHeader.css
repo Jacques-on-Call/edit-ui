@@ -25,6 +25,7 @@
 
 /* compact on mobile */
 @media(max-width:640px) {
-  .editor-header .page-title { font-size:1rem; }
+  .editor-header .page-title { display:none; }
+  .editor-header .page-title-mobile { font-size: 1rem; font-weight: 600; color: #e6f0ff; position: absolute; left: 50%; transform: translateX(-50%); }
   .tabs { display:none; } /* hide tabs in header to save space; use compact UI instead */
 }

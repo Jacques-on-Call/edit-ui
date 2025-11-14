@@ -4,35 +4,55 @@ This document serves as a debug diary for the `easy-seo` project. It records com
 
 ---
 
-## **Workaround: Robust Navigation Fallback for `preact-router`**
+## **Bug: Excessive Re-Renders Causing Performance Issues**
 
 **Date:** 2025-11-14
 **Agent:** Jules #164
 
 ### **Symptoms:**
 
-In some development environments, particularly when multiple instances of Preact or its context providers might be bundled, `preact-router`'s `route()` function can fail silently. It executes without throwing an error, but `window.location.pathname` does not update, leaving the user on the original page. This can break critical user flows, like navigating from the File Explorer to the Content Editor.
+The application was experiencing performance issues, particularly in the `ContentEditorPage`, manifesting as a "looping" console output and potential UI jitter. Logs from `App.jsx` and `EditorHeader.jsx` were appearing repeatedly, indicating that the entire component tree was re-rendering frequently and unnecessarily.
 
 ### **Root Cause:**
 
-This is often a symptom of a misconfigured build or a dependency issue, where a component calling `route()` is pulling from a different instance of the router context than the one rendering the `<Router>` component. This can happen with duplicate `preact` versions in `node_modules` or incorrect aliasing in `vite.config.js`.
+The root cause was a series of redundant `setState` calls in the `ContentEditorPage` component that were being triggered by various events, even when the state value had not actually changed.
 
-### **Solution (Workaround):**
+1.  **`window.matchMedia` Listener:** The `useEffect` hook that listened for changes to the viewport size was calling `setIsMobile(e.matches)` on every `change` event, regardless of whether the `matches` boolean was different from the current state.
+2.  **`onInput` Handler:** The `handleEditorInput` function was calling `setContent(e.currentTarget.innerHTML)` on every `input` event from the `contentEditable` div, even if the user's action (e.g., pressing an arrow key) did not change the inner HTML.
 
-Since diagnosing the root cause of duplicate dependencies can be time-consuming, a robust, multi-stage fallback was implemented directly into the navigation logic in `FileExplorer.jsx` to ensure navigation *always* completes.
+Each of these unnecessary `setState` calls would trigger a full re-render of the `ContentEditorPage` and its children, leading to the observed performance degradation and console spam.
 
-The logic follows these steps:
-1.  **Attempt `route()`:** The primary method is to call `preact-router`'s `route(target)` function. This is the cleanest and preferred method.
-2.  **Verify Location Change:** After calling `route()`, the code immediately compares the current `window.location.pathname` with the expected target pathname.
-3.  **Fallback to `history.pushState`:** If the pathname has not changed, it indicates `route()` failed. The code then falls back to using `window.history.pushState({}, '', target)` to manually change the URL in the browser's history, followed by `window.dispatchEvent(new Event('popstate'))`. This mimics a native browser navigation event and is often sufficient to get the router to pick up the change. A `setTimeout` is used to re-verify the URL after a short delay.
-4.  **Final Resort: Full Reload:** If the `pushState` method also fails to update the location, the code falls back to the last resort: `window.location.href = target`. This forces a full page reload, which is a heavier user experience but guarantees the user gets to the correct page.
+### **Solution:**
 
-This entire process is instrumented with detailed console logs (`[FileExplorer] trying preact-router route()`, `[FileExplorer] route() did not change location...`, etc.) to make it clear which navigation method was successful.
+The fix was to introduce "state guards" to prevent `setState` from being called if the new value is the same as the current value.
 
-### **TODO:**
-The root cause of the silent `route()` failure should be investigated in the future. Check for duplicate Preact dependencies using `npm ls preact` and ensure `vite.config.js` has the correct `resolve.alias` settings. Once the root cause is fixed, this robust fallback can be simplified.
+1.  **Guarded `matchMedia` Listener:** The `onChange` handler was updated to compare the incoming `e.matches` value with the current `isMobile` state before calling `setIsMobile`.
+
+    ```javascript
+    const onChange = (e) => {
+      const newVal = !!e.matches;
+      if (newVal !== isMobile) {
+        setIsMobile(newVal);
+        console.log('[ContentEditor] isMobile changed ->', newVal);
+      }
+    };
+    ```
+
+2.  **Guarded Input Handler:** The `handleEditorInput` function was updated to compare the current `innerHTML` of the editor with the current `content` state before calling `setContent`.
+
+    ```javascript
+    function handleEditorInput(e) {
+      const val = e.currentTarget.innerHTML;
+      if (val !== content) {
+        setContent(val);
+      }
+    }
+    ```
+
+Additionally, `console.trace()` was added to key locations (`App.jsx` render, `useAutosave` hook) to make it easier to diagnose the call stack and identify the trigger for future performance issues.
 
 ---
+
 ## **Bug: Missing gh_session Token Causes Authentication Failures**
 
 **Date:** 2025-11-09

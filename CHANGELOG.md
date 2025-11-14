@@ -1,5 +1,16 @@
 # Project Change Log
 
+Jules #164 (Stabilization & Mobile Polish)
+Date: 2025-11-14
+Summary:
+Stabilized the Content Editor by eliminating a re-render loop and further optimized the mobile layout for a more focused, full-screen editing experience.
+Details:
+- **Performance:** Implemented state guards on `window.matchMedia` listeners and editor input handlers to prevent redundant `setState` calls, which were causing the component tree to re-render excessively.
+- **Diagnostics:** Added `console.trace` logs to the `AppContent` component and the `useAutosave` hook to help diagnose the sources of re-renders and save triggers.
+- **Mobile Layout:** Hid the central tab navigation (`Content`/`Visual`) in the `EditorHeader` on mobile viewports, maximizing vertical space for the content area.
+- **Compact Header:** Refined the mobile `EditorHeader` to be more compact by conditionally rendering a centered, smaller page title.
+Impact: The Content Editor is now more performant and stable, with a cleaner and more immersive workspace on mobile devices.
+
 Jules #164 (Mobile-First Patch)
 Date: 2025-11-14
 Summary:

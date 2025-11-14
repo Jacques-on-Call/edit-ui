@@ -13,6 +13,7 @@ export default function useAutosave({ onSave, delay = 1500, debugLabel = 'autosa
       console.log(`[${debugLabel}] scheduleSave - reset timer`);
     } else {
       console.log(`[${debugLabel}] scheduleSave - start timer`);
+      console.trace(`[${debugLabel}] scheduleSave trace`);
     }
 
     timeoutRef.current = setTimeout(async () => {
