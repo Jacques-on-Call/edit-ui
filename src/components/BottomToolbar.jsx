@@ -7,11 +7,11 @@ export function BottomToolbar() {
 
   return (
     <footer
-      className="fixed bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black to-midnight-blue border-t border-blue-400/50 shadow-2xl z-20"
+      className="fixed bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/30 to-midnight-blue/20 border-t border-white/10 shadow-2xl z-20"
       style={{
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        backgroundColor: 'rgba(0, 0, 10, 0.7)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        backgroundColor: 'rgba(0, 0, 10, 0.4)',
       }}
     >
       <div className="flex items-center justify-around h-full px-4 max-w-screen-xl mx-auto">

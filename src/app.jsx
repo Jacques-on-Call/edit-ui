@@ -1,6 +1,7 @@
 // easy-seo/src/app.jsx
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { HeaderProvider, useHeader } from './contexts/HeaderContext';
+import { UIProvider } from './contexts/UIContext';
 import { theme } from './themes/theme';
 import { Router, useRouter } from 'preact-router';
 import { LoginPage } from './pages/LoginPage';
@@ -8,6 +9,7 @@ import { RepoSelectPage } from './pages/RepoSelectPage';
 import { FileExplorerPage } from './pages/FileExplorerPage';
 import { CallbackPage } from './pages/CallbackPage';
 import AuthDebugMonitor from './components/AuthDebugMonitor';
+import { BottomToolbar } from './components/BottomToolbar';
 
 import SearchBar from './components/SearchBar';
 import ContentEditorPage from './pages/ContentEditorPage'; // <-- new import
@@ -21,6 +23,7 @@ const AppContent = () => {
 
   const isLoginPage = !isAuthenticated && router.url === '/';
   const showSearchBar = router.url.startsWith('/explorer') || router.url.startsWith('/editor');
+  const showBottomToolbar = router.url.startsWith('/explorer');
 
   return (
     <div
@@ -57,6 +60,7 @@ const AppContent = () => {
         )}
       </main>
 
+      {showBottomToolbar && <BottomToolbar />}
       {import.meta.env.DEV && <AuthDebugMonitor />}
     </div>
   );
@@ -66,7 +70,9 @@ export function App() {
   return (
     <AuthProvider>
       <HeaderProvider>
-        <AppContent />
+        <UIProvider>
+          <AppContent />
+        </UIProvider>
       </HeaderProvider>
     </AuthProvider>
   );

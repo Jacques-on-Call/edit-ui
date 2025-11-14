@@ -20,9 +20,8 @@ import './LiquidGlassButton.css';
 
 function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTrigger }) {
   const { fileManifest } = useFileManifest(repo);
-  const { currentPath: path, navigateToPath } = useUI();
+  const { currentPath, navigateToPath } = useUI();
   const [files, setFiles] = useState([]);
-  const [path, setPath] = useState('src/pages');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -36,9 +35,9 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
   // Notify parent of path changes
   useEffect(() => {
     if (onPathChange) {
-      onPathChange(path);
+      onPathChange(currentPath);
     }
-  }, [path, onPathChange]);
+  }, [currentPath, onPathChange]);
 
   const handleLongPress = (file, event) => {
     event.preventDefault();
@@ -94,7 +93,7 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
     setError(null);
 
     try {
-      let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`);
+      let data = await fetchJson(`/api/files?repo=${repo}&path=${currentPath}`);
 
       const sortedData = data.sort((a, b) => {
         if (a.type === 'dir' && b.type !== 'dir') return -1;
@@ -128,7 +127,7 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
     } finally {
       setLoading(false);
     }
-  }, [repo, path, fetchDetailsForFile]);
+  }, [repo, currentPath, fetchDetailsForFile]);
 
   useEffect(() => {
     fetchFiles();
@@ -276,7 +275,7 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
   <button
                 className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg text-white/80 hover:bg-white/10 transition-colors disabled:opacity-40"
   onClick={handleGoHome}
-  disabled={path === 'src/pages'}
+  disabled={currentPath === 'src/pages'}
   title="Go to root directory"
   >
   <Icon name="Home" className="w-5 h-5" />
