@@ -8,7 +8,6 @@ This document lists all significant files in the `easy-seo` project, along with 
 
 -   **`src/app.jsx`**: The main application component. Handles routing and global layout.
 -   **`src/contexts/AuthContext.jsx`**: Manages global authentication state.
--   **`src/contexts/UIContext.jsx`**: Manages UI state including modal visibility and file explorer navigation (current path, navigation functions).
 -   **`src/pages/LoginPage.jsx`**: The user login page.
 -   **`src/pages/RepoSelectPage.jsx`**: The repository selection page.
 -   **`src/pages/FileExplorerPage.jsx`**: The main file explorer page.
@@ -19,9 +18,8 @@ This document lists all significant files in the `easy-seo` project, along with 
 
 ### **Components**
 
--   **`src/components/FileExplorer.jsx`**: The core file explorer component. Displays files and folders with metadata, search results, and README content. Uses UIContext for navigation state.
+-   **`src/components/FileExplorer.jsx`**: The core file explorer component. Displays files and folders with metadata, search results, and README content.
 -   **`src/components/FileTile.jsx`**: Renders a single file or folder tile with icon, name, and last-edited metadata. Handles click, long-press, and right-click interactions.
--   **`src/components/BottomToolbar.jsx`**: Fixed bottom navigation bar with Home, Create (center), and Back buttons. Uses UIContext for file tree navigation.
 -   **`src/components/ReadmeDisplay.jsx`**: Renders the README.md file.
 -   **`src/components/Icon.jsx`**: A wrapper for the lucide-preact icon library.
 -   **`src/components/ContextMenu.jsx`**: Renders a right-click/long-press context menu with configurable options (Open, Delete, etc.).

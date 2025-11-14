@@ -1,9 +1,10 @@
+import { route } from 'preact-router';
 import { Home, ArrowLeft, Plus } from 'lucide-preact';
 import LiquidGlassButton from './LiquidGlassButton';
 import { useUI } from '../contexts/UIContext';
 
 export function BottomToolbar() {
-  const { setCreateOpen, navigateHome, navigateBack } = useUI();
+  const { setCreateOpen } = useUI();
 
   return (
     <footer
@@ -16,9 +17,9 @@ export function BottomToolbar() {
     >
       <div className="flex items-center justify-around h-full px-4 max-w-screen-xl mx-auto">
         <button
-          onClick={navigateHome}
+          onClick={() => route('/explorer')}
           className="p-3 text-white transition-transform duration-150 ease-in-out rounded-full hover:bg-white/10 active:scale-90"
-          aria-label="Go to home folder (src/pages)"
+          aria-label="Go home"
         >
           <Home size={24} />
         </button>
@@ -28,9 +29,9 @@ export function BottomToolbar() {
         </LiquidGlassButton>
 
         <button
-          onClick={navigateBack}
+          onClick={() => window.history.back()}
           className="p-3 text-white transition-transform duration-150 ease-in-out rounded-full hover:bg-white/10 active:scale-90"
-          aria-label="Go back one folder"
+          aria-label="Go back"
         >
           <ArrowLeft size={24} />
         </button>
