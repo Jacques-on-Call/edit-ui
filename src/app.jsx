@@ -22,12 +22,18 @@ const AppContent = () => {
 
   const isLoginPage = !isAuthenticated && router.url === '/';
   const isExplorerLayout = router.url.startsWith('/explorer');
+  const isEditorLayout = router.url.startsWith('/editor');
 
-  const mainLayoutClasses = isExplorerLayout
+  // Editor needs a full-bleed layout, explorer is flex-col, others are padded
+  const mainLayoutClasses = isEditorLayout
+    ? 'h-screen text-text'
+    : isExplorerLayout
     ? 'relative h-screen flex flex-col text-text overflow-hidden'
     : 'relative min-h-screen text-text';
 
-  const mainContentClasses = isExplorerLayout
+  const mainContentClasses = isEditorLayout
+    ? 'h-full'
+    : isExplorerLayout
     ? 'relative z-10 flex-grow overflow-y-auto'
     : `relative z-10 ${isLoginPage ? '' : 'p-6 md:p-10'}`;
 
@@ -39,9 +45,12 @@ const AppContent = () => {
         <div className="orb orb-white orb-3"></div>
       </div>
 
-      <header className={isExplorerLayout ? 'relative z-10 flex-shrink-0 p-6 md:p-10 flex justify-between items-center h-24' : 'flex justify-between items-center pb-8 h-16'}>
-        {isExplorerLayout ? <SearchBar onSearch={setSearchQuery} /> : headerContent}
-      </header>
+      {/* Hide global header on editor page; it has its own */}
+      {!isEditorLayout && (
+        <header className={isExplorerLayout ? 'relative z-10 flex-shrink-0 p-6 md:p-10 flex justify-between items-center h-24' : 'flex justify-between items-center pb-8 h-16'}>
+          {isExplorerLayout ? <SearchBar onSearch={setSearchQuery} /> : headerContent}
+        </header>
+      )}
 
       <main className={mainContentClasses}>
         {isLoading ? (

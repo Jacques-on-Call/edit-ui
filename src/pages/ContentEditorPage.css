@@ -1,57 +1,10 @@
-:root {
-  --header-h: 64px;
-  --bottom-bar-height: 64px;
-  --panel-bg: rgba(6,12,25,0.85);
-}
-
-/* Shell */
-.editor-shell {
-  min-height: 100vh;
-  display:flex;
-  flex-direction:column;
-}
-
-/* Body: mobile-first single column */
-.editor-body {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  align-items: start;
-}
-
-/* Main pane - mobile-focused adjustments */
-.main-pane {
-  padding: 12px;
+.editor-area {
+  height: 100vh;
+  width: 100vw;
+  padding: 24px;
   box-sizing: border-box;
-  overflow: auto;
-  /* reserve 90vh for the main content area on mobile, subtract header + bottom bar */
-  min-height: calc(90vh - var(--header-h) - var(--bottom-bar-height) - 8px);
-  width: 100%;
-}
-
-/* Editor area: aim for ~90% viewport height on mobile */
-.content-editor .editor-area {
-  background: rgba(2,6,15,0.6);
-  padding: 18px;
-  border-radius: 10px;
-  min-height: calc(90vh - var(--header-h) - var(--bottom-bar-height) - 64px);
+  overflow-y: auto;
   color: #cfe1ff;
   outline: none;
-  width: 100%;
+  background: #02060f;
 }
-
-/* Hide side panes by default on small screens */
-.left-pane, .right-pane {
-  display: none !important;
-}
-
-/* Drawers & overlays remain available in later sprints */
-
-/* Make sure main pane accounts for safe area at bottom (iOS) */
-.main-pane,
-.content-editor .editor-area {
-  padding-bottom: calc(var(--bottom-bar-height,64px) + env(safe-area-inset-bottom));
-}
-
-/* Minor text and spacing adjustments for mobile */
-.editor-instructions { font-size: 14px; margin-bottom: 8px; color: #cfe1ff; }
