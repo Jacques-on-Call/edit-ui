@@ -1,4 +1,4 @@
-// Mock API for Sprint1+3 (defensive)
+// Defensive mock API - includes saveDraft and publishPage
 export function fetchPageJson(slug = 'home') {
   console.log('[mockApi] fetchPageJson called for', slug);
   const fixture = {
@@ -36,9 +36,7 @@ export async function saveDraft({ slug = 'home', content = '', meta = {} } = {})
 }
 
 /**
- * publishPage({slug, content, meta})
- * - Safe mock: writes a published snapshot to localStorage under easy-seo:published:<slug>
- * - Simulates latency and returns { ok, key, url, error }
+ * publishPage - mock publish stored in localStorage
  */
 export async function publishPage({ slug = 'home', content = '', meta = {} } = {}) {
   console.log('[mockApi] publishPage called for', slug, 'payload length', (content || '').length);
@@ -51,11 +49,7 @@ export async function publishPage({ slug = 'home', content = '', meta = {} } = {
       console.error('[mockApi] localStorage.setItem failed (publish):', storageErr && storageErr.message ? storageErr.message : storageErr);
       return { ok: false, error: `localStorage error: ${storageErr && storageErr.message ? storageErr.message : String(storageErr)}` };
     }
-
-    // simulate async publish latency
     await new Promise((res) => setTimeout(res, 350));
-
-    // Return a fake preview URL served from public preview for now
     const url = `/preview/mock-preview.html?published=${encodeURIComponent(slug)}&ts=${Date.now()}`;
     console.log('[mockApi] publishPage resolved, url=', url);
     return { ok: true, key, url };
