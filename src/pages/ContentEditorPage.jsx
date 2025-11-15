@@ -1,6 +1,7 @@
 import { h } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { fetchPageJson } from '../lib/mockApi';
+import BottomActionBar from '../components/BottomActionBar';
 import './ContentEditorPage.css';
 
 export default function ContentEditorPage(props) {
@@ -27,15 +28,18 @@ export default function ContentEditorPage(props) {
   }
 
   return (
-    <div
-      className="editor-area"
-      contentEditable
-      onInput={handleEditorInput}
-      dangerouslySetInnerHTML={{ __html: content }}
-      role="textbox"
-      aria-multiline="true"
-      suppressContentEditableWarning
-      onFocus={() => console.log('[ContentEditor] editor focus')}
-    />
+    <div className="editor-container">
+      <div
+        className="editor-area"
+        contentEditable
+        onInput={handleEditorInput}
+        dangerouslySetInnerHTML={{ __html: content }}
+        role="textbox"
+        aria-multiline="true"
+        suppressContentEditableWarning
+        onFocus={() => console.log('[ContentEditor] editor focus')}
+      />
+      <BottomActionBar />
+    </div>
   );
 }
