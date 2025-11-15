@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useEffect, useState, useRef } from 'preact/hooks';
+import { useEffect, useState, useRef, useCallback } from 'preact/hooks';
 import { route } from 'preact-router';
 import { fetchPageJson } from '../lib/mockApi';
 import useAutosave from '../hooks/useAutosave';
@@ -11,12 +11,14 @@ export default function ContentEditorPage(props) {
   const [content, setContent] = useState('');
   const editorRef = useRef(null);
   const [saveStatus, setSaveStatus] = useState('saved'); // saved, unsaved, saving
+  const initialLoad = useRef(true);
 
-  const { triggerSave } = useAutosave((newContent) => {
+  // 1. Wrap the autosave callback in useCallback to ensure it always has the correct pageId.
+  const autosaveCallback = useCallback((newContent) => {
     setSaveStatus('saving');
     console.log('[ContentEditor] Autosaving content to local storage...');
     try {
-      const key = `easy-seo-draft:${props.pageId || 'home'}`;
+      const key = `easy-seo-draft:${pageId}`;
       const payload = {
         content: newContent,
         timestamp: new Date().toISOString(),
@@ -29,10 +31,13 @@ export default function ContentEditorPage(props) {
       console.error('[ContentEditor] Failed to autosave content to local storage:', error);
       setSaveStatus('unsaved');
     }
-  }, 1000);
+  }, [pageId]);
 
+  const { triggerSave } = useAutosave(autosaveCallback, 1000);
+
+  // Effect for loading initial content
   useEffect(() => {
-    let isFirstRender = true;
+    initialLoad.current = true; // Reset guard on page change
     console.log('[ContentEditor] Loading page:', pageId);
 
     const draftKey = `easy-seo-draft:${pageId}`;
@@ -57,17 +62,23 @@ export default function ContentEditorPage(props) {
         }
       });
     }
-
-    return () => { isFirstRender = false; };
   }, [pageId]);
 
+  // 2. A new useEffect watches for content changes to trigger autosave.
+  // 3. A guard prevents it from running on the initial content load.
+  useEffect(() => {
+    if (initialLoad.current) {
+      initialLoad.current = false;
+      return;
+    }
+    setSaveStatus('unsaved');
+    triggerSave(content);
+  }, [content, triggerSave]);
+
+  // Decoupled input handler
   function handleEditorInput(e) {
     const newContent = e.currentTarget.innerHTML;
-    if (newContent !== content) {
-      setContent(newContent);
-      setSaveStatus('unsaved');
-      triggerSave(newContent);
-    }
+    setContent(newContent);
   }
 
   const handleHome = () => {
