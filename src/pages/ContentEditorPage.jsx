@@ -14,6 +14,7 @@ export default function ContentEditorPage(props) {
   const [content, setContent] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   const mounted = useRef(true);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   useEffect(() => {
     mounted.current = true;
@@ -87,6 +88,84 @@ export default function ContentEditorPage(props) {
     if (val === content) return;
     setContent(val);
   }
+
+  function handleSelectBlock(id) {
+    console.log('[ContentEditor] selected block:', id);
+    setSelectedBlockId(id);
+    if (isMobile) {
+      setRightOpen(true);
+      console.log('[ContentEditor] rightDrawerOpen -> true (auto open on select)');
+    }
+  }
+
+  // Toggle to control whether publish should open preview automatically.
+  // Keep this false during mobile-only local-save testing.
+  const OPEN_PREVIEW_ON_PUBLISH = false;
+
+  async function handlePublish() {
+    console.log('[ContentEditor] handlePublish triggered');
+    if (!pageJson) {
+      console.warn('[ContentEditor] publish aborted: no pageJson loaded');
+      return;
+    }
+
+    const slug = pageJson.meta?.slug || pageId;
+    const payload = { slug, content, meta: pageJson.meta || {} };
+
+    try {
+      console.log('[ContentEditor] publish start - ensuring draft saved');
+      setIsPublishing(true);
+
+      // Persist current content to draft first
+      const saveRes = await saveDraft(payload);
+      console.log('[ContentEditor] saveDraft result:', saveRes);
+      if (!saveRes || !saveRes.ok) {
+        console.error('[ContentEditor] publish aborted: saveDraft error', saveRes);
+        setIsPublishing(false);
+        return;
+      }
+      console.log('[ContentEditor] draft saved, key=', saveRes.key);
+
+      // Perform the local "publish" (writes easy-seo:published:<slug>)
+      console.log('[ContentEditor] calling publishPage for', slug);
+      const publishRes = await publishPage(payload);
+      console.log('[ContentEditor] publishPage result:', publishRes);
+      if (!publishRes || !publishRes.ok) {
+        console.error('[ContentEditor] publish failed:', publishRes);
+        setIsPublishing(false);
+        return;
+      }
+
+      console.log('[ContentEditor] publish success, url=', publishRes.url);
+
+      // IMPORTANT: do not open preview automatically during this sprint.
+      if (OPEN_PREVIEW_ON_PUBLISH) {
+        try {
+          window.open(publishRes.url, '_blank');
+        } catch (err) {
+          console.warn('[ContentEditor] could not open preview tab (popup blocked?)', err);
+        }
+      } else {
+        console.log('[ContentEditor] preview open suppressed (mobile-only save test mode)');
+      }
+
+      setIsPublishing(false);
+    } catch (err) {
+      console.error('[ContentEditor] unexpected publish error:', err);
+      setIsPublishing(false);
+    }
+  }
+
+  function handleAdd() {
+    console.log('[ContentEditor] Add requested (stub)');
+    alert('Add modal (stub). This will be implemented in Sprint 2+.');
+  }
+
+  // close drawers when page changes
+  useEffect(() => {
+    setLeftOpen(false);
+    setRightOpen(false);
+  }, [pageId]);
 
   return (
     <div className="editor-shell">
