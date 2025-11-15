@@ -2,7 +2,7 @@ import { h } from 'preact';
 import { useEffect, useState, useRef } from 'preact/hooks';
 import { route } from 'preact-router';
 import { fetchPageJson } from '../lib/mockApi';
-import { ChevronLeft, Home, Plus, UploadCloud } from 'lucide-preact';
+import { Home, Plus, UploadCloud } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
   const pageId = props.pageId || 'home';
@@ -25,11 +25,12 @@ export default function ContentEditorPage(props) {
 
   function handleEditorInput(e) {
     const newContent = e.currentTarget.innerHTML;
-    console.log(`[ContentEditor] content changed, length: ${newContent.length}`);
-    setContent(newContent);
+    if (newContent !== content) {
+      console.log(`[ContentEditor] content changed, length: ${newContent.length}`);
+      setContent(newContent);
+    }
   }
 
-  const handleBack = () => route('/explorer');
   const handleHome = () => {
     console.log('[BottomBar] Home clicked');
     route('/explorer');
@@ -39,13 +40,8 @@ export default function ContentEditorPage(props) {
 
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">
-      {/* Minimal Top Header */}
-      <header class="flex items-center p-2 border-b border-gray-700 flex-shrink-0">
-        <button onClick={handleBack} class="p-2">
-          <ChevronLeft size={24} />
-        </button>
-        <h1 class="text-lg font-semibold ml-2">{pageJson?.meta?.title || 'Untitled'}</h1>
-      </header>
+      {/* Global Header Shell */}
+      <header class="flex items-center p-2 border-b border-gray-700 flex-shrink-0 h-14"></header>
 
       {/* Editable Area */}
       <main
