@@ -11,6 +11,7 @@ export default function ContentEditorPage(props) {
   const [content, setContent] = useState('');
   const editorRef = useRef(null);
   const [saveStatus, setSaveStatus] = useState('saved'); // saved, unsaved, saving
+  const isInitialLoad = useRef(true);
 
   const { triggerSave } = useAutosave((newContent) => {
     setSaveStatus('saving');
@@ -64,6 +65,10 @@ export default function ContentEditorPage(props) {
     const newContent = e.currentTarget.innerHTML;
     if (newContent !== content) {
       setContent(newContent);
+      if (isInitialLoad.current) {
+        isInitialLoad.current = false;
+        return;
+      }
       setSaveStatus('unsaved');
       triggerSave(newContent);
     }
@@ -113,9 +118,15 @@ export default function ContentEditorPage(props) {
 
       {/* Bottom Action Bar */}
       <footer class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 flex justify-around items-center p-2 pb-[calc(0.5rem_+_env(safe-area-inset-bottom))]">
+        <button onClick={handleHome} class="p-2">
+          <Home size={24} />
+        </button>
+        <button onClick={handleAdd} class="p-2">
+          <Plus size={24} />
+        </button>
         <div class="flex items-center">
-          <button onClick={handleHome} class="p-2">
-            <Home size={24} />
+          <button onClick={handlePublish} class="p-2">
+            <UploadCloud size={24} />
           </button>
           <div
             class={`w-3 h-3 rounded-full ml-2 ${
@@ -135,12 +146,6 @@ export default function ContentEditorPage(props) {
             }}
           ></div>
         </div>
-        <button onClick={handleAdd} class="p-2">
-          <Plus size={24} />
-        </button>
-        <button onClick={handlePublish} class="p-2">
-          <UploadCloud size={24} />
-        </button>
       </footer>
     </div>
   );
