@@ -62,9 +62,11 @@ export default function ContentEditorPage(props) {
 
   function handleEditorInput(e) {
     const newContent = e.currentTarget.innerHTML;
-    setContent(newContent);
-    setSaveStatus('unsaved');
-    triggerSave(newContent);
+    if (newContent !== content) {
+      setContent(newContent);
+      setSaveStatus('unsaved');
+      triggerSave(newContent);
+    }
   }
 
   const handleHome = () => {
