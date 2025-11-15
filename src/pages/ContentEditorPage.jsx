@@ -11,13 +11,12 @@ export default function ContentEditorPage(props) {
   const [content, setContent] = useState('');
   const editorRef = useRef(null);
   const [saveStatus, setSaveStatus] = useState('saved'); // saved, unsaved, saving
-  const isInitialLoad = useRef(true);
 
   const { triggerSave } = useAutosave((newContent) => {
     setSaveStatus('saving');
     console.log('[ContentEditor] Autosaving content to local storage...');
     try {
-      const key = `easy-seo-draft:${pageId}`;
+      const key = `easy-seo-draft:${props.pageId || 'home'}`;
       const payload = {
         content: newContent,
         timestamp: new Date().toISOString(),
@@ -33,6 +32,7 @@ export default function ContentEditorPage(props) {
   }, 1000);
 
   useEffect(() => {
+    let isFirstRender = true;
     console.log('[ContentEditor] Loading page:', pageId);
 
     const draftKey = `easy-seo-draft:${pageId}`;
@@ -45,8 +45,6 @@ export default function ContentEditorPage(props) {
       if (editorRef.current) {
         editorRef.current.innerHTML = draft.content;
       }
-      // We don't need to fetch the original page JSON if we have a draft.
-      // Set a minimal pageJson object to avoid breaking other parts of the component.
       setPageJson({ meta: { title: 'Draft' } });
     } else {
       fetchPageJson(pageId).then((pj) => {
@@ -59,16 +57,14 @@ export default function ContentEditorPage(props) {
         }
       });
     }
+
+    return () => { isFirstRender = false; };
   }, [pageId]);
 
   function handleEditorInput(e) {
     const newContent = e.currentTarget.innerHTML;
     if (newContent !== content) {
       setContent(newContent);
-      if (isInitialLoad.current) {
-        isInitialLoad.current = false;
-        return;
-      }
       setSaveStatus('unsaved');
       triggerSave(newContent);
     }
