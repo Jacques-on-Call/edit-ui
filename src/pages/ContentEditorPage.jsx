@@ -98,6 +98,8 @@ export default function ContentEditorPage(props) {
     }
   }
 
+  const [isPublishing, setIsPublishing] = useState(false);
+
   // Toggle to control whether publish should open preview automatically.
   // Keep this false during mobile-only local-save testing.
   const OPEN_PREVIEW_ON_PUBLISH = false;
@@ -169,7 +171,17 @@ export default function ContentEditorPage(props) {
 
   return (
     <div className="editor-shell">
-      <EditorHeader title={pageJson?.meta?.title || 'Untitled Page'} onPublish={handlePublish} isSaving={isSaving || isPublishing} isMobile={true} />
+      <EditorHeader
+        title={pageJson?.meta?.title || 'Untitled Page'}
+        onPublish={handlePublish}
+        isSaving={isSaving || isPublishing}
+        activeTab={activeTab}
+        onTabSwitch={handleTabSwitch}
+        onToggleBlocks={toggleLeft}
+        onToggleInspector={toggleRight}
+        isMobile={isMobile}
+      />
+
       <div className="editor-body">
         <main className="main-pane">
           <div className="content-editor">
