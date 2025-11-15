@@ -36,7 +36,21 @@ export default function ContentEditorPage(props) {
     route('/explorer');
   };
   const handleAdd = () => console.log('[BottomBar] Add clicked');
-  const handlePublish = () => console.log('[BottomBar] Publish clicked');
+  const handlePublish = () => {
+    console.log('[ContentEditor] handlePublish triggered');
+    try {
+      console.log(`[ContentEditor] Saving content to local storage for page: ${pageId}...`);
+      const key = `easy-seo-draft:${pageId}`;
+      const payload = {
+        content: content,
+        timestamp: new Date().toISOString(),
+      };
+      localStorage.setItem(key, JSON.stringify(payload));
+      console.log(`[ContentEditor] Content successfully saved to local storage with key: ${key}`);
+    } catch (error) {
+      console.error('[ContentEditor] Failed to save content to local storage:', error);
+    }
+  };
 
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">
