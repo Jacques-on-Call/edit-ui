@@ -11,9 +11,7 @@ export default function ContentEditorPage(props) {
   const [content, setContent] = useState('');
   const editorRef = useRef(null);
   const [saveStatus, setSaveStatus] = useState('saved'); // saved, unsaved, saving
-  const initialLoad = useRef(true);
 
-  // 1. Wrap the autosave callback in useCallback to ensure it always has the correct pageId.
   const autosaveCallback = useCallback((newContent) => {
     setSaveStatus('saving');
     console.log('[ContentEditor] Autosaving content to local storage...');
@@ -35,9 +33,7 @@ export default function ContentEditorPage(props) {
 
   const { triggerSave } = useAutosave(autosaveCallback, 1000);
 
-  // Effect for loading initial content
   useEffect(() => {
-    initialLoad.current = true; // Reset guard on page change
     console.log('[ContentEditor] Loading page:', pageId);
 
     const draftKey = `easy-seo-draft:${pageId}`;
@@ -64,21 +60,11 @@ export default function ContentEditorPage(props) {
     }
   }, [pageId]);
 
-  // 2. A new useEffect watches for content changes to trigger autosave.
-  // 3. A guard prevents it from running on the initial content load.
-  useEffect(() => {
-    if (initialLoad.current) {
-      initialLoad.current = false;
-      return;
-    }
-    setSaveStatus('unsaved');
-    triggerSave(content);
-  }, [content, triggerSave]);
-
-  // Decoupled input handler
   function handleEditorInput(e) {
     const newContent = e.currentTarget.innerHTML;
     setContent(newContent);
+    setSaveStatus('unsaved');
+    triggerSave(newContent);
   }
 
   const handleHome = () => {
