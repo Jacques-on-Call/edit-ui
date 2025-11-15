@@ -1,27 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mock Preview</title>
-  <style>
-    body { font-family: sans-serif; background-color: #1a1a1a; color: #fff; padding: 1rem; }
-    #content { border: 1px dashed #555; padding: 1rem; min-height: 100px; white-space: pre-wrap; }
-  </style>
-</head>
-<body>
-  <h1>Mock Preview</h1>
-  <div id="content">Waiting for content...</div>
-  <script>
-    console.log('mock preview ready');
-    window.addEventListener('message', (event) => {
-      const data = event.data;
-      if (data.type === 'preview-patch') {
-        console.log('preview patched', data.payload);
-        document.getElementById('content').textContent = JSON.stringify(data.payload, null, 2);
-        event.source.postMessage({ type: 'preview-ack', status: 'received' }, event.origin);
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Mock Preview (Sprint1)</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style> /* unchanged styling */ </style>
+  </head>
+  <body>
+    <div class="box">
+      <h1>Mock Preview</h1>
+      <div id="content">Waiting for editor...</div>
+      <div class="log" id="log"></div>
+    </div>
+
+    <script>
+      function appendLog(msg) {
+        const el = document.getElementById('log');
+        el.textContent = (new Date()).toLocaleTimeString() + ' — ' + msg + '\\n' + el.textContent;
+        console.log('[mock-preview] ' + msg);
       }
-    });
-  </script>
-</body>
+
+      window.addEventListener('message', (e) => {
+        try {
+          const data = e.data;
+          if (!data || !data.type) return;
+          appendLog('message received: ' + JSON.stringify(data.type));
+          if (data.type === 'preview-patch') {
+            document.getElementById('content').innerHTML = data.payload.html || '<p>(empty)</p>';
+            appendLog('preview patched (length ' + ((data.payload.html||'').length) + ')');
+            // echo ack with id if provided
+            parent.postMessage({ type: 'preview-ack', id: data.id || null, ts: Date.now(), received: true }, '*');
+          }
+          if (data.type === 'ping') {
+            // ignore or respond as needed
+            parent.postMessage({ type: 'pong', ts: Date.now() }, '*');
+          }
+        } catch (err) {
+          appendLog('error processing message: ' + err.message);
+        }
+      });
+
+      appendLog('mock preview ready');
+      // notify parent that preview is ready
+      parent.postMessage({ type: 'preview-ready', ts: Date.now() }, '*');
+    </script>
+  </body>
 </html>

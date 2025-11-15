@@ -1,3 +1,4 @@
+// (Updated ContentEditorPage with preview-ready/ack handling and message id guard)
 import { h } from 'preact';
 import { useEffect, useState, useRef } from 'preact/hooks';
 import EditorHeader from '../components/EditorHeader';
@@ -15,6 +16,11 @@ export default function ContentEditorPage(props) {
   const [selectedBlockId, setSelectedBlockId] = useState(null);
   const iframeRef = useRef(null);
   const mounted = useRef(true);
+
+  // preview control refs
+  const previewReady = useRef(false);
+  const lastSentPreviewId = useRef(null);
+  const lastPreviewAckAt = useRef(0);
 
   useEffect(() => {
     mounted.current = true;
@@ -40,7 +46,6 @@ export default function ContentEditorPage(props) {
     const mq = window.matchMedia('(max-width:640px)');
     const onChange = (e) => {
       const newVal = !!e.matches;
-      // guard: only update when changed
       setIsMobile(prev => {
         if (prev === newVal) {
           console.log('[ContentEditor] isMobile change event ignored (no change).');
@@ -62,20 +67,8 @@ export default function ContentEditorPage(props) {
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
 
-  function toggleLeft() {
-    setLeftOpen(prev => {
-      const v = !prev;
-      console.log('[ContentEditor] leftDrawerOpen ->', v);
-      return v;
-    });
-  }
-  function toggleRight() {
-    setRightOpen(prev => {
-      const v = !prev;
-      console.log('[ContentEditor] rightDrawerOpen ->', v);
-      return v;
-    });
-  }
+  function toggleLeft() { setLeftOpen(prev => { const v = !prev; console.log('[ContentEditor] leftDrawerOpen ->', v); return v; }); }
+  function toggleRight() { setRightOpen(prev => { const v = !prev; console.log('[ContentEditor] rightDrawerOpen ->', v); return v; }); }
 
   // Load page JSON
   useEffect(() => {
@@ -98,25 +91,35 @@ export default function ContentEditorPage(props) {
       try {
         const result = await saveDraft(payload);
         if (!result || !result.ok) {
-          // do not throw — handle gracefully and log
           console.error('[ContentEditor] autosave failed, saveDraft returned an error:', result && result.error ? result.error : result);
           return;
         }
         console.log('[ContentEditor] autosave success, key=', result.key);
-        // only postMessage if iframe is reachable
-        const msg = { type: 'preview-patch', payload: { html: payload.content }, ts: Date.now() };
-        if (iframeRef.current && iframeRef.current.contentWindow) {
-          try {
-            console.log('[ContentEditor] sending postMessage to preview iframe:', msg);
-            iframeRef.current.contentWindow.postMessage(msg, '*');
-          } catch (err) {
-            console.warn('[ContentEditor] postMessage failed (caught):', err && err.message ? err.message : err);
-          }
-        } else {
-          console.warn('[ContentEditor] preview iframe not ready; skipping postMessage.');
+
+        // postMessage to preview only if preview is ready and iframe exists
+        const now = Date.now();
+        if (!previewReady.current) {
+          console.warn('[ContentEditor] preview not ready; skipping postMessage.');
+          return;
+        }
+        if (!iframeRef.current || !iframeRef.current.contentWindow) {
+          console.warn('[ContentEditor] preview iframe not available; skipping postMessage.');
+          return;
+        }
+
+        // create a small message id and include it in payload
+        const msgId = `p-${now}`;
+        lastSentPreviewId.current = msgId;
+        lastPreviewAckAt.current = now;
+        const msg = { type: 'preview-patch', id: msgId, payload: { html: payload.content }, ts: now };
+
+        try {
+          console.log('[ContentEditor] sending postMessage to preview iframe:', msg);
+          iframeRef.current.contentWindow.postMessage(msg, '*');
+        } catch (err) {
+          console.warn('[ContentEditor] postMessage failed (caught):', err && err.message ? err.message : err);
         }
       } catch (err) {
-        // unexpected error
         console.error('[ContentEditor] autosave unexpected error:', err && err.message ? err.message : err);
       }
     },
@@ -131,12 +134,38 @@ export default function ContentEditorPage(props) {
     scheduleSave({ slug: pageJson.meta?.slug || pageId, content, meta: pageJson.meta || {} });
   }, [content, pageJson, scheduleSave, pageId]);
 
-  // message listener
+  // message listener - filter for known types only & guard against loops
   useEffect(() => {
     function onMessage(e) {
       if (!e?.data) return;
-      console.log('[ContentEditor] received message from preview iframe:', e.data);
+
+      const data = e.data;
+      // If you can, check origin (left commented for dev convenience)
+      // if (e.origin !== window.location.origin) return;
+
+      // Only handle messages we expect: preview-ready, preview-ack
+      if (data.type === 'preview-ready') {
+        previewReady.current = true;
+        console.log('[ContentEditor] preview-ready received; previewReady -> true');
+        return;
+      }
+
+      if (data.type === 'preview-ack') {
+        // If ack contains id, compare to lastSentPreviewId to avoid loops
+        const ackId = data.id || null;
+        if (ackId && lastSentPreviewId.current && ackId === lastSentPreviewId.current) {
+          console.log('[ContentEditor] received preview-ack for id=', ackId, ' — ack acknowledged; no further action.');
+          return;
+        }
+        // If ack is unrelated, log and ignore
+        console.log('[ContentEditor] received preview-ack (unmatched id):', data);
+        return;
+      }
+
+      // Unknown message types - ignore to avoid feedback loops
+      console.log('[ContentEditor] ignoring unknown iframe message type:', data);
     }
+
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
   }, []);
@@ -150,10 +179,7 @@ export default function ContentEditorPage(props) {
   // avoid repeated setContent if identical
   function handleEditorInput(e) {
     const val = e.currentTarget.innerHTML;
-    if (val === content) {
-      // avoid noisy setState
-      return;
-    }
+    if (val === content) return;
     setContent(val);
   }
 
@@ -172,7 +198,6 @@ export default function ContentEditorPage(props) {
 
   function handleAdd() {
     console.log('[ContentEditor] Add requested (stub)');
-    // on mobile we open a simple add dialog later; keep stub for now
     alert('Add modal (stub). This will be implemented in Sprint 2+.');
   }
 

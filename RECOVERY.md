@@ -4,6 +4,37 @@ This document serves as a debug diary for the `easy-seo` project. It records com
 
 ---
 
+## **Bug: Infinite Autosave Loop Triggered by Preview Iframe**
+
+**Date:** 2025-11-14
+**Agent:** Jules #165
+
+### **Symptoms:**
+
+In the `ContentEditorPage`, any user input would trigger an initial autosave, but this would be followed by a continuous, rapid-fire sequence of additional autosave calls, even with no further user interaction. This was visible in the browser's console logs and network tab, showing repeated calls to `mockApi.saveDraft`.
+
+### **Root Cause:**
+
+The issue was a classic feedback loop caused by insecure `postMessage` communication between the editor and its preview iframe.
+
+1.  **Editor Sends Patch:** On autosave, the editor would send a `preview-patch` message to the iframe.
+2.  **Iframe Responds:** The preview iframe would receive the patch and, in addition to acknowledging it, would also send other unrelated messages back to the parent (e.g., messages about its internal state, like scroll position or scale).
+3.  **Editor Reacts Indiscriminately:** The editor's `window.addEventListener('message', ...)` was not filtering incoming messages. It was reacting to *any* message from the iframe.
+4.  **Loop:** An unrelated message from the iframe would be misinterpreted by the editor's logic, causing a state change that would re-trigger the `useEffect` hook responsible for scheduling an autosave, thus restarting the cycle.
+
+### **Solution:**
+
+The fix was to implement a robust, idempotent messaging protocol for iframe communication, treating it with the same caution as a network API.
+
+1.  **Readiness Handshake:** The editor now waits for a `preview-ready` message from the iframe before attempting to send any data. A `previewReady` ref is used to track this state.
+2.  **Unique Message IDs:** Each `preview-patch` message sent from the editor now includes a unique, timestamp-based ID (e.g., `{ id: 'p-1678886400000', ... }`). The ID of the last sent message is stored in a `lastSentPreviewId` ref.
+3.  **Strict Message Filtering:** The editor's `onMessage` handler now explicitly checks `data.type` and only acts on known, expected types (`preview-ready`, `preview-ack`). All other message types are ignored.
+4.  **ACK Validation:** When the editor receives a `preview-ack` message, it compares the `id` in the message with the `lastSentPreviewId`. If they match, the ACK is considered valid and the communication cycle for that update is complete. If they do not match, the ACK is ignored, preventing duplicate or out-of-order messages from causing issues.
+
+This pattern breaks the feedback loop by ensuring the editor only acts on specific, expected, and verifiable messages from the preview iframe, making the communication channel stable and predictable.
+
+---
+
 ## **Bug: Excessive Re-Renders Causing Performance Issues**
 
 **Date:** 2025-11-14

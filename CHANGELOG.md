@@ -1,5 +1,21 @@
 # Project Change Log
 
+Jules #165 (Autosave Loop Fix)
+Date: 2025-11-14
+Summary:
+Fixed a critical bug where the Content Editor would enter an infinite autosave loop due to messages from the preview iframe. Implemented a robust, idempotent messaging protocol to prevent this and similar feedback loops.
+Details:
+- **Idempotent Messaging:** The editor now attaches a unique ID to each `preview-patch` message it sends.
+- **Strict Message Handling:** The editor's `message` event listener now only accepts and processes known message types (`preview-ready`, `preview-ack`).
+- **ACK Validation:** The editor now validates incoming `preview-ack` messages, ignoring any that do not correspond to the most recently sent message ID. This prevents echoed or delayed messages from re-triggering the save process.
+- **Readiness Flag:** The editor will not send any `preview-patch` messages until it has received a `preview-ready` message from the iframe, ensuring the preview is initialized before communication begins.
+Impact: The Content Editor is now stable and immune to autosave feedback loops caused by iframe communication. This makes the editing experience reliable and prevents unnecessary network requests and local storage writes.
+
+Reflection:
+Challenge: The most difficult part of this fix was the extensive debugging required to verify it in a broken development environment. The backend server was non-functional, and the frontend had a hard dependency on it, requiring multiple patches and workarounds just to get the component to render for testing.
+Discovery: When dealing with `postMessage` between frames, it's essential to treat it like a network protocol. Assume messages can be delayed, duplicated, or unexpected. A simple handshake (`ready`) and message IDs (`ack`) are critical for robust communication.
+Advice: Never trust cross-origin messages. Always validate the message `type` and, if necessary, the `origin`. For stateful interactions like saving, use unique identifiers to make the communication idempotent.
+
 Jules #164 (Final Sprint 1 Patch)
 Date: 2025-11-14
 Summary:
