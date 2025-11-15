@@ -7,14 +7,6 @@ import { fetchPageJson, saveDraft } from '../lib/mockApi';
 import useAutosave from '../hooks/useAutosave';
 import './ContentEditorPage.css';
 
-/**
- * ContentEditorPage (mobile-first)
- * - Detects mobile (matchMedia)
- * - Adds left/right drawer toggles for mobile
- * - Keeps desktop 3-column layout
- * - Extensive console logs for verification
- */
-
 export default function ContentEditorPage(props) {
   const pageId = (props && props.pageId) || (typeof window !== 'undefined' && new URL(window.location.href).pathname.split('/').pop()) || 'home';
   const [activeTab, setActiveTab] = useState('content');
@@ -22,8 +14,18 @@ export default function ContentEditorPage(props) {
   const [content, setContent] = useState('');
   const [selectedBlockId, setSelectedBlockId] = useState(null);
   const iframeRef = useRef(null);
+  const mounted = useRef(true);
 
-  // Mobile detection and toggles for drawers
+  useEffect(() => {
+    mounted.current = true;
+    console.log('[ContentEditor] mounted');
+    return () => {
+      mounted.current = false;
+      console.log('[ContentEditor] unmounted');
+    };
+  }, []);
+
+  // Mobile detection (guarded)
   const [isMobile, setIsMobile] = useState(() => {
     try {
       return typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(max-width:640px)').matches : false;
@@ -31,21 +33,23 @@ export default function ContentEditorPage(props) {
       return false;
     }
   });
+
   useEffect(() => {
     console.log('[ContentEditor] initial isMobile:', isMobile);
     if (typeof window === 'undefined' || !window.matchMedia) return;
     const mq = window.matchMedia('(max-width:640px)');
     const onChange = (e) => {
       const newVal = !!e.matches;
-      if (newVal !== isMobile) {
-        setIsMobile(newVal);
+      // guard: only update when changed
+      setIsMobile(prev => {
+        if (prev === newVal) {
+          console.log('[ContentEditor] isMobile change event ignored (no change).');
+          return prev;
+        }
         console.log('[ContentEditor] isMobile changed ->', newVal);
-      } else {
-        // avoid setState if no change
-        console.log('[ContentEditor] isMobile change event ignored (no change).');
-      }
+        return newVal;
+      });
     };
-    // use addEventListener for newer browsers, fallback to addListener
     if (mq.addEventListener) mq.addEventListener('change', onChange);
     else mq.addListener(onChange);
     return () => {
@@ -54,8 +58,9 @@ export default function ContentEditorPage(props) {
     };
   }, []);
 
-  const [leftOpen, setLeftOpen] = useState(false);   // blocks drawer
-  const [rightOpen, setRightOpen] = useState(false); // inspector drawer
+  // drawers
+  const [leftOpen, setLeftOpen] = useState(false);
+  const [rightOpen, setRightOpen] = useState(false);
 
   function toggleLeft() {
     setLeftOpen(prev => {
@@ -72,9 +77,11 @@ export default function ContentEditorPage(props) {
     });
   }
 
+  // Load page JSON
   useEffect(() => {
     console.log('[ContentEditor] Loading page:', pageId);
     fetchPageJson(pageId).then((pj) => {
+      if (!mounted.current) return;
       console.log('[ContentEditor] page.json loaded:', pj);
       setPageJson(pj);
       const firstTextNode = (pj?.blocks || []).find((c) => c.type === 'paragraph' || c.type === 'heading') || null;
@@ -84,34 +91,47 @@ export default function ContentEditorPage(props) {
     });
   }, [pageId]);
 
+  // Autosave hook - defensive handling of save result
   const { scheduleSave, isSaving } = useAutosave({
     onSave: async (payload) => {
       console.log('[ContentEditor] autosave onSave handler triggered');
       try {
-        await saveDraft(payload);
-        console.log('[ContentEditor] autosave success');
+        const result = await saveDraft(payload);
+        if (!result || !result.ok) {
+          // do not throw — handle gracefully and log
+          console.error('[ContentEditor] autosave failed, saveDraft returned an error:', result && result.error ? result.error : result);
+          return;
+        }
+        console.log('[ContentEditor] autosave success, key=', result.key);
+        // only postMessage if iframe is reachable
         const msg = { type: 'preview-patch', payload: { html: payload.content }, ts: Date.now() };
-        console.log('[ContentEditor] sending postMessage to preview iframe:', msg);
-        try {
-          iframeRef.current?.contentWindow?.postMessage(msg, '*');
-        } catch (err) {
-          console.warn('[ContentEditor] postMessage failed:', err);
+        if (iframeRef.current && iframeRef.current.contentWindow) {
+          try {
+            console.log('[ContentEditor] sending postMessage to preview iframe:', msg);
+            iframeRef.current.contentWindow.postMessage(msg, '*');
+          } catch (err) {
+            console.warn('[ContentEditor] postMessage failed (caught):', err && err.message ? err.message : err);
+          }
+        } else {
+          console.warn('[ContentEditor] preview iframe not ready; skipping postMessage.');
         }
       } catch (err) {
-        console.error('[ContentEditor] autosave failed:', err);
+        // unexpected error
+        console.error('[ContentEditor] autosave unexpected error:', err && err.message ? err.message : err);
       }
     },
     debugLabel: 'autosave',
     delay: 1500,
   });
 
+  // schedule autosave on content change (guarded to avoid redundant scheduling)
   useEffect(() => {
-    if (pageJson) {
-      console.log('[ContentEditor] content changed, length:', content.length);
-      scheduleSave({ slug: pageJson.meta?.slug || pageId, content, meta: pageJson.meta || {} });
-    }
+    if (!pageJson) return;
+    console.log('[ContentEditor] content changed, length:', content.length);
+    scheduleSave({ slug: pageJson.meta?.slug || pageId, content, meta: pageJson.meta || {} });
   }, [content, pageJson, scheduleSave, pageId]);
 
+  // message listener
   useEffect(() => {
     function onMessage(e) {
       if (!e?.data) return;
@@ -123,22 +143,23 @@ export default function ContentEditorPage(props) {
 
   function handleTabSwitch(tab) {
     console.log('[ContentEditor] tab ->', tab);
+    if (tab === activeTab) return;
     setActiveTab(tab);
   }
 
+  // avoid repeated setContent if identical
   function handleEditorInput(e) {
     const val = e.currentTarget.innerHTML;
-    if (val !== content) {
-      setContent(val);
-    } else {
-      console.log('[ContentEditor] editor input ignored (same content)');
+    if (val === content) {
+      // avoid noisy setState
+      return;
     }
+    setContent(val);
   }
 
   function handleSelectBlock(id) {
     console.log('[ContentEditor] selected block:', id);
     setSelectedBlockId(id);
-    // open inspector automatically on mobile for discoverability
     if (isMobile) {
       setRightOpen(true);
       console.log('[ContentEditor] rightDrawerOpen -> true (auto open on select)');
@@ -151,21 +172,15 @@ export default function ContentEditorPage(props) {
 
   function handleAdd() {
     console.log('[ContentEditor] Add requested (stub)');
+    // on mobile we open a simple add dialog later; keep stub for now
     alert('Add modal (stub). This will be implemented in Sprint 2+.');
   }
 
-  // Close drawers when route / pageId changes (safety)
+  // close drawers when page changes
   useEffect(() => {
     setLeftOpen(false);
     setRightOpen(false);
   }, [pageId]);
-
-  useEffect(() => {
-    console.log('[ContentEditor] mounted');
-    return () => {
-      console.log('[ContentEditor] unmounted');
-    };
-  }, []);
 
   return (
     <div className="editor-shell">
@@ -181,12 +196,9 @@ export default function ContentEditorPage(props) {
       />
 
       <div className="editor-body">
-        {/* Left pane - desktop visible, mobile drawer when leftOpen */}
         <aside className={`left-pane ${!isMobile ? 'visible' : (leftOpen ? 'drawer open' : 'hidden')}`}>
           <BlockTree blocks={pageJson?.blocks || pageJson?.children || []} onSelect={handleSelectBlock} selectedId={selectedBlockId} />
         </aside>
-
-        {/* Drawer overlay for left */}
         {isMobile && leftOpen && <div className="drawer-overlay" onClick={() => { setLeftOpen(false); console.log('[ContentEditor] leftDrawerOpen -> false (overlay)'); }} />}
 
         <main className="main-pane" style={{ paddingBottom: 'calc(var(--bottom-bar-height,64px) + env(safe-area-inset-bottom))' }}>
@@ -219,7 +231,6 @@ export default function ContentEditorPage(props) {
           )}
         </main>
 
-        {/* Right pane - desktop visible, mobile drawer when rightOpen */}
         <aside className={`right-pane ${!isMobile ? 'visible' : (rightOpen ? 'drawer open' : 'hidden')}`}>
           <div className="panel">
             <h4>Inspector (stub)</h4>
@@ -227,12 +238,10 @@ export default function ContentEditorPage(props) {
             <pre className="meta">{JSON.stringify(pageJson?.meta || {}, null, 2)}</pre>
           </div>
         </aside>
-
-        {/* Drawer overlay for right */}
         {isMobile && rightOpen && <div className="drawer-overlay" onClick={() => { setRightOpen(false); console.log('[ContentEditor] rightDrawerOpen -> false (overlay)'); }} />}
       </div>
 
-      <BottomActionBar onAdd={handleAdd} onPublish={handlePublish} />
+      <BottomActionBar onAdd={handleAdd} onPublish={handlePublish} showHome={true} />
     </div>
   );
 }

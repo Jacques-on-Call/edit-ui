@@ -31,10 +31,15 @@ The fix was to introduce "state guards" to prevent `setState` from being called 
     ```javascript
     const onChange = (e) => {
       const newVal = !!e.matches;
-      if (newVal !== isMobile) {
-        setIsMobile(newVal);
+      // guard: only update when changed
+      setIsMobile(prev => {
+        if (prev === newVal) {
+          console.log('[ContentEditor] isMobile change event ignored (no change).');
+          return prev;
+        }
         console.log('[ContentEditor] isMobile changed ->', newVal);
-      }
+        return newVal;
+      });
     };
     ```
 
@@ -43,13 +48,14 @@ The fix was to introduce "state guards" to prevent `setState` from being called 
     ```javascript
     function handleEditorInput(e) {
       const val = e.currentTarget.innerHTML;
-      if (val !== content) {
-        setContent(val);
+      if (val === content) {
+        return; // avoid noisy setState
       }
+      setContent(val);
     }
     ```
 
-Additionally, `console.trace()` was added to key locations (`App.jsx` render, `useAutosave` hook) to make it easier to diagnose the call stack and identify the trigger for future performance issues.
+3. **Mounted Ref Guard:** A `mounted` ref was added to the component to prevent state updates from promises (`fetchPageJson`) that might resolve after the component has unmounted, which is another potential source of errors and instability.
 
 ---
 
