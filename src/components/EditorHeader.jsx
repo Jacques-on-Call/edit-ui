@@ -2,22 +2,20 @@ import { h } from 'preact';
 import './EditorHeader.css';
 
 /**
- * EditorHeader
- * - On mobile we hide the Publish button (bottom toolbar has Publish)
- * - Provide compact toggles for Blocks/Inspector on mobile (icons)
+ * EditorHeader - keep compact on mobile; header Publish hidden on mobile.
+ * Expects prop isMobile (boolean) to be passed from ContentEditorPage.
  */
 export default function EditorHeader({ title, onPublish, isSaving, activeTab, onTabSwitch, onToggleBlocks, onToggleInspector, isMobile }) {
   console.log('[EditorHeader] render - title:', title, 'activeTab:', activeTab, 'isSaving:', isSaving, 'isMobile:', !!isMobile);
   return (
-    <header className="editor-header">
+    <header className="editor-header" role="banner" aria-label="Editor header">
       <div className="left">
-        {/* On mobile, we prefer a compact top-left back (or hide) and surface Home in bottom bar */}
         <button className="btn-plain" onClick={() => { console.log('[EditorHeader] back clicked'); window.history.back(); }} aria-label="Back">Back</button>
         <h2 className="page-title">{title}</h2>
       </div>
 
       <div className="center">
-        {/* hide tabs on very small screens; keep accessible via header on larger mobile/tablet */}
+        {/* Hide tabs on smallest mobile screens; will be revisited in a later sprint */}
         {!isMobile && (
           <nav className="tabs" role="tablist" aria-label="Editor tabs">
             <button className={`tab ${activeTab === 'content' ? 'active' : ''}`} onClick={() => onTabSwitch('content')}>Content</button>
@@ -27,6 +25,7 @@ export default function EditorHeader({ title, onPublish, isSaving, activeTab, on
       </div>
 
       <div className="right">
+        {/* Compact toggles available on mobile (optional) */}
         {isMobile && (
           <>
             <button className="btn-icon" onClick={() => { console.log('[EditorHeader] blocks toggle clicked'); onToggleBlocks && onToggleBlocks(); }} title="Blocks">☰</button>
@@ -36,7 +35,7 @@ export default function EditorHeader({ title, onPublish, isSaving, activeTab, on
 
         <span className="saving-indicator" aria-live="polite">{isSaving ? 'Saving…' : ''}</span>
 
-        {/* Hide the header publish on mobile to avoid duplicate controls */}
+        {/* Do not render the header Publish button on mobile to avoid duplicates with bottom bar */}
         {!isMobile && <button className="btn-primary" onClick={onPublish}>Publish</button>}
       </div>
     </header>

@@ -63,6 +63,15 @@ export default function ContentEditorPage(props) {
     };
   }, []);
 
+  // On mobile, ensure drawers are closed by default
+  useEffect(() => {
+    if (isMobile) {
+      setLeftOpen(false);
+      setRightOpen(false);
+      console.log('[ContentEditor] main-pane mobile layout applied');
+    }
+  }, [isMobile]);
+
   // drawers
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);

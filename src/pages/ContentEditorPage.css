@@ -19,12 +19,13 @@
   align-items: start;
 }
 
-/* Main pane */
+/* Main pane - mobile-focused adjustments */
 .main-pane {
   padding: 12px;
   box-sizing: border-box;
   overflow: auto;
-  min-height: calc(90vh - var(--bottom-bar-height) - 12px - env(safe-area-inset-bottom));
+  /* reserve 90vh for the main content area on mobile, subtract header + bottom bar */
+  min-height: calc(90vh - var(--header-h) - var(--bottom-bar-height) - 8px);
   width: 100%;
 }
 
@@ -32,63 +33,25 @@
 .content-editor .editor-area {
   background: rgba(2,6,15,0.6);
   padding: 18px;
-  border-radius: 8px;
-  min-height: calc(90vh - var(--header-h) - var(--bottom-bar-height) - 48px);
+  border-radius: 10px;
+  min-height: calc(90vh - var(--header-h) - var(--bottom-bar-height) - 64px);
   color: #cfe1ff;
   outline: none;
   width: 100%;
 }
 
-/* Preview */
-.preview-iframe {
-  width:100%;
-  height:100%;
-  min-height:360px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
+/* Hide side panes by default on small screens */
+.left-pane, .right-pane {
+  display: none !important;
 }
 
-/* Drawers & overlays */
-.drawer {
-  display: block;
-  position: fixed;
-  top: var(--header-h);
-  bottom: var(--bottom-bar-height);
-  width: 86%;
-  max-width: 420px;
-  background: var(--panel-bg);
-  z-index: 60;
-  overflow: auto;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-  transform: translateX(-110%);
-  transition: transform .22s ease;
-  padding: 12px;
-}
-.left-pane.drawer { left: 0; transform: translateX(-110%); }
-.left-pane.drawer.open { transform: translateX(0); }
-.right-pane.drawer { right: 0; transform: translateX(110%); }
-.right-pane.drawer.open { transform: translateX(0); }
+/* Drawers & overlays remain available in later sprints */
 
-.drawer-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: rgba(0,0,0,0.45);
+/* Make sure main pane accounts for safe area at bottom (iOS) */
+.main-pane,
+.content-editor .editor-area {
+  padding-bottom: calc(var(--bottom-bar-height,64px) + env(safe-area-inset-bottom));
 }
 
-/* Tablet / Desktop columns */
-@media(min-width: 641px) and (max-width: 1023px) {
-  .editor-body { grid-template-columns: 180px 1fr 260px; }
-  .left-pane, .right-pane { display: block; }
-}
-@media(min-width: 1024px) {
-  .editor-body { grid-template-columns: 240px 1fr 300px; }
-  .left-pane, .right-pane { display: block; }
-}
-
-/* Inspector panel style */
-.panel {
-  padding: 12px;
-  color: #dbe9ff;
-}
+/* Minor text and spacing adjustments for mobile */
+.editor-instructions { font-size: 14px; margin-bottom: 8px; color: #cfe1ff; }
