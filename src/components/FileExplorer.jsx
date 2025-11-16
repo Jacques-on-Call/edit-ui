@@ -149,6 +149,28 @@ setError(null);
 try {
 let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`);
 
+// Merge with drafts from localStorage
+for (let i = 0; i < localStorage.length; i++) {
+  const key = localStorage.key(i);
+  if (key.startsWith('easy-seo-draft:')) {
+    const slug = key.replace('easy-seo-draft:', '');
+    const draftData = JSON.parse(localStorage.getItem(key));
+    // cheap filename guess
+    const filename = `${slug}.astro`;
+
+    // Avoid duplicates
+    if (!data.some(file => file.name.replace(/\.[^/.]+$/, '') === slug)) {
+      data.push({
+        name: filename,
+        path: `${path}/${filename}`,
+        sha: `draft-${slug}`,
+        type: 'file',
+        isDraft: true,
+      });
+    }
+  }
+}
+
 const sortedData = data.sort((a, b) => {
 if (a.type === 'dir' && b.type !== 'dir') return -1;
 if (a.type !== 'dir' && b.type === 'dir') return 1;
@@ -157,7 +179,9 @@ return a.name.localeCompare(b.name);
 setFiles(sortedData);
 
 sortedData.forEach(file => {
-fetchDetailsForFile(file);
+  if (!file.isDraft) {
+    fetchDetailsForFile(file);
+  }
 });
 
 const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');

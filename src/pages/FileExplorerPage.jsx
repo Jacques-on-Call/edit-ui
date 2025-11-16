@@ -59,33 +59,31 @@ export function FileExplorerPage() {
 
   const handleCreate = async (name, type) => {
     try {
-      const fullPath = `${currentPath}/${name}`;
-      let body = { repo: repoName, path: fullPath, type };
-
-      // For files, add some default, base64 encoded content
-      if (type === 'file') {
-        try {
-          const templateUrl = `/api/files?repo=${encodeURIComponent(repoName)}&path=${encodeURIComponent('src/pages/_template.astro')}`;
-          const templateData = await fetchJson(templateUrl);
-          const content = atob(templateData.content);
-          body.content = btoa(content);
-        } catch (err) {
-          console.error('Template fetch error:', err);
-          // Continue without template
-          body.content = btoa('---\ntitle: New Page\n---\n<h1>New Page</h1>');
-        }
+      if (type === 'folder') {
+        // Folder creation might still need a backend call.
+        // For now, we'll just log it.
+        console.log(`[FileExplorer] Folder creation not implemented for client-only drafts.`);
+        alert('Folder creation is not supported in this version.');
+        return;
       }
 
-      await fetchJson('/api/files', {
-        method: 'POST',
-        body: JSON.stringify(body),
-      });
+      const slug = name.replace(/\.[^/.]+$/, "");
+      const initialContent = '---\ntitle: New Page\n---\n<h1>New Page</h1>';
+      const draftPayload = {
+        slug,
+        content: initialContent,
+        meta: { title: 'New Page' },
+        savedAt: new Date().toISOString(),
+      };
+
+      localStorage.setItem(`easy-seo-draft:${slug}`, JSON.stringify(draftPayload));
+      console.log(`[FileExplorer] createDraft -> slug: ${slug}`);
 
       setCreateOpen(false);
       setRefreshTrigger(prev => prev + 1); // Trigger refresh
     } catch (err) {
-      console.error('Create error:', err);
-      alert(`Failed to create item: ${err.message}`);
+      console.error('Create draft error:', err);
+      alert(`Failed to create draft: ${err.message}`);
     }
   };
 
