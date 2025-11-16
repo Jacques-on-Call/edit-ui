@@ -1,5 +1,6 @@
 # Project Change Log
 
+need to tricgger deploy
 Jules #167 (Draft Workflow Implementation)
 Date: 2025-11-16
 Summary:
