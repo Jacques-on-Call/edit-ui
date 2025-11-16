@@ -23,6 +23,8 @@
 .btn-primary { background: #1673ff; color:white; border-radius:8px; padding:8px 12px; border:none; }
 .btn-plain { background: none; border: none; color:#cfe1ff; }
 
+.editor-toolbar{color:#FFFFFF!important;z-index:9999!important}.editor-header{overflow:visible!important}
+
 /* compact on mobile */
 @media(max-width:640px) {
   .editor-header .page-title { display:none; }

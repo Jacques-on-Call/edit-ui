@@ -1,43 +1,66 @@
 import { h } from 'preact';
+import { Bold, Italic, Heading2, List, Link, Undo, Redo } from 'lucide-preact';
 import './EditorHeader.css';
 
-/**
- * EditorHeader
- * - On mobile we hide the Publish button (bottom toolbar has Publish)
- * - Provide compact toggles for Blocks/Inspector on mobile (icons)
- */
-export default function EditorHeader({ title, onPublish, isSaving, activeTab, onTabSwitch, onToggleBlocks, onToggleInspector, isMobile }) {
-  console.log('[EditorHeader] render - title:', title, 'activeTab:', activeTab, 'isSaving:', isSaving, 'isMobile:', !!isMobile);
+export default function EditorHeader({ editorApiRef, isMobile }) {
+  console.log(`[EditorToolbar] mounted isMobile:${isMobile}`);
+
+  const handleAction = (action) => {
+    console.log(`[EditorToolbar] action -> ${action}`);
+    const api = editorApiRef.current;
+    if (api) {
+      switch (action) {
+        case 'bold':
+          api.toggleBold();
+          break;
+        case 'italic':
+          api.toggleItalic();
+          break;
+        case 'heading':
+          api.toggleHeading();
+          break;
+        case 'link':
+          const url = prompt('Enter the URL:');
+          if (url) {
+            api.insertLink(url);
+          }
+          break;
+        case 'undo':
+          api.undo();
+          break;
+        case 'redo':
+          api.redo();
+          break;
+        default:
+          break;
+      }
+    }
+  };
+
   return (
     <header className="editor-header">
-      <div className="left">
-        {/* On mobile, we prefer a compact top-left back (or hide) and surface Home in bottom bar */}
-        <button className="btn-plain" onClick={() => { console.log('[EditorHeader] back clicked'); window.history.back(); }} aria-label="Back">Back</button>
-        <h2 className="page-title">{title}</h2>
-      </div>
-
-      <div className="center">
-        {/* hide tabs on very small screens; keep accessible via header on larger mobile/tablet */}
-        {!isMobile && (
-          <nav className="tabs" role="tablist" aria-label="Editor tabs">
-            <button className={`tab ${activeTab === 'content' ? 'active' : ''}`} onClick={() => onTabSwitch('content')}>Content</button>
-            <button className={`tab ${activeTab === 'visual' ? 'active' : ''}`} onClick={() => onTabSwitch('visual')}>Visual</button>
-          </nav>
-        )}
-      </div>
-
-      <div className="right">
-        {isMobile && (
-          <>
-            <button className="btn-icon" onClick={() => { console.log('[EditorHeader] blocks toggle clicked'); onToggleBlocks && onToggleBlocks(); }} title="Blocks">☰</button>
-            <button className="btn-icon" onClick={() => { console.log('[EditorHeader] inspector toggle clicked'); onToggleInspector && onToggleInspector(); }} title="Inspect">⚙</button>
-          </>
-        )}
-
-        <span className="saving-indicator" aria-live="polite">{isSaving ? 'Saving…' : ''}</span>
-
-        {/* Hide the header publish on mobile to avoid duplicate controls */}
-        {!isMobile && <button className="btn-primary" onClick={onPublish}>Publish</button>}
+      <div className="toolbar">
+        <button onClick={() => handleAction('bold')} aria-label="Bold">
+          <Bold size={18} />
+        </button>
+        <button onClick={() => handleAction('italic')} aria-label="Italic">
+          <Italic size={18} />
+        </button>
+        <button onClick={() => handleAction('heading')} aria-label="Heading">
+          <Heading2 size={18} />
+        </button>
+        <button onClick={() => handleAction('list')} aria-label="List">
+          <List size={18} />
+        </button>
+        <button onClick={() => handleAction('link')} aria-label="Link">
+          <Link size={18} />
+        </button>
+        <button onClick={() => handleAction('undo')} aria-label="Undo">
+          <Undo size={18} />
+        </button>
+        <button onClick={() => handleAction('redo')} aria-label="Redo">
+          <Redo size={18} />
+        </button>
       </div>
     </header>
   );
