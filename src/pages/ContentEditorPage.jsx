@@ -11,8 +11,11 @@ export default function ContentEditorPage(props) {
   const [content, setContent] = useState('');
   const editorRef = useRef(null);
   const [saveStatus, setSaveStatus] = useState('saved'); // saved, unsaved, saving
+  const isProgrammaticUpdateRef = useRef(false);
+  const lastAcceptedContentRef = useRef(null);
 
   const autosaveCallback = useCallback((newContent) => {
+    console.log(`[ContentEditor] autosave-callback ${new Date().toISOString()} len=${newContent.length}`);
     setSaveStatus('saving');
     console.log('[ContentEditor] Autosaving content to local storage...');
     try {
@@ -42,9 +45,12 @@ export default function ContentEditorPage(props) {
     if (savedDraft) {
       console.log('[ContentEditor] Found saved draft in local storage.');
       const draft = JSON.parse(savedDraft);
+      lastAcceptedContentRef.current = draft.content;
       setContent(draft.content);
       if (editorRef.current) {
+        isProgrammaticUpdateRef.current = true;
         editorRef.current.innerHTML = draft.content;
+        isProgrammaticUpdateRef.current = false;
       }
       setPageJson({ meta: { title: 'Draft' } });
     } else {
@@ -52,17 +58,25 @@ export default function ContentEditorPage(props) {
         console.log('[ContentEditor] page.json loaded:', pj);
         setPageJson(pj);
         const initialContent = pj?.content || '<p>Start typing...</p>';
+        lastAcceptedContentRef.current = initialContent;
         setContent(initialContent);
         if (editorRef.current) {
+          isProgrammaticUpdateRef.current = true;
           editorRef.current.innerHTML = initialContent;
+          isProgrammaticUpdateRef.current = false;
         }
       });
     }
   }, [pageId]);
 
   function handleEditorInput(e) {
+    if (isProgrammaticUpdateRef.current) {
+      return;
+    }
     const newContent = e.currentTarget.innerHTML;
-    if (newContent !== content) {
+    console.log(`[ContentEditor] input-event ${new Date().toISOString()} len=${newContent.length}`);
+    if (newContent !== lastAcceptedContentRef.current) {
+      lastAcceptedContentRef.current = newContent;
       setContent(newContent);
       setSaveStatus('unsaved');
       triggerSave(newContent);
