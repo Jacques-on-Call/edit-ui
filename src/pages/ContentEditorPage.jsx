@@ -13,9 +13,12 @@ export default function ContentEditorPage(props) {
   const [saveStatus, setSaveStatus] = useState('saved'); // saved, unsaved, saving
   const isProgrammaticUpdateRef = useRef(false);
   const lastAcceptedContentRef = useRef(null);
+  const lastSavedContentRef = useRef(null);
 
   const autosaveCallback = useCallback((newContent) => {
-    console.log(`[ContentEditor] autosave-callback ${new Date().toISOString()} len=${newContent.length}`);
+    if (newContent === lastSavedContentRef.current) {
+      return;
+    }
     setSaveStatus('saving');
     console.log('[ContentEditor] Autosaving content to local storage...');
     try {
@@ -25,6 +28,7 @@ export default function ContentEditorPage(props) {
         timestamp: new Date().toISOString(),
       };
       localStorage.setItem(key, JSON.stringify(payload));
+      lastSavedContentRef.current = newContent;
       console.log(`[ContentEditor] Content successfully autosaved to local storage with key: ${key}`);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('saved'), 2000); // Revert to neutral after 2s
@@ -46,6 +50,7 @@ export default function ContentEditorPage(props) {
       console.log('[ContentEditor] Found saved draft in local storage.');
       const draft = JSON.parse(savedDraft);
       lastAcceptedContentRef.current = draft.content;
+      lastSavedContentRef.current = draft.content;
       setContent(draft.content);
       if (editorRef.current) {
         isProgrammaticUpdateRef.current = true;
@@ -59,6 +64,7 @@ export default function ContentEditorPage(props) {
         setPageJson(pj);
         const initialContent = pj?.content || '<p>Start typing...</p>';
         lastAcceptedContentRef.current = initialContent;
+        lastSavedContentRef.current = initialContent;
         setContent(initialContent);
         if (editorRef.current) {
           isProgrammaticUpdateRef.current = true;
@@ -74,7 +80,6 @@ export default function ContentEditorPage(props) {
       return;
     }
     const newContent = e.currentTarget.innerHTML;
-    console.log(`[ContentEditor] input-event ${new Date().toISOString()} len=${newContent.length}`);
     if (newContent !== lastAcceptedContentRef.current) {
       lastAcceptedContentRef.current = newContent;
       setContent(newContent);
