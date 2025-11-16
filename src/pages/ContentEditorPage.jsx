@@ -3,24 +3,23 @@ import { useEffect, useState, useRef, useCallback } from 'preact/hooks';
 import { route } from 'preact-router';
 import { fetchPageJson } from '../lib/mockApi';
 import useAutosave from '../hooks/useAutosave';
-import LexicalEditor from '../components/LexicalEditor'; // Import the new editor
 import { Home, Plus, UploadCloud } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
   const pageId = props.pageId || 'home';
   const [pageJson, setPageJson] = useState(null);
-  const [content, setContent] = useState(null); // Initialize as null to show loading state
-  const [saveStatus, setSaveStatus] = useState('saved');
+  const [content, setContent] = useState('');
+  const editorRef = useRef(null);
+  const [saveStatus, setSaveStatus] = useState('saved'); // saved, unsaved, saving
+  const isProgrammaticUpdateRef = useRef(false);
+  const lastAcceptedContentRef = useRef(null);
   const lastSavedContentRef = useRef(null);
 
   const autosaveCallback = useCallback((newContent) => {
-    // This callback is triggered by the useAutosave hook after debouncing
-    console.log(`[ContentEditor] autosave-callback TIMESTAMP=${new Date().toISOString()} len=${newContent.length}`);
     if (newContent === lastSavedContentRef.current) {
       return;
     }
     setSaveStatus('saving');
-    console.log('[ContentEditor] Autosaving content to local storage...');
     try {
       const key = `easy-seo-draft:${pageId}`;
       const draft = JSON.parse(localStorage.getItem(key) || '{}');
@@ -33,8 +32,9 @@ export default function ContentEditorPage(props) {
       };
       localStorage.setItem(key, JSON.stringify(payload));
       lastSavedContentRef.current = newContent;
-      console.log(`[ContentEditor] Content successfully autosaved to local storage with key: ${key}`);
+      console.log(`[ContentEditor] draftSaved -> slug: ${pageId}, key: ${key}`);
       setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('saved'), 2000); // Revert to neutral after 2s
     } catch (error) {
       console.error('[ContentEditor] Failed to autosave content to local storage:', error);
       setSaveStatus('unsaved');
@@ -52,33 +52,67 @@ export default function ContentEditorPage(props) {
     if (savedDraft) {
       const draft = JSON.parse(savedDraft);
       console.log(`[ContentEditor] loadedDraft -> slug: ${draft.slug}, savedAt: ${draft.savedAt}`);
-      const initialContent = draft.content;
-      lastSavedContentRef.current = initialContent;
-      setContent(initialContent);
+      lastAcceptedContentRef.current = draft.content;
+      lastSavedContentRef.current = draft.content;
+      setContent(draft.content);
+      if (editorRef.current) {
+        isProgrammaticUpdateRef.current = true;
+        editorRef.current.innerHTML = draft.content;
+        isProgrammaticUpdateRef.current = false;
+      }
       setPageJson({ meta: draft.meta });
     } else {
       fetchPageJson(pageId).then((pj) => {
         console.log('[ContentEditor] page.json loaded:', pj);
         setPageJson(pj);
         const initialContent = pj?.content || '<p>Start typing...</p>';
+        lastAcceptedContentRef.current = initialContent;
         lastSavedContentRef.current = initialContent;
         setContent(initialContent);
+        if (editorRef.current) {
+          isProgrammaticUpdateRef.current = true;
+          editorRef.current.innerHTML = initialContent;
+          isProgrammaticUpdateRef.current = false;
+        }
       });
     }
   }, [pageId]);
 
-  function handleLexicalChange(newContent) {
-    // This function is called on every keystroke from the LexicalEditor
-    console.log(`[ContentEditor] lexical-change len: ${newContent.length}`);
-    setContent(newContent);
-    setSaveStatus('unsaved');
-    triggerSave(newContent);
+  function handleEditorInput(e) {
+    if (isProgrammaticUpdateRef.current) {
+      return;
+    }
+    const newContent = e.currentTarget.innerHTML;
+    if (newContent !== lastAcceptedContentRef.current) {
+      lastAcceptedContentRef.current = newContent;
+      setContent(newContent);
+      setSaveStatus('unsaved');
+      triggerSave(newContent);
+    }
   }
 
-  const handleHome = () => route('/explorer');
+  const handleHome = () => {
+    console.log('[BottomBar] Home clicked');
+    route('/explorer');
+  };
   const handleAdd = () => console.log('[BottomBar] Add clicked');
-  const handlePublish = () => console.log('[ContentEditor] handlePublish triggered - Not implemented in this sprint');
-
+  const handlePublish = () => {
+    console.log('[ContentEditor] handlePublish triggered');
+    try {
+      console.log(`[ContentEditor] Saving content to local storage for page: ${pageId}...`);
+      const key = `easy-seo-draft:${pageId}`;
+      const payload = {
+        content: content,
+        timestamp: new Date().toISOString(),
+      };
+      localStorage.setItem(key, JSON.stringify(payload));
+      console.log(`[ContentEditor] Content successfully saved to local storage with key: ${key}`);
+      setSaveStatus('saved');
+    } catch (error) {
+      console.error('[ContentEditor] Failed to save content to local storage:', error);
+      setSaveStatus('unsaved');
+    }
+  };
 
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">
@@ -87,18 +121,16 @@ export default function ContentEditorPage(props) {
 
       {/* Editable Area */}
       <main
-        class="flex-grow overflow-y-auto"
+        class="flex-grow overflow-y-auto p-4"
         style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}
       >
-        {content !== null ? (
-          <LexicalEditor
-            slug={pageId}
-            initialContent={content}
-            onChange={handleLexicalChange}
-          />
-        ) : (
-          <div>Loading editor...</div>
-        )}
+        <div
+          ref={editorRef}
+          contentEditable
+          onInput={handleEditorInput}
+          class="w-full h-full focus:outline-none"
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
       </main>
 
       {/* Bottom Action Bar */}
@@ -114,14 +146,20 @@ export default function ContentEditorPage(props) {
             <UploadCloud size={24} />
           </button>
           <div
-            class="w-3 h-3 rounded-full ml-2"
+            class={`w-3 h-3 rounded-full ml-2 ${
+              saveStatus === 'unsaved'
+                ? 'bg-red-500' // --scarlet: #FF2400
+                : saveStatus === 'saving'
+                ? 'bg-yellow-500' // A temporary saving color
+                : 'bg-green-500' // --light-green: #C7EA46
+            }`}
             style={{
               backgroundColor:
                 saveStatus === 'unsaved'
-                  ? '#FF2400' // red
+                  ? '#FF2400'
                   : saveStatus === 'saving'
-                  ? '#FBBF24' // yellow
-                  : '#C7EA46', // green
+                  ? '#FBBF24' // Tailwind yellow-500
+                  : '#C7EA46',
             }}
           ></div>
         </div>
