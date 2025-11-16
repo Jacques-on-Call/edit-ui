@@ -20,23 +20,26 @@ export default function ContentEditorPage(props) {
       return;
     }
     setSaveStatus('saving');
-    console.log('[ContentEditor] Autosaving content to local storage...');
     try {
       const key = `easy-seo-draft:${pageId}`;
+      const draft = JSON.parse(localStorage.getItem(key) || '{}');
       const payload = {
+        ...draft,
+        slug: pageId,
         content: newContent,
-        timestamp: new Date().toISOString(),
+        meta: pageJson?.meta || { title: 'New Page' },
+        savedAt: new Date().toISOString(),
       };
       localStorage.setItem(key, JSON.stringify(payload));
       lastSavedContentRef.current = newContent;
-      console.log(`[ContentEditor] Content successfully autosaved to local storage with key: ${key}`);
+      console.log(`[ContentEditor] draftSaved -> slug: ${pageId}, key: ${key}`);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('saved'), 2000); // Revert to neutral after 2s
     } catch (error) {
       console.error('[ContentEditor] Failed to autosave content to local storage:', error);
       setSaveStatus('unsaved');
     }
-  }, [pageId]);
+  }, [pageId, pageJson]);
 
   const { triggerSave } = useAutosave(autosaveCallback, 1000);
 
@@ -47,8 +50,8 @@ export default function ContentEditorPage(props) {
     const savedDraft = localStorage.getItem(draftKey);
 
     if (savedDraft) {
-      console.log('[ContentEditor] Found saved draft in local storage.');
       const draft = JSON.parse(savedDraft);
+      console.log(`[ContentEditor] loadedDraft -> slug: ${draft.slug}, savedAt: ${draft.savedAt}`);
       lastAcceptedContentRef.current = draft.content;
       lastSavedContentRef.current = draft.content;
       setContent(draft.content);
@@ -57,7 +60,7 @@ export default function ContentEditorPage(props) {
         editorRef.current.innerHTML = draft.content;
         isProgrammaticUpdateRef.current = false;
       }
-      setPageJson({ meta: { title: 'Draft' } });
+      setPageJson({ meta: draft.meta });
     } else {
       fetchPageJson(pageId).then((pj) => {
         console.log('[ContentEditor] page.json loaded:', pj);
