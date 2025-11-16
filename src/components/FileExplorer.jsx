@@ -153,20 +153,24 @@ let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`);
 for (let i = 0; i < localStorage.length; i++) {
   const key = localStorage.key(i);
   if (key.startsWith('easy-seo-draft:')) {
-    const slug = key.replace('easy-seo-draft:', '');
     const draftData = JSON.parse(localStorage.getItem(key));
-    // cheap filename guess
-    const filename = `${slug}.astro`;
+    const draftPath = draftData.path || '';
+    const draftDir = draftPath.substring(0, draftPath.lastIndexOf('/'));
 
-    // Avoid duplicates
-    if (!data.some(file => file.name.replace(/\.[^/.]+$/, '') === slug)) {
-      data.push({
-        name: filename,
-        path: `${path}/${filename}`,
-        sha: `draft-${slug}`,
-        type: 'file',
-        isDraft: true,
-      });
+    if (draftDir === path) {
+      const slug = key.replace('easy-seo-draft:', '');
+      const filename = draftPath.substring(draftPath.lastIndexOf('/') + 1);
+
+      // Avoid duplicates
+      if (!data.some(file => file.path === draftPath)) {
+        data.push({
+          name: filename,
+          path: draftPath,
+          sha: `draft-${slug}`,
+          type: 'file',
+          isDraft: true,
+        });
+      }
     }
   }
 }

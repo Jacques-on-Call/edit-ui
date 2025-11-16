@@ -68,9 +68,11 @@ export function FileExplorerPage() {
       }
 
       const slug = name.replace(/\.[^/.]+$/, "");
+      const fullPath = `${currentPath}/${name}`;
       const initialContent = '---\ntitle: New Page\n---\n<h1>New Page</h1>';
       const draftPayload = {
         slug,
+        path: fullPath,
         content: initialContent,
         meta: { title: 'New Page' },
         savedAt: new Date().toISOString(),
