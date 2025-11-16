@@ -1,5 +1,22 @@
 # Project Change Log
 
+Jules #167 (Draft Workflow Implementation)
+Date: 2025-11-16
+Summary:
+Implemented the foundational client-side draft workflow. This includes fixing a persistent autosave bug, displaying file status (Draft/Live) in the UI, and ensuring new files are created as local drafts instead of being committed directly to the repository.
+Details:
+- **Robust Autosave:** Fixed a complex autosave bug in the Content Editor that caused infinite loops and redundant saves. The final solution uses a multi-layered guard system, including a `lastSavedContentRef`, to ensure saves only happen when content has genuinely changed.
+- **File State Badges:** The File Explorer now displays "Draft" and "Live" badges next to each file, providing clear visual feedback on the status of content. This is driven by checking for draft and published keys in `localStorage`.
+- **Create as Draft:** The file creation process has been modified to be a client-only operation. New files are now saved as drafts to `localStorage` and no longer trigger backend API calls or repository commits, preventing premature builds.
+- **Path-Aware Drafts:** The draft system is now path-aware, storing the full file path in the `localStorage` payload and ensuring that drafts only appear in their correct directory, fixing a duplication bug.
+- **Editor-Draft Sync:** The Content Editor now loads and saves the complete draft payload from `localStorage`, making it the single source of truth for client-side drafts.
+Impact: The application now has a safe, robust, and user-friendly client-side draft system. This prevents accidental live publishes, provides users with clear status indicators, and lays the groundwork for a full repository-backed publishing workflow.
+
+Reflection:
+Challenge: The most challenging part was debugging the subtle autosave race conditions. It required multiple iterations and a deep, methodical approach with telemetry to finally isolate the root cause. It was a powerful lesson in not underestimating the complexity of state management in reactive UIs.
+Discovery: The user's guidance to use a `lastSavedContentRef` was the key insight. Comparing against the last *persisted* state is a much more robust pattern than comparing against the last *rendered* state, and it elegantly solves a whole class of race conditions.
+Advice: For complex state interactions, especially those involving user input, debouncing, and asynchronous operations, add temporary, detailed logging first. Don't rush to a solution until you can clearly see the sequence of events. The logs will reveal the true nature of the problem.
+
 Jules #165 (Autosave Loop Fix)
 Date: 2025-11-14
 Summary:

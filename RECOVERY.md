@@ -4,6 +4,35 @@ This document serves as a debug diary for the `easy-seo` project. It records com
 
 ---
 
+## **Bug: Infinite Autosave Loop on `contentEditable` Element**
+
+**Date:** 2025-11-16
+**Agent:** Jules #167
+
+### **Symptoms:**
+
+In the `ContentEditorPage`, any user input would trigger a continuous, rapid-fire sequence of autosave calls, and the "save status" dot would flicker endlessly. This happened both on initial page load and during user typing.
+
+### **Root Cause:**
+
+This was a subtle and complex bug with multiple contributing factors, ultimately boiling down to a race condition between Preact's state updates and the browser's handling of `contentEditable` elements.
+
+1.  **Save-on-Load:** An early attempt to fix the bug involved a `useEffect` that watched for content changes. This was an anti-pattern because the initial asynchronous loading of content would trigger this `useEffect`, causing an unwanted save immediately on page load.
+2.  **Infinite Re-render Loop:** The core issue was a missing guard in the `onInput` handler. Calling `setContent` on every input event caused a re-render. The re-render would update the `innerHTML` of the `contentEditable` div. The browser would then interpret this programmatic `innerHTML` change as a *new* input event, firing the `onInput` handler again and creating an infinite loop.
+3.  **Redundant Saves:** Even after fixing the loop, the save status dot would flicker because the debounced autosave would fire even if the content hadn't changed since the last *successful save*.
+
+### **Solution:**
+
+The final, robust solution required a multi-layered guard system to address each of these issues independently.
+
+1.  **Programmatic-Write Guard (`isProgrammaticUpdateRef`):** A `useRef` boolean flag is set to `true` immediately before the application programmatically sets the `editorRef.current.innerHTML` on initial content load. It is set back to `false` immediately after. The `onInput` handler now checks this flag at the very beginning and returns immediately if it's true, effectively ignoring the input event caused by the initial render.
+2.  **Last-Accepted-Content Guard (`lastAcceptedContentRef`):** A second `useRef` is used to track the last content string that was accepted by the `onInput` handler. The handler now compares the current `innerHTML` to this ref (`if (newContent !== lastAcceptedContentRef.current)`). This prevents race conditions where multiple input events might fire before the component has had a chance to re-render with the new `content` state.
+3.  **Last-Saved-Content Guard (`lastSavedContentRef`):** A third `useRef` is used to track the content of the last successful save. Inside the debounced `autosaveCallback`, the very first step is now a guard that checks if the incoming content is identical to the last saved content (`if (newContent === lastSavedContentRef.current)`). If they are the same, the function returns immediately, preventing a redundant `localStorage` write and the associated UI flicker.
+
+This combination of guards makes the editor component stable, efficient, and free of race conditions.
+
+---
+
 ## **Bug: Infinite Autosave Loop Triggered by Preview Iframe**
 
 **Date:** 2025-11-14

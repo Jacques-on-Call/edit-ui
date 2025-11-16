@@ -10,8 +10,8 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/contexts/AuthContext.jsx`**: Manages global authentication state.
 -   **`src/pages/LoginPage.jsx`**: The user login page.
 -   **`src/pages/RepoSelectPage.jsx`**: The repository selection page.
--   **`src/pages/FileExplorerPage.jsx`**: The main file explorer page.
--   **`src/pages/ContentEditorPage.jsx`**: The main shell for the content editor. Orchestrates the block tree, content area, inspector, and preview panes.
+-   **`src/pages/FileExplorerPage.jsx`**: The main file explorer page. Handles the file creation logic (now client-side drafts) and passes data down to the `FileExplorer` component.
+-   **`src/pages/ContentEditorPage.jsx`**: The main shell for the content editor. Responsible for loading and saving full draft payloads to `localStorage`.
 
 ### **Styling**
 
@@ -26,8 +26,8 @@ This document lists all significant files in the `easy-seo` project, along with 
 
 ### **Components**
 
--   **`src/components/FileExplorer.jsx`**: The core file explorer component.
--   **`src/components/FileTile.jsx`**: Renders a single file or folder tile.
+-   **`src/components/FileExplorer.jsx`**: The core file explorer component. Fetches repository files and merges them with client-side drafts from `localStorage` to create a unified file list.
+-   **`src/components/FileTile.jsx`**: Renders a single file or folder tile. Now displays "Draft" and "Live" badges based on the file's status.
 -   **`src/components/ReadmeDisplay.jsx`**: Renders the README.md file.
 -   **`src/components/Icon.jsx`**: A wrapper for the lucide-preact icon library.
 -   **`src/components/ContextMenu.jsx`**: Renders a right-click/long-press context menu.
