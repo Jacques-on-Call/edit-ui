@@ -23,7 +23,7 @@ function getIconForFile(fileName) {
   return 'File';
 }
 
-function FileTile({ file, isSelected, metadata, onOpen, onShowActions }) {
+function FileTile({ file, isSelected, metadata, hasDraft, isPublished, onOpen, onShowActions }) {
   const longPressTimer = useRef();
   const isLongPress = useRef(false);
 
@@ -93,6 +93,16 @@ function FileTile({ file, isSelected, metadata, onOpen, onShowActions }) {
         onTouchCancel={handleTouchEnd}
         onContextMenu={handleContextMenu}
       >
+        <div className="absolute top-2 right-2 text-xs font-bold">
+          {isPublished && !hasDraft && <span className="text-green-400">Live</span>}
+          {hasDraft && !isPublished && <span className="text-orange-400">Draft</span>}
+          {isPublished && hasDraft && (
+            <div className="flex items-center space-x-1">
+              <span className="text-orange-400">Draft</span>
+              <span className="text-green-400">•</span>
+            </div>
+          )}
+        </div>
         <div className="flex-grow flex flex-col items-center justify-center text-center w-full">
           <div className="mb-2">
             <Icon name={iconName} className={`w-12 h-12 ${iconColor} transition-colors`} />

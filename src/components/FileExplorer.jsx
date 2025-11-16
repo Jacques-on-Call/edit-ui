@@ -348,16 +348,25 @@ return (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {Array.isArray(filesToDisplay) && filesToDisplay
                 .filter(file => !file.name.startsWith('.') && file.name.toLowerCase() !== 'readme.md')
-                .map(file => (
-                  <FileTile
-                    key={file.sha}
-                    file={file}
-                    metadata={metadataCache[file.sha]}
-                    isSelected={selectedFile && selectedFile.sha === file.sha}
-                    onOpen={handleOpen}
-                    onShowActions={handleLongPress}
-                  />
-                ))}
+                .map(file => {
+                  const slug = (file.name || file.path || '').replace(/\.[^/.]+$/, '');
+                  const hasDraft = localStorage.getItem(`easy-seo-draft:${slug}`) !== null;
+                  const isPublished = localStorage.getItem(`easy-seo-published:${slug}`) !== null;
+                  console.log(`[FileExplorer] fileState -> slug: ${slug}, draft: ${hasDraft}, published: ${isPublished}`);
+
+                  return (
+                    <FileTile
+                      key={file.sha}
+                      file={file}
+                      metadata={metadataCache[file.sha]}
+                      isSelected={selectedFile && selectedFile.sha === file.sha}
+                      hasDraft={hasDraft}
+                      isPublished={isPublished}
+                      onOpen={handleOpen}
+                      onShowActions={handleLongPress}
+                    />
+                  );
+                })}
             </div>
             {contextMenu && (
               <FileContextMenu
