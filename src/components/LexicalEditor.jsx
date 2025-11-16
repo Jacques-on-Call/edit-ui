@@ -15,11 +15,13 @@ import { $getRoot, $insertNodes } from 'lexical';
 // Internal component to handle setting the initial editor state from HTML
 function InitialContentPlugin({ initialContent }) {
   const [editor] = useLexicalComposerContext();
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (!initialContent || editor.isCommitted()) {
+    if (hasInitialized.current || !initialContent) {
       return;
     }
+    hasInitialized.current = true;
 
     editor.update(() => {
       const parser = new DOMParser();
