@@ -1,16 +1,14 @@
 import { fetchJson } from './fetchJson';
 
 // Defensive mock API - includes saveDraft and publishPage
-export async function fetchPageJson(slug = 'home') {
-  console.log('[mockApi] fetchPageJson called for', slug);
+export async function fetchPageJson(path) {
+  console.log('[mockApi] fetchPageJson called for path:', path);
   try {
     const repoData = JSON.parse(localStorage.getItem('easy-seo-repo'));
     if (!repoData || !repoData.repo) {
       throw new Error('No repository selected in localStorage');
     }
     const repo = repoData.repo;
-    // Construct the correct path to the file in the src/pages directory
-    const path = `src/pages/${slug}.astro`;
 
     // Call the correct endpoint with the required 'repo' and 'path' parameters
     const data = await fetchJson(`/api/get-file-content?repo=${repo}&path=${path}`);
@@ -32,17 +30,19 @@ export async function fetchPageJson(slug = 'home') {
     };
 
     const contentBody = stripFrontmatter(decodedContent);
+    const slug = path.split('/').pop().replace(/\.[^/.]+$/, '');
 
     return {
       meta: { title: slug }, // Placeholder for now
       content: contentBody,
     };
   } catch (error) {
-    console.error(`[mockApi] Error fetching page JSON for slug "${slug}":`, error);
+    const slug = path.split('/').pop().replace(/\.[^/.]+$/, '');
+    console.error(`[mockApi] Error fetching page JSON for path "${path}":`, error);
     // Return a default structure on error to prevent crashes
     return {
       meta: { title: `Error loading ${slug}`, slug },
-      content: `<p>Could not load content for ${slug}.</p>`,
+      content: `<p>Could not load content for ${path}.</p>`,
     };
   }
 }

@@ -298,9 +298,9 @@ const handleOpen = (fileToOpen) => {
   if (file.type === 'dir') {
     setPath(file.path);
   } else {
-    const slug = (file.name || file.path || '').replace(/\.[^/.]+$/, '');
-    const target = `/editor/${encodeURIComponent(slug)}`;
-    console.log(`[FileExplorer] navigate attempt -> ${file.path} -> slug: ${slug} -> target: ${target}`);
+    // Encode the full path to ensure it's correctly passed in the URL
+    const target = `/editor/${encodeURIComponent(file.path)}`;
+    console.log(`[FileExplorer] navigate attempt -> full path: ${file.path} -> target: ${target}`);
     try {
       console.log('[FileExplorer] trying preact-router route()');
       route(target);

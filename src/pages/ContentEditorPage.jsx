@@ -8,7 +8,11 @@ import EditorHeader from '../components/EditorHeader';
 import { Home, Plus, UploadCloud } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
-  const pageId = props.pageId || 'home';
+  // The path is now passed in the URL, encoded.
+  const path = decodeURIComponent(props.path);
+  // The slug is the filename without the extension, used for drafts.
+  const slug = path.split('/').pop().replace(/\.[^/.]+$/, '');
+
   const [initialContent, setInitialContent] = useState(null);
   const [saveStatus, setSaveStatus] = useState('saved');
   const lastAcceptedContentRef = useRef(null);
@@ -27,11 +31,12 @@ export default function ContentEditorPage(props) {
     setSaveStatus('saving');
     console.log('[ContentEditor] Autosaving content to local storage...');
     try {
-      const key = `easy-seo-draft:${pageId}`;
+      const key = `easy-seo-draft:${slug}`;
       const draft = JSON.parse(localStorage.getItem(key) || '{}');
       const payload = {
         ...draft,
-        slug: pageId,
+        slug: slug,
+        path: path,
         content: newContent,
         savedAt: new Date().toISOString(),
       };
@@ -43,13 +48,13 @@ export default function ContentEditorPage(props) {
       console.error('[ContentEditor] Failed to autosave content to local storage:', error);
       setSaveStatus('unsaved');
     }
-  }, [pageId]);
+  }, [path, slug]);
 
   const { triggerSave } = useAutosave(autosaveCallback, 1000);
 
   useEffect(() => {
     const loadContent = async () => {
-      const draftKey = `easy-seo-draft:${pageId}`;
+      const draftKey = `easy-seo-draft:${slug}`;
       const savedDraft = localStorage.getItem(draftKey);
       let finalContent = '';
 
@@ -59,7 +64,7 @@ export default function ContentEditorPage(props) {
         finalContent = draft.content || '';
       } else {
         console.log('[ContentEditor] No draft found. Fetching from API...');
-        const pageJson = await fetchPageJson(pageId);
+        const pageJson = await fetchPageJson(path);
         if (pageJson?.content) {
             finalContent = pageJson.content;
         } else if (pageJson?.meta?.initialContent) {
@@ -79,7 +84,7 @@ export default function ContentEditorPage(props) {
     };
 
     loadContent();
-  }, [pageId]);
+  }, [path, slug]);
 
   function handleLexicalChange(newContent) {
     console.log(`[ContentEditor] lexical-change len: ${newContent.length}`);
@@ -104,7 +109,7 @@ export default function ContentEditorPage(props) {
         {initialContent !== null ? (
           <LexicalEditor
             ref={editorRef}
-            slug={pageId}
+            slug={slug}
             initialContent={initialContent}
             onChange={handleLexicalChange}
           />
