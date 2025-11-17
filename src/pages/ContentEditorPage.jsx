@@ -13,6 +13,7 @@ export default function ContentEditorPage(props) {
   const [saveStatus, setSaveStatus] = useState('saved');
   const lastAcceptedContentRef = useRef(null);
   const editorApiRef = useRef(null);
+  const pageJsonRef = useRef(null);
 
   const autosaveCallback = useCallback((newContent) => {
     console.log(`[ContentEditor] autosave-callback TIMESTAMP=${new Date().toISOString()} len=${newContent.length}`);
@@ -33,17 +34,45 @@ export default function ContentEditorPage(props) {
       localStorage.setItem(key, JSON.stringify(payload));
       lastAcceptedContentRef.current = newContent;
       console.log(`[ContentEditor] Content successfully autosaved to local storage with key: ${key}`);
+
+      const meta = pageJsonRef.current?.meta || {};
+      serializeToAstroAndStore(pageId, meta, newContent);
+
       setSaveStatus('saved');
     } catch (error) {
       console.error('[ContentEditor] Failed to autosave content to local storage:', error);
       setSaveStatus('unsaved');
     }
-  }, [pageId]);
+  }, [pageId, serializeToAstroAndStore]);
+
+  const serializeToAstroAndStore = useCallback((slug, meta, draftHtml) => {
+    const layout = meta?.layout || '../../../layouts/Layout.astro';
+    let title = meta?.title || '';
+    title = title.replace(/\\/g, '\\\\').replace(/"/g, '\"').replace(/\r?\n/g, ' ');
+
+    const frontmatter = `---
+layout: ${layout}
+title: "${title}"
+slug: ${slug}
+savedAt: ${new Date().toISOString()}
+---`;
+
+    const astroFileContent = `${frontmatter}\n\n${draftHtml}`;
+    const key = `easy-seo:astrofile:${slug}`;
+    localStorage.setItem(key, astroFileContent);
+    console.log(`[ContentEditor] astroAutoSerialized -> slug:${slug}, key:${key}, length:${astroFileContent.length}`);
+  }, []);
 
   const { triggerSave } = useAutosave(autosaveCallback, 1000);
 
   useEffect(() => {
-    const computeAndSetInitialContent = (pageJson = null) => {
+    console.log('[ContentEditor] Loading page:', pageId);
+
+    fetchPageJson(pageId).then((pj) => {
+      console.log('[ContentEditor] page.json promise resolved:', pj);
+      console.log('[ContentEditor] page.json loaded:', pj);
+      pageJsonRef.current = pj; // Store the fetched JSON
+
       const draftKey = `easy-seo-draft:${pageId}`;
       const savedDraft = localStorage.getItem(draftKey);
       let finalContent = '';
@@ -51,10 +80,11 @@ export default function ContentEditorPage(props) {
       if (savedDraft) {
         const draft = JSON.parse(savedDraft);
         finalContent = draft.content || '';
-      } else if (pageJson?.content) {
-        finalContent = pageJson.content;
-      } else if (pageJson?.meta?.initialContent) {
-        finalContent = pageJson.meta.initialContent;
+        console.log(`[ContentEditor] loadedDraft -> slug: ${draft.slug}, savedAt: ${draft.savedAt}`);
+      } else if (pj?.content) {
+        finalContent = pj.content;
+      } else if (pj?.meta?.initialContent) {
+        finalContent = pj.meta.initialContent;
       }
 
       if (typeof finalContent === 'string' && !finalContent.startsWith('<')) {
@@ -62,18 +92,9 @@ export default function ContentEditorPage(props) {
       }
 
       console.log('[ContentEditor] initialContent ->', finalContent);
-
       setInitialContent(finalContent);
       lastAcceptedContentRef.current = finalContent;
-    };
-
-    const draftKey = `easy-seo-draft:${pageId}`;
-    const savedDraft = localStorage.getItem(draftKey);
-    if (savedDraft) {
-      computeAndSetInitialContent();
-    } else {
-      fetchPageJson(pageId).then(computeAndSetInitialContent);
-    }
+    });
   }, [pageId]);
 
   function handleLexicalChange(newContent) {

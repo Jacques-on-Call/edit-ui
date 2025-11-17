@@ -12,7 +12,9 @@ import { ListItemNode, ListNode } from '@lexical/list';
 import { CodeHighlightNode, CodeNode } from '@lexical/code';
 import { AutoLinkNode, LinkNode } from '@lexical/link';
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
-import { $getRoot, $insertNodes } from 'lexical';
+import { $getRoot, $insertNodes, FORMAT_TEXT_COMMAND, UNDO_COMMAND, REDO_COMMAND } from 'lexical';
+import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from '@lexical/list';
+import { TOGGLE_LINK_COMMAND } from '@lexical/link';
 
 const editorConfig = {
   namespace: 'EasySEOEditor',
@@ -69,13 +71,57 @@ function InitialContentPlugin({ initialContent }) {
 }
 
 const LexicalEditor = forwardRef(({ slug, initialContent, onChange }, ref) => {
-  const editorRef = useRef(null);
+  const [editor] = useLexicalComposerContext();
 
-  useImperativeHandle(ref, () => ({
-    focus: () => {
-      editorRef.current?.focus();
+  useImperativeHandle(ref, () => {
+    const logAction = (action) => {
+      editor.update(() => {
+        const html = $generateHtmlFromNodes(editor);
+        console.log(`[ContentEditor] apply-format -> ${action} len:${html.length}`);
+      });
+    };
+
+    return {
+      focus: () => {
+        editor.focus();
+      },
+      toggleBold: () => {
+        editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
+        logAction('bold');
+      },
+      toggleItalic: () => {
+        editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
+        logAction('italic');
+      },
+    toggleUnderline: () => {
+      editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
+      logAction('underline');
     },
-  }));
+    toggleStrikethrough: () => {
+      editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
+      logAction('strikethrough');
+    },
+    insertLink: (url) => {
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, url);
+      logAction('link');
+    },
+    toggleOrderedList: () => {
+      editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
+      logAction('ordered-list');
+    },
+    toggleUnorderedList: () => {
+      editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
+      logAction('unordered-list');
+    },
+    undo: () => {
+      editor.dispatchCommand(UNDO_COMMAND, undefined);
+      logAction('undo');
+    },
+    redo: () => {
+      editor.dispatchCommand(REDO_COMMAND, undefined);
+      logAction('redo');
+    },
+  }});
 
   const handleOnChange = (editorState, editor) => {
     editor.update(() => {
@@ -93,7 +139,7 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange }, ref) => {
     <LexicalComposer initialConfig={initialConfig}>
       <div className="relative">
         <RichTextPlugin
-          contentEditable={<ContentEditable className="editor-input" />}
+          contentEditable={<ContentEditable className="editor-input" data-testid="lexical-editor" />}
           placeholder={<div className="editor-placeholder">Start typing...</div>}
           ErrorBoundary={LexicalErrorBoundary}
         />

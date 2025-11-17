@@ -17,6 +17,9 @@ export default function EditorHeader({ editorApiRef }) {
         case 'heading':
           if (api.toggleHeading) api.toggleHeading();
           break;
+        case 'list':
+          if (api.toggleUnorderedList) api.toggleUnorderedList();
+          break;
         case 'link':
           if (api.insertLink) {
             const url = prompt('Enter the URL:');
