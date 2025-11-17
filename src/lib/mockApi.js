@@ -1,19 +1,26 @@
+import { fetchJson } from './fetchJson';
+
 // Defensive mock API - includes saveDraft and publishPage
-export function fetchPageJson(slug = 'home') {
+export async function fetchPageJson(slug = 'home') {
   console.log('[mockApi] fetchPageJson called for', slug);
-  const fixture = {
-    meta: { title: 'Mock Title for ' + slug, slug, initialContent: '<p>Welcome to mock ' + slug + '</p>' },
-    blocks: [
-      { id: 'block-1', type: 'heading', content: 'Main Heading' },
-      { id: 'block-2', type: 'paragraph', content: 'A paragraph of text.' },
-    ]
-  };
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log('[mockApi] returning fixture for', slug);
-      resolve(fixture);
-    }, 120);
-  });
+  try {
+    // This is the new, real implementation
+    const data = await fetchJson(`/api/files/get/${slug}`);
+    // The backend returns the file content in a `content` property
+    // and metadata in a `meta` property. We need to format this
+    // into the structure the frontend expects.
+    return {
+      meta: data.meta || { title: 'Error: No meta found' },
+      content: data.content || '',
+    };
+  } catch (error) {
+    console.error(`[mockApi] Error fetching page JSON for slug "${slug}":`, error);
+    // Return a default structure on error to prevent crashes
+    return {
+      meta: { title: `Error loading ${slug}`, slug },
+      content: `<p>Could not load content for ${slug}.</p>`,
+    };
+  }
 }
 
 export async function saveDraft({ slug = 'home', content = '', meta = {} } = {}) {

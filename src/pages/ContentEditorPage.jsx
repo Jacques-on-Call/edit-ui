@@ -12,7 +12,12 @@ export default function ContentEditorPage(props) {
   const [initialContent, setInitialContent] = useState(null);
   const [saveStatus, setSaveStatus] = useState('saved');
   const lastAcceptedContentRef = useRef(null);
-  const editorApiRef = useRef(null);
+  const [editorApi, setEditorApi] = useState(null);
+  const editorRef = useCallback(node => {
+    if (node !== null) {
+      setEditorApi(node);
+    }
+  }, []);
 
   const autosaveCallback = useCallback((newContent) => {
     console.log(`[ContentEditor] autosave-callback TIMESTAMP=${new Date().toISOString()} len=${newContent.length}`);
@@ -43,21 +48,27 @@ export default function ContentEditorPage(props) {
   const { triggerSave } = useAutosave(autosaveCallback, 1000);
 
   useEffect(() => {
-    const computeAndSetInitialContent = (pageJson = null) => {
+    const loadContent = async () => {
       const draftKey = `easy-seo-draft:${pageId}`;
       const savedDraft = localStorage.getItem(draftKey);
       let finalContent = '';
 
       if (savedDraft) {
+        console.log('[ContentEditor] Found draft in local storage.');
         const draft = JSON.parse(savedDraft);
         finalContent = draft.content || '';
-      } else if (pageJson?.content) {
-        finalContent = pageJson.content;
-      } else if (pageJson?.meta?.initialContent) {
-        finalContent = pageJson.meta.initialContent;
+      } else {
+        console.log('[ContentEditor] No draft found. Fetching from API...');
+        const pageJson = await fetchPageJson(pageId);
+        if (pageJson?.content) {
+            finalContent = pageJson.content;
+        } else if (pageJson?.meta?.initialContent) {
+            finalContent = pageJson.meta.initialContent;
+        }
       }
 
       if (typeof finalContent === 'string' && !finalContent.startsWith('<')) {
+        console.log('[ContentEditor] Normalizing plain text content to HTML.');
         finalContent = finalContent.split('\n').filter(line => line.trim() !== '').map(line => `<p>${line}</p>`).join('');
       }
 
@@ -67,13 +78,7 @@ export default function ContentEditorPage(props) {
       lastAcceptedContentRef.current = finalContent;
     };
 
-    const draftKey = `easy-seo-draft:${pageId}`;
-    const savedDraft = localStorage.getItem(draftKey);
-    if (savedDraft) {
-      computeAndSetInitialContent();
-    } else {
-      fetchPageJson(pageId).then(computeAndSetInitialContent);
-    }
+    loadContent();
   }, [pageId]);
 
   function handleLexicalChange(newContent) {
@@ -90,7 +95,7 @@ export default function ContentEditorPage(props) {
 
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">
-      <EditorHeader editorApiRef={editorApiRef} />
+      <EditorHeader editorApi={editorApi} />
 
       <main
         class="flex-grow overflow-y-auto"
@@ -98,7 +103,7 @@ export default function ContentEditorPage(props) {
       >
         {initialContent !== null ? (
           <LexicalEditor
-            ref={editorApiRef}
+            ref={editorRef}
             slug={pageId}
             initialContent={initialContent}
             onChange={handleLexicalChange}

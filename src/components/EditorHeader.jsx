@@ -2,34 +2,33 @@ import { h } from 'preact';
 import { Bold, Italic, Heading2, List, Link, Undo, Redo } from 'lucide-preact';
 import './EditorHeader.css';
 
-export default function EditorHeader({ editorApiRef }) {
+export default function EditorHeader({ editorApi }) {
   const handleAction = (action) => {
     console.log(`[EditorToolbar] action -> ${action}`);
-    const api = editorApiRef.current;
-    if (api) {
+    if (editorApi) {
       switch (action) {
         case 'bold':
-          if (api.toggleBold) api.toggleBold();
+          if (editorApi.toggleBold) editorApi.toggleBold();
           break;
         case 'italic':
-          if (api.toggleItalic) api.toggleItalic();
+          if (editorApi.toggleItalic) editorApi.toggleItalic();
           break;
         case 'heading':
-          if (api.toggleHeading) api.toggleHeading();
+          if (editorApi.toggleHeading) editorApi.toggleHeading();
           break;
         case 'link':
-          if (api.insertLink) {
+          if (editorApi.insertLink) {
             const url = prompt('Enter the URL:');
             if (url) {
-              api.insertLink(url);
+              editorApi.insertLink(url);
             }
           }
           break;
         case 'undo':
-          if (api.undo) api.undo();
+          if (editorApi.undo) editorApi.undo();
           break;
         case 'redo':
-          if (api.redo) api.redo();
+          if (editorApi.redo) editorApi.redo();
           break;
         default:
           break;
