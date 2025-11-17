@@ -9,14 +9,14 @@ import { Home, Plus, UploadCloud } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
   const pageId = props.pageId || 'home';
-  const [content, setContent] = useState(null);
+  const [initialContent, setInitialContent] = useState(null);
   const [saveStatus, setSaveStatus] = useState('saved');
-  const lastSavedContentRef = useRef(null);
+  const lastAcceptedContentRef = useRef(null);
   const editorApiRef = useRef(null);
 
   const autosaveCallback = useCallback((newContent) => {
     console.log(`[ContentEditor] autosave-callback TIMESTAMP=${new Date().toISOString()} len=${newContent.length}`);
-    if (newContent === lastSavedContentRef.current) {
+    if (newContent === lastAcceptedContentRef.current) {
       return;
     }
     setSaveStatus('saving');
@@ -31,7 +31,7 @@ export default function ContentEditorPage(props) {
         savedAt: new Date().toISOString(),
       };
       localStorage.setItem(key, JSON.stringify(payload));
-      lastSavedContentRef.current = newContent;
+      lastAcceptedContentRef.current = newContent;
       console.log(`[ContentEditor] Content successfully autosaved to local storage with key: ${key}`);
       setSaveStatus('saved');
     } catch (error) {
@@ -43,37 +43,45 @@ export default function ContentEditorPage(props) {
   const { triggerSave } = useAutosave(autosaveCallback, 1000);
 
   useEffect(() => {
-    console.log('[ContentEditor] Loading page:', pageId);
+    const computeAndSetInitialContent = (pageJson = null) => {
+      const draftKey = `easy-seo-draft:${pageId}`;
+      const savedDraft = localStorage.getItem(draftKey);
+      let finalContent = '';
+
+      if (savedDraft) {
+        const draft = JSON.parse(savedDraft);
+        finalContent = draft.content || '';
+      } else if (pageJson?.content) {
+        finalContent = pageJson.content;
+      } else if (pageJson?.meta?.initialContent) {
+        finalContent = pageJson.meta.initialContent;
+      }
+
+      if (typeof finalContent === 'string' && !finalContent.startsWith('<')) {
+        finalContent = finalContent.split('\n').filter(line => line.trim() !== '').map(line => `<p>${line}</p>`).join('');
+      }
+
+      console.log('[ContentEditor] initialContent ->', finalContent);
+
+      setInitialContent(finalContent);
+      lastAcceptedContentRef.current = finalContent;
+    };
+
     const draftKey = `easy-seo-draft:${pageId}`;
     const savedDraft = localStorage.getItem(draftKey);
-
     if (savedDraft) {
-      const draft = JSON.parse(savedDraft);
-      console.log(`[ContentEditor] loadedDraft -> slug: ${draft.slug}, savedAt: ${draft.savedAt}`);
-      let initialContent = draft.content || '';
-      if (!initialContent.startsWith('<')) {
-        initialContent = initialContent.split('\n').filter(line => line.trim() !== '').map(line => `<p>${line}</p>`).join('');
-      }
-      console.log('[ContentEditor] initialContent ->', initialContent);
-      setContent(initialContent);
+      computeAndSetInitialContent();
     } else {
-      fetchPageJson(pageId).then((pj) => {
-        console.log('[ContentEditor] page.json loaded:', pj);
-        let initialContent = pj?.content || pj?.meta?.initialContent || '';
-        if (!initialContent.startsWith('<')) {
-          initialContent = initialContent.split('\n').filter(line => line.trim() !== '').map(line => `<p>${line}</p>`).join('');
-        }
-        console.log('[ContentEditor] initialContent ->', initialContent);
-        setContent(initialContent);
-      });
+      fetchPageJson(pageId).then(computeAndSetInitialContent);
     }
   }, [pageId]);
 
   function handleLexicalChange(newContent) {
     console.log(`[ContentEditor] lexical-change len: ${newContent.length}`);
-    setContent(newContent);
-    setSaveStatus('unsaved');
-    triggerSave(newContent);
+    if (newContent !== lastAcceptedContentRef.current) {
+      setSaveStatus('unsaved');
+      triggerSave(newContent);
+    }
   }
 
   const handleHome = () => route('/explorer');
@@ -88,11 +96,11 @@ export default function ContentEditorPage(props) {
         class="flex-grow overflow-y-auto"
         style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}
       >
-        {content !== null ? (
+        {initialContent !== null ? (
           <LexicalEditor
             ref={editorApiRef}
             slug={pageId}
-            initialContent={content}
+            initialContent={initialContent}
             onChange={handleLexicalChange}
           />
         ) : (
