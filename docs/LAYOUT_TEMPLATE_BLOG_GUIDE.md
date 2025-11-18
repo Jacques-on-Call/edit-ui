@@ -218,3 +218,25 @@ Appendix: useful tooling & references
 - For a11y: https://dequeuniversity.com/axe/core-documentation
 - For canonical JSON‑LD patterns: https://schema.org/Article, https://schema.org/BreadcrumbList
 
+## Original Advice:
+An optimised blog post template should do more than just look nice.
+It should:
+
+→ Build trust (EEAT)
+→ Be accessible and scannable
+→ Drive engagement and subscribers
+
+Here's what every SEO-ready blog template needs:
+
+1. Breadcrumb navigation - helps users and Google understand context.
+2. Post date (and updated date) - shows freshness and credibility.
+3. Author bio + profile link - adds expertise signals.
+4. Structured headings (H1–H3) – keep hierarchy logical and readable.
+5. Formatting styles – bold, quotes, lists, tables. Makes scanning easy.
+6. Rich media – images, video, charts. Supports accessibility and dwell time.
+7. Mobile-first design – test on phone first, desktop second.
+8. Subscribe CTA or lead magnet – capture interest while trust is high.
+9. Internal links block – guide readers deeper into your site.
+10. Schema markup – Article + Author + BreadcrumbList.
+
+All of this makes your posts look trustworthy to both humans and machines.
