@@ -1,5 +1,19 @@
 # Project Change Log
 
+Jules #169 (Workspace Reset & Process Correction)
+Date: 2025-11-18
+Summary:
+Performed a full workspace reset to recover from a corrupted state caused by sandbox git instability. This entry documents the key learnings from the failure and establishes a renewed commitment to the "baby steps" development process.
+Details:
+- **Problem:** A series of attempts to implement routing and data-fetching changes resulted in a major regression (broken CSS, non-functional editor). The root cause was identified as the sandbox's unstable `git` environment, which prevented small, atomic commits and led to a tangled, incorrect state being submitted.
+- **Solution:** A "scorched earth" reset (`reset_all`) was performed to revert the entire workspace to a known-good state. This provides a clean foundation to re-implement the features correctly.
+- **Process Reinforcement:** This incident highlighted the absolute necessity of adhering to the "one small change per branch/commit" rule. The failure was not in the code's logic, but in the process of its implementation. Future work will proceed with extreme caution, ensuring each logical change is isolated, built, verified, and submitted independently.
+
+Reflection:
+Challenge: The most challenging part was recovering from a state of cascading failures. When the application is broken and the underlying tools (like git) are unreliable, it's very difficult to debug and move forward. The decision to perform a full reset was difficult but necessary.
+Discovery: The "baby steps" principle is not just a suggestion; it's a critical safety mechanism. Attempting to bundle even closely related changes can lead to unpredictable outcomes and make rollbacks nearly impossible. The process is as important as the code.
+Advice: If the development environment's tools become unstable, do not try to fight them. Fall back to a known-good state. A full reset, while seemingly drastic, is often faster and safer than trying to untangle a corrupted workspace. Always, always, always make the smallest possible change and verify it completely before moving on.
+
 Jacques 25/11/18 reset for the third time the process of getting the home.astro live is breaking the app in vaious ways . the ideal is to do this process safly so as to be able to solve the challenges without serios regression. after being burnt by days of bug hunting im taking the reset path now.
 Jules #167 (Draft Workflow Implementation)
 Date: 2025-11-16
