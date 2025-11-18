@@ -1,50 +1,19 @@
-import { fetchJson } from './fetchJson';
-
 // Defensive mock API - includes saveDraft and publishPage
-export async function fetchPageJson(path) {
-  console.log('[mockApi] fetchPageJson called for path:', path);
-  try {
-    const repoData = JSON.parse(localStorage.getItem('easy-seo-repo'));
-    if (!repoData || !repoData.repo) {
-      throw new Error('No repository selected in localStorage');
-    }
-    const repo = repoData.repo;
-
-    // Call the correct endpoint with the required 'repo' and 'path' parameters
-    const data = await fetchJson(`/api/get-file-content?repo=${repo}&path=${path}`);
-
-    // The content is base64 encoded, so we need to decode it.
-    const decodedContent = atob(data.content);
-
-    // Strip YAML frontmatter to isolate the HTML content for the editor.
-    const stripFrontmatter = (text) => {
-      const lines = text.split('\n');
-      if (lines[0].trim() !== '---') {
-        return text; // No frontmatter found
-      }
-      const secondFenceIndex = lines.indexOf('---', 1);
-      if (secondFenceIndex === -1) {
-        return text; // Malformed frontmatter, return as is
-      }
-      return lines.slice(secondFenceIndex + 1).join('\n').trim();
-    };
-
-    const contentBody = stripFrontmatter(decodedContent);
-    const slug = path.split('/').pop().replace(/\.[^/.]+$/, '');
-
-    return {
-      meta: { title: slug }, // Placeholder for now
-      content: contentBody,
-    };
-  } catch (error) {
-    const slug = path.split('/').pop().replace(/\.[^/.]+$/, '');
-    console.error(`[mockApi] Error fetching page JSON for path "${path}":`, error);
-    // Return a default structure on error to prevent crashes
-    return {
-      meta: { title: `Error loading ${slug}`, slug },
-      content: `<p>Could not load content for ${path}.</p>`,
-    };
-  }
+export function fetchPageJson(slug = 'home') {
+  console.log('[mockApi] fetchPageJson called for', slug);
+  const fixture = {
+    meta: { title: 'Mock Title for ' + slug, slug, initialContent: '<p>Welcome to mock ' + slug + '</p>' },
+    blocks: [
+      { id: 'block-1', type: 'heading', content: 'Main Heading' },
+      { id: 'block-2', type: 'paragraph', content: 'A paragraph of text.' },
+    ]
+  };
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log('[mockApi] returning fixture for', slug);
+      resolve(fixture);
+    }, 120);
+  });
 }
 
 export async function saveDraft({ slug = 'home', content = '', meta = {} } = {}) {

@@ -5,16 +5,9 @@ import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
-import {
-  FORMAT_TEXT_COMMAND,
-  FORMAT_ELEMENT_COMMAND,
-  UNDO_COMMAND,
-  REDO_COMMAND,
-} from 'lexical';
-import { TOGGLE_LINK_COMMAND } from '@lexical/link';
 import { ListItemNode, ListNode } from '@lexical/list';
 import { CodeHighlightNode, CodeNode } from '@lexical/code';
 import { AutoLinkNode, LinkNode } from '@lexical/link';
@@ -75,39 +68,12 @@ function InitialContentPlugin({ initialContent }) {
   return null;
 }
 
-function EditorApiPlugin({ setEditor }) {
-  const [editor] = useLexicalComposerContext();
-  useEffect(() => {
-    setEditor(editor);
-  }, [editor, setEditor]);
-  return null;
-}
-
 const LexicalEditor = forwardRef(({ slug, initialContent, onChange }, ref) => {
   const editorRef = useRef(null);
-  const [editor, setEditor] = useState(null);
 
   useImperativeHandle(ref, () => ({
     focus: () => {
       editorRef.current?.focus();
-    },
-    toggleBold: () => {
-      editor?.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
-    },
-    toggleItalic: () => {
-      editor?.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
-    },
-    toggleHeading: () => {
-      editor?.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'h2');
-    },
-    insertLink: (url) => {
-      editor?.dispatchCommand(TOGGLE_LINK_COMMAND, url);
-    },
-    undo: () => {
-      editor?.dispatchCommand(UNDO_COMMAND, undefined);
-    },
-    redo: () => {
-      editor?.dispatchCommand(REDO_COMMAND, undefined);
     },
   }));
 
@@ -134,7 +100,6 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange }, ref) => {
         <HistoryPlugin />
         <OnChangePlugin onChange={handleOnChange} />
         <InitialContentPlugin initialContent={initialContent} />
-        <EditorApiPlugin setEditor={setEditor} />
       </div>
     </LexicalComposer>
   );

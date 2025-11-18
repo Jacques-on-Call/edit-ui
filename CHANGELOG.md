@@ -1,6 +1,5 @@
 # Project Change Log
 
-jacques reset to restore app after a regressive code edit
 Jules #167 (Draft Workflow Implementation)
 Date: 2025-11-16
 Summary:
