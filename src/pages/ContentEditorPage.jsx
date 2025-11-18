@@ -55,20 +55,29 @@ export default function ContentEditorPage(props) {
   useEffect(() => {
     const loadContent = async () => {
       const draftKey = `easy-seo-draft:${slug}`;
-      const savedDraft = localStorage.getItem(draftKey);
       let finalContent = '';
+      let foundValidDraft = false;
 
-      if (savedDraft) {
-        console.log('[ContentEditor] Found draft in local storage.');
-        const draft = JSON.parse(savedDraft);
-        finalContent = draft.content || '';
-      } else {
-        console.log('[ContentEditor] No draft found. Fetching from API...');
+      try {
+        const savedDraft = localStorage.getItem(draftKey);
+        if (savedDraft) {
+          console.log('[ContentEditor] Found draft in local storage.');
+          const draft = JSON.parse(savedDraft);
+          finalContent = draft.content || '';
+          foundValidDraft = true;
+        }
+      } catch (error) {
+        console.error('[ContentEditor] Failed to load or parse draft from localStorage. Deleting corrupt draft and fetching from server.', error);
+        localStorage.removeItem(draftKey);
+      }
+
+      if (!foundValidDraft) {
+        console.log('[ContentEditor] No valid draft found. Fetching from API...');
         const pageJson = await fetchPageJson(path);
         if (pageJson?.content) {
-            finalContent = pageJson.content;
+          finalContent = pageJson.content;
         } else if (pageJson?.meta?.initialContent) {
-            finalContent = pageJson.meta.initialContent;
+          finalContent = pageJson.meta.initialContent;
         }
       }
 
