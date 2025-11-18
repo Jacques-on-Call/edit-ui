@@ -1,5 +1,20 @@
 # Project Change Log
 
+Jules #169 (Editor Routing Fix)
+Date: 2025-11-18
+Summary:
+Successfully refactored the editor's routing mechanism to use the full, URL-encoded file path instead of a simple slug. This is a foundational step for enabling the editor to load real file content from the repository.
+Details:
+- Modified `FileExplorer.jsx` to change the navigation target from `/editor/<slug>` to `/editor/<encodedFilePath>`.
+- Updated `ContentEditorPage.jsx` to correctly decode the `filePath` from the URL, derive the `slug` for backward compatibility with drafts and the mock API, and prepare the component for future data fetching logic.
+- The change was implemented as a small, isolated "baby step" to minimize risk, and was verified via a successful production build and user confirmation.
+Impact: The editor is now correctly receiving the full, unique path of the file to be edited. This unblocks the next step of replacing the mock data with a real API call to fetch file content.
+
+Reflection:
+Challenge: The primary challenge was procedural, not technical. After a major regression caused by bundling too many changes, it was critical to slow down and implement this change with extreme care and focus, ensuring it was a single, verifiable, and isolated step.
+Discovery: Re-affirming the power of the "baby steps" approach. By isolating this routing change, we were able to implement, test, and verify it with high confidence and zero side effects.
+Advice: Always follow the established process, especially after a failure. Small, focused commits are the bedrock of a stable and maintainable codebase.
+
 Jules #169 (Workspace Reset & Process Correction)
 Date: 2025-11-18
 Summary:
