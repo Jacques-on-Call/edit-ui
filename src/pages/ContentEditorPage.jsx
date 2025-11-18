@@ -1,5 +1,15 @@
 import { h } from 'preact';
 import { useEffect, useState, useRef, useCallback } from 'preact/hooks';
+
+function escapeHtml(unsafe) {
+  if (typeof unsafe !== 'string') return '';
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/\\/g, '\\\\');
+}
 import { route } from 'preact-router';
 import { fetchPageJson } from '../lib/mockApi';
 import useAutosave from '../hooks/useAutosave';
@@ -43,36 +53,41 @@ export default function ContentEditorPage(props) {
   const { triggerSave } = useAutosave(autosaveCallback, 1000);
 
   useEffect(() => {
-    const computeAndSetInitialContent = (pageJson = null) => {
-      const draftKey = `easy-seo-draft:${pageId}`;
-      const savedDraft = localStorage.getItem(draftKey);
-      let finalContent = '';
-
-      if (savedDraft) {
-        const draft = JSON.parse(savedDraft);
-        finalContent = draft.content || '';
-      } else if (pageJson?.content) {
-        finalContent = pageJson.content;
-      } else if (pageJson?.meta?.initialContent) {
-        finalContent = pageJson.meta.initialContent;
-      }
+    const processAndSetInitialContent = (contentSource) => {
+      let finalContent = contentSource || '';
 
       if (typeof finalContent === 'string' && !finalContent.startsWith('<')) {
-        finalContent = finalContent.split('\n').filter(line => line.trim() !== '').map(line => `<p>${line}</p>`).join('');
+        finalContent = finalContent
+          .split('\n')
+          .filter(line => line.trim() !== '')
+          .map(line => `<p>${escapeHtml(line.trim())}</p>`)
+          .join('');
       }
 
       console.log('[ContentEditor] initialContent ->', finalContent);
-
-      setInitialContent(finalContent);
       lastAcceptedContentRef.current = finalContent;
+      setInitialContent(finalContent);
     };
 
     const draftKey = `easy-seo-draft:${pageId}`;
-    const savedDraft = localStorage.getItem(draftKey);
-    if (savedDraft) {
-      computeAndSetInitialContent();
+    const savedDraftJSON = localStorage.getItem(draftKey);
+    let draft = null;
+
+    if (savedDraftJSON) {
+      try {
+        draft = JSON.parse(savedDraftJSON);
+      } catch (e) {
+        console.error(`[ContentEditor] Failed to parse draft for ${pageId}:`, e);
+      }
+    }
+
+    if (draft && typeof draft.content !== 'undefined') {
+      processAndSetInitialContent(draft.content);
     } else {
-      fetchPageJson(pageId).then(computeAndSetInitialContent);
+      fetchPageJson(pageId).then(pageJson => {
+        const content = pageJson?.content || pageJson?.meta?.initialContent || '';
+        processAndSetInitialContent(content);
+      });
     }
   }, [pageId]);
 
