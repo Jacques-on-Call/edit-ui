@@ -18,7 +18,11 @@ import EditorHeader from '../components/EditorHeader';
 import { Home, Plus, UploadCloud } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
-  const pageId = props.pageId || 'home';
+  const encodedPath = props.filePath || props.filePathEncoded || null;
+  const rawPath = encodedPath ? decodeURIComponent(encodedPath) : (props.pageId || 'home');
+  const pageId = rawPath.includes('/') ? rawPath.split('/').pop().replace(/\.astro$/, '') : rawPath;
+  const filePathRef = useRef(rawPath);
+
   const [initialContent, setInitialContent] = useState(null);
   const [saveStatus, setSaveStatus] = useState('saved');
   const lastAcceptedContentRef = useRef(null);
