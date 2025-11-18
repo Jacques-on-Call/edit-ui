@@ -1,5 +1,6 @@
 # Project Change Log
 
+Jacques 25/11/18 reset for the third time the process of getting the home.astro live is breaking the app in vaious ways . the ideal is to do this process safly so as to be able to solve the challenges without serios regression. after being burnt by days of bug hunting im taking the reset path now.
 Jules #167 (Draft Workflow Implementation)
 Date: 2025-11-16
 Summary:
