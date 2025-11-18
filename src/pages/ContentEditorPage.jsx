@@ -10,17 +10,43 @@ import EditorHeader from '../components/EditorHeader';
 import { Home, Plus, UploadCloud } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
-const rawPath = props.filePath ? decodeURIComponent(props.filePath) : `src/pages/${props.pageId || 'home'}.astro`;
-let pageId;
-if (rawPath.endsWith('/index.astro')) {
-  const parts = rawPath.split('/');
-  const parentDir = parts.length > 1 ? parts[parts.length - 2] : '';
-  pageId = (parentDir === 'pages' || parentDir === '') ? 'home' : parentDir;
-} else {
-  pageId = rawPath.split('/').pop().replace(/\.astro$/, '');
-}
-pageId = pageId || 'home';
-console.log('[ContentEditor] resolvedPath ->', { rawPath, pageId });
+  // Step 1: Establish a single source of truth for the path string.
+  // It can come from an encoded filePath prop or a pageId prop.
+  let pathIdentifier = props.filePath ? decodeURIComponent(props.filePath) : (props.pageId || 'home');
+
+  // Step 2: Normalize the identifier into a full, canonical path.
+  // This prevents the `src/pages/src/pages` duplication bug.
+  let rawPath;
+  if (pathIdentifier.startsWith('src/pages/')) {
+      rawPath = pathIdentifier; // It's already a full path.
+  } else if (pathIdentifier.includes('/')) {
+      rawPath = `src/pages/${pathIdentifier}`; // It's a relative path, prefix it.
+  } else {
+      rawPath = `src/pages/${pathIdentifier}.astro`; // It's a simple slug.
+  }
+
+  // Just in case a slug like "index.astro" was passed, clean up the extension.
+  if (rawPath.endsWith('.astro.astro')) {
+      rawPath = rawPath.slice(0, -6);
+  }
+
+  // Step 3: Derive a stable `pageId` (slug) from the canonical path.
+  // This logic correctly handles root and nested index pages.
+  let pageId;
+  if (rawPath.endsWith('/index.astro')) {
+    const parts = rawPath.split('/');
+    // Get the directory name before '/index.astro'.
+    const parentDir = parts.length > 2 ? parts[parts.length - 2] : '';
+    // The root index's parent is 'pages', which should map to 'home'.
+    pageId = (parentDir === 'pages' || parentDir === '') ? 'home' : parentDir;
+  } else {
+    // For any other page, the slug is the filename without the extension.
+    pageId = rawPath.split('/').pop().replace(/\.astro$/, '');
+  }
+  // Final fallback to ensure pageId is never empty.
+  pageId = pageId || 'home';
+
+  console.log('[ContentEditor] resolvedPath ->', { rawPath, pageId });
   const filePathRef = useRef(rawPath);
 
   const [initialContent, setInitialContent] = useState(null);
