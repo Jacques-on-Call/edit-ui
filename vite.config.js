@@ -20,4 +20,10 @@ export default defineConfig({
       'react/jsx-runtime': 'preact/jsx-runtime',
     },
   },
+  optimizeDeps: {
+    include: ['preact', 'preact/compat', 'react', 'react-dom'],
+  },
+  ssr: {
+    noExternal: ['preact', 'preact/compat', 'react', 'react-dom'],
+  },
 });

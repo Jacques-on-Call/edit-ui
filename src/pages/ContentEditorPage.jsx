@@ -1,16 +1,8 @@
 import { h } from 'preact';
 import { useEffect, useState, useRef, useCallback } from 'preact/hooks';
-
-function escapeHtml(unsafe) {
-  if (typeof unsafe !== 'string') return '';
-  return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/\\/g, '\\\\');
-}
 import { route } from 'preact-router';
+import { useAuth } from '../contexts/AuthContext';
+import { fetchJson } from '../lib/fetchJson';
 import { fetchPageJson } from '../lib/mockApi';
 import useAutosave from '../hooks/useAutosave';
 import LexicalEditor from '../components/LexicalEditor';
@@ -18,11 +10,7 @@ import EditorHeader from '../components/EditorHeader';
 import { Home, Plus, UploadCloud } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
-  const encodedPath = props.filePath || props.filePathEncoded || null;
-  const rawPath = encodedPath ? decodeURIComponent(encodedPath) : (props.pageId || 'home');
-  const pageId = rawPath.includes('/') ? rawPath.split('/').pop().replace(/\.astro$/, '') : rawPath;
-  const filePathRef = useRef(rawPath);
-
+  const pageId = props.pageId || 'home';
   const [initialContent, setInitialContent] = useState(null);
   const [saveStatus, setSaveStatus] = useState('saved');
   const lastAcceptedContentRef = useRef(null);
@@ -54,46 +42,66 @@ export default function ContentEditorPage(props) {
     }
   }, [pageId]);
 
+  const { selectedRepo } = useAuth();
   const { triggerSave } = useAutosave(autosaveCallback, 1000);
 
   useEffect(() => {
     const processAndSetInitialContent = (contentSource) => {
       let finalContent = contentSource || '';
-
       if (typeof finalContent === 'string' && !finalContent.startsWith('<')) {
-        finalContent = finalContent
-          .split('\n')
-          .filter(line => line.trim() !== '')
-          .map(line => `<p>${escapeHtml(line.trim())}</p>`)
-          .join('');
+        finalContent = finalContent.split('\n').filter(line => line.trim() !== '').map(line => `<p>${line}</p>`).join('');
       }
-
       console.log('[ContentEditor] initialContent ->', finalContent);
-      lastAcceptedContentRef.current = finalContent;
       setInitialContent(finalContent);
+      lastAcceptedContentRef.current = finalContent;
+    };
+
+    const fetchAndProcessRealContent = async () => {
+      const repo = selectedRepo?.full_name || window.selectedRepo || 'Jacques-on-Call/StrategyContent';
+      const path = filePathRef.current;
+      console.log('[ContentEditor] fetching real file ->', { repo, path });
+
+      try {
+        const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`;
+        const json = await fetchJson(url);
+
+        const base64Content = json.content || json.data || json.file;
+        if (!base64Content) throw new Error('No content in API response');
+
+        const binaryString = atob(base64Content);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const decodedContent = new TextDecoder('utf-8').decode(bytes);
+
+        const frontmatterRegex = /^---\s*[\r\n]+([\s\S]*?)[\r\n]+---\s*[\r\n]+/;
+        const match = decodedContent.match(frontmatterRegex);
+
+        let bodyContent = decodedContent;
+        if (match) {
+          console.log('[ContentEditor] frontmatter detected and stripped:', match[0]);
+          bodyContent = decodedContent.substring(match[0].length);
+        }
+
+        processAndSetInitialContent(bodyContent);
+
+      } catch (err) {
+        console.warn(`[ContentEditor] fetch repo file failed, falling back to mockApi:`, err);
+        const pageJson = await fetchPageJson(pageId);
+        processAndSetInitialContent(pageJson.content || pageJson.meta?.initialContent);
+      }
     };
 
     const draftKey = `easy-seo-draft:${pageId}`;
-    const savedDraftJSON = localStorage.getItem(draftKey);
-    let draft = null;
-
-    if (savedDraftJSON) {
-      try {
-        draft = JSON.parse(savedDraftJSON);
-      } catch (e) {
-        console.error(`[ContentEditor] Failed to parse draft for ${pageId}:`, e);
-      }
-    }
-
-    if (draft && typeof draft.content !== 'undefined') {
+    const savedDraft = localStorage.getItem(draftKey);
+    if (savedDraft) {
+      const draft = JSON.parse(savedDraft);
       processAndSetInitialContent(draft.content);
     } else {
-      fetchPageJson(pageId).then(pageJson => {
-        const content = pageJson?.content || pageJson?.meta?.initialContent || '';
-        processAndSetInitialContent(content);
-      });
+      fetchAndProcessRealContent();
     }
-  }, [pageId]);
+  }, [pageId, selectedRepo]);
 
   function handleLexicalChange(newContent) {
     console.log(`[ContentEditor] lexical-change len: ${newContent.length}`);
