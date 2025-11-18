@@ -10,9 +10,17 @@ import EditorHeader from '../components/EditorHeader';
 import { Home, Plus, UploadCloud } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
-  const encodedPath = props.filePath || props.filePathEncoded || null;
-  const rawPath = encodedPath ? decodeURIComponent(encodedPath) : (props.pageId || 'home');
-  const pageId = rawPath.includes('/') ? rawPath.split('/').pop().replace(/\.astro$/, '') : rawPath;
+const rawPath = props.filePath ? decodeURIComponent(props.filePath) : `src/pages/${props.pageId || 'home'}.astro`;
+let pageId;
+if (rawPath.endsWith('/index.astro')) {
+  const parts = rawPath.split('/');
+  const parentDir = parts.length > 1 ? parts[parts.length - 2] : '';
+  pageId = (parentDir === 'pages' || parentDir === '') ? 'home' : parentDir;
+} else {
+  pageId = rawPath.split('/').pop().replace(/\.astro$/, '');
+}
+pageId = pageId || 'home';
+console.log('[ContentEditor] resolvedPath ->', { rawPath, pageId });
   const filePathRef = useRef(rawPath);
 
   const [initialContent, setInitialContent] = useState(null);
