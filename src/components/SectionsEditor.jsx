@@ -41,16 +41,12 @@ export default function SectionsEditor({ sections = [], onChange }) {
   };
 
   return (
-    <div class="p-4 bg-gray-800 rounded-md">
-      <div class="flex items-center justify-between mb-3">
+    <div class="bg-gray-800">
+      <div class="flex items-center justify-between mb-3 px-4 pt-4">
         <h2 class="text-lg font-semibold">Page Sections</h2>
-        <div>
-          <button onClick={handleAdd} class="px-3 py-1 bg-blue-600 rounded">Add Section</button>
-          <button onClick={handleSave} class="ml-2 px-3 py-1 bg-green-600 rounded">Save</button>
-        </div>
       </div>
       {local.map((s, i) => (
-        <div key={i} class="mb-4 p-3 bg-gray-700 rounded">
+        <div key={i} class="mb-4 p-3 bg-gray-700">
           <div class="flex justify-between items-center mb-2">
             <strong>{s.type}</strong>
             <button onClick={() => handleRemove(i)} class="text-sm text-red-400">Remove</button>

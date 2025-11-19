@@ -99,6 +99,7 @@ export default function ContentEditorPage(props) {
     const loadAstroModeContent = async () => {
       const draftKey = `easy-seo-draft:${pageId}`;
       const savedDraft = localStorage.getItem(draftKey);
+
       if (savedDraft) {
         console.log('[ContentEditor-Astro] Found local draft. Loading from localStorage.');
         const draft = JSON.parse(savedDraft);
@@ -173,11 +174,27 @@ export default function ContentEditorPage(props) {
     triggerSave(newSections);
   };
 
+  const handleAddSection = () => {
+    const newSection = {
+      id: `section-${Date.now()}`,
+      type: 'textSection',
+      props: {
+        title: 'New Section',
+        body: '<p>Start writing your content here.</p>',
+        ctaText: '',
+        ctaHref: '',
+      },
+    };
+    const newSections = [...(sections || []), newSection];
+    setSections(newSections);
+    triggerSave(newSections);
+  };
+
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">
       <EditorHeader editorApiRef={editorApiRef} />
-      <main class="flex-grow overflow-y-auto p-4 md:p-6" style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
-        <div class="mx-auto w-full" style={{ maxWidth: '80ch' }}>
+      <main class="flex-grow overflow-y-auto" style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
+        <div class="w-full">
           {sections ? (
             <SectionsEditor sections={sections} onChange={handleSectionsChange} />
           ) : contentBody !== null ? (
@@ -192,7 +209,7 @@ export default function ContentEditorPage(props) {
           )}
         </div>
       </main>
-      <BottomActionBar saveStatus={saveStatus} />
+      <BottomActionBar saveStatus={saveStatus} onAdd={handleAddSection} />
     </div>
   );
 }

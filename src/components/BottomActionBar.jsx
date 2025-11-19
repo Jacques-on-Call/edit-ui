@@ -1,26 +1,32 @@
 import { h } from 'preact';
 import { route } from 'preact-router';
-import { Home, Plus } from 'lucide-preact';
+import { Home, Plus, UploadCloud } from 'lucide-preact';
 import './BottomActionBar.css';
 
-/**
- * Bottom action bar for mobile - single Publish button here, Home on left
- */
-export default function BottomActionBar({ onAdd, onPublish, showHome = true }) {
-  const handleHomeClick = () => {
-    console.log('[BottomBar] Home clicked');
-    route('/explorer');
+export default function BottomActionBar({ saveStatus, onPublish, onAdd }) {
+
+  const getStatusColor = () => {
+    if (saveStatus === 'saved') return 'bg-yellow-green'; // yellow-green
+    return 'bg-scarlet'; // scarlet
   };
 
   return (
     <footer className="bottom-action-bar" role="toolbar" aria-label="Editor actions">
-      <button onClick={handleHomeClick} className="bar-btn" aria-label="Home">
+      <button onClick={() => route('/explorer')} className="bar-btn" aria-label="Home">
         <Home size={28} />
       </button>
-      <button onClick={() => { console.log('[BottomBar] Add clicked'); onAdd && onAdd(); }} className="bar-btn bar-add" aria-label="Add">
+
+      {/* The "Add Section" button will be enabled in the next step */}
+      <button onClick={onAdd} className="bar-btn bar-add" aria-label="Add Section">
         <Plus size={32} />
       </button>
-      <button onClick={() => { console.log('[BottomBar] Publish clicked'); onPublish && onPublish(); }} className="bar-btn bar-publish" aria-label="Publish">Publish</button>
+
+      <div class="publish-container">
+        <button onClick={onPublish} className="bar-btn bar-publish" aria-label="Publish">
+          <UploadCloud size={28} />
+        </button>
+        <span class={`save-status-dot ${getStatusColor()}`}></span>
+      </div>
     </footer>
   );
 }

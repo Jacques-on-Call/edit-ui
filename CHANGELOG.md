@@ -1,5 +1,20 @@
 # Project Change Log
 
+Jules #171 (UI Refactor: Editor Layout and Toolbar)
+Date: 2025-11-19
+Summary:
+Refactored the content editor's UI to align with the mobile-first, minimal-padding design goal. This includes updating the `BottomActionBar` with improved UX and relocating the "Add Section" functionality.
+Details:
+- **BottomActionBar Refactor:**
+    - The text-based "Publish" button was replaced with an `UploadCloud` icon.
+    - A colored dot was added as a save status indicator (scarlet for unsaved, yellow-green for saved).
+- **Relocated "Add Section" Button:**
+    - The "Add Section" and "Save" buttons were removed from the body of the `SectionsEditor`.
+    - A new "Add Section" button, using a `Plus` icon, was added to the `BottomActionBar`, centralizing the main editor actions.
+- **Layout Adjustments:**
+    - Removed horizontal padding and max-width constraints from `ContentEditorPage` and `SectionsEditor` to create a full-width, edge-to-edge editing experience on mobile devices.
+Impact: The content editor's UI is now cleaner, more space-efficient, and closer to the intended mobile-first design. Key actions are consolidated in the bottom action bar, and the save status is now clearly visible, improving user confidence and experience.
+
 Jules #171 (Bugfix: Correct Editor Toolbar and Fix Autosave)
 Date: 2025-11-19
 Summary:
