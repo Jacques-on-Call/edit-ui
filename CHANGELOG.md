@@ -1,5 +1,14 @@
 # Project Change Log
 
+Jules #171 (Bugfix: Restore Bottom Toolbar in Editor)
+Date: 2025-11-19
+Summary:
+Fixed a critical regression where the bottom toolbar was not appearing on the content editor page.
+Details:
+- **Root Cause:** The main application layout component (`App.jsx`) contained a conditional rendering rule that only displayed the `<BottomToolbar>` for routes under `/explorer`.
+- **Fix:** The rendering condition was updated to include editor routes (`/editor`). The logic was changed from `{isExplorerLayout && <BottomToolbar />}` to `{(isExplorerLayout || isEditorLayout) && <BottomToolbar />}`.
+Impact: The bottom toolbar is now correctly displayed on both the file explorer and content editor pages, restoring essential navigation and action controls to the editor view. This brings the UI back to its intended state and unblocks further development on the editor.
+
 Jules #171 (Phase 1, Step 4: JSON-Mode Data Loading)
 Date: 2025-11-19
 Summary:
