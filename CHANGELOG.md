@@ -1,5 +1,26 @@
 # Project Change Log
 
+Jules #171 (Phase 1, Step 3: Editor Mode Concept)
+Date: 2025-11-19
+Summary:
+Introduced the concept of an "editorMode" within the ContentEditorPage. This allows the editor to differentiate between traditional `.astro` files and the new JSON-backed, editor-managed pages.
+Details:
+- **Mode Derivation:** Logic was added directly to `ContentEditorPage.jsx` to determine the `editorMode`. It checks if the file path is within `src/pages/_test/` and ends with `.astro`. If it matches, `editorMode` is set to `'json'`; otherwise, it defaults to `'astro'`.
+- **Implementation:** The `editorMode` is derived as a simple variable on each render, avoiding unnecessary state management.
+- **Verification:** A `console.log` was added to the component to output the resolved `editorMode`, `slug`, and `path`, allowing for easy verification that the correct mode is being assigned based on the file being viewed.
+Impact: The application can now logically distinguish between page types, which is a critical prerequisite for loading the correct editor and data source in the upcoming steps.
+
+Jules #171 (Phase 1, Steps 1 & 2: Contract & Schema Definition)
+Date: 2025-11-19
+Summary:
+Defined and aligned on the foundational concepts for Phase 1 of the editor refinement. This step involves no code changes but establishes the core principles for how "editor-managed pages" will work.
+Details:
+- **Editor-Managed Page Contract:** An "editor-managed page" is defined as a page whose source of truth is a structured JSON file, not the body of an `.astro` file. The Easy-SEO editor will read from and write to this JSON data, leaving the corresponding `.astro` file untouched during the editing process. For Phase 1, all testing and development will be focused on a single test page: `src/pages/_test/home.astro`.
+- **Phase 1 JSON Schema:** A minimal, stable JSON schema has been agreed upon. The root object will contain `slug` (string), `meta` (object with a `title`), and `sections` (an array of section objects).
+- **Section Schema:** Each object within the `sections` array will have an `id` (string), a `type` (e.g., "hero"), and `props` (an object containing the content fields for that section type, like `title` and `body`).
+- **Section ID Strategy:** As per our agreement, section IDs will be generated on the client-side using a simple, dependency-free, timestamp-based string (e.g., `section-${Date.now()}`). This ensures IDs are unique enough for local editing and easy to debug.
+Impact: This initial alignment provides a clear and stable foundation for the implementation work in subsequent steps. By freezing the core data structures and contracts upfront, we minimize the risk of architectural changes mid-phase.
+
 Jules #169 (Editor Routing Fix)
 Date: 2025-11-18
 Summary:
@@ -77,7 +98,7 @@ Impact: The Content Editor is now stable, performant, and provides a polished, f
 
 Reflection:
 Challenge: The most challenging part was diagnosing the subtle re-render loop. The combination of unguarded state updates from multiple sources created a feedback loop that was difficult to trace without targeted diagnostics.
-Discovery: The pattern of returning a structured result object (e.g., `{ok, error}`) instead of throwing errors from API or async functions makes the calling code much cleaner and more resilient. The defensive `saveDraft` is a perfect example of this.
+Discovery: The pattern of returning a structured result object (e.g., `{ok, error}`) instead of throwing errors from API or async functions makes the calling code much cleaner and more resilient.
 Advice: For complex components with multiple `useEffect` hooks and event handlers, always add guards to `setState` calls. A simple `if (newValue !== currentState)` check can prevent a cascade of performance problems. When in doubt, add `console.trace()` to identify the source of state updates.
 
 Jacques 251114 reset to undo a bad edit that causes app to not open login

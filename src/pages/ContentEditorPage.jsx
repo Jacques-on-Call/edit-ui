@@ -28,6 +28,13 @@ export default function ContentEditorPage(props) {
     ? (pathIdentifier.split('/').slice(-2, -1)[0] || 'home')
     : pathIdentifier.split('/').pop().replace(/\.astro$/, '') || 'home';
 
+  // Determine editor mode based on the path
+  const isTestFile = pathIdentifier.startsWith('src/pages/_test/') && pathIdentifier.endsWith('.astro');
+  const editorMode = isTestFile ? 'json' : 'astro';
+
+  // Verification log for Step 3
+  console.log(`[ContentEditorPage] mode=${editorMode} slug=${pageId} path=${pathIdentifier}`);
+
   // --- AUTOSAVE LOGIC ---
   const autosaveCallback = useCallback((dataToSave) => {
     setSaveStatus('saving');
