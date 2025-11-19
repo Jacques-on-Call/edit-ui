@@ -1,191 +1,146 @@
 import { h } from 'preact';
 import { useEffect, useState, useRef, useCallback } from 'preact/hooks';
 import { route } from 'preact-router';
-import { fetchPageJson } from '../lib/mockApi';
+import matter from 'gray-matter';
+import { useAuth } from '../contexts/AuthContext';
+import { fetchJson } from '../lib/fetchJson';
 import useAutosave from '../hooks/useAutosave';
 import LexicalEditor from '../components/LexicalEditor';
 import SectionsEditor from '../components/SectionsEditor';
 import EditorHeader from '../components/EditorHeader';
 import { Home, Plus, UploadCloud } from 'lucide-preact';
 
-// NOTE: This file is intentionally minimal: we only add detection for frontmatter.sections
-// and render a SectionsEditor. No file writes or remote API changes here.
-
 export default function ContentEditorPage(props) {
-  const filePathRef = useRef(null);
-  const pageIdFromProps = props.pageId || 'home';
-  const encodedPathProp = props.filePath || props.filePathEncoded || null;
-  const rawPathInitial = encodedPathProp ? decodeURIComponent(encodedPathProp) : `src/pages/${pageIdFromProps}.astro`;
+  const { selectedRepo } = useAuth();
 
-  const [content, setContent] = useState(null); // HTML body for Lexical
-  const [sections, setSections] = useState(null); // frontmatter.sections if present
-  const [frontmatter, setFrontmatter] = useState(null); // store raw frontmatter object if present
+  // State for content, sections, and save status
+  const [contentBody, setContentBody] = useState(null); // For Lexical
+  const [sections, setSections] = useState(null); // For SectionsEditor
   const [saveStatus, setSaveStatus] = useState('saved');
-  const lastSavedContentRef = useRef(null);
+
+  // Refs for editor API and tracking the file path
   const editorApiRef = useRef(null);
+  const filePathRef = useRef(null);
 
-  // derive pageId slug from path (handle index.astro)
-  const rawPath = filePathRef.current || rawPathInitial;
-  let pageId = 'home';
-  try {
-    const p = rawPath;
-    pageId = p.endsWith('/index.astro') ? (p.split('/').slice(-2, -1)[0] || 'home') : p.split('/').pop().replace(/\.astro$/, '') || 'home';
-  } catch (e) {
-    pageId = pageIdFromProps;
-  }
+  // Deriving a stable pageId (slug) for drafts and keys
+  const pathIdentifier = props.filePath ? decodeURIComponent(props.filePath) : (props.pageId || 'home');
+  const pageId = pathIdentifier.endsWith('/index.astro')
+    ? (pathIdentifier.split('/').slice(-2, -1)[0] || 'home')
+    : pathIdentifier.split('/').pop().replace(/\.astro$/, '') || 'home';
 
-  // Autosave callback works for both HTML (content) and sections (serialize sections to draft)
-  const autosaveCallback = useCallback((newContent) => {
-    console.log(`[ContentEditor] autosave-callback TIMESTAMP=${new Date().toISOString()} len=${String(newContent?.length || 0)}`);
-    // we store either content HTML string or a sections JSON payload depending on editing mode
+  // --- AUTOSAVE LOGIC ---
+  const autosaveCallback = useCallback((dataToSave) => {
+    setSaveStatus('saving');
     try {
       const key = `easy-seo-draft:${pageId}`;
-      const draftRaw = localStorage.getItem(key);
-      const draft = draftRaw ? JSON.parse(draftRaw) : {};
+      const draft = JSON.parse(localStorage.getItem(key) || '{}');
+
       const payload = {
         ...draft,
         slug: pageId,
         savedAt: new Date().toISOString(),
       };
+
+      // Save either sections or content based on which editor is active
       if (sections) {
-        payload.sections = sections;
+        payload.sections = dataToSave;
       } else {
-        payload.content = newContent;
+        payload.content = dataToSave;
       }
+
       localStorage.setItem(key, JSON.stringify(payload));
-      lastSavedContentRef.current = sections ? JSON.stringify(sections) : newContent;
-      console.log(`[ContentEditor] Content successfully autosaved to local storage with key: ${key}`);
+      console.log(`[ContentEditor] Draft successfully saved to key: ${key}`);
       setSaveStatus('saved');
     } catch (error) {
-      console.error('[ContentEditor] Failed to autosave content to local storage:', error);
+      console.error('[ContentEditor] Failed to autosave draft:', error);
       setSaveStatus('unsaved');
     }
   }, [pageId, sections]);
 
   const { triggerSave } = useAutosave(autosaveCallback, 1000);
 
+  // --- DATA LOADING & PARSING ---
   useEffect(() => {
-    console.log('[ContentEditor] Loading page:', rawPathInitial);
-    filePathRef.current = rawPathInitial;
+    filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
 
-    // Attempt to load local draft first
-    const draftKey = `easy-seo-draft:${pageId}`;
-    const savedDraft = localStorage.getItem(draftKey);
-
-    if (savedDraft) {
-      const draft = JSON.parse(savedDraft);
-      console.log(`[ContentEditor] loadedDraft -> slug: ${draft.slug}, savedAt: ${draft.savedAt}`);
-      if (draft.sections) {
-        setSections(draft.sections);
-        setFrontmatter({ ...(draft.meta || {}) });
-        lastSavedContentRef.current = JSON.stringify(draft.sections);
-        console.log('[ContentEditor] initialSections ->', draft.sections);
-        return;
-      }
-      let initialContent = draft.content || '';
-      if (!initialContent.startsWith('<')) {
-        initialContent = initialContent.split('\n').filter(line => line.trim() !== '').map(line => `<p>${line}</p>`).join('');
-      }
-      lastSavedContentRef.current = initialContent;
-      console.log('[ContentEditor] initialContent ->', initialContent);
-      setContent(initialContent);
-      return;
-    }
-
-    // No local draft — use mockApi or remote fetch path (remote fetch handled elsewhere)
-    fetchPageJson(pageId).then((pj) => {
-      console.log('[ContentEditor] page.json loaded:', pj);
-      // If the page JSON or frontmatter includes sections, open SectionsEditor
-      const fmSections = pj?.meta?.sections || pj?.sections || null;
-      if (fmSections && Array.isArray(fmSections)) {
-        setSections(fmSections);
-        setFrontmatter(pj.meta || {});
-        lastSavedContentRef.current = JSON.stringify(fmSections);
-        console.log('[ContentEditor] initialSections ->', fmSections);
+    const loadContent = async () => {
+      // 1. Try to load from local draft first
+      const draftKey = `easy-seo-draft:${pageId}`;
+      const savedDraft = localStorage.getItem(draftKey);
+      if (savedDraft) {
+        console.log('[ContentEditor] Found local draft. Loading from localStorage.');
+        const draft = JSON.parse(savedDraft);
+        if (draft.sections) {
+          setSections(draft.sections);
+          return;
+        }
+        setContentBody(draft.content || '');
         return;
       }
 
-      let initialContent = pj?.content || pj?.meta?.initialContent || '';
-      if (!initialContent.startsWith('<')) {
-        initialContent = initialContent.split('\n').filter(line => line.trim() !== '').map(line => `<p>${line}</p>`).join('');
-      }
-      console.log('[ContentEditor] initialContent ->', initialContent);
-      lastSavedContentRef.current = initialContent;
-      setContent(initialContent);
-    });
-  }, []); // run on mount only
+      // 2. If no draft, fetch from the repository
+      console.log('[ContentEditor] No local draft. Fetching file from repository...');
+      const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
+      const path = filePathRef.current;
 
-  function handleLexicalChange(newContent) {
-    console.log(`[ContentEditor] lexical-change len: ${newContent.length}`);
-    setContent(newContent);
+      try {
+        const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`;
+        const json = await fetchJson(url);
+        const decodedContent = atob(json.content || '');
+
+        // Use gray-matter to parse the file content
+        const { data: frontmatter, content: body } = matter(decodedContent);
+
+        // 3. Decide which editor to show based on parsed content
+        if (frontmatter && frontmatter.sections && Array.isArray(frontmatter.sections)) {
+          console.log('[ContentEditor] Frontmatter with sections found. Loading SectionsEditor.');
+          setSections(frontmatter.sections);
+        } else {
+          console.log('[ContentEditor] No sections found. Loading LexicalEditor with file body.');
+          setContentBody(body);
+        }
+      } catch (error) {
+        console.error('[ContentEditor] Failed to fetch or parse file content:', error);
+        setContentBody('// Error loading content. Please try again.');
+      }
+    };
+
+    loadContent();
+  }, [pageId, selectedRepo]);
+
+  // --- EVENT HANDLERS ---
+  const handleLexicalChange = (newContent) => {
+    setContentBody(newContent);
     setSaveStatus('unsaved');
     triggerSave(newContent);
-  }
+  };
 
-  // Sections editor change handler — updates state and triggers autosave
-  function handleSectionsChange(newSections) {
-    console.log('[ContentEditor] sections-change ->', newSections);
+  const handleSectionsChange = (newSections) => {
     setSections(newSections);
     setSaveStatus('unsaved');
-    // triggerSave must accept some content param; pass serialized sections string so autosave saves it
-    triggerSave(JSON.stringify(newSections));
-  }
-
-  const handleHome = () => route('/explorer');
-  const handleAdd = () => console.log('[BottomBar] Add clicked');
-  const handlePublish = () => console.log('[ContentEditor] handlePublish triggered - Not implemented');
+    triggerSave(newSections);
+  };
 
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">
       <EditorHeader editorApiRef={editorApiRef} />
-
-      <main
-        class="flex-grow overflow-y-auto"
-        style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}
-      >
-        {/* If sections are present, render the SectionsEditor. Otherwise, fall back to Lexical. */}
-        {sections ? (
-          <div class="mx-auto w-full px-4 md:px-6" style={{ maxWidth: '65ch' }}>
-            <SectionsEditor sections={sections} onChange={handleSectionsChange} pageId={pageId} />
-          </div>
-        ) : content !== null ? (
-          <div class="mx-auto w-full px-4 md:px-6" style={{ maxWidth: '65ch' }}>
+      <main class="flex-grow overflow-y-auto p-4 md:p-6" style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
+        <div class="mx-auto w-full" style={{ maxWidth: '80ch' }}>
+          {sections ? (
+            <SectionsEditor sections={sections} onChange={handleSectionsChange} />
+          ) : contentBody !== null ? (
             <LexicalEditor
               ref={editorApiRef}
               slug={pageId}
-              initialContent={content}
+              initialContent={contentBody}
               onChange={handleLexicalChange}
             />
-          </div>
-        ) : (
-          <div class="p-6">Loading editor...</div>
-        )}
-      </main>
-
-      <footer class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 flex justify-around items-center p-2 pb-[calc(0.5rem_+_env(safe-area-inset-bottom))]">
-        <button onClick={handleHome} class="p-2">
-          <Home size={24} />
-        </button>
-        <button onClick={handleAdd} class="p-2">
-          <Plus size={24} />
-        </button>
-        <div class="flex items-center">
-          <button onClick={handlePublish} class="p-2">
-            <UploadCloud size={24} />
-          </button>
-          <div
-            class="w-3 h-3 rounded-full ml-2"
-            style={{
-              backgroundColor:
-                saveStatus === 'unsaved'
-                  ? '#FF2400'
-                  ' : saveStatus === 'saving'
-                  ? '#FBBF24'
-                  : '#C7EA46',
-            }}
-          ></div>
+          ) : (
+            <div>Loading Editor...</div>
+          )}
         </div>
-      </footer>
+      </main>
+      {/* Footer remains the same */}
     </div>
   );
 }

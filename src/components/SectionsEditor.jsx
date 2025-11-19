@@ -14,7 +14,7 @@ export default function SectionsEditor({ sections = [], onChange }) {
       next[index][propPath] = value;
     }
     setLocal(next);
-    onChange(next); // This is the critical fix for autosave
+    onChange(next); // Autosave fix
   };
 
   const handleAdd = () => {
