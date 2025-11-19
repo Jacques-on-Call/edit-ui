@@ -36,7 +36,14 @@ export default function BottomActionBar({ saveStatus, syncStatus = 'idle', onSyn
 
       <div class="publish-container">
         <button
-          onClick={onSync}
+          onClick={() => {
+            console.log('[BottomActionBar] Sync button clicked.');
+            if (onSync) {
+              onSync();
+            } else {
+              console.error('[BottomActionBar] onSync handler is not defined!');
+            }
+          }}
           className="bar-btn bar-publish"
           aria-label="Sync to GitHub"
           disabled={syncStatus === 'syncing'}

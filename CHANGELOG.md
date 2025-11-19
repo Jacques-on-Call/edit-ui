@@ -1,5 +1,15 @@
 # Project Change Log
 
+Jules #171 (Debug: Add Logging to Sync Button)
+Date: 2025-11-19
+Summary:
+Added diagnostic logging to the "Sync to GitHub" button in the `BottomActionBar` to debug an issue where the sync process was not being triggered.
+Details:
+- The `onClick` handler for the sync button in `BottomActionBar.jsx` was wrapped with a new function.
+- This new function adds a `console.log` statement to confirm that the button click event is being captured.
+- It also includes an `if/else` check to verify that the `onSync` prop is being passed down correctly from the parent component.
+Impact: This change is for debugging purposes only and has no impact on user-facing functionality. The new logs will allow us to quickly determine if the issue is in the button component itself or in the parent `ContentEditorPage`.
+
 Jules #171 (Phase 1, Step 5: Backend JSON Round-trip)
 Date: 2025-11-19
 Summary:
