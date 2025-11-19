@@ -1,8 +1,14 @@
 import { h } from 'preact';
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 
 export default function SectionsEditor({ sections = [], onChange }) {
   const [local, setLocal] = useState(JSON.parse(JSON.stringify(sections)));
+
+  // This effect synchronizes the internal state with the parent's prop.
+  // This is crucial to prevent stale state if the parent re-renders.
+  useEffect(() => {
+    setLocal(JSON.parse(JSON.stringify(sections)));
+  }, [sections]);
 
   const updateSectionProp = (index, propPath, value) => {
     const next = [...local];

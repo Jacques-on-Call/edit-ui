@@ -68,7 +68,7 @@ const AppContent = () => {
         )}
       </main>
 
-      {(isExplorerLayout || isEditorLayout) && <BottomToolbar />}
+      {isExplorerLayout && <BottomToolbar />}
 
       {import.meta.env.DEV && <AuthDebugMonitor />}
     </div>

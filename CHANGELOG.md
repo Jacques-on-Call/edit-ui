@@ -1,5 +1,19 @@
 # Project Change Log
 
+Jules #171 (Bugfix: Correct Editor Toolbar and Fix Autosave)
+Date: 2025-11-19
+Summary:
+Fixed two critical regressions on the content editor page. First, replaced the incorrect file explorer toolbar with the correct editor-specific action bar. Second, fixed a state synchronization bug that was preventing autosave from working in the `SectionsEditor`.
+Details:
+- **Correct Toolbar Restored:**
+    - The incorrect `BottomToolbar` was removed from the editor page layout.
+    - The correct `BottomActionBar`, which contains the save status indicator and publish button, was added to the `ContentEditorPage`.
+- **Autosave for SectionsEditor Fixed:**
+    - Diagnosed a bug where the `SectionsEditor`'s internal state was not synchronizing with its parent's `sections` prop.
+    - Added a `useEffect` hook to the `SectionsEditor` to force its internal state to update whenever the `sections` prop changes, ensuring state consistency.
+    - This fix restores the intended autosave functionality, and user edits are now correctly persisted to `localStorage`.
+Impact: The content editor is now in a stable, usable state. The correct UI is displayed, and the core local autosave functionality is working reliably, which fully completes Step 4 of the Phase 1 plan and prepares us for implementing the backend round-trip.
+
 Jules #171 (Phase 1, Step 4: Autosave & Toolbar Fixes)
 Date: 2025-11-19
 Summary:

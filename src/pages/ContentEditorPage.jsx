@@ -8,6 +8,7 @@ import useAutosave from '../hooks/useAutosave';
 import LexicalEditor from '../components/LexicalEditor';
 import SectionsEditor from '../components/SectionsEditor';
 import EditorHeader from '../components/EditorHeader';
+import BottomActionBar from '../components/BottomActionBar';
 import { Home, Plus, UploadCloud } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
@@ -191,7 +192,7 @@ export default function ContentEditorPage(props) {
           )}
         </div>
       </main>
-      {/* Footer remains the same */}
+      <BottomActionBar saveStatus={saveStatus} />
     </div>
   );
 }
