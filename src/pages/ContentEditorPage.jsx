@@ -64,7 +64,7 @@ export default function ContentEditorPage(props) {
     }
   }, [pageId, sections]);
 
-  const { triggerSave } = useAutosave(autosaveCallback, 1000);
+  const { triggerSave } = useAutosave(autosaveCallback, 1500);
 
   // --- DATA LOADING & PARSING ---
   useEffect(() => {

@@ -1,5 +1,19 @@
 # Project Change Log
 
+Jules #171 (Phase 1, Step 4: Autosave & Toolbar Fixes)
+Date: 2025-11-19
+Summary:
+Completed the implementation of Step 4 by restoring autosave functionality for the `SectionsEditor` in JSON mode. Also fixed a critical regression with the bottom toolbar's navigation buttons.
+Details:
+- **Autosave for SectionsEditor:**
+    - The `useAutosave` hook in `ContentEditorPage.jsx` was already correctly wired to the `SectionsEditor`'s `onChange` event.
+    - The autosave delay was adjusted from 1000ms to 1500ms as requested, ensuring saves occur after a brief pause in user activity.
+    - Any change within a section now correctly triggers a save of the entire JSON page structure to `localStorage`.
+- **Bottom Toolbar Navigation Fix:**
+    - Corrected the "Home" button's action in `BottomToolbar.jsx` to navigate to `/explorer` instead of the root `/`.
+    - Clarified the `aria-label` for the "Back" button for better accessibility.
+Impact: The local-only editing experience for JSON-mode pages is now complete and stable. Users can open the test page, see default content, make edits, and have their changes automatically persist in `localStorage`. The main application navigation is also restored to its expected behavior. This fully completes Step 4 of the Phase 1 plan.
+
 Jules #171 (Bugfix: Restore Bottom Toolbar in Editor)
 Date: 2025-11-19
 Summary:

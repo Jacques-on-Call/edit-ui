@@ -17,9 +17,9 @@ export function BottomToolbar() {
     >
       <div className="flex items-center justify-around h-full px-4 max-w-screen-xl mx-auto">
         <button
-          onClick={() => route('/')}
+          onClick={() => route('/explorer')}
           className="p-3 text-white transition-transform duration-150 ease-in-out rounded-full hover:bg-white/10 active:scale-90"
-          aria-label="Go home"
+          aria-label="Home (File Explorer)"
         >
           <Home size={24} />
         </button>
@@ -31,7 +31,7 @@ export function BottomToolbar() {
         <button
           onClick={() => window.history.back()}
           className="p-3 text-white transition-transform duration-150 ease-in-out rounded-full hover:bg-white/10 active:scale-90"
-          aria-label="Go back"
+          aria-label="Back"
         >
           <ArrowLeft size={24} />
         </button>
