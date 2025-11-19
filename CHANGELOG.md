@@ -1,5 +1,17 @@
 # Project Change Log
 
+Jules #171 (Phase 1, Step 5: Backend JSON Round-trip)
+Date: 2025-11-19
+Summary:
+Implemented the backend round-trip functionality for JSON-mode pages. This allows the editor to save its content to a dedicated `.json` file in the GitHub repository and provides the foundation for loading content from the repo in the next step.
+Details:
+- **New Backend Endpoint:** Created a new `POST` endpoint at `/api/page-json/update` in the Cloudflare worker. This endpoint accepts the page's JSON data (`slug`, `meta`, `sections`) and uses the GitHub API to create or update the corresponding file at `content/pages/{slug}.json`.
+- **Frontend Sync Logic:**
+    - The "Publish" button in the `BottomActionBar` was repurposed into a "Sync to GitHub" button.
+    - A `handleSync` function was added to `ContentEditorPage` that reads the current draft from `localStorage` and sends it to the new backend endpoint.
+- **UI Feedback:** The `BottomActionBar` was enhanced to provide clear visual feedback on the sync process. The "Sync" icon now shows a loading spinner, a success checkmark, or an error icon, and the button is disabled during the sync operation to prevent duplicate requests.
+Impact: The editor is no longer a purely local-only tool. It can now persist its state to the central GitHub repository, completing a critical milestone in the Phase 1 plan. This sets the stage for the final step: loading this data back into the editor.
+
 Jules #171 (UI Refactor: Editor Layout and Toolbar)
 Date: 2025-11-19
 Summary:

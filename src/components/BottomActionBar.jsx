@@ -1,13 +1,27 @@
 import { h } from 'preact';
 import { route } from 'preact-router';
-import { Home, Plus, UploadCloud } from 'lucide-preact';
+import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw } from 'lucide-preact';
 import './BottomActionBar.css';
 
-export default function BottomActionBar({ saveStatus, onPublish, onAdd }) {
+export default function BottomActionBar({ saveStatus, syncStatus = 'idle', onSync, onAdd }) {
 
   const getStatusColor = () => {
-    if (saveStatus === 'saved') return 'bg-yellow-green'; // yellow-green
-    return 'bg-scarlet'; // scarlet
+    if (saveStatus === 'saved') return 'bg-yellow-green';
+    return 'bg-scarlet';
+  };
+
+  const renderSyncIcon = () => {
+    switch (syncStatus) {
+      case 'syncing':
+        return <RefreshCw size={28} className="animate-spin" />;
+      case 'success':
+        return <CheckCircle size={28} className="text-yellow-green" />;
+      case 'error':
+        return <AlertCircle size={28} className="text-scarlet" />;
+      case 'idle':
+      default:
+        return <UploadCloud size={28} />;
+    }
   };
 
   return (
@@ -16,14 +30,18 @@ export default function BottomActionBar({ saveStatus, onPublish, onAdd }) {
         <Home size={28} />
       </button>
 
-      {/* The "Add Section" button will be enabled in the next step */}
       <button onClick={onAdd} className="bar-btn bar-add" aria-label="Add Section">
         <Plus size={32} />
       </button>
 
       <div class="publish-container">
-        <button onClick={onPublish} className="bar-btn bar-publish" aria-label="Publish">
-          <UploadCloud size={28} />
+        <button
+          onClick={onSync}
+          className="bar-btn bar-publish"
+          aria-label="Sync to GitHub"
+          disabled={syncStatus === 'syncing'}
+        >
+          {renderSyncIcon()}
         </button>
         <span class={`save-status-dot ${getStatusColor()}`}></span>
       </div>

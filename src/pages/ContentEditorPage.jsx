@@ -18,6 +18,7 @@ export default function ContentEditorPage(props) {
   const [contentBody, setContentBody] = useState(null); // For Lexical
   const [sections, setSections] = useState(null); // For SectionsEditor
   const [saveStatus, setSaveStatus] = useState('saved');
+  const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, success, error
 
   // Refs for editor API and tracking the file path
   const editorApiRef = useRef(null);
@@ -190,6 +191,60 @@ export default function ContentEditorPage(props) {
     triggerSave(newSections);
   };
 
+  const handleSync = async () => {
+    if (!selectedRepo) {
+      console.error('[Sync] Cannot sync: repository not selected.');
+      setSyncStatus('error');
+      return;
+    }
+
+    setSyncStatus('syncing');
+    console.log('[Sync] Starting sync to GitHub...');
+
+    try {
+      const draftKey = `easy-seo-draft:${pageId}`;
+      const savedDraft = localStorage.getItem(draftKey);
+
+      if (!savedDraft) {
+        console.error('[Sync] No local draft found to sync.');
+        setSyncStatus('error');
+        return;
+      }
+
+      const draftData = JSON.parse(savedDraft);
+
+      // For Phase 1, we only sync 'json' mode pages with sections.
+      if (editorMode !== 'json' || !draftData.sections) {
+        console.warn('[Sync] Sync is currently only supported for JSON-mode pages with sections.');
+        setSyncStatus('error');
+        return;
+      }
+
+      const payload = {
+        repo: selectedRepo.full_name,
+        pageData: {
+          slug: draftData.slug,
+          meta: draftData.meta || { title: draftData.slug }, // Ensure meta exists
+          sections: draftData.sections,
+        },
+      };
+
+      const result = await fetchJson('/api/page-json/update', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      console.log('[Sync] Sync successful:', result);
+      setSyncStatus('success');
+      setTimeout(() => setSyncStatus('idle'), 2500); // Reset after a short delay
+
+    } catch (error)
+    {
+      console.error('[Sync] An error occurred during sync:', error);
+      setSyncStatus('error');
+    }
+  };
+
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">
       <EditorHeader editorApiRef={editorApiRef} />
@@ -209,7 +264,12 @@ export default function ContentEditorPage(props) {
           )}
         </div>
       </main>
-      <BottomActionBar saveStatus={saveStatus} onAdd={handleAddSection} />
+      <BottomActionBar
+        saveStatus={saveStatus}
+        syncStatus={syncStatus}
+        onAdd={handleAddSection}
+        onSync={handleSync}
+      />
     </div>
   );
 }
