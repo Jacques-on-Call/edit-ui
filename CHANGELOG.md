@@ -1,5 +1,19 @@
 # Project Change Log
 
+Jules #171 (Phase 1, Step 4: JSON-Mode Data Loading)
+Date: 2025-11-19
+Summary:
+Adapted the `ContentEditorPage` to handle data loading for JSON-mode pages, focusing on a local-first experience. This change ensures that the editor is always functional and never tries to parse the body of the associated `.astro` file when in JSON mode.
+Details:
+- **Conditional Loading Logic:** The main `useEffect` hook in `ContentEditorPage.jsx` was refactored. It now uses the `editorMode` variable to branch its logic.
+- **`'json'` Mode Behavior:**
+    - The component now exclusively checks for a draft in `localStorage`.
+    - If a draft is found, it loads the `sections` array from the draft.
+    - If no draft exists, it initializes the `SectionsEditor` with a default, placeholder `sections` array.
+    - **Crucially, it does not make any network requests to fetch file content in this mode.**
+- **`'astro'` Mode Behavior:** The existing logic for loading drafts or fetching and parsing `.astro` files from the repository remains unchanged, preserving legacy functionality.
+Impact: The editor is now correctly configured for the first phase of the JSON-first architecture. It can reliably open the test page (`_test/home.astro`) in a valid state (either from a draft or with default content) without any dependency on the backend or file system for its content, which meets the acceptance criteria for this step.
+
 Jules #171 (Phase 1, Step 3: Editor Mode Concept)
 Date: 2025-11-19
 Summary:

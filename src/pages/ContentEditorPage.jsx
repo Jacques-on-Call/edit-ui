@@ -70,12 +70,36 @@ export default function ContentEditorPage(props) {
   useEffect(() => {
     filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
 
-    const loadContent = async () => {
-      // 1. Try to load from local draft first
+    const loadJsonModeContent = () => {
+      const draftKey = `easy-seo-draft:${pageId}`;
+      const savedDraft = localStorage.getItem(draftKey);
+
+      if (savedDraft) {
+        console.log('[ContentEditor-JSON] Found local draft. Loading from localStorage.');
+        try {
+          const draft = JSON.parse(savedDraft);
+          if (draft.sections) {
+            setSections(draft.sections);
+          } else {
+            console.warn('[ContentEditor-JSON] Draft found but has no sections. Falling back to default.');
+            setSections(getDefaultSections());
+          }
+        } catch (e) {
+          console.error('[ContentEditor-JSON] Failed to parse draft. Loading default sections.', e);
+          setSections(getDefaultSections());
+        }
+        return;
+      }
+
+      console.log('[ContentEditor-JSON] No local draft found. Initializing with default sections.');
+      setSections(getDefaultSections());
+    };
+
+    const loadAstroModeContent = async () => {
       const draftKey = `easy-seo-draft:${pageId}`;
       const savedDraft = localStorage.getItem(draftKey);
       if (savedDraft) {
-        console.log('[ContentEditor] Found local draft. Loading from localStorage.');
+        console.log('[ContentEditor-Astro] Found local draft. Loading from localStorage.');
         const draft = JSON.parse(savedDraft);
         if (draft.sections) {
           setSections(draft.sections);
@@ -85,35 +109,55 @@ export default function ContentEditorPage(props) {
         return;
       }
 
-      // 2. If no draft, fetch from the repository
-      console.log('[ContentEditor] No local draft. Fetching file from repository...');
+      console.log('[ContentEditor-Astro] No local draft. Fetching file from repository...');
       const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
       const path = filePathRef.current;
-
       try {
         const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`;
         const json = await fetchJson(url);
         const decodedContent = atob(json.content || '');
-
-        // Use gray-matter to parse the file content
         const { data: frontmatter, content: body } = matter(decodedContent);
 
-        // 3. Decide which editor to show based on parsed content
         if (frontmatter && frontmatter.sections && Array.isArray(frontmatter.sections)) {
-          console.log('[ContentEditor] Frontmatter with sections found. Loading SectionsEditor.');
           setSections(frontmatter.sections);
         } else {
-          console.log('[ContentEditor] No sections found. Loading LexicalEditor with file body.');
           setContentBody(body);
         }
       } catch (error) {
-        console.error('[ContentEditor] Failed to fetch or parse file content:', error);
+        console.error('[ContentEditor-Astro] Failed to fetch or parse file content:', error);
         setContentBody('// Error loading content. Please try again.');
       }
     };
 
-    loadContent();
-  }, [pageId, selectedRepo]);
+    if (editorMode === 'json') {
+      loadJsonModeContent();
+    } else {
+      loadAstroModeContent();
+    }
+  }, [pageId, selectedRepo, editorMode]);
+
+  // Helper to generate default sections for JSON mode
+  const getDefaultSections = () => [
+    {
+      id: `section-${Date.now()}-1`,
+      type: 'hero',
+      props: {
+        title: 'Placeholder Hero Title',
+        subtitle: 'Placeholder hero subtitle text.',
+        body: '<p>This is the default body content for the hero section. You can edit this.</p>',
+      },
+    },
+    {
+      id: `section-${Date.now()}-2`,
+      type: 'textSection',
+      props: {
+        title: 'Placeholder Text Section',
+        body: '<p>This is some default placeholder text for a standard text section.</p>',
+        ctaText: 'Learn More',
+        ctaHref: '#',
+      },
+    },
+  ];
 
   // --- EVENT HANDLERS ---
   const handleLexicalChange = (newContent) => {
