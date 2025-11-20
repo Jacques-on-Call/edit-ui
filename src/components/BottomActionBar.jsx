@@ -38,6 +38,7 @@ export default function BottomActionBar({ saveStatus, syncStatus = 'idle', onSyn
         <button
           type="button"
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             onPreview(e);
           }}
