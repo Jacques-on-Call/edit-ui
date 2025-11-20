@@ -35,7 +35,14 @@ export default function BottomActionBar({ saveStatus, syncStatus = 'idle', onSyn
       </button>
 
       {onPreview && (
-        <button onClick={onPreview} className="bar-btn" aria-label="Preview">
+        <button
+          onClick={() => {
+            console.log('[BottomActionBar] Preview button clicked.');
+            onPreview();
+          }}
+          className="bar-btn"
+          aria-label="Preview"
+        >
           <Eye size={28} />
         </button>
       )}
