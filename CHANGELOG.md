@@ -1,5 +1,20 @@
 # Project Change Log
 
+Jules #172 (Phase 1 Complete: Load from GitHub)
+Date: 2025-11-19
+Summary:
+Completed the final step of Phase 1 by implementing the logic to load JSON-mode page content from the GitHub repository. This finalizes the full data round-trip (local -> remote -> local) for editor-managed pages.
+Details:
+- **New Backend Endpoint:** A new `GET` endpoint, `/api/page-json`, was created in the Cloudflare worker. It fetches the specified `content/pages/{slug}.json` file from the GitHub repository.
+- **Frontend Data Fetching:** The `ContentEditorPage` was enhanced. When in `json` mode, if no local draft is found, it now attempts to fetch the page's content from the new API endpoint.
+- **Graceful Fallback:** If the remote fetch results in a 404 error (file not found), the editor gracefully falls back to initializing with default placeholder content, ensuring a seamless user experience for new pages.
+Impact: Phase 1 of the JSON-first editor is now feature-complete. The application has a stable, end-to-end workflow for creating/editing locally, syncing to GitHub, and reloading that content from the repository. This provides a robust foundation for Phase 2.
+
+Reflection:
+Challenge: The main challenge was seamlessly integrating the new asynchronous fetch logic into the existing `useEffect` hook in `ContentEditorPage` while preserving the critical "draft-first" behavior and without affecting the legacy 'astro' mode.
+Discovery: The existing backend structure (`router.js` and `routes/content.js`) provided a very clear and effective pattern to follow, which made adding the new endpoint quick and consistent with the project's standards.
+Advice: When adding a remote data source to a component that also has a local cache (like `localStorage`), always follow the sequence: check local cache first, then fetch from remote, and finally fall back to a default state. This layered approach ensures the UI is always responsive and resilient.
+
 Jules #171 (Debug: Add Logging to Sync Button)
 Date: 2025-11-19
 Summary:

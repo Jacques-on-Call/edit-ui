@@ -72,7 +72,7 @@ export default function ContentEditorPage(props) {
   useEffect(() => {
     filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
 
-    const loadJsonModeContent = () => {
+    const loadJsonModeContent = async () => {
       const draftKey = `easy-seo-draft:${pageId}`;
       const savedDraft = localStorage.getItem(draftKey);
 
@@ -93,8 +93,27 @@ export default function ContentEditorPage(props) {
         return;
       }
 
-      console.log('[ContentEditor-JSON] No local draft found. Initializing with default sections.');
-      setSections(getDefaultSections());
+      console.log('[ContentEditor-JSON] No local draft. Fetching from repository...');
+      const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
+      try {
+        const url = `/api/page-json?repo=${encodeURIComponent(repo)}&slug=${encodeURIComponent(pageId)}`;
+        const pageJson = await fetchJson(url);
+
+        if (pageJson && pageJson.sections) {
+          console.log('[ContentEditor-JSON] Successfully fetched from repository.');
+          setSections(pageJson.sections);
+        } else {
+          console.warn('[ContentEditor-JSON] Fetched data but it has no sections. Falling back to default.');
+          setSections(getDefaultSections());
+        }
+      } catch (error) {
+        if (error.message.includes('404')) {
+          console.log('[ContentEditor-JSON] No remote JSON found. Initializing with default sections.');
+        } else {
+          console.error('[ContentEditor-JSON] Failed to fetch remote JSON. Falling back to default.', error);
+        }
+        setSections(getDefaultSections());
+      }
     };
 
     const loadAstroModeContent = async () => {
