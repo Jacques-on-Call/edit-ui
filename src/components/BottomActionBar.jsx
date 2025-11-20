@@ -26,16 +26,17 @@ export default function BottomActionBar({ saveStatus, syncStatus = 'idle', onSyn
 
   return (
     <footer className="bottom-action-bar" role="toolbar" aria-label="Editor actions">
-      <button onClick={() => route('/explorer')} className="bar-btn" aria-label="Home">
+      <button type="button" onClick={() => route('/explorer')} className="bar-btn" aria-label="Home">
         <Home size={28} />
       </button>
 
-      <button onClick={onAdd} className="bar-btn bar-add" aria-label="Add Section">
+      <button type="button" onClick={onAdd} className="bar-btn bar-add" aria-label="Add Section">
         <Plus size={32} />
       </button>
 
       {onPreview && (
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onPreview(e);
@@ -49,6 +50,7 @@ export default function BottomActionBar({ saveStatus, syncStatus = 'idle', onSyn
 
       <div class="publish-container">
         <button
+          type="button"
           onClick={() => {
             console.log('[BottomActionBar] Sync button clicked.');
             if (onSync) {
