@@ -1,5 +1,68 @@
 # Project Change Log
 
+Jules #172 (Phase 2, Step 5: Implement "Preview" Button)
+Date: 2025-11-20
+Summary:
+Added a "Preview" button to the editor's bottom action bar, which is visible only for JSON-mode pages. This provides the first user-facing link between the editor and the real Astro-rendered content.
+Details:
+- **`BottomActionBar` Update:** The component now accepts an `onPreview` prop. When this prop is provided, a new "Preview" button (using an `Eye` icon) is rendered.
+- **`ContentEditorPage` Logic:**
+  - A `handlePreview` function was added. For Phase 2, this function is hardcoded to open the URL `/preview/json-preview/home-from-json` in a new tab.
+  - The `onPreview` prop is conditionally passed to `BottomActionBar` only when `editorMode` is `'json'`, ensuring the button only appears on the relevant pages.
+Impact: The editor now has a functional, albeit simple, preview mechanism. This closes the loop on the Phase 2 goal by allowing a user to navigate from the editor for a JSON-managed page directly to the live, rendered version of that page.
+
+Jules #172 (Phase 2, Step 4: Define Preview URL Mapping)
+Date: 2025-11-20
+Summary:
+This is a documentation-only step to formally define the URL structure for previewing our new JSON-backed pages.
+Details:
+- **Preview URL Rule:** The preview URL for a JSON-managed page will follow the pattern `/preview/<path-to-astro-file-without-src-pages>`.
+- **Example Mapping:**
+  - The JSON page corresponding to the Astro file at `src/pages/json-preview/home-from-json.astro`...
+  - ...will have its preview available at the stable route: `/preview/json-preview/home-from-json`.
+- **`slug` Mapping:**
+  - Specifically, for the page with `slug: "home"`, the editor will know to map this to the preview URL `/preview/json-preview/home-from-json`.
+Impact: This provides a clear and predictable rule for constructing preview URLs, which will be implemented in the editor's "Preview" button functionality in the next step.
+
+Jules #172 (Phase 2, Step 3: Create JSON-backed Test Route)
+Date: 2025-11-20
+Summary:
+Successfully created a new, buildable Astro page that renders content directly from a static JSON file (`content/pages/home.json`). This proves the core of the JSON-to-Astro rendering pipeline.
+Details:
+- **New Test Page:** Created `src/pages/json-preview/home-from-json.astro`. This page uses `MainLayout.astro` and passes the imported `home.json` data to the `PageRenderer.astro` component.
+- **Build System Fix:** Discovered that Astro's build process ignores directories prefixed with an underscore. To resolve this, the `src/pages/_test` directory was renamed to `src/pages/json-preview`.
+- **Editor Logic Update:** The `editorMode` detection logic in `ContentEditorPage.jsx` was updated to recognize the new `json-preview` path, ensuring that files within this directory are correctly opened in 'json' mode.
+- **Workspace Cleanup:** Removed a legacy `home.astro` file from the test directory that was causing build conflicts.
+- **Verification:** The Astro build process (`npm run build`) now completes successfully and generates the new page, confirming the end-to-end rendering path from static JSON to final HTML is working.
+Impact: We have a stable, verifiable test route for our JSON-first content. This completes a major milestone for Phase 2 and provides a concrete URL to target for the editor's preview functionality in the next steps.
+
+Jules #172 (Phase 2, Step 2: Create PageRenderer Component)
+Date: 2025-11-20
+Summary:
+Created the new `PageRenderer.astro` component, which is responsible for rendering a page's section data into the appropriate Astro components. This is a key building block for connecting our JSON content to the Astro frontend.
+Details:
+- **New File:** Created `src/components/PageRenderer.astro`.
+- **Functionality:** The component accepts a `page` object as a prop. It iterates through the `page.sections` array and maps each section's `type` to the corresponding component (`Hero.astro` or `TextBlock.astro`) based on the mapping defined in Step 1.
+- **Prop Handling:** It passes the relevant props from the JSON object to the child components.
+- **Graceful Fallback:** Includes a fallback to render a placeholder for any unknown section types, making the renderer resilient to future changes.
+Impact: This component provides a clean, centralized, and maintainable way to translate our structured JSON data into a rendered Astro page. It fully isolates the rendering logic from the page-level and layout components.
+
+Jules #172 (Phase 2, Step 1: JSON to Component Mapping)
+Date: 2025-11-20
+Summary:
+This is a documentation-only step that formally defines the mapping between the section types in our JSON files and the Astro components that will render them for Phase 2. It also clarifies the specific constraints for this phase to keep the implementation simple and low-risk.
+Details:
+- **Component Mapping:**
+  - `type: "hero"` will be rendered by `src/components/Hero.astro`.
+  - `type: "textSection"` will be rendered by `src/components/TextBlock.astro`.
+- **Rendering Constraints for Phase 2:**
+  - **Ignored Properties:**
+    - For the `hero` section, the `body` property will be stored in the JSON but not rendered.
+    - For the `textSection`, the `ctaText` and `ctaHref` properties will also be stored but not rendered.
+  - **HTML Handling:**
+    - All `body` properties from the JSON, which contain HTML, will be treated as plain text during rendering to avoid the complexity of HTML-to-Markdown conversion or modifying existing components.
+Impact: This provides a clear, documented contract for the development of the `PageRenderer.astro` component and the associated test page. It ensures the scope of the next development steps is well-defined and aligns with our "one step, one commit" principle.
+
 Jules #172 (Phase 1 Complete: Load from GitHub)
 Date: 2025-11-19
 Summary:

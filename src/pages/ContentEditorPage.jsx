@@ -31,7 +31,7 @@ export default function ContentEditorPage(props) {
     : pathIdentifier.split('/').pop().replace(/\.astro$/, '') || 'home';
 
   // Determine editor mode based on the path
-  const isTestFile = pathIdentifier.startsWith('src/pages/_test/') && pathIdentifier.endsWith('.astro');
+  const isTestFile = pathIdentifier.startsWith('src/pages/json-preview/') && pathIdentifier.endsWith('.astro');
   const editorMode = isTestFile ? 'json' : 'astro';
 
   // Verification log for Step 3
@@ -210,6 +210,17 @@ export default function ContentEditorPage(props) {
     triggerSave(newSections);
   };
 
+  const handlePreview = () => {
+    // For Phase 2, this is hardcoded to our single test page.
+    if (editorMode === 'json' && pageId === 'home') {
+      const previewUrl = '/preview/json-preview/home-from-json';
+      console.log(`[Preview] Opening preview in new tab: ${previewUrl}`);
+      window.open(previewUrl, '_blank');
+    } else {
+      console.warn('[Preview] Preview is only available for the JSON-mode home page in this phase.');
+    }
+  };
+
   const handleSync = async () => {
     if (!selectedRepo) {
       console.error('[Sync] Cannot sync: repository not selected.');
@@ -288,6 +299,7 @@ export default function ContentEditorPage(props) {
         syncStatus={syncStatus}
         onAdd={handleAddSection}
         onSync={handleSync}
+        onPreview={editorMode === 'json' ? handlePreview : null}
       />
     </div>
   );

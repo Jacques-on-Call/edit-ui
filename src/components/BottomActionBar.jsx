@@ -1,9 +1,9 @@
 import { h } from 'preact';
 import { route } from 'preact-router';
-import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw } from 'lucide-preact';
+import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye } from 'lucide-preact';
 import './BottomActionBar.css';
 
-export default function BottomActionBar({ saveStatus, syncStatus = 'idle', onSync, onAdd }) {
+export default function BottomActionBar({ saveStatus, syncStatus = 'idle', onSync, onAdd, onPreview }) {
 
   const getStatusColor = () => {
     if (saveStatus === 'saved') return 'bg-yellow-green';
@@ -33,6 +33,12 @@ export default function BottomActionBar({ saveStatus, syncStatus = 'idle', onSyn
       <button onClick={onAdd} className="bar-btn bar-add" aria-label="Add Section">
         <Plus size={32} />
       </button>
+
+      {onPreview && (
+        <button onClick={onPreview} className="bar-btn" aria-label="Preview">
+          <Eye size={28} />
+        </button>
+      )}
 
       <div class="publish-container">
         <button
