@@ -1,0 +1,104 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+
+// Component styles are not automatically included in Astro pages.
+// We need to import the CSS from the components we are replicating
+// so that our client-side generated HTML is styled correctly.
+import '../../components/Hero.astro';
+import '../../components/TextBlock.astro';
+---
+
+<MainLayout title="Page Preview">
+  <div id="preview-container">
+    <h1 class="text-2xl font-bold mb-4 text-center p-8">Loading Preview...</h1>
+  </div>
+</MainLayout>
+
+<script>
+  // A simple client-side renderer that mimics the Astro components
+  const renderers = {
+    hero: (props) => {
+      const heroBanner = document.createElement('div');
+      heroBanner.className = 'hero-banner';
+
+      const overlay = document.createElement('div');
+      overlay.className = 'hero-overlay';
+      heroBanner.appendChild(overlay);
+
+      const content = document.createElement('div');
+      content.className = 'hero-content container';
+
+      const title = document.createElement('h1');
+      title.textContent = props.title || '';
+      content.appendChild(title);
+
+      if (props.subtitle) {
+        const subtitle = document.createElement('p');
+        subtitle.className = 'slogan';
+        subtitle.textContent = props.subtitle;
+        content.appendChild(subtitle);
+      }
+
+      // Note: Buttons are not rendered in this simplified preview
+      heroBanner.appendChild(content);
+      return heroBanner;
+    },
+    textSection: (props) => {
+      const section = document.createElement('section');
+      section.className = 'container content-wrapper';
+
+      // Replicating Astro's `set:html` by setting innerHTML
+      const contentDiv = document.createElement('div');
+      // In the draft, `body` is HTML, and `title` is plain text.
+      // We'll create a simple structure to display both.
+      contentDiv.innerHTML = `<h2>${props.title || ''}</h2>${props.body || ''}`;
+      section.appendChild(contentDiv);
+
+      // Note: Buttons are not rendered in this simplified preview
+      return section;
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const previewContainer = document.getElementById('preview-container');
+
+    try {
+      const previewPath = window.location.pathname.replace('/preview/', '');
+      const pageId = previewPath.split('/').pop();
+      if (!pageId) throw new Error('Could not determine pageId from path.');
+
+      const draftKey = `easy-seo-draft:${pageId}`;
+      const savedDraft = localStorage.getItem(draftKey);
+      if (!savedDraft) throw new Error(`No draft found for key: ${draftKey}`);
+
+      const draftData = JSON.parse(savedDraft);
+
+      // Clear the "Loading..." message
+      previewContainer.innerHTML = '';
+
+      if (draftData.sections && Array.isArray(draftData.sections)) {
+        draftData.sections.forEach(section => {
+          const renderer = renderers[section.type];
+          if (renderer) {
+            const element = renderer(section.props);
+            previewContainer.appendChild(element);
+          } else {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'p-4 text-center text-red-500';
+            errorDiv.textContent = `Unknown section type: ${section.type}`;
+            previewContainer.appendChild(errorDiv);
+          }
+        });
+      } else {
+        throw new Error('Draft data does not contain a valid sections array.');
+      }
+
+    } catch (error) {
+      console.error('[Preview] Error loading preview:', error);
+      previewContainer.innerHTML = `<div class="p-8 text-center">
+        <h1 class="text-2xl font-bold text-red-500">Preview Error</h1>
+        <pre class="text-left bg-gray-800 p-4 rounded mt-4">${error.message}</pre>
+      </div>`;
+    }
+  });
+</script>
