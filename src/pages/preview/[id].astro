@@ -1,0 +1,34 @@
+---
+import MainLayout from '../../../layouts/MainLayout.astro';
+import PageRenderer from '../../../../src/components/PageRenderer.astro';
+
+const { id } = Astro.params;
+let pageData = null;
+let error = null;
+
+try {
+  // Construct the absolute URL for the API endpoint
+  const apiUrl = new URL(`/api/previews/${id}`, Astro.url.origin);
+  const response = await fetch(apiUrl.toString());
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch preview data: ${response.status} ${response.statusText}`);
+  }
+
+  pageData = await response.json();
+} catch (e) {
+  console.error('[Preview Page] Error fetching preview data:', e);
+  error = e.message;
+}
+---
+
+<MainLayout title={pageData ? `Preview: ${pageData.slug}` : 'Preview'}>
+  {pageData ? (
+    <PageRenderer page={pageData} />
+  ) : (
+    <div class="container mx-auto p-8 text-center">
+      <h1 class="text-2xl font-bold text-red-500">Error Loading Preview</h1>
+      <p class="mt-4">{error || 'The preview data could not be loaded.'}</p>
+    </div>
+  )}
+</MainLayout>

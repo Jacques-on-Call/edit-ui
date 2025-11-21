@@ -210,18 +210,35 @@ export default function ContentEditorPage(props) {
     triggerSave(newSections);
   };
 
-  const handlePreview = () => {
-    if (editorMode === 'json') {
-      // Build the preview URL dynamically from the file path
-      // Remove 'src/pages/' prefix and '.astro' extension to get the preview path
-      const previewPath = pathIdentifier
-        .replace(/^src\/pages\//, '')
-        .replace(/\.astro$/, '');
-      const previewUrl = `/preview/${previewPath}`;
-      console.log(`[Preview] Opening preview in new tab: ${previewUrl}`);
-      window.open(previewUrl, '_blank');
-    } else {
-      console.warn(`[Preview] Preview is only available for JSON-mode pages. Current mode: ${editorMode}`);
+  const handlePreview = async () => {
+    if (editorMode !== 'json' || !sections) {
+      console.warn('[Preview] Preview is only available for JSON-mode pages with sections.');
+      return;
+    }
+
+    try {
+      const payload = {
+        slug: pageId,
+        sections: sections,
+        // Add any other relevant metadata for the preview
+        meta: { title: `Preview: ${pageId}` },
+      };
+
+      const result = await fetchJson('/api/previews', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      if (result.id) {
+        const previewUrl = `/preview/${result.id}`;
+        console.log(`[Preview] Opening preview in new tab: ${previewUrl}`);
+        window.open(previewUrl, '_blank');
+      } else {
+        throw new Error('Preview API did not return an ID.');
+      }
+    } catch (error) {
+      console.error('[Preview] Failed to create preview:', error);
+      // Optionally, show an error to the user
     }
   };
 
