@@ -211,34 +211,35 @@ export default function ContentEditorPage(props) {
   };
 
   const handlePreview = async () => {
-    if (editorMode !== 'json' || !sections) {
-      console.warn('[Preview] Preview is only available for JSON-mode pages with sections.');
-      return;
+    // This function now uses the path of the file, not its content.
+    // It's designed to preview the last synced version from the repository.
+    if (!filePathRef.current) {
+        console.error('[Preview] Cannot generate preview: file path is not available.');
+        return;
     }
 
+    console.log(`[Preview] Requesting preview for path: ${filePathRef.current}`);
+
     try {
-      const payload = {
-        slug: pageId,
-        sections: sections,
-        // Add any other relevant metadata for the preview
-        meta: { title: `Preview: ${pageId}` },
-      };
+        const payload = {
+            repo: selectedRepo.full_name,
+            path: filePathRef.current,
+        };
 
-      const result = await fetchJson('/api/previews', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
+        const result = await fetchJson('/api/previews', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
 
-      if (result.id) {
-        const previewUrl = `/preview/${result.id}`;
-        console.log(`[Preview] Opening preview in new tab: ${previewUrl}`);
-        window.open(previewUrl, '_blank');
-      } else {
-        throw new Error('Preview API did not return an ID.');
-      }
+        if (result.previewUrl) {
+            console.log(`[Preview] Opening preview in new tab: ${result.previewUrl}`);
+            window.open(result.previewUrl, '_blank');
+        } else {
+            throw new Error('Preview API did not return a previewUrl.');
+        }
     } catch (error) {
-      console.error('[Preview] Failed to create preview:', error);
-      // Optionally, show an error to the user
+        console.error('[Preview] Failed to create preview:', error);
+        // Optionally, show an error message to the user here.
     }
   };
 
@@ -320,7 +321,7 @@ export default function ContentEditorPage(props) {
         syncStatus={syncStatus}
         onAdd={handleAddSection}
         onSync={handleSync}
-        onPreview={editorMode === 'json' ? handlePreview : null}
+        onPreview={handlePreview}
       />
     </div>
   );
