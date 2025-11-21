@@ -1,5 +1,37 @@
 # Project Change Log
 
+Copilot Agent (Enhancement: Dynamic Preview URL)
+Date: 2025-11-21
+Summary:
+Enhanced the preview button to dynamically generate the preview URL based on the current page being edited, rather than being hardcoded to a single test page.
+Details:
+- **Previous Behavior:** The preview button was hardcoded to only work for the `home-from-json` page and would show a warning for any other page.
+- **New Behavior:** The preview URL is now dynamically constructed from the current file path by:
+  1. Removing the `src/pages/` prefix
+  2. Removing the `.astro` extension
+  3. Prepending `/preview/` to create the full preview URL
+- **Example:** A file at `src/pages/json-preview/about-page.astro` will now preview at `/preview/json-preview/about-page`.
+Impact: The preview feature now works for any JSON-mode page in the editor, making it a truly reusable feature for all content editing workflows.
+
+Copilot Agent (Bug Fix: Recursive Preview Directory Nesting)
+Date: 2025-11-21
+Summary:
+Fixed a critical bug where the preview build output was being recursively nested into itself, creating `public/preview/preview/preview/...` directories up to 10 levels deep. This prevented the preview URL from working correctly. Also refined the preview URL to use the cleaner format without `/index.html`.
+Details:
+- **Root Cause:** Astro copies the entire `public/` directory into the build output. Since `public/preview` existed in the repository with old build artifacts (from previous builds), it was being copied to `dist/preview/preview/`, creating recursive nesting each time the build ran.
+- **Solution:**
+  - Removed the entire `public/preview` directory from the repository (109MB of recursively nested files).
+  - Added `public/preview/` to `.gitignore` to prevent committing build artifacts in the future.
+  - The GitHub Actions workflow in `.github/workflows/build-preview.yml` already has the correct logic to copy `dist/preview/*` to `public/preview/`.
+  - Updated the preview URL in `ContentEditorPage.jsx` from `/preview/json-preview/home-from-json/index.html` to `/preview/json-preview/home-from-json` to match the cleaner format specified in Phase 2, Step 4.
+- **Verification:** Confirmed that the build now generates the correct structure in `dist/preview/json-preview/home-from-json/index.html` without any nested `preview` directories.
+Impact: The preview feature now works correctly. The URL `/preview/json-preview/home-from-json` will resolve to the correct file after the GitHub Actions workflow runs and copies the build output to `public/preview/`.
+
+Reflection:
+Challenge: The most challenging aspect was understanding that Astro copies the `public/` directory into the build output, which created a feedback loop where each build would nest the previous build's output inside itself.
+Discovery: Build artifacts should never be committed to version control. The `.gitignore` file should always exclude output directories to prevent this type of recursive nesting issue.
+Advice: When working with static site generators, always ensure that build output directories are excluded from version control, and that CI/CD workflows handle the deployment of build artifacts separately from source code.
+
 Jules #172 (Phase 2, Step 5: Implement "Preview" Button)
 Date: 2025-11-20
 Summary:

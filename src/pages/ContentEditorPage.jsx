@@ -211,13 +211,17 @@ export default function ContentEditorPage(props) {
   };
 
   const handlePreview = () => {
-    // For Phase 2, this is hardcoded to our single test page.
-    if (editorMode === 'json' && pageId === 'home-from-json') {
-      const previewUrl = '/preview/json-preview/home-from-json/index.html';
+    if (editorMode === 'json') {
+      // Build the preview URL dynamically from the file path
+      // Remove 'src/pages/' prefix and '.astro' extension to get the preview path
+      const previewPath = pathIdentifier
+        .replace(/^src\/pages\//, '')
+        .replace(/\.astro$/, '');
+      const previewUrl = `/preview/${previewPath}`;
       console.log(`[Preview] Opening preview in new tab: ${previewUrl}`);
       window.open(previewUrl, '_blank');
     } else {
-      console.warn(`[Preview] Preview is only available for the JSON-mode home page in this phase. Current pageId: ${pageId}`);
+      console.warn(`[Preview] Preview is only available for JSON-mode pages. Current mode: ${editorMode}`);
     }
   };
 
