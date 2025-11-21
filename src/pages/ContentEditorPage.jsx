@@ -213,7 +213,7 @@ export default function ContentEditorPage(props) {
   const handlePreview = () => {
     // For Phase 2, this is hardcoded to our single test page.
     if (editorMode === 'json' && pageId === 'home-from-json') {
-      const previewUrl = '/preview/json-preview/home-from-json';
+      const previewUrl = '/preview/json-preview/home-from-json/index.html';
       console.log(`[Preview] Opening preview in new tab: ${previewUrl}`);
       window.open(previewUrl, '_blank');
     } else {
