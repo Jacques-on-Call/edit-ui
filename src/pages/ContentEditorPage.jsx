@@ -232,7 +232,7 @@ export default function ContentEditorPage(props) {
         });
 
         if (result.previewUrl) {
-            console.log(`[Preview] Opening preview in new tab: ${result.previewUrl}`);
+            console.log(`[Preview] Received previewUrl: ${result.previewUrl}`);
             window.open(result.previewUrl, '_blank');
         } else {
             throw new Error('Preview API did not return a previewUrl.');
