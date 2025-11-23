@@ -29,11 +29,14 @@ export const AuthProvider = ({ children }) => {
 
     authCheckInProgress.current = true;
     setIsLoading(true);
+    console.log(`[DEBUG-PREVIEW] Auth Check on route: ${window.location.pathname}`);
+    console.log(`[DEBUG-PREVIEW] Loading state:`, true);
 
     try {
       const userData = await fetchJson('/api/me');
       setUser(userData);
       setIsAuthenticated(true);
+      console.log(`[DEBUG-PREVIEW] User state:`, userData);
 
       const reposData = await fetchJson('/api/repos');
       setRepositories(reposData);
@@ -41,6 +44,7 @@ export const AuthProvider = ({ children }) => {
 
     } catch (error) {
       console.error('[AuthContext] Auth check failed:', error);
+      console.log(`[DEBUG-PREVIEW] User state:`, null);
       setUser(null);
       setIsAuthenticated(false);
       setRepositories([]);
@@ -48,6 +52,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
       authCheckInProgress.current = false;
+      console.log(`[DEBUG-PREVIEW] Loading state:`, false);
     }
   }, []);
 

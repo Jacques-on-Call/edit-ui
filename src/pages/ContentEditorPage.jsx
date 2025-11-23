@@ -218,7 +218,7 @@ export default function ContentEditorPage(props) {
         .replace(/^src\/pages\//, '')
         .replace(/\.astro$/, '');
       const previewUrl = `/preview/${previewPath}`;
-      console.log(`[Preview] Opening preview in new tab: ${previewUrl}`);
+      console.log(`[DEBUG-PREVIEW] Opening preview in new tab: ${previewUrl}`);
       window.open(previewUrl, '_blank');
     } else {
       console.warn(`[Preview] Preview is only available for JSON-mode pages. Current mode: ${editorMode}`);
