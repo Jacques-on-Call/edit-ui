@@ -1,5 +1,6 @@
 # Project Change Log
 
+251123 reset repository to see if 1011 error resolves
 Copilot Agent (Enhancement: Dynamic Preview URL)
 Date: 2025-11-21
 Summary:

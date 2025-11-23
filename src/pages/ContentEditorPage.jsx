@@ -210,36 +210,18 @@ export default function ContentEditorPage(props) {
     triggerSave(newSections);
   };
 
-  const handlePreview = async () => {
-    // This function now uses the path of the file, not its content.
-    // It's designed to preview the last synced version from the repository.
-    if (!filePathRef.current) {
-        console.error('[Preview] Cannot generate preview: file path is not available.');
-        return;
-    }
-
-    console.log(`[Preview] Requesting preview for path: ${filePathRef.current}`);
-
-    try {
-        const payload = {
-            repo: selectedRepo.full_name,
-            path: filePathRef.current,
-        };
-
-        const result = await fetchJson('/api/previews', {
-            method: 'POST',
-            body: JSON.stringify(payload),
-        });
-
-        if (result.previewUrl) {
-            console.log(`[Preview] Received previewUrl: ${result.previewUrl}`);
-            window.open(result.previewUrl, '_blank');
-        } else {
-            throw new Error('Preview API did not return a previewUrl.');
-        }
-    } catch (error) {
-        console.error('[Preview] Failed to create preview:', error);
-        // Optionally, show an error message to the user here.
+  const handlePreview = () => {
+    if (editorMode === 'json') {
+      // Build the preview URL dynamically from the file path
+      // Remove 'src/pages/' prefix and '.astro' extension to get the preview path
+      const previewPath = pathIdentifier
+        .replace(/^src\/pages\//, '')
+        .replace(/\.astro$/, '');
+      const previewUrl = `/preview/${previewPath}`;
+      console.log(`[Preview] Opening preview in new tab: ${previewUrl}`);
+      window.open(previewUrl, '_blank');
+    } else {
+      console.warn(`[Preview] Preview is only available for JSON-mode pages. Current mode: ${editorMode}`);
     }
   };
 
@@ -321,7 +303,7 @@ export default function ContentEditorPage(props) {
         syncStatus={syncStatus}
         onAdd={handleAddSection}
         onSync={handleSync}
-        onPreview={handlePreview}
+        onPreview={editorMode === 'json' ? handlePreview : null}
       />
     </div>
   );
