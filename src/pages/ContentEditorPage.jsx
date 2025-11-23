@@ -226,6 +226,7 @@ export default function ContentEditorPage(props) {
   };
 
   const handleSync = async () => {
+    console.log('[DEBUG-BUILD] Trigger Build button clicked.');
     if (!selectedRepo) {
       console.error('[Sync] Cannot sync: repository not selected.');
       setSyncStatus('error');
@@ -236,45 +237,48 @@ export default function ContentEditorPage(props) {
     console.log('[Sync] Starting sync to GitHub...');
 
     try {
+      // Step 1: Save the content first
       const draftKey = `easy-seo-draft:${pageId}`;
       const savedDraft = localStorage.getItem(draftKey);
 
       if (!savedDraft) {
-        console.error('[Sync] No local draft found to sync.');
-        setSyncStatus('error');
-        return;
+        throw new Error('No local draft found to sync.');
       }
-
       const draftData = JSON.parse(savedDraft);
 
-      // For Phase 1, we only sync 'json' mode pages with sections.
       if (editorMode !== 'json' || !draftData.sections) {
-        console.warn('[Sync] Sync is currently only supported for JSON-mode pages with sections.');
-        setSyncStatus('error');
-        return;
+        throw new Error('Sync is currently only supported for JSON-mode pages with sections.');
       }
 
-      const payload = {
+      const savePayload = {
         repo: selectedRepo.full_name,
         pageData: {
           slug: draftData.slug,
-          meta: draftData.meta || { title: draftData.slug }, // Ensure meta exists
+          meta: draftData.meta || { title: draftData.slug },
           sections: draftData.sections,
         },
       };
 
-      const result = await fetchJson('/api/page-json/update', {
+      await fetchJson('/api/page-json/update', {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: JSON.stringify(savePayload),
+      });
+      console.log('[Sync] Content save successful.');
+
+      // Step 2: Trigger the build
+      console.log('[DEBUG-BUILD] Content saved, now triggering build...');
+      const buildPayload = { repo: selectedRepo.full_name };
+      const buildResult = await fetchJson('/api/trigger-build', {
+          method: 'POST',
+          body: JSON.stringify(buildPayload),
       });
 
-      console.log('[Sync] Sync successful:', result);
+      console.log('[DEBUG-BUILD] Build trigger API call successful.', buildResult);
       setSyncStatus('success');
-      setTimeout(() => setSyncStatus('idle'), 2500); // Reset after a short delay
+      setTimeout(() => setSyncStatus('idle'), 2500);
 
-    } catch (error)
-    {
-      console.error('[Sync] An error occurred during sync:', error);
+    } catch (error) {
+      console.error('[DEBUG-BUILD] An error occurred during sync or build trigger:', error.message, error.stack);
       setSyncStatus('error');
     }
   };
