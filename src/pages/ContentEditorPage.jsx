@@ -12,7 +12,10 @@ import BottomActionBar from '../components/BottomActionBar';
 import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
+  console.log('[Trace] Component rendering...');
+  console.log('[Trace] Before useAuth');
   const { selectedRepo } = useAuth();
+  console.log('[Trace] After useAuth. selectedRepo:', selectedRepo);
 
   // State for content, sections, and save status
   const [contentBody, setContentBody] = useState(null); // For Lexical
@@ -69,10 +72,13 @@ export default function ContentEditorPage(props) {
     }
   }, [pageId, sections]);
 
+  console.log('[Trace] Before useAutosave');
   const { triggerSave } = useAutosave(autosaveCallback, 1500);
+  console.log('[Trace] After useAutosave');
 
   // --- DATA LOADING & PARSING ---
   useEffect(() => {
+    console.log('[Trace] Inside useEffect');
     console.log('[ContentEditor] useEffect running...');
     try {
       filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
@@ -327,6 +333,7 @@ export default function ContentEditorPage(props) {
     .replace(/\.astro$/, '');
   const previewUrl = `/preview/${previewPath}`;
 
+  console.log('[Trace] Rendering JSX...');
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">
       <EditorHeader editorApiRef={editorApiRef} />
