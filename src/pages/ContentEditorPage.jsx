@@ -12,12 +12,13 @@ import BottomActionBar from '../components/BottomActionBar';
 import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
+  // --- 1. HOOKS ---
   console.log('[Trace] Component rendering...');
   console.log('[Trace] Before useAuth');
   const { selectedRepo } = useAuth();
   console.log('[Trace] After useAuth. selectedRepo:', selectedRepo);
 
-  // State for content, sections, and save status
+  // State Hooks
   const [contentBody, setContentBody] = useState(null); // For Lexical
   const [sections, setSections] = useState(null); // For SectionsEditor
   const [saveStatus, setSaveStatus] = useState('saved');
@@ -26,172 +27,23 @@ export default function ContentEditorPage(props) {
   const [isPreviewBuilding, setIsPreviewBuilding] = useState(false);
   const [previewKey, setPreviewKey] = useState(Date.now());
 
-  // Refs for editor API and tracking the file path
+  // Ref Hooks
   const editorApiRef = useRef(null);
   const filePathRef = useRef(null);
 
-  // Deriving a stable pageId (slug) for drafts and keys
+  // --- 2. DERIVED STATE & CONSTANTS ---
   const pathIdentifier = props.filePath ? decodeURIComponent(props.filePath) : (props.pageId || 'home');
   const pageId = pathIdentifier.endsWith('/index.astro')
     ? (pathIdentifier.split('/').slice(-2, -1)[0] || 'home')
     : pathIdentifier.split('/').pop().replace(/\.astro$/, '') || 'home';
 
-  // Determine editor mode based on the path
   const isTestFile = pathIdentifier.startsWith('src/pages/json-preview/') && pathIdentifier.endsWith('.astro');
   const editorMode = isTestFile ? 'json' : 'astro';
 
-  // Verification log for Step 3
   console.log(`[ContentEditorPage] mode=${editorMode} slug=${pageId} path=${pathIdentifier}`);
 
-  // --- AUTOSAVE LOGIC ---
-  const autosaveCallback = useCallback((dataToSave) => {
-    setSaveStatus('saving');
-    try {
-      const key = `easy-seo-draft:${pageId}`;
-      const draft = JSON.parse(localStorage.getItem(key) || '{}');
-
-      const payload = {
-        ...draft,
-        slug: pageId,
-        savedAt: new Date().toISOString(),
-      };
-
-      // Save either sections or content based on which editor is active
-      if (sections) {
-        payload.sections = dataToSave;
-      } else {
-        payload.content = dataToSave;
-      }
-
-      localStorage.setItem(key, JSON.stringify(payload));
-      console.log(`[ContentEditor] Draft successfully saved to key: ${key}`);
-      setSaveStatus('saved');
-    } catch (error) {
-      console.error('[ContentEditor] Failed to autosave draft:', error);
-      setSaveStatus('unsaved');
-    }
-  }, [pageId, sections]);
-
-  console.log('[Trace] Before useAutosave');
-  const { triggerSave } = useAutosave(autosaveCallback, 1500);
-  console.log('[Trace] After useAutosave');
-
-  // --- DATA LOADING & PARSING ---
-  useEffect(() => {
-    console.log('[Trace] Inside useEffect');
-    console.log('[ContentEditor] useEffect running...');
-    try {
-      filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
-
-      const loadJsonModeContent = async () => {
-        const draftKey = `easy-seo-draft:${pageId}`;
-        const savedDraft = localStorage.getItem(draftKey);
-
-        if (savedDraft) {
-          console.log('[ContentEditor-JSON] Found local draft. Loading from localStorage.');
-          try {
-            const draft = JSON.parse(savedDraft);
-            if (draft.sections) {
-              console.log('[ContentEditor] Setting sections state from draft...');
-              setSections(draft.sections);
-            } else {
-              console.warn('[ContentEditor-JSON] Draft found but has no sections. Falling back to default.');
-              console.log('[ContentEditor] Setting sections state to default...');
-              setSections(getDefaultSections());
-            }
-          } catch (e) {
-            console.error('[ContentEditor-JSON] Failed to parse draft. Loading default sections.', e);
-            console.log('[ContentEditor] Setting sections state to default after parse failure...');
-            setSections(getDefaultSections());
-          }
-          return;
-        }
-
-        console.log('[ContentEditor-JSON] No local draft. Fetching from repository...');
-        const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
-        try {
-          const url = `/api/page-json?repo=${encodeURIComponent(repo)}&slug=${encodeURIComponent(pageId)}`;
-          const pageJson = await fetchJson(url);
-
-          if (pageJson && pageJson.sections) {
-            console.log('[ContentEditor-JSON] Successfully fetched from repository.');
-            console.log('[ContentEditor] Setting sections state from fetched data...');
-            setSections(pageJson.sections);
-          } else {
-            console.warn('[ContentEditor-JSON] Fetched data but it has no sections. Falling back to default.');
-            console.log('[ContentEditor] Setting sections state to default after fetch...');
-            setSections(getDefaultSections());
-          }
-        } catch (error) {
-          if (error.message.includes('404')) {
-            console.log('[ContentEditor-JSON] No remote JSON found. Initializing with default sections.');
-          } else {
-            console.error('[ContentEditor-JSON] Failed to fetch remote JSON. Falling back to default.', error);
-          }
-          console.log('[ContentEditor] Setting sections state to default after fetch error...');
-          setSections(getDefaultSections());
-        }
-      };
-
-      const loadAstroModeContent = async () => {
-        const draftKey = `easy-seo-draft:${pageId}`;
-        const savedDraft = localStorage.getItem(draftKey);
-
-        if (savedDraft) {
-          console.log('[ContentEditor-Astro] Found local draft. Loading from localStorage.');
-          const draft = JSON.parse(savedDraft);
-          if (draft.sections) {
-            console.log('[ContentEditor] Setting sections state from Astro draft...');
-            setSections(draft.sections);
-            return;
-          }
-          console.log('[ContentEditor] Setting contentBody state from Astro draft...');
-          setContentBody(draft.content || '');
-          return;
-        }
-
-        console.log('[ContentEditor-Astro] No local draft. Fetching file from repository...');
-        const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
-        const path = filePathRef.current;
-        try {
-          const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`;
-          const json = await fetchJson(url);
-          const decodedContent = atob(json.content || '');
-          const { data: frontmatter, content: body } = matter(decodedContent);
-
-          if (frontmatter && frontmatter.sections && Array.isArray(frontmatter.sections)) {
-            console.log('[ContentEditor] Setting sections state from Astro frontmatter...');
-            setSections(frontmatter.sections);
-          } else {
-            console.log('[ContentEditor] Setting contentBody state from Astro body...');
-            setContentBody(body);
-          }
-        } catch (error) {
-          console.error('[ContentEditor-Astro] Failed to fetch or parse file content:', error);
-          console.log('[ContentEditor] Setting contentBody state to error message...');
-          setContentBody('// Error loading content. Please try again.');
-        }
-      };
-
-      if (editorMode === 'json') {
-        loadJsonModeContent();
-      } else {
-        loadAstroModeContent();
-      }
-
-      // Trigger build on first open
-      const buildFlag = `has-built-${pageId}`;
-      if (editorMode === 'json' && selectedRepo && !sessionStorage.getItem(buildFlag)) {
-        triggerBuild();
-        sessionStorage.setItem(buildFlag, 'true');
-      }
-    } catch (e) {
-      console.error('[ContentEditor] useEffect crash:', e);
-    }
-  }, [pageId, selectedRepo, editorMode, triggerBuild]);
-
-  // Helper to generate default sections for JSON mode
-  const getDefaultSections = () => [
+  // --- 3. CALLBACKS & HANDLERS ---
+  const getDefaultSections = useCallback(() => [
     {
       id: `section-${Date.now()}-1`,
       type: 'hero',
@@ -211,62 +63,101 @@ export default function ContentEditorPage(props) {
         ctaHref: '#',
       },
     },
-  ];
+  ], []);
 
-  // --- EVENT HANDLERS ---
-  const handleLexicalChange = (newContent) => {
+  const autosaveCallback = useCallback((dataToSave) => {
+    setSaveStatus('saving');
+    try {
+      const key = `easy-seo-draft:${pageId}`;
+      const draft = JSON.parse(localStorage.getItem(key) || '{}');
+      const payload = { ...draft, slug: pageId, savedAt: new Date().toISOString() };
+
+      if (sections) {
+        payload.sections = dataToSave;
+      } else {
+        payload.content = dataToSave;
+      }
+
+      localStorage.setItem(key, JSON.stringify(payload));
+      console.log(`[ContentEditor] Draft successfully saved to key: ${key}`);
+      setSaveStatus('saved');
+    } catch (error) {
+      console.error('[ContentEditor] Failed to autosave draft:', error);
+      setSaveStatus('unsaved');
+    }
+  }, [pageId, sections]);
+
+  console.log('[Trace] Before useAutosave');
+  const { triggerSave } = useAutosave(autosaveCallback, 1500);
+  console.log('[Trace] After useAutosave');
+
+  const triggerBuild = useCallback(async () => {
+    if (!selectedRepo) {
+      console.warn('[Build] Cannot trigger build: repository not selected.');
+      return;
+    }
+    console.log('[Build] Triggering background build...');
+    setIsPreviewBuilding(true);
+    try {
+      const buildPayload = { repo: selectedRepo.full_name };
+      await fetchJson('/api/trigger-build', {
+        method: 'POST',
+        body: JSON.stringify(buildPayload),
+      });
+      console.log('[Build] Build trigger API call successful.');
+      setTimeout(() => {
+        console.log('[Build] Refreshing preview after build delay.');
+        setIsPreviewBuilding(false);
+        setPreviewKey(Date.now());
+      }, 30000);
+    } catch (error) {
+      console.error('[Build] Failed to trigger build:', error.message, error.stack);
+      setIsPreviewBuilding(false);
+    }
+  }, [selectedRepo]);
+
+  const handleLexicalChange = useCallback((newContent) => {
     setContentBody(newContent);
     setSaveStatus('unsaved');
     triggerSave(newContent);
-  };
+  }, [triggerSave]);
 
-  const handleSectionsChange = (newSections) => {
+  const handleSectionsChange = useCallback((newSections) => {
     setSections(newSections);
     setSaveStatus('unsaved');
     triggerSave(newSections);
-  };
+  }, [triggerSave]);
 
-  const handleAddSection = () => {
+  const handleAddSection = useCallback(() => {
     const newSection = {
       id: `section-${Date.now()}`,
       type: 'textSection',
-      props: {
-        title: 'New Section',
-        body: '<p>Start writing your content here.</p>',
-        ctaText: '',
-        ctaHref: '',
-      },
+      props: { title: 'New Section', body: '<p>Start writing your content here.</p>', ctaText: '', ctaHref: '' },
     };
     const newSections = [...(sections || []), newSection];
     setSections(newSections);
     triggerSave(newSections);
-  };
+  }, [sections, triggerSave]);
 
-  const handlePreview = () => {
+  const handlePreview = useCallback(() => {
     setViewMode(prevMode => prevMode === 'editor' ? 'preview' : 'editor');
-  };
+  }, []);
 
-  const handleSync = async () => {
+  const handleSync = useCallback(async () => {
     console.log('[DEBUG-BUILD] Trigger Build button clicked.');
     if (!selectedRepo) {
       console.error('[Sync] Cannot sync: repository not selected.');
       setSyncStatus('error');
       return;
     }
-
     setSyncStatus('syncing');
     console.log('[Sync] Starting sync to GitHub...');
-
     try {
-      // Step 1: Save the content first
       const draftKey = `easy-seo-draft:${pageId}`;
       const savedDraft = localStorage.getItem(draftKey);
+      if (!savedDraft) throw new Error('No local draft found to sync.');
 
-      if (!savedDraft) {
-        throw new Error('No local draft found to sync.');
-      }
       const draftData = JSON.parse(savedDraft);
-
       if (editorMode !== 'json' || !draftData.sections) {
         throw new Error('Sync is currently only supported for JSON-mode pages with sections.');
       }
@@ -280,54 +171,108 @@ export default function ContentEditorPage(props) {
         },
       };
 
-      await fetchJson('/api/page-json/update', {
-        method: 'POST',
-        body: JSON.stringify(savePayload),
-      });
+      await fetchJson('/api/page-json/update', { method: 'POST', body: JSON.stringify(savePayload) });
       console.log('[Sync] Content save successful.');
-
-      // Step 2: Trigger the build automatically
       triggerBuild();
-
       setSyncStatus('success');
       setTimeout(() => setSyncStatus('idle'), 2500);
-
     } catch (error) {
       console.error('[DEBUG-BUILD] An error occurred during sync or build trigger:', error.message, error.stack);
       setSyncStatus('error');
     }
-  };
+  }, [selectedRepo, pageId, editorMode, triggerBuild]);
 
-  const triggerBuild = useCallback(async () => {
-    if (!selectedRepo) {
-      console.warn('[Build] Cannot trigger build: repository not selected.');
-      return;
-    }
-
-    console.log('[Build] Triggering background build...');
-    setIsPreviewBuilding(true);
-
+  // --- 4. SIDE EFFECTS (useEffect) ---
+  useEffect(() => {
+    console.log('[Trace] Inside useEffect');
+    console.log('[ContentEditor] useEffect running...');
     try {
-      const buildPayload = { repo: selectedRepo.full_name };
-      await fetchJson('/api/trigger-build', {
-        method: 'POST',
-        body: JSON.stringify(buildPayload),
-      });
-      console.log('[Build] Build trigger API call successful.');
+      filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
 
-      // Start a timer to refresh the preview after a delay
-      setTimeout(() => {
-        console.log('[Build] Refreshing preview after build delay.');
-        setIsPreviewBuilding(false);
-        setPreviewKey(Date.now()); // Force iframe refresh
-      }, 30000); // 30-second delay
+      const loadJsonModeContent = async () => {
+        const draftKey = `easy-seo-draft:${pageId}`;
+        const savedDraft = localStorage.getItem(draftKey);
 
-    } catch (error) {
-      console.error('[Build] Failed to trigger build:', error.message, error.stack);
-      setIsPreviewBuilding(false); // Reset on error
+        if (savedDraft) {
+          console.log('[ContentEditor-JSON] Found local draft. Loading from localStorage.');
+          try {
+            const draft = JSON.parse(savedDraft);
+            setSections(draft.sections || getDefaultSections());
+          } catch (e) {
+            console.error('[ContentEditor-JSON] Failed to parse draft. Loading default.', e);
+            setSections(getDefaultSections());
+          }
+          return;
+        }
+
+        console.log('[ContentEditor-JSON] No local draft. Fetching from repository...');
+        const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
+        try {
+          const url = `/api/page-json?repo=${encodeURIComponent(repo)}&slug=${encodeURIComponent(pageId)}`;
+          const pageJson = await fetchJson(url);
+          setSections(pageJson.sections || getDefaultSections());
+        } catch (error) {
+          if (error.message.includes('404')) {
+            console.log('[ContentEditor-JSON] No remote JSON found. Initializing with default sections.');
+          } else {
+            console.error('[ContentEditor-JSON] Failed to fetch remote JSON. Falling back to default.', error);
+          }
+          setSections(getDefaultSections());
+        }
+      };
+
+      const loadAstroModeContent = async () => {
+        const draftKey = `easy-seo-draft:${pageId}`;
+        const savedDraft = localStorage.getItem(draftKey);
+
+        if (savedDraft) {
+          console.log('[ContentEditor-Astro] Found local draft. Loading from localStorage.');
+          const draft = JSON.parse(savedDraft);
+          if (draft.sections) {
+            setSections(draft.sections);
+            return;
+          }
+          setContentBody(draft.content || '');
+          return;
+        }
+
+        console.log('[ContentEditor-Astro] No local draft. Fetching file from repository...');
+        const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
+        const path = filePathRef.current;
+        try {
+          const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`;
+          const json = await fetchJson(url);
+          const decodedContent = atob(json.content || '');
+          const { data: frontmatter, content: body } = matter(decodedContent);
+
+          if (frontmatter && frontmatter.sections && Array.isArray(frontmatter.sections)) {
+            setSections(frontmatter.sections);
+          } else {
+            setContentBody(body);
+          }
+        } catch (error) {
+          console.error('[ContentEditor-Astro] Failed to fetch or parse file content:', error);
+          setContentBody('// Error loading content. Please try again.');
+        }
+      };
+
+      if (editorMode === 'json') {
+        loadJsonModeContent();
+      } else {
+        loadAstroModeContent();
+      }
+
+      const buildFlag = `has-built-${pageId}`;
+      if (editorMode === 'json' && selectedRepo && !sessionStorage.getItem(buildFlag)) {
+        triggerBuild();
+        sessionStorage.setItem(buildFlag, 'true');
+      }
+    } catch (e) {
+      console.error('[ContentEditor] useEffect crash:', e);
     }
-  }, [selectedRepo]);
+  }, [pageId, selectedRepo, editorMode, triggerBuild, getDefaultSections]);
 
+  // --- 5. RENDER LOGIC ---
   const previewPath = pathIdentifier
     .replace(/^src\/pages\//, '')
     .replace(/\.astro$/, '');
