@@ -73,98 +73,114 @@ export default function ContentEditorPage(props) {
 
   // --- DATA LOADING & PARSING ---
   useEffect(() => {
-    filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
+    console.log('[ContentEditor] useEffect running...');
+    try {
+      filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
 
-    const loadJsonModeContent = async () => {
-      const draftKey = `easy-seo-draft:${pageId}`;
-      const savedDraft = localStorage.getItem(draftKey);
+      const loadJsonModeContent = async () => {
+        const draftKey = `easy-seo-draft:${pageId}`;
+        const savedDraft = localStorage.getItem(draftKey);
 
-      if (savedDraft) {
-        console.log('[ContentEditor-JSON] Found local draft. Loading from localStorage.');
-        try {
-          const draft = JSON.parse(savedDraft);
-          if (draft.sections) {
-            setSections(draft.sections);
-          } else {
-            console.warn('[ContentEditor-JSON] Draft found but has no sections. Falling back to default.');
+        if (savedDraft) {
+          console.log('[ContentEditor-JSON] Found local draft. Loading from localStorage.');
+          try {
+            const draft = JSON.parse(savedDraft);
+            if (draft.sections) {
+              console.log('[ContentEditor] Setting sections state from draft...');
+              setSections(draft.sections);
+            } else {
+              console.warn('[ContentEditor-JSON] Draft found but has no sections. Falling back to default.');
+              console.log('[ContentEditor] Setting sections state to default...');
+              setSections(getDefaultSections());
+            }
+          } catch (e) {
+            console.error('[ContentEditor-JSON] Failed to parse draft. Loading default sections.', e);
+            console.log('[ContentEditor] Setting sections state to default after parse failure...');
             setSections(getDefaultSections());
           }
-        } catch (e) {
-          console.error('[ContentEditor-JSON] Failed to parse draft. Loading default sections.', e);
-          setSections(getDefaultSections());
-        }
-        return;
-      }
-
-      console.log('[ContentEditor-JSON] No local draft. Fetching from repository...');
-      const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
-      try {
-        const url = `/api/page-json?repo=${encodeURIComponent(repo)}&slug=${encodeURIComponent(pageId)}`;
-        const pageJson = await fetchJson(url);
-
-        if (pageJson && pageJson.sections) {
-          console.log('[ContentEditor-JSON] Successfully fetched from repository.');
-          setSections(pageJson.sections);
-        } else {
-          console.warn('[ContentEditor-JSON] Fetched data but it has no sections. Falling back to default.');
-          setSections(getDefaultSections());
-        }
-      } catch (error) {
-        if (error.message.includes('404')) {
-          console.log('[ContentEditor-JSON] No remote JSON found. Initializing with default sections.');
-        } else {
-          console.error('[ContentEditor-JSON] Failed to fetch remote JSON. Falling back to default.', error);
-        }
-        setSections(getDefaultSections());
-      }
-    };
-
-    const loadAstroModeContent = async () => {
-      const draftKey = `easy-seo-draft:${pageId}`;
-      const savedDraft = localStorage.getItem(draftKey);
-
-      if (savedDraft) {
-        console.log('[ContentEditor-Astro] Found local draft. Loading from localStorage.');
-        const draft = JSON.parse(savedDraft);
-        if (draft.sections) {
-          setSections(draft.sections);
           return;
         }
-        setContentBody(draft.content || '');
-        return;
-      }
 
-      console.log('[ContentEditor-Astro] No local draft. Fetching file from repository...');
-      const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
-      const path = filePathRef.current;
-      try {
-        const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`;
-        const json = await fetchJson(url);
-        const decodedContent = atob(json.content || '');
-        const { data: frontmatter, content: body } = matter(decodedContent);
+        console.log('[ContentEditor-JSON] No local draft. Fetching from repository...');
+        const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
+        try {
+          const url = `/api/page-json?repo=${encodeURIComponent(repo)}&slug=${encodeURIComponent(pageId)}`;
+          const pageJson = await fetchJson(url);
 
-        if (frontmatter && frontmatter.sections && Array.isArray(frontmatter.sections)) {
-          setSections(frontmatter.sections);
-        } else {
-          setContentBody(body);
+          if (pageJson && pageJson.sections) {
+            console.log('[ContentEditor-JSON] Successfully fetched from repository.');
+            console.log('[ContentEditor] Setting sections state from fetched data...');
+            setSections(pageJson.sections);
+          } else {
+            console.warn('[ContentEditor-JSON] Fetched data but it has no sections. Falling back to default.');
+            console.log('[ContentEditor] Setting sections state to default after fetch...');
+            setSections(getDefaultSections());
+          }
+        } catch (error) {
+          if (error.message.includes('404')) {
+            console.log('[ContentEditor-JSON] No remote JSON found. Initializing with default sections.');
+          } else {
+            console.error('[ContentEditor-JSON] Failed to fetch remote JSON. Falling back to default.', error);
+          }
+          console.log('[ContentEditor] Setting sections state to default after fetch error...');
+          setSections(getDefaultSections());
         }
-      } catch (error) {
-        console.error('[ContentEditor-Astro] Failed to fetch or parse file content:', error);
-        setContentBody('// Error loading content. Please try again.');
+      };
+
+      const loadAstroModeContent = async () => {
+        const draftKey = `easy-seo-draft:${pageId}`;
+        const savedDraft = localStorage.getItem(draftKey);
+
+        if (savedDraft) {
+          console.log('[ContentEditor-Astro] Found local draft. Loading from localStorage.');
+          const draft = JSON.parse(savedDraft);
+          if (draft.sections) {
+            console.log('[ContentEditor] Setting sections state from Astro draft...');
+            setSections(draft.sections);
+            return;
+          }
+          console.log('[ContentEditor] Setting contentBody state from Astro draft...');
+          setContentBody(draft.content || '');
+          return;
+        }
+
+        console.log('[ContentEditor-Astro] No local draft. Fetching file from repository...');
+        const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
+        const path = filePathRef.current;
+        try {
+          const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`;
+          const json = await fetchJson(url);
+          const decodedContent = atob(json.content || '');
+          const { data: frontmatter, content: body } = matter(decodedContent);
+
+          if (frontmatter && frontmatter.sections && Array.isArray(frontmatter.sections)) {
+            console.log('[ContentEditor] Setting sections state from Astro frontmatter...');
+            setSections(frontmatter.sections);
+          } else {
+            console.log('[ContentEditor] Setting contentBody state from Astro body...');
+            setContentBody(body);
+          }
+        } catch (error) {
+          console.error('[ContentEditor-Astro] Failed to fetch or parse file content:', error);
+          console.log('[ContentEditor] Setting contentBody state to error message...');
+          setContentBody('// Error loading content. Please try again.');
+        }
+      };
+
+      if (editorMode === 'json') {
+        loadJsonModeContent();
+      } else {
+        loadAstroModeContent();
       }
-    };
 
-    if (editorMode === 'json') {
-      loadJsonModeContent();
-    } else {
-      loadAstroModeContent();
-    }
-
-    // Trigger build on first open
-    const buildFlag = `has-built-${pageId}`;
-    if (editorMode === 'json' && !sessionStorage.getItem(buildFlag)) {
-      triggerBuild();
-      sessionStorage.setItem(buildFlag, 'true');
+      // Trigger build on first open
+      const buildFlag = `has-built-${pageId}`;
+      if (editorMode === 'json' && selectedRepo && !sessionStorage.getItem(buildFlag)) {
+        triggerBuild();
+        sessionStorage.setItem(buildFlag, 'true');
+      }
+    } catch (e) {
+      console.error('[ContentEditor] useEffect crash:', e);
     }
   }, [pageId, selectedRepo, editorMode, triggerBuild]);
 
