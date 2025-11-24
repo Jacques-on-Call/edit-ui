@@ -9,7 +9,7 @@ import LexicalEditor from '../components/LexicalEditor';
 import SectionsEditor from '../components/SectionsEditor';
 import EditorHeader from '../components/EditorHeader';
 import BottomActionBar from '../components/BottomActionBar';
-import { Home, Plus, UploadCloud } from 'lucide-preact';
+import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
   const { selectedRepo } = useAuth();
@@ -20,6 +20,8 @@ export default function ContentEditorPage(props) {
   const [saveStatus, setSaveStatus] = useState('saved');
   const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, success, error
   const [viewMode, setViewMode] = useState('editor'); // 'editor' or 'preview'
+  const [isPreviewBuilding, setIsPreviewBuilding] = useState(false);
+  const [previewKey, setPreviewKey] = useState(Date.now());
 
   // Refs for editor API and tracking the file path
   const editorApiRef = useRef(null);
@@ -157,7 +159,14 @@ export default function ContentEditorPage(props) {
     } else {
       loadAstroModeContent();
     }
-  }, [pageId, selectedRepo, editorMode]);
+
+    // Trigger build on first open
+    const buildFlag = `has-built-${pageId}`;
+    if (editorMode === 'json' && !sessionStorage.getItem(buildFlag)) {
+      triggerBuild();
+      sessionStorage.setItem(buildFlag, 'true');
+    }
+  }, [pageId, selectedRepo, editorMode, triggerBuild]);
 
   // Helper to generate default sections for JSON mode
   const getDefaultSections = () => [
@@ -255,15 +264,9 @@ export default function ContentEditorPage(props) {
       });
       console.log('[Sync] Content save successful.');
 
-      // Step 2: Trigger the build
-      console.log('[DEBUG-BUILD] Content saved, now triggering build...');
-      const buildPayload = { repo: selectedRepo.full_name };
-      const buildResult = await fetchJson('/api/trigger-build', {
-          method: 'POST',
-          body: JSON.stringify(buildPayload),
-      });
+      // Step 2: Trigger the build automatically
+      triggerBuild();
 
-      console.log('[DEBUG-BUILD] Build trigger API call successful.', buildResult);
       setSyncStatus('success');
       setTimeout(() => setSyncStatus('idle'), 2500);
 
@@ -272,6 +275,36 @@ export default function ContentEditorPage(props) {
       setSyncStatus('error');
     }
   };
+
+  const triggerBuild = useCallback(async () => {
+    if (!selectedRepo) {
+      console.warn('[Build] Cannot trigger build: repository not selected.');
+      return;
+    }
+
+    console.log('[Build] Triggering background build...');
+    setIsPreviewBuilding(true);
+
+    try {
+      const buildPayload = { repo: selectedRepo.full_name };
+      await fetchJson('/api/trigger-build', {
+        method: 'POST',
+        body: JSON.stringify(buildPayload),
+      });
+      console.log('[Build] Build trigger API call successful.');
+
+      // Start a timer to refresh the preview after a delay
+      setTimeout(() => {
+        console.log('[Build] Refreshing preview after build delay.');
+        setIsPreviewBuilding(false);
+        setPreviewKey(Date.now()); // Force iframe refresh
+      }, 30000); // 30-second delay
+
+    } catch (error) {
+      console.error('[Build] Failed to trigger build:', error.message, error.stack);
+      setIsPreviewBuilding(false); // Reset on error
+    }
+  }, [selectedRepo]);
 
   const previewPath = pathIdentifier
     .replace(/^src\/pages\//, '')
@@ -298,8 +331,18 @@ export default function ContentEditorPage(props) {
             )}
           </div>
         ) : (
-          <div class="w-full h-full bg-white">
+          <div class="w-full h-full bg-white relative">
+            {isPreviewBuilding && (
+              <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+                <div class="text-white text-center">
+                  <RefreshCw size={48} className="animate-spin mb-4 mx-auto" />
+                  <p class="text-lg font-semibold">Building preview...</p>
+                  <p class="text-sm">This may take a moment.</p>
+                </div>
+              </div>
+            )}
             <iframe
+              key={previewKey}
               src={previewUrl}
               title="Live Preview"
               className="w-full h-full border-0"
