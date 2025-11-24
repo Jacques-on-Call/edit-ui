@@ -2,6 +2,7 @@
 
 ## Phase 3: Pipeline Integration
 - Cleanup of auth logs and instrumentation of build pipeline.
+- Enhanced error propagation and logging for Content Save API.
 
 251123 reset repository to see if 1011 error resolves
 Copilot Agent (Enhancement: Dynamic Preview URL)
