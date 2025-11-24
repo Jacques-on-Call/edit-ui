@@ -19,6 +19,7 @@ export default function ContentEditorPage(props) {
   const [sections, setSections] = useState(null); // For SectionsEditor
   const [saveStatus, setSaveStatus] = useState('saved');
   const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, success, error
+  const [viewMode, setViewMode] = useState('editor'); // 'editor' or 'preview'
 
   // Refs for editor API and tracking the file path
   const editorApiRef = useRef(null);
@@ -211,18 +212,7 @@ export default function ContentEditorPage(props) {
   };
 
   const handlePreview = () => {
-    if (editorMode === 'json') {
-      // Build the preview URL dynamically from the file path
-      // Remove 'src/pages/' prefix and '.astro' extension to get the preview path
-      const previewPath = pathIdentifier
-        .replace(/^src\/pages\//, '')
-        .replace(/\.astro$/, '');
-      const previewUrl = `/preview/${previewPath}`;
-      console.log(`[DEBUG-PREVIEW] Opening preview in new tab: ${previewUrl}`);
-      window.open(previewUrl, '_blank');
-    } else {
-      console.warn(`[Preview] Preview is only available for JSON-mode pages. Current mode: ${editorMode}`);
-    }
+    setViewMode(prevMode => prevMode === 'editor' ? 'preview' : 'editor');
   };
 
   const handleSync = async () => {
@@ -283,28 +273,45 @@ export default function ContentEditorPage(props) {
     }
   };
 
+  const previewPath = pathIdentifier
+    .replace(/^src\/pages\//, '')
+    .replace(/\.astro$/, '');
+  const previewUrl = `/preview/${previewPath}`;
+
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">
       <EditorHeader editorApiRef={editorApiRef} />
       <main class="flex-grow overflow-y-auto" style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
-        <div class="w-full">
-          {sections ? (
-            <SectionsEditor sections={sections} onChange={handleSectionsChange} />
-          ) : contentBody !== null ? (
-            <LexicalEditor
-              ref={editorApiRef}
-              slug={pageId}
-              initialContent={contentBody}
-              onChange={handleLexicalChange}
+        {viewMode === 'editor' ? (
+          <div class="w-full">
+            {sections ? (
+              <SectionsEditor sections={sections} onChange={handleSectionsChange} />
+            ) : contentBody !== null ? (
+              <LexicalEditor
+                ref={editorApiRef}
+                slug={pageId}
+                initialContent={contentBody}
+                onChange={handleLexicalChange}
+              />
+            ) : (
+              <div>Loading Editor...</div>
+            )}
+          </div>
+        ) : (
+          <div class="w-full h-full bg-white">
+            <iframe
+              src={previewUrl}
+              title="Live Preview"
+              className="w-full h-full border-0"
+              sandbox="allow-scripts allow-same-origin"
             />
-          ) : (
-            <div>Loading Editor...</div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
       <BottomActionBar
         saveStatus={saveStatus}
         syncStatus={syncStatus}
+        viewMode={viewMode}
         onAdd={handleAddSection}
         onSync={handleSync}
         onPreview={editorMode === 'json' ? handlePreview : null}
