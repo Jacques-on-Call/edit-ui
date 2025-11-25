@@ -7,12 +7,13 @@ import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { HeadingNode, QuoteNode } from '@lexical/rich-text';
+import { HeadingNode, QuoteNode, $createHeadingNode } from '@lexical/rich-text';
 import { ListItemNode, ListNode } from '@lexical/list';
 import { CodeHighlightNode, CodeNode } from '@lexical/code';
-import { AutoLinkNode, LinkNode } from '@lexical/link';
+import { AutoLinkNode, LinkNode, TOGGLE_LINK_COMMAND } from '@lexical/link';
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
-import { $getRoot, $insertNodes } from 'lexical';
+import { $getRoot, $insertNodes, $getSelection, $isRangeSelection, FORMAT_TEXT_COMMAND, UNDO_COMMAND, REDO_COMMAND } from 'lexical';
+import { $setBlocksType } from '@lexical/selection';
 
 const editorConfig = {
   namespace: 'EasySEOEditor',
@@ -68,15 +69,45 @@ function InitialContentPlugin({ initialContent }) {
   return null;
 }
 
-const LexicalEditor = forwardRef(({ slug, initialContent, onChange }, ref) => {
-  const editorRef = useRef(null);
+// Internal plugin to expose the editor API via a ref
+function EditorApiPlugin({ apiRef }) {
+  const [editor] = useLexicalComposerContext();
 
-  useImperativeHandle(ref, () => ({
+  useImperativeHandle(apiRef, () => ({
+    toggleBold: () => {
+      editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
+    },
+    toggleItalic: () => {
+      editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
+    },
+    toggleHeading: () => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          $setBlocksType(selection, () => $createHeadingNode('h2'));
+        }
+      });
+    },
+    insertLink: (url) => {
+      if (url) {
+        editor.dispatchCommand(TOGGLE_LINK_COMMAND, url);
+      }
+    },
+    undo: () => {
+      editor.dispatchCommand(UNDO_COMMAND, undefined);
+    },
+    redo: () => {
+      editor.dispatchCommand(REDO_COMMAND, undefined);
+    },
     focus: () => {
-      editorRef.current?.focus();
+      editor.focus();
     },
   }));
 
+  return null; // This plugin does not render anything
+}
+
+const LexicalEditor = forwardRef(({ slug, initialContent, onChange }, ref) => {
   const handleOnChange = (editorState, editor) => {
     editor.update(() => {
       const htmlString = $generateHtmlFromNodes(editor);
@@ -100,6 +131,7 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange }, ref) => {
         <HistoryPlugin />
         <OnChangePlugin onChange={handleOnChange} />
         <InitialContentPlugin initialContent={initialContent} />
+        <EditorApiPlugin apiRef={ref} />
       </div>
     </LexicalComposer>
   );
