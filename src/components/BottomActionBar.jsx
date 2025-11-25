@@ -1,9 +1,26 @@
 import { h } from 'preact';
+import { useEffect } from 'preact/hooks';
 import { route } from 'preact-router';
 import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil } from 'lucide-preact';
 import './BottomActionBar.css';
 
 export default function BottomActionBar({ saveStatus, syncStatus = 'idle', viewMode = 'editor', onSync, onAdd, onPreview }) {
+  useEffect(() => {
+    const handleResize = () => {
+      // This gets the height of the keyboard
+      const keyboardInset = window.innerHeight - window.visualViewport.height;
+      // This sets a variable that the CSS can use to move the toolbar
+      document.documentElement.style.setProperty('--keyboard-inset', `${keyboardInset}px`);
+    };
+
+    window.visualViewport.addEventListener('resize', handleResize);
+    handleResize(); // Run once on mount to set initial state
+
+    return () => {
+      window.visualViewport.removeEventListener('resize', handleResize);
+      document.documentElement.style.removeProperty('--keyboard-inset'); // Clean up
+    };
+  }, []);
 
   const getStatusColor = () => {
     if (saveStatus === 'saved') return 'bg-yellow-green';

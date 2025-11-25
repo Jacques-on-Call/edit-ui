@@ -1,9 +1,10 @@
 .bottom-action-bar {
   position: fixed;
-  bottom: 0;
+  bottom: var(--keyboard-inset, 0); /* Moves up with keyboard */
   left: 0;
   right: 0;
   height: 64px;
+  transition: bottom 0.2s ease-out; /* Smooth transition */
   background: rgba(16, 24, 39, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
