@@ -8,9 +8,9 @@ export default function HeroEditor({ props, onChange }) {
   };
 
   return (
-    <div className="space-y-2">
+    <div class="space-y-2">
       <div>
-        <label className="block text-xs font-medium text-gray-300 mb-1">
+        <label class="block text-xs font-medium text-gray-300 mb-1">
           Title
         </label>
         <input
@@ -18,11 +18,11 @@ export default function HeroEditor({ props, onChange }) {
           name="title"
           value={props?.title || ''}
           onInput={handleInputChange}
-          className="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+          class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-300 mb-1">
+        <label class="block text-xs font-medium text-gray-300 mb-1">
           Subtitle
         </label>
         <input
@@ -30,11 +30,11 @@ export default function HeroEditor({ props, onChange }) {
           name="subtitle"
           value={props?.subtitle || ''}
           onInput={handleInputChange}
-          className="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+          class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
        <div>
-        <label className="block text-xs font-medium text-gray-300 mb-1">
+        <label class="block text-xs font-medium text-gray-300 mb-1">
           Body
         </label>
         <textarea
@@ -42,7 +42,7 @@ export default function HeroEditor({ props, onChange }) {
           value={props?.body || ''}
           onInput={handleInputChange}
           rows="4"
-          className="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+          class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
     </div>

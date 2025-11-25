@@ -258,11 +258,6 @@ export default function ContentEditorPage(props) {
         loadAstroModeContent();
       }
 
-      const buildFlag = `has-built-${pageId}`;
-      if (editorMode === 'json' && selectedRepo && !sessionStorage.getItem(buildFlag)) {
-        triggerBuild();
-        sessionStorage.setItem(buildFlag, 'true');
-      }
     } catch (e) {
       console.error('[ContentEditor] useEffect crash:', e);
     }
