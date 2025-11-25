@@ -268,7 +268,7 @@ export default function ContentEditorPage(props) {
     .replace(/^src\/pages\//, '')
     .replace(/\.astro$/, '')
     .replace(/\/index$/, '');
-  const previewUrl = `/${previewPath}`;
+  const previewUrl = `https://strategycontent.pages.dev/${previewPath}`;
 
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">
