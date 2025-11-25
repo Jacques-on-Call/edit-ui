@@ -264,11 +264,27 @@ export default function ContentEditorPage(props) {
   }, [pageId, selectedRepo, editorMode, triggerBuild, getDefaultSections]);
 
   // --- 5. RENDER LOGIC ---
-  const previewPath = pathIdentifier
+  let previewPath = pathIdentifier
     .replace(/^src\/pages\//, '')
-    .replace(/\.astro$/, '')
-    .replace(/\/index$/, '');
+    .replace(/\.astro$/, '');
+
+  if (previewPath.endsWith('index')) {
+    // This handles both 'index' and '.../index'
+    previewPath = previewPath.slice(0, -'index'.length);
+  }
+
+  // Ensure it ends with a slash for directories
+  if (!previewPath.endsWith('/')) {
+    previewPath += '/';
+  }
+  // But remove it for the root path
+  if (previewPath === '/') {
+    previewPath = '';
+  }
+
+
   const previewUrl = `https://strategycontent.pages.dev/${previewPath}`;
+  console.log(`[DEBUG-PREVIEW] Generated preview URL for pathIdentifier "${pathIdentifier}": ${previewUrl}`);
 
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">
