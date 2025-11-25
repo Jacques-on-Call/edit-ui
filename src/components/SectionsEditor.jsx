@@ -50,46 +50,44 @@ export default function SectionsEditor({ sections = [], onChange }) {
   };
 
   return (
-    <div class="bg-gray-800">
-      <div class="flex items-center justify-between mb-3 px-4 pt-4">
-        <h2 class="text-lg font-semibold">Page Sections</h2>
-      </div>
+    <div class="p-4 space-y-4">
       {local.map((s, i) => {
         const EditorComponent = editorComponentRegistry[s.type];
         return (
-          <div key={i} class="mb-4 p-3 bg-gray-700 rounded-lg">
-            <div class="flex justify-between items-center mb-3">
-              <strong class="text-sm font-semibold capitalize">{s.type.replace(/_/g, ' ')}</strong>
-              <button onClick={() => handleRemove(i)} class="text-xs text-red-400 hover:text-red-300">Remove</button>
+          <div key={s.id || i} class="bg-gray-800 border border-gray-700 rounded-lg shadow-md">
+            <div class="flex items-center justify-between p-3 border-b border-gray-700">
+              <h3 class="text-lg font-semibold capitalize text-white">{s.type.replace(/_/g, ' ')}</h3>
+              <button
+                onClick={() => handleRemove(i)}
+                class="text-gray-400 hover:text-red-500 transition-colors"
+                aria-label="Remove section"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
             </div>
 
-            {EditorComponent ? (
-              <EditorComponent
-                props={s.props}
-                onChange={(newProps) => updateSectionProp(i, 'props', newProps)}
-              />
-            ) : (
-              // Fallback to generic fields if no specific editor component is found
-              <div class="space-y-2">
-                <div>
-                  <label class="block text-xs text-gray-300">Title</label>
-                  <input
-                    class="w-full p-2 rounded bg-gray-800 border border-gray-600"
-                    value={s.props?.title || ''}
-                    onInput={(e) => updateSectionProp(i, 'props.title', e.target.value)}
-                  />
+            <div class="p-4">
+              {EditorComponent ? (
+                <EditorComponent
+                  props={s.props}
+                  onChange={(newProps) => updateSectionProp(i, 'props', newProps)}
+                />
+              ) : (
+                <div class="space-y-3">
+                  {Object.entries(s.props || {}).map(([key, value]) => (
+                    <div key={key}>
+                      <label class="block text-sm font-medium text-gray-300 mb-1 capitalize">{key}</label>
+                      <input
+                        type="text"
+                        class="w-full p-2 rounded bg-gray-900 border border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+                        value={value}
+                        onInput={(e) => updateSectionProp(i, `props.${key}`, e.target.value)}
+                      />
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <label class="block text-xs text-gray-300">Body</label>
-                  <textarea
-                    class="w-full p-2 rounded bg-gray-800 border border-gray-600"
-                    rows="4"
-                    value={s.props?.body || ''}
-                    onInput={(e) => updateSectionProp(i, 'props.body', e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         );
       })}

@@ -266,8 +266,9 @@ export default function ContentEditorPage(props) {
   // --- 5. RENDER LOGIC ---
   const previewPath = pathIdentifier
     .replace(/^src\/pages\//, '')
-    .replace(/\.astro$/, '');
-  const previewUrl = `https://strategycontent.agency/${previewPath}`;
+    .replace(/\.astro$/, '')
+    .replace(/\/index$/, '');
+  const previewUrl = `/${previewPath}`;
 
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">

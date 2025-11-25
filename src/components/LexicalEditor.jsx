@@ -122,10 +122,10 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange }, ref) => {
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <div className="relative">
+      <div class="relative">
         <RichTextPlugin
-          contentEditable={<ContentEditable className="editor-input" />}
-          placeholder={<div className="editor-placeholder">Start typing...</div>}
+          contentEditable={<ContentEditable class="editor-input" />}
+          placeholder={<div class="editor-placeholder">Start typing...</div>}
           ErrorBoundary={LexicalErrorBoundary}
         />
         <HistoryPlugin />

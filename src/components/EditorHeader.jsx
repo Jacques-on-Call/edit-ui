@@ -9,27 +9,25 @@ export default function EditorHeader({ editorApiRef }) {
     if (api) {
       switch (action) {
         case 'bold':
-          if (api.toggleBold) api.toggleBold();
+          api.toggleBold();
           break;
         case 'italic':
-          if (api.toggleItalic) api.toggleItalic();
+          api.toggleItalic();
           break;
         case 'heading':
-          if (api.toggleHeading) api.toggleHeading();
+          api.toggleHeading();
           break;
         case 'link':
-          if (api.insertLink) {
-            const url = prompt('Enter the URL:');
-            if (url) {
-              api.insertLink(url);
-            }
+          const url = prompt('Enter the URL:');
+          if (url) {
+            api.insertLink(url);
           }
           break;
         case 'undo':
-          if (api.undo) api.undo();
+          api.undo();
           break;
         case 'redo':
-          if (api.redo) api.redo();
+          api.redo();
           break;
         default:
           break;
@@ -38,8 +36,8 @@ export default function EditorHeader({ editorApiRef }) {
   };
 
   return (
-    <header className="editor-header">
-      <div className="toolbar">
+    <header class="editor-header">
+      <div class="toolbar">
         <button onClick={() => handleAction('bold')} aria-label="Bold">
           <Bold size={18} />
         </button>
