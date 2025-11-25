@@ -1,50 +1,31 @@
 import { h } from 'preact';
+import EditableField from './EditableField';
 
 export default function HeroEditor({ props, onChange }) {
-  // This handler updates the parent with the full props object on any change.
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    onChange({ ...props, [name]: value });
+  const handleFieldChange = (fieldName, fieldValue) => {
+    onChange({ ...props, [fieldName]: fieldValue });
   };
 
   return (
-    <div class="space-y-2">
-      <div>
-        <label class="block text-xs font-medium text-gray-300 mb-1">
-          Title
-        </label>
-        <input
-          type="text"
-          name="title"
-          value={props?.title || ''}
-          onInput={handleInputChange}
-          class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-gray-300 mb-1">
-          Subtitle
-        </label>
-        <input
-          type="text"
-          name="subtitle"
-          value={props?.subtitle || ''}
-          onInput={handleInputChange}
-          class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
-       <div>
-        <label class="block text-xs font-medium text-gray-300 mb-1">
-          Body
-        </label>
-        <textarea
-          name="body"
-          value={props?.body || ''}
-          onInput={handleInputChange}
-          rows="4"
-          class="w-full p-2 rounded bg-gray-800 border border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
+    <div class="flex flex-col">
+      <EditableField
+        value={props?.title || ''}
+        onChange={(newValue) => handleFieldChange('title', newValue)}
+        placeholder="Hero Title"
+        className="text-4xl font-bold text-white tracking-tight"
+      />
+      <EditableField
+        value={props?.subtitle || ''}
+        onChange={(newValue) => handleFieldChange('subtitle', newValue)}
+        placeholder="Enter a subtitle..."
+        className="mt-2 text-lg text-gray-400"
+      />
+      <EditableField
+        value={props?.body || ''}
+        onChange={(newValue) => handleFieldChange('body', newValue)}
+        placeholder="Start writing the body content..."
+        className="mt-4 text-base text-gray-300"
+      />
     </div>
   );
 }
