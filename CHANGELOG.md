@@ -1,5 +1,36 @@
 # Project Change Log
 
+Jules #181 (feat): Overhaul Editor Core Functionality and UX
+Date: 2025-11-25
+Summary:
+This major update addresses several critical bugs and introduces a new, extensible architecture for the content editor, significantly improving its functionality, reliability, and user experience.
+
+Details:
+- **Functional Rich-Text Toolbar:** Fixed a long-standing bug where the header toolbar was disconnected from the editor. The `LexicalEditor` now correctly exposes its API, making the bold, italic, link, and other rich-text formatting buttons fully functional.
+- **Visual Component Editor ("What You See Is What You Edit"):**
+    - Introduced a new component registry to dynamically render specific editor UIs based on a section's `type`.
+    - Created the first visual editor component, `HeroEditor.jsx`, providing a user-friendly form for 'hero' sections.
+    - Refactored `SectionsEditor.jsx` to use the registry, with a robust fallback to a generic editor for unregistered types.
+- **Reliable Preview Workflow:**
+    - Fixed a critical 404 error by correcting the preview URL to point to the dedicated Cloudflare Pages deployment (`https://strategycontent.pages.dev/...`).
+    - The preview URL logic was also enhanced to correctly handle Astro's routing for `index.astro` files.
+- **Improved UI/UX:**
+    - The "blocky" and technical UI of the `SectionsEditor` has been redesigned with a more polished, card-based layout.
+- **Dependency Fix:** Resolved the root cause of the Lexical editor's instability by installing the `easy-seo` project's missing `npm` dependencies, ensuring a stable build.
+
+Impact:
+The content editor is now significantly more stable, functional, and user-friendly. The new component-based architecture provides a solid foundation for future development, and the fixes to the toolbar and preview system create a professional and reliable editing experience.
+
+Reflection:
+- **What was the most challenging part of this task?**
+  The most challenging part was diagnosing the root cause of the broken Lexical editor. The code *looked* correct, so the issue wasn't immediately obvious. It required a methodical process of elimination, from checking the component wiring to the build configuration, to finally uncover the missing project dependencies.
+- **What was a surprising discovery or key learning?**
+  The key learning was a reinforcement of a core principle: when a complex library misbehaves for no apparent reason, always suspect a problem with the build environment or dependencies first. The missing `@preact/preset-vite` package was a subtle but critical failure point that had a cascading effect on the editor's functionality.
+- **What advice would you give the next agent who works on this code?**
+  When working on the `easy-seo` project, remember that it's a separate workspace within the monorepo. If you encounter strange behavior, especially after pulling changes, your first step should be to run `npm install --prefix easy-seo` to ensure its dependencies are in sync. Don't assume the root `npm install` is sufficient.
+
+---
+
 ## Phase 3: Pipeline Integration
 - Cleanup of auth logs and instrumentation of build pipeline.
 - Enhanced error propagation and logging for Content Save API.
