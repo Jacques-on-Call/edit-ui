@@ -13,10 +13,7 @@ import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
   // --- 1. HOOKS ---
-  console.log('[Trace] Component rendering...');
-  console.log('[Trace] Before useAuth');
   const { selectedRepo } = useAuth();
-  console.log('[Trace] After useAuth. selectedRepo:', selectedRepo);
 
   // State Hooks
   const [contentBody, setContentBody] = useState(null); // For Lexical
@@ -87,9 +84,7 @@ export default function ContentEditorPage(props) {
     }
   }, [pageId, sections]);
 
-  console.log('[Trace] Before useAutosave');
   const { triggerSave } = useAutosave(autosaveCallback, 1500);
-  console.log('[Trace] After useAutosave');
 
   const triggerBuild = useCallback(async () => {
     if (!selectedRepo) {
@@ -97,7 +92,7 @@ export default function ContentEditorPage(props) {
       return;
     }
     console.log('[Build] Triggering background build...');
-    setIsPreviewBuilding(true);
+    setIsPreviewBuilding(true); // Set building state to true
     try {
       const buildPayload = { repo: selectedRepo.full_name };
       await fetchJson('/api/trigger-build', {
@@ -105,14 +100,10 @@ export default function ContentEditorPage(props) {
         body: JSON.stringify(buildPayload),
       });
       console.log('[Build] Build trigger API call successful.');
-      setTimeout(() => {
-        console.log('[Build] Refreshing preview after build delay.');
-        setIsPreviewBuilding(false);
-        setPreviewKey(Date.now());
-      }, 30000);
+      // The "Building..." overlay will now persist until a manual refresh.
     } catch (error) {
       console.error('[Build] Failed to trigger build:', error.message, error.stack);
-      setIsPreviewBuilding(false);
+      setIsPreviewBuilding(false); // Turn off overlay on error
     }
   }, [selectedRepo]);
 
@@ -141,6 +132,12 @@ export default function ContentEditorPage(props) {
 
   const handlePreview = useCallback(() => {
     setViewMode(prevMode => prevMode === 'editor' ? 'preview' : 'editor');
+  }, []);
+
+  const handleRefreshPreview = useCallback(() => {
+    console.log('[Preview] Manual refresh triggered.');
+    setPreviewKey(Date.now());
+    setIsPreviewBuilding(false); // Hide the overlay on manual refresh
   }, []);
 
   const handleSync = useCallback(async () => {
@@ -184,7 +181,6 @@ export default function ContentEditorPage(props) {
 
   // --- 4. SIDE EFFECTS (useEffect) ---
   useEffect(() => {
-    console.log('[Trace] Inside useEffect');
     console.log('[ContentEditor] useEffect running...');
     try {
       filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
@@ -278,7 +274,6 @@ export default function ContentEditorPage(props) {
     .replace(/\.astro$/, '');
   const previewUrl = `/preview/${previewPath}`;
 
-  console.log('[Trace] Rendering JSX...');
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">
       <EditorHeader editorApiRef={editorApiRef} />
@@ -309,6 +304,13 @@ export default function ContentEditorPage(props) {
                 </div>
               </div>
             )}
+            <button
+              onClick={handleRefreshPreview}
+              className="absolute top-4 right-4 z-20 bg-gray-800 bg-opacity-75 text-white p-2 rounded-full hover:bg-gray-700 transition-colors"
+              aria-label="Refresh Preview"
+            >
+              <RefreshCw size={24} />
+            </button>
             <iframe
               key={previewKey}
               src={previewUrl}
