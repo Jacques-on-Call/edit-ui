@@ -114,12 +114,8 @@ export default function ContentEditorPage(props) {
       console.log('[SYNC-DEBUG] Step 4 SUCCESS: Build trigger API call successful. Response:', response);
       setViewMode('preview'); // Switch to preview to show the build overlay
     } catch (error) {
-      console.error('[SYNC-DEBUG] Step 4 FAILED: API call to /api/trigger-build threw an error.', {
-        message: error.message,
-        stack: error.stack,
-        response: error.response,
-      });
-      setIsPreviewBuilding(false);
+      console.error('[Build] Failed to trigger build:', error);
+      setIsPreviewBuilding(false); // Turn off overlay on error
     }
   }, [selectedRepo]);
 
@@ -157,9 +153,6 @@ export default function ContentEditorPage(props) {
   }, []);
 
   const handleSync = useCallback(async () => {
-    console.log('[SYNC-DEBUG] Step 1: handleSync initiated.');
-    setSyncStatus('syncing');
-
     if (!selectedRepo) {
       console.error('[SYNC-DEBUG] Step 1 FAILED: No selectedRepo. Aborting.');
       setSyncStatus('error');
@@ -197,18 +190,18 @@ export default function ContentEditorPage(props) {
       const response = await fetchJson('/api/page-json/update', { method: 'POST', body: JSON.stringify(savePayload) });
       console.log('[SYNC-DEBUG] Step 3 SUCCESS: API call to /api/page-json/update was successful. Response:', response);
 
-      triggerBuild(); // This is Step 4
+      await fetchJson('/api/page-json/update', { method: 'POST', body: JSON.stringify(savePayload) });
+      console.log('[Sync] Content save successful.');
 
-      console.log('[SYNC-DEBUG] Step 5: Setting sync status to "success".');
+      setIsPreviewBuilding(true);
+      setViewMode('preview');
+      triggerBuild();
+
       setSyncStatus('success');
       setTimeout(() => setSyncStatus('idle'), 2500);
 
     } catch (error) {
-      console.error('[SYNC-DEBUG] A critical error occurred during the sync process.', {
-        message: error.message,
-        stack: error.stack,
-        response: error.response,
-      });
+      console.error('[Sync] An error occurred during sync or build trigger:', error);
       setSyncStatus('error');
     }
   }, [selectedRepo, pageId, editorMode, triggerBuild]);
@@ -353,8 +346,9 @@ export default function ContentEditorPage(props) {
               <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
                 <div class="text-white text-center">
                   <RefreshCw size={48} className="animate-spin mb-4 mx-auto" />
-                  <p class="text-lg font-semibold">Fetching preview...</p>
-                  <p class="text-sm">This may take a moment.</p>
+                  <p class="text-lg font-semibold">Live Preview is Building</p>
+                  <p class="text-sm">Your changes are being deployed. This may take a minute.</p>
+                  <p class="text-xs mt-2">You can refresh the preview in a bit.</p>
                 </div>
               </div>
             )}
