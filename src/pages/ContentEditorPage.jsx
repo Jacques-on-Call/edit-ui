@@ -129,6 +129,12 @@ export default function ContentEditorPage(props) {
       }
     } catch (error) {
       console.error('[Build Poll] Error fetching build status:', error);
+      console.error('[Build Poll] Full error details:', {
+        message: error.message,
+        status: error.status,
+        data: error.data,
+        stack: error.stack,
+      });
       setIsPreviewBuilding(false);
       setBuildError('Could not check the build status. Please try refreshing the preview manually.');
     }
