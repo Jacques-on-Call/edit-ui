@@ -343,7 +343,7 @@ export default function ContentEditorPage(props) {
               <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
                 <div class="text-white text-center">
                   <RefreshCw size={48} className="animate-spin mb-4 mx-auto" />
-                  <p class="text-lg font-semibold">Building preview...</p>
+                  <p class="text-lg font-semibold">Fetching preview...</p>
                   <p class="text-sm">This may take a moment.</p>
                 </div>
               </div>
