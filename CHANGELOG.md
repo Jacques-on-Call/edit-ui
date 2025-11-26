@@ -1,5 +1,27 @@
 # Project Change Log
 
+GitHub Copilot (Debug): Deep API Debug Mission - Add Diagnostic Endpoints
+Date: 2025-11-26
+Summary:
+Added diagnostic tooling to debug 500/404 errors on `/api/trigger-build` and `/api/page-json/update` endpoints.
+
+Details:
+- **New Debug Endpoint:** Added `/_debug/version` endpoint to verify worker deployment, check environment variables, and confirm route availability. Returns JSON with version, routes list, and `hasDeployHook` status.
+- **Enhanced Error Logging:** Improved `fetchJson.js` to log full error details including status, statusText, response body, HTTP method, and timestamp.
+- **Request Logging:** Added `[ROUTER]` logging to trace all incoming requests to the Cloudflare Worker.
+- **Sync/Build Logging:** Enhanced `ContentEditorPage.jsx` with detailed logging around sync and build trigger operations to identify duplicate calls or timing issues.
+- **Documentation:** Updated `RECOVERY.md` with comprehensive diagnostic guide for these API errors.
+
+Impact:
+These changes provide the diagnostic tools needed to identify the root cause of the 500 error on `/api/trigger-build` (likely missing `CLOUDFLARE_DEPLOY_HOOK` secret) and any 404 errors on `/api/page-json/update`.
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the architecture and flow between the frontend, worker, and Cloudflare configuration to identify all the diagnostic points needed.
+- **What was a surprising discovery or key learning?** The `CLOUDFLARE_DEPLOY_HOOK` environment variable is explicitly required by the handler code, and its absence returns a clear 500 error. This is documented in `wrangler.toml` but easy to miss during deployment.
+- **What advice would you give the next agent who works on this code?** Always check `/_debug/version` first when debugging API issues. It quickly confirms worker deployment status and environment variable configuration.
+
+---
+
 Jules #181 (feat): Create a mobile-first, document-centric editing experience
 Date: 2025-11-25
 Summary:

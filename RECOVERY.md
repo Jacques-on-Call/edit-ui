@@ -4,6 +4,88 @@ This document serves as a debug diary for the `easy-seo` project. It records com
 
 ---
 
+## **Bug: 500 Error on `/api/trigger-build` and 404 Error on `/api/page-json/update`**
+
+**Date:** 2025-11-26
+**Agent:** GitHub Copilot
+
+### **Symptoms:**
+
+API calls from the frontend were returning unexpected errors:
+- `/api/trigger-build` → **500 Internal Server Error**
+- `/api/page-json/update` → **404 Not Found** (intermittent)
+
+The browser console showed:
+```
+[fetchJson] An HTTP error occurred: { url: "/api/trigger-build", status: 500, responseData: {…} }
+```
+
+However, other endpoints like `/api/me`, `/api/repos`, and `/api/files` worked correctly.
+
+### **Root Cause Analysis:**
+
+After investigation, the following findings were identified:
+
+#### **1. `/api/trigger-build` 500 Error:**
+The most likely cause is a **missing `CLOUDFLARE_DEPLOY_HOOK` environment variable**. The handler in `cloudflare-worker-src/routes/content.js` (lines 113-117) explicitly returns a 500 error if this secret is not configured:
+
+```javascript
+if (!env.CLOUDFLARE_DEPLOY_HOOK) {
+  const errorMessage = 'Configuration Error: The CLOUDFLARE_DEPLOY_HOOK secret is missing...';
+  return safeJsonResponse({ message: errorMessage }, 500, origin);
+}
+```
+
+**How to verify:** Visit `https://edit.strategycontent.agency/_debug/version` in your browser. If `hasDeployHook` is `false`, the secret is not configured.
+
+**Solution:** 
+1. Go to Cloudflare Dashboard → Workers & Pages → [Your Worker] → Settings → Variables
+2. Add a new variable named `CLOUDFLARE_DEPLOY_HOOK` with type "Encrypt" (secret)
+3. Set the value to your Cloudflare Pages deploy hook URL (format: `https://api.cloudflare.com/client/v4/pages/webhooks/deploy_hooks/{hook-id}`)
+
+#### **2. `/api/page-json/update` 404 Error (Intermittent):**
+
+This 404 may be caused by:
+- **Duplicate API calls:** The sync flow calls both `/api/page-json/update` AND then `triggerBuild()` which calls `/api/trigger-build`. If the second call fails immediately after the first succeeds, it may appear as a 404 on the wrong endpoint in console logs.
+- **Worker deployment mismatch:** The deployed worker may not match the repository code.
+
+**How to verify:** 
+1. Check `/_debug/version` to confirm the worker has the expected routes listed
+2. Watch browser DevTools Network tab to see the exact sequence of API calls
+3. Check Cloudflare Worker logs (Dashboard → Workers → [Worker] → Logs → Real-time logs)
+
+### **Diagnostic Endpoints Added:**
+
+A new debug endpoint was added to help diagnose these issues:
+
+**`/_debug/version`** - Returns:
+```json
+{
+  "version": "2025-11-26-debug-v1",
+  "routes": ["/api/page-json/update", "/api/trigger-build", ...],
+  "hasDeployHook": true/false,
+  "timestamp": "ISO timestamp"
+}
+```
+
+⚠️ **Note:** This debug endpoint should be removed or secured before production deployment.
+
+### **Enhanced Logging:**
+
+Additional logging was added to help trace API issues:
+
+1. **Router logging:** Every request now logs `[ROUTER] METHOD /path` to Cloudflare Worker logs
+2. **fetchJson logging:** Enhanced error logging now shows full error details including status, statusText, and response body (truncated for security)
+3. **ContentEditorPage logging:** Sync and build operations now log timestamps and sanitized payload info
+
+### **Solution Summary:**
+
+1. **For 500 on trigger-build:** Configure `CLOUDFLARE_DEPLOY_HOOK` secret in Cloudflare dashboard
+2. **For 404 issues:** Verify worker deployment using `/_debug/version` endpoint
+3. **For debugging:** Check browser console for enhanced error logs and Cloudflare Worker logs for server-side traces
+
+---
+
 ## **Bug: Infinite Autosave Loop on `contentEditable` Element**
 
 **Date:** 2025-11-16

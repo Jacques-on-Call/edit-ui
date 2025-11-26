@@ -89,6 +89,7 @@ export default function ContentEditorPage(props) {
   const { triggerSave } = useAutosave(autosaveCallback, 1500);
 
   const triggerBuild = useCallback(async () => {
+    console.log(`[Build] triggerBuild called at ${new Date().toISOString()}`);
     if (!selectedRepo) {
       console.warn('[Build] Cannot trigger build: repository not selected.');
       return;
@@ -97,6 +98,7 @@ export default function ContentEditorPage(props) {
     setIsPreviewBuilding(true); // Set building state to true
     try {
       const buildPayload = { repo: selectedRepo.full_name };
+      console.log('[Build] About to call /api/trigger-build with payload:', JSON.stringify(buildPayload));
       await fetchJson('/api/trigger-build', {
         method: 'POST',
         body: JSON.stringify(buildPayload),
@@ -110,6 +112,11 @@ export default function ContentEditorPage(props) {
       }, 60000); // 60 seconds
     } catch (error) {
       console.error('[Build] Failed to trigger build:', error);
+      console.error('[Build] Error details:', {
+        message: error.message,
+        status: error.status,
+        data: error.data,
+      });
       setIsPreviewBuilding(false); // Turn off overlay on error
     }
   }, [selectedRepo]);
@@ -148,6 +155,7 @@ export default function ContentEditorPage(props) {
   }, []);
 
   const handleSync = useCallback(async () => {
+    console.log(`[Sync] handleSync called at ${new Date().toISOString()}`);
     if (!selectedRepo) {
       console.error('[Sync] Cannot sync: repository not selected.');
       setSyncStatus('error');
@@ -174,17 +182,31 @@ export default function ContentEditorPage(props) {
         },
       };
 
+      // Log sanitized payload info (exclude actual content for security)
+      console.log('[Sync] About to call /api/page-json/update with payload:', {
+        repo: savePayload.repo,
+        slug: savePayload.pageData.slug,
+        sectionCount: savePayload.pageData.sections?.length || 0,
+      });
       await fetchJson('/api/page-json/update', { method: 'POST', body: JSON.stringify(savePayload) });
-      console.log('[Sync] Content save successful.');
+      console.log('[Sync] Content save successful. Now triggering build...');
 
       setIsPreviewBuilding(true);
       setViewMode('preview');
+      
+      console.log('[Sync] About to call triggerBuild...');
       triggerBuild();
+      console.log('[Sync] triggerBuild called.');
 
       setSyncStatus('success');
       setTimeout(() => setSyncStatus('idle'), 2500);
     } catch (error) {
       console.error('[Sync] An error occurred during sync or build trigger:', error);
+      console.error('[Sync] Error details:', {
+        message: error.message,
+        status: error.status,
+        data: error.data,
+      });
       setSyncStatus('error');
     }
   }, [selectedRepo, pageId, editorMode, triggerBuild]);

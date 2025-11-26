@@ -32,10 +32,22 @@ export async function fetchJson(url, options = {}) {
         error.data = 'Could not read error response body.';
       }
     }
-    console.error(`[fetchJson] An HTTP error occurred:`, {
+    // Enhanced error logging for debugging API issues
+    // Note: Truncate response body to avoid exposing sensitive data
+    const sanitizedBody = typeof error.data === 'object' 
+      ? JSON.stringify(error.data) 
+      : String(error.data || '');
+    const truncatedBody = sanitizedBody.length > 500 
+      ? sanitizedBody.substring(0, 500) + '... [truncated]' 
+      : sanitizedBody;
+    
+    console.error(`[fetchJson] Full error details:`, {
       url: url,
       status: error.status,
-      responseData: error.data,
+      statusText: response.statusText,
+      responseBody: truncatedBody,
+      method: finalOptions.method || 'GET',
+      timestamp: new Date().toISOString(),
     });
     throw error;
   }
