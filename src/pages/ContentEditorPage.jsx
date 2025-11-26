@@ -27,8 +27,16 @@ export default function ContentEditorPage(props) {
   // Ref Hooks
   const editorApiRef = useRef(null);
   const filePathRef = useRef(null);
+  // Use ref for selectedRepo to avoid recreating callbacks on every render
+  const selectedRepoRef = useRef(selectedRepo);
 
-  console.log('[ContentEditorPage] RENDER - syncStatus:', syncStatus, 'isPreviewBuilding:', isPreviewBuilding);
+  // Keep selectedRepoRef in sync with selectedRepo state
+  useEffect(() => {
+    selectedRepoRef.current = selectedRepo;
+  }, [selectedRepo]);
+
+  // Debug render only in development - commented out to reduce console spam
+  // console.log('[ContentEditorPage] RENDER - syncStatus:', syncStatus, 'isPreviewBuilding:', isPreviewBuilding);
 
   // --- 2. DERIVED STATE & CONSTANTS ---
   const pathIdentifier = props.filePath ? decodeURIComponent(props.filePath) : (props.pageId || 'home');
@@ -39,9 +47,11 @@ export default function ContentEditorPage(props) {
   const isTestFile = pathIdentifier.startsWith('src/pages/json-preview/') && pathIdentifier.endsWith('.astro');
   const editorMode = isTestFile ? 'json' : 'astro';
 
-  console.log(`[ContentEditorPage] mode=${editorMode} slug=${pageId} path=${pathIdentifier}`);
+  // Debug mode logging - only log once per unique combination to reduce spam
+  // console.log(`[ContentEditorPage] mode=${editorMode} slug=${pageId} path=${pathIdentifier}`);
 
   // --- 3. CALLBACKS & HANDLERS ---
+  // getDefaultSections uses empty dependency array for stable reference
   const getDefaultSections = useCallback(() => [
     {
       id: `section-${Date.now()}-1`,
@@ -88,16 +98,19 @@ export default function ContentEditorPage(props) {
 
   const { triggerSave } = useAutosave(autosaveCallback, 1500);
 
+  // triggerBuild uses selectedRepoRef to avoid being recreated when selectedRepo changes
+  // This prevents infinite re-render loops in the useEffect that depends on this callback
   const triggerBuild = useCallback(async () => {
     console.log(`[Build] triggerBuild called at ${new Date().toISOString()}`);
-    if (!selectedRepo) {
+    const repo = selectedRepoRef.current; // Use ref instead of direct state
+    if (!repo) {
       console.warn('[Build] Cannot trigger build: repository not selected.');
       return;
     }
     console.log('[Build] Triggering background build...');
     setIsPreviewBuilding(true); // Set building state to true
     try {
-      const buildPayload = { repo: selectedRepo.full_name };
+      const buildPayload = { repo: repo.full_name };
       console.log('[Build] About to call /api/trigger-build with payload:', JSON.stringify(buildPayload));
       await fetchJson('/api/trigger-build', {
         method: 'POST',
@@ -119,7 +132,7 @@ export default function ContentEditorPage(props) {
       });
       setIsPreviewBuilding(false); // Turn off overlay on error
     }
-  }, [selectedRepo]);
+  }, []); // Empty dependency array - stable reference using ref
 
   const handleLexicalChange = useCallback((newContent) => {
     setContentBody(newContent);
@@ -192,7 +205,8 @@ export default function ContentEditorPage(props) {
       console.log('[Sync] Content save successful. Now triggering build...');
 
       setIsPreviewBuilding(true);
-      setViewMode('preview');
+      // Don't auto-switch to preview mode - let user decide when to view preview
+      // setViewMode('preview'); // Removed: Clicking Sync should not force preview mode
       
       console.log('[Sync] About to call triggerBuild...');
       triggerBuild();
@@ -317,12 +331,15 @@ export default function ContentEditorPage(props) {
     } catch (e) {
       console.error('[ContentEditor] useEffect crash:', e);
     }
-  }, [pageId, selectedRepo, editorMode, triggerBuild, getDefaultSections]);
+    // Dependencies: Only use primitive values to prevent re-runs when callbacks are recreated
+    // getDefaultSections is stable (empty deps), but we inline calls anyway for safety
+    // selectedRepo?.full_name extracts the primitive string value from the object
+  }, [pageId, selectedRepo?.full_name, editorMode]);
 
   // --- 5. RENDER LOGIC ---
   const previewUrl = useMemo(() => {
     const generatePreviewPath = (path) => {
-      console.log(`[PREVIEW-URL-GEN] Input path: "${path}"`);
+      // Console logs removed to reduce spam - they were firing on every memo check
       let result = path;
 
       if (result.startsWith('src/pages/')) {
@@ -341,13 +358,11 @@ export default function ContentEditorPage(props) {
         result += '/';
       }
 
-      console.log(`[PREVIEW-URL-GEN] Final generated path: "${result}"`);
       return result;
     };
 
     const previewPath = generatePreviewPath(pathIdentifier);
     const finalUrl = `https://strategycontent.pages.dev/${previewPath}`;
-    console.log(`[DEBUG-PREVIEW] Final preview URL: ${finalUrl}`);
     return finalUrl;
   }, [pathIdentifier]);
 

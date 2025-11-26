@@ -4,6 +4,88 @@ This document serves as a debug diary for the `easy-seo` project. It records com
 
 ---
 
+## **Bug: Infinite Re-render Loop from Callback Dependencies in useEffect**
+
+**Date:** 2025-11-26
+**Agent:** GitHub Copilot
+
+### **Symptoms:**
+
+The ContentEditorPage component was rendering dozens of times per second with stable state values:
+```
+[ContentEditorPage] RENDER - syncStatus: idle isPreviewBuilding: false
+[ContentEditorPage] RENDER - syncStatus: idle isPreviewBuilding: false
+...  (repeats 50+ times)
+```
+
+The component re-rendered even when no state was changing, causing performance issues and making debugging difficult.
+
+### **Root Cause:**
+
+The issue was a common React/Preact anti-pattern: using callbacks (created with `useCallback`) as dependencies in `useEffect`.
+
+```javascript
+// PROBLEMATIC CODE:
+const triggerBuild = useCallback(async () => {
+  // Uses selectedRepo directly
+  if (!selectedRepo) return;
+  // ...
+}, [selectedRepo]); // Recreated every time selectedRepo changes
+
+useEffect(() => {
+  // ... loading logic ...
+}, [pageId, selectedRepo, editorMode, triggerBuild, getDefaultSections]);
+// ↑ triggerBuild and getDefaultSections cause re-runs!
+```
+
+**The chain of events:**
+1. Component renders
+2. `selectedRepo` state is read
+3. `triggerBuild` is created with `selectedRepo` in dependencies
+4. `useEffect` sees `triggerBuild` has a new reference (different from last render)
+5. `useEffect` runs
+6. State potentially changes, triggering another render
+7. Go back to step 1
+
+### **Solution:**
+
+Use a **ref** to hold the state value that the callback needs:
+
+```javascript
+// FIXED CODE:
+// 1. Create a ref to hold the state value
+const selectedRepoRef = useRef(selectedRepo);
+
+// 2. Keep the ref in sync with state
+useEffect(() => {
+  selectedRepoRef.current = selectedRepo;
+}, [selectedRepo]);
+
+// 3. Use the ref inside the callback - empty dependency array for stability
+const triggerBuild = useCallback(async () => {
+  const repo = selectedRepoRef.current; // Read from ref, not state
+  if (!repo) return;
+  // ...
+}, []); // Empty array - callback reference is now stable
+
+// 4. Remove callbacks from useEffect dependencies, use primitives
+useEffect(() => {
+  // ... loading logic ...
+}, [pageId, selectedRepo?.full_name, editorMode]); // Use primitive values only
+```
+
+### **Key Insights:**
+
+1. **Callbacks in useEffect dependencies are dangerous** - They often have state dependencies that cause them to be recreated on every render.
+
+2. **Use refs for "latest value" access** - When a callback needs access to state but you don't want the callback to be recreated when state changes, use a ref.
+
+3. **Prefer primitive values in dependencies** - Instead of `selectedRepo` (object), use `selectedRepo?.full_name` (string). Objects change reference on every render.
+
+4. **The "stale closure" problem is sometimes desirable** - By intentionally using refs, we create a "stale closure" but with controlled staleness via the ref sync effect.
+
+---
+
 ## **Bug: 500 Error on `/api/trigger-build` and 404 Error on `/api/page-json/update`**
 
 **Date:** 2025-11-26

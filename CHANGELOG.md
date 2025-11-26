@@ -1,5 +1,33 @@
 # Project Change Log
 
+GitHub Copilot (Fix): Stop Infinite Re-renders and UX Improvements
+Date: 2025-11-26
+Summary:
+Fixed three bugs causing performance issues and confusing UX in the ContentEditorPage component: an infinite re-render loop, auto-switching to preview mode on sync, and console log spam.
+
+Details:
+- **Bug 1 - Infinite Re-render Loop:**
+  - **Root Cause:** The `useEffect` hook had `triggerBuild` and `getDefaultSections` in its dependency array. Since `triggerBuild` depended on `selectedRepo` state, it was being recreated on every render, which triggered the `useEffect` again, creating an infinite loop.
+  - **Fix Applied:** Introduced `selectedRepoRef` to hold a stable reference to `selectedRepo`. The `triggerBuild` callback now reads from this ref instead of directly from state, allowing it to have an empty dependency array for a stable reference. The main `useEffect` now uses primitive values (`selectedRepo?.full_name` instead of the full object) to prevent unnecessary re-runs.
+  
+- **Bug 2 - Sync Opens Preview Automatically:**
+  - **Root Cause:** The `handleSync` function had `setViewMode('preview')` which forced the UI into preview mode whenever the user clicked Sync.
+  - **Fix Applied:** Removed the automatic view mode switch. Users can now sync their content without being forced into preview mode, giving them control over when to view the preview.
+
+- **Bug 3 - Console Log Spam from useMemo:**
+  - **Root Cause:** The `previewUrl` useMemo had three `console.log` statements that were firing on every memo check, causing excessive console output.
+  - **Fix Applied:** Removed the console.log statements from inside the useMemo. Also commented out the RENDER debug logs at the top of the component.
+
+Impact:
+The ContentEditorPage now renders efficiently without infinite loops, the Sync button no longer forces preview mode, and the browser console is no longer flooded with debug messages. This significantly improves performance and user experience.
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the subtle interaction between React/Preact's dependency tracking and callback recreation. The `useCallback` hook with state dependencies looks correct but creates a new function reference every time the state changes, which then triggers any `useEffect` that depends on that callback.
+- **What was a surprising discovery or key learning?** Using refs to hold state values for use inside callbacks is a powerful pattern to break dependency cycles. The ref gives access to the latest value without being part of the callback's dependency array.
+- **What advice would you give the next agent who works on this code?** When callbacks are used in useEffect dependencies, always ask: "Will this callback be recreated on state changes?" If yes, consider using refs for the state values needed inside the callback, and use an empty dependency array to keep the callback stable.
+
+---
+
 GitHub Copilot (Fix): Save Fetched Content as Initial Draft
 Date: 2025-11-26
 Summary:
