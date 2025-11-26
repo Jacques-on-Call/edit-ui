@@ -1,5 +1,27 @@
 # Project Change Log
 
+Jules #184 (feat): Implement Auto-Refresh for Content Preview
+Date: 2025-11-26
+Summary:
+Completed Phase 3 of the editor refinement by implementing a full-stack "Auto-Refresh via Polling" feature. This replaces the manual, timer-based preview refresh with a robust, automated system that provides users with real-time feedback on the build status.
+
+Details:
+- **New Backend Endpoint:** Created a secure API endpoint (`/api/check-build-status`) in the Cloudflare worker that queries the Cloudflare API for the latest deployment status.
+- **Frontend Polling Logic:** The `ContentEditorPage` now initiates a polling loop after a build is triggered. It repeatedly checks the new endpoint every 3 seconds.
+- **Automated Refresh:** Upon detecting a 'success' status from the API, the preview iframe is automatically reloaded, showing the latest changes without requiring user interaction.
+- **UI Feedback:** The UI now displays a "Building..." overlay during the polling process and shows a clear error message if the build fails or times out, significantly improving user experience.
+- **Debugging & Resolution:** The initial implementation failed with a 404 error on the new endpoint. Added diagnostic logging to the frontend to capture the full error response, which confirmed the issue was a stale Cloudflare worker deployment.
+
+Impact:
+The content editor now provides a seamless, modern preview experience. Users no longer need to guess when a build is finished and manually refresh. The system provides clear, automated feedback, making the content workflow faster and more intuitive.
+
+Reflection:
+- **What was the most challenging part of this task?** The most challenging part was diagnosing the initial 404 failure. The code appeared correct, which made an environmental issue the likely culprit. The key was to trust the process, add targeted logging, and let the data pinpoint the problem (a stale deployment) rather than assuming the code was wrong.
+- **What was a surprising discovery or key learning?** This task was a powerful reminder that in a distributed system with separate frontend and backend deployments, a "stale deployment" is a common and often counter-intuitive cause of "route not found" errors. Committing a diagnostic change (like adding a log) is often the fastest way to both diagnose and fix the problem by forcing a redeployment of all services.
+- **What advice would you give the next agent who works on this code?** When a newly added API route returns a 404, your first suspicion should be a stale worker deployment. Before diving deep into code fixes, add detailed logging to the client's `catch` block to confirm the exact error status and then try forcing a redeployment with a trivial change to a relevant backend file.
+
+---
+
 GitHub Copilot (Fix): Preview Shows Stale Content - Wrong JSON Import Path
 Date: 2025-11-26
 Summary:
