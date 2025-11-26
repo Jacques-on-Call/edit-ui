@@ -87,23 +87,29 @@ export default function ContentEditorPage(props) {
   const { triggerSave } = useAutosave(autosaveCallback, 1500);
 
   const triggerBuild = useCallback(async () => {
+    console.log('[SYNC-DEBUG] Step 4: triggerBuild function initiated.');
     if (!selectedRepo) {
-      console.warn('[Build] Cannot trigger build: repository not selected.');
+      console.error('[SYNC-DEBUG] Step 4 FAILED: No selectedRepo found.');
+      setIsPreviewBuilding(false);
       return;
     }
-    console.log('[Build] Triggering background build...');
-    setIsPreviewBuilding(true); // Set building state to true
+    console.log(`[SYNC-DEBUG] Step 4: Repository found: ${selectedRepo.full_name}. Setting isPreviewBuilding=true.`);
+    setIsPreviewBuilding(true);
     try {
       const buildPayload = { repo: selectedRepo.full_name };
-      await fetchJson('/api/trigger-build', {
+      console.log('[SYNC-DEBUG] Step 4: Calling /api/trigger-build with payload:', buildPayload);
+      const response = await fetchJson('/api/trigger-build', {
         method: 'POST',
         body: JSON.stringify(buildPayload),
       });
-      console.log('[Build] Build trigger API call successful.');
-      // The "Building..." overlay will now persist until a manual refresh.
+      console.log('[SYNC-DEBUG] Step 4 SUCCESS: Build trigger API call successful. Response:', response);
     } catch (error) {
-      console.error('[Build] Failed to trigger build:', error.message, error.stack);
-      setIsPreviewBuilding(false); // Turn off overlay on error
+      console.error('[SYNC-DEBUG] Step 4 FAILED: API call to /api/trigger-build threw an error.', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response,
+      });
+      setIsPreviewBuilding(false);
     }
   }, [selectedRepo]);
 
@@ -141,21 +147,30 @@ export default function ContentEditorPage(props) {
   }, []);
 
   const handleSync = useCallback(async () => {
-    console.log('[DEBUG-BUILD] Trigger Build button clicked.');
+    console.log('[SYNC-DEBUG] Step 1: handleSync initiated.');
+    setSyncStatus('syncing');
+
     if (!selectedRepo) {
-      console.error('[Sync] Cannot sync: repository not selected.');
+      console.error('[SYNC-DEBUG] Step 1 FAILED: No selectedRepo. Aborting.');
       setSyncStatus('error');
       return;
     }
-    setSyncStatus('syncing');
-    console.log('[Sync] Starting sync to GitHub...');
+    console.log(`[SYNC-DEBUG] Step 1: Found repo: ${selectedRepo.full_name}`);
+
     try {
       const draftKey = `easy-seo-draft:${pageId}`;
+      console.log(`[SYNC-DEBUG] Step 2: Reading from localStorage with key: "${draftKey}"`);
       const savedDraft = localStorage.getItem(draftKey);
-      if (!savedDraft) throw new Error('No local draft found to sync.');
+
+      if (!savedDraft) {
+        console.error('[SYNC-DEBUG] Step 2 FAILED: No local draft found in localStorage.');
+        throw new Error('No local draft found to sync.');
+      }
+      console.log('[SYNC-DEBUG] Step 2: Found draft in localStorage.');
 
       const draftData = JSON.parse(savedDraft);
       if (editorMode !== 'json' || !draftData.sections) {
+        console.error(`[SYNC-DEBUG] Step 2 FAILED: Sync is not supported. editorMode=${editorMode}, hasSections=${!!draftData.sections}`);
         throw new Error('Sync is currently only supported for JSON-mode pages with sections.');
       }
 
@@ -167,14 +182,23 @@ export default function ContentEditorPage(props) {
           sections: draftData.sections,
         },
       };
+      console.log('[SYNC-DEBUG] Step 3: Prepared payload for API call:', savePayload);
 
-      await fetchJson('/api/page-json/update', { method: 'POST', body: JSON.stringify(savePayload) });
-      console.log('[Sync] Content save successful.');
-      triggerBuild();
+      const response = await fetchJson('/api/page-json/update', { method: 'POST', body: JSON.stringify(savePayload) });
+      console.log('[SYNC-DEBUG] Step 3 SUCCESS: API call to /api/page-json/update was successful. Response:', response);
+
+      triggerBuild(); // This is Step 4
+
+      console.log('[SYNC-DEBUG] Step 5: Setting sync status to "success".');
       setSyncStatus('success');
       setTimeout(() => setSyncStatus('idle'), 2500);
+
     } catch (error) {
-      console.error('[DEBUG-BUILD] An error occurred during sync or build trigger:', error.message, error.stack);
+      console.error('[SYNC-DEBUG] A critical error occurred during the sync process.', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response,
+      });
       setSyncStatus('error');
     }
   }, [selectedRepo, pageId, editorMode, triggerBuild]);
@@ -264,27 +288,35 @@ export default function ContentEditorPage(props) {
   }, [pageId, selectedRepo, editorMode, triggerBuild, getDefaultSections]);
 
   // --- 5. RENDER LOGIC ---
-  let previewPath = pathIdentifier
-    .replace(/^src\/pages\//, '')
-    .replace(/\.astro$/, '');
+  const generatePreviewPath = (path) => {
+    console.log(`[PREVIEW-URL-GEN] Input path: "${path}"`);
+    let result = path;
 
-  if (previewPath.endsWith('index')) {
-    // This handles both 'index' and '.../index'
-    previewPath = previewPath.slice(0, -'index'.length);
-  }
+    if (result.startsWith('src/pages/')) {
+      result = result.substring('src/pages/'.length);
+    }
 
-  // Ensure it ends with a slash for directories
-  if (!previewPath.endsWith('/')) {
-    previewPath += '/';
-  }
-  // But remove it for the root path
-  if (previewPath === '/') {
-    previewPath = '';
-  }
+    if (result.endsWith('.astro')) {
+      result = result.slice(0, -'.astro'.length);
+    }
 
+    if (result.endsWith('index')) {
+      result = result.slice(0, -'index'.length);
+    }
 
+    // Astro treats paths without extensions as directories, so they need a trailing slash.
+    // The root path (from 'index') correctly becomes an empty string and does not get a slash.
+    if (result.length > 0 && !result.endsWith('/')) {
+      result += '/';
+    }
+
+    console.log(`[PREVIEW-URL-GEN] Final generated path: "${result}"`);
+    return result;
+  };
+
+  const previewPath = generatePreviewPath(pathIdentifier);
   const previewUrl = `https://strategycontent.pages.dev/${previewPath}`;
-  console.log(`[DEBUG-PREVIEW] Generated preview URL for pathIdentifier "${pathIdentifier}": ${previewUrl}`);
+  console.log(`[DEBUG-PREVIEW] Final preview URL: ${previewUrl}`);
 
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">
