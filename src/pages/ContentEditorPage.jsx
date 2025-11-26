@@ -63,23 +63,32 @@ export default function ContentEditorPage(props) {
   ], []);
 
   const autosaveCallback = useCallback((dataToSave) => {
+    console.log('[AUTOSAVE-DEBUG] Step 1: autosaveCallback initiated.');
     setSaveStatus('saving');
     try {
       const key = `easy-seo-draft:${pageId}`;
+      console.log(`[AUTOSAVE-DEBUG] Step 2: Using localStorage key: "${key}"`);
+
       const draft = JSON.parse(localStorage.getItem(key) || '{}');
       const payload = { ...draft, slug: pageId, savedAt: new Date().toISOString() };
 
       if (sections) {
+        console.log('[AUTOSAVE-DEBUG] Step 3: Sections mode detected. Saving sections data.');
         payload.sections = dataToSave;
       } else {
+        console.log('[AUTOSAVE-DEBUG] Step 3: Astro mode detected. Saving content body.');
         payload.content = dataToSave;
       }
 
+      console.log('[AUTOSAVE-DEBUG] Step 4: Preparing to save payload:', payload);
       localStorage.setItem(key, JSON.stringify(payload));
-      console.log(`[ContentEditor] Draft successfully saved to key: ${key}`);
+      console.log(`[AUTOSAVE-DEBUG] Step 5: SUCCESS! Draft saved to localStorage.`);
       setSaveStatus('saved');
     } catch (error) {
-      console.error('[ContentEditor] Failed to autosave draft:', error);
+      console.error('[AUTOSAVE-DEBUG] Step 5: FAILED! An error occurred during the save process.', {
+        message: error.message,
+        stack: error.stack,
+      });
       setSaveStatus('unsaved');
     }
   }, [pageId, sections]);
