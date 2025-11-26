@@ -1,5 +1,27 @@
 # Project Change Log
 
+GitHub Copilot (Fix): Missing cors.js Utility Causing 404 Errors on API Endpoints
+Date: 2025-11-26
+Summary:
+Fixed a critical bug where `/api/check-build-status`, `/api/trigger-build`, and `/api/page-json/update` endpoints were returning 404 errors. The root cause was a missing utility file that caused the worker module to fail to load.
+
+Details:
+- **Root Cause:** The `cloudflare-worker-src/routes/build.js` file was importing `corsHeaders` from `../utils/cors`, but the `cors.js` file did not exist. This caused the entire worker to fail to start, resulting in 404 errors for all API routes served by the modular router.
+- **Fix Applied:** Created the missing `cloudflare-worker-src/utils/cors.js` file with a proper `corsHeaders` factory function.
+- **Corrected Usage:** Updated `build.js` to properly call `corsHeaders(origin)` as a function instead of spreading it directly (which was incorrect).
+- **Environment Variables:** Added `ACCOUNT_ID` and `CLOUDFLARE_PROJECT_NAME` to `wrangler.toml` vars section so they are available to the worker at runtime.
+- **Documentation:** Updated `cloudflare-worker-src/FILES.md` to document the new `cors.js` utility and `build.js` route handler.
+
+Impact:
+The API endpoints for the auto-refresh preview system (`/api/check-build-status`, `/api/trigger-build`) and the content save endpoint (`/api/page-json/update`) will now work correctly once deployed. Users can sync content to GitHub and see live preview updates.
+
+Reflection:
+- **What was the most challenging part of this task?** Tracing the 404 errors back to their root cause. The error messages didn't directly indicate a missing module - they just showed 404 for routes that appeared to be registered correctly.
+- **What was a surprising discovery or key learning?** When a JavaScript module import fails (missing file), the entire module graph can fail to load silently in a serverless worker context. This manifests as 404s rather than import errors because the worker simply doesn't start.
+- **What advice would you give the next agent who works on this code?** When adding new route handlers, always verify that all imports can be resolved. Check for missing utility files, and ensure functions are called correctly (e.g., `corsHeaders(origin)` not `...corsHeaders`).
+
+---
+
 Jules #184 (feat): Implement Auto-Refresh for Content Preview
 Date: 2025-11-26
 Summary:
