@@ -238,14 +238,38 @@ export default function ContentEditorPage(props) {
         try {
           const url = `/api/page-json?repo=${encodeURIComponent(repo)}&slug=${encodeURIComponent(pageId)}`;
           const pageJson = await fetchJson(url);
-          setSections(pageJson.sections || getDefaultSections());
+          const fetchedSections = pageJson.sections || getDefaultSections();
+          setSections(fetchedSections);
+
+          // Save fetched content as the initial draft so sync can find it
+          const draftPayload = {
+            slug: pageId,
+            meta: pageJson.meta || { title: pageId },
+            sections: fetchedSections,
+            path: filePathRef.current,
+            savedAt: new Date().toISOString()
+          };
+          localStorage.setItem(draftKey, JSON.stringify(draftPayload));
+          console.log('[ContentEditor-JSON] Fetched content saved as initial draft:', draftKey);
         } catch (error) {
           if (error.message.includes('404')) {
             console.log('[ContentEditor-JSON] No remote JSON found. Initializing with default sections.');
           } else {
             console.error('[ContentEditor-JSON] Failed to fetch remote JSON. Falling back to default.', error);
           }
-          setSections(getDefaultSections());
+          const defaultSections = getDefaultSections();
+          setSections(defaultSections);
+
+          // Save default sections as initial draft so sync can find it
+          const draftPayload = {
+            slug: pageId,
+            meta: { title: pageId },
+            sections: defaultSections,
+            path: filePathRef.current,
+            savedAt: new Date().toISOString()
+          };
+          localStorage.setItem(draftKey, JSON.stringify(draftPayload));
+          console.log('[ContentEditor-JSON] Default content saved as initial draft:', draftKey);
         }
       };
 

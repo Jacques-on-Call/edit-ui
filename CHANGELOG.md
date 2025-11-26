@@ -1,5 +1,25 @@
 # Project Change Log
 
+GitHub Copilot (Fix): Save Fetched Content as Initial Draft
+Date: 2025-11-26
+Summary:
+Fixed a critical bug where fetched JSON content was not saved to localStorage, causing the "No local draft found to sync" error when users clicked the Sync button.
+
+Details:
+- **Root Cause:** When opening a JSON-mode page (e.g., `home-from-json`), the editor fetched content from GitHub if no local draft existed. However, this fetched content was never saved to localStorage. When the user clicked "Sync to GitHub", the sync handler looked for a draft in localStorage, found nothing, and threw the error.
+- **Fix Applied:** After successfully fetching content from `/api/page-json` in JSON mode, the content is now immediately saved to localStorage as the initial draft. This includes the `slug`, `meta`, `sections`, `path`, and `savedAt` timestamp.
+- **Fallback Handling:** When falling back to default sections (on 404 or fetch error), the default content is also saved to localStorage, ensuring sync always works for new pages.
+
+Impact:
+The Sync button now works correctly for JSON-mode pages that were loaded from the repository. Users no longer encounter the "No local draft found to sync" error.
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the data flow between the fetch operation, state updates, localStorage, and the sync handler to identify exactly where the localStorage save was missing.
+- **What was a surprising discovery or key learning?** The autosave hook only triggers on user changes (via `onChange`), not on initial data load. This meant fetched content needed an explicit save to localStorage to bridge the gap between load and sync.
+- **What advice would you give the next agent who works on this code?** When implementing data loading that may later be synced/saved, always ensure the loaded data is persisted to the expected storage location immediately after loading. The sync handler should never have to guess where to find data.
+
+---
+
 GitHub Copilot (Debug): Deep API Debug Mission - Add Diagnostic Endpoints
 Date: 2025-11-26
 Summary:
