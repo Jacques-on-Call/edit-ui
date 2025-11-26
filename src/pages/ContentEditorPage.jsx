@@ -112,6 +112,7 @@ export default function ContentEditorPage(props) {
         body: JSON.stringify(buildPayload),
       });
       console.log('[SYNC-DEBUG] Step 4 SUCCESS: Build trigger API call successful. Response:', response);
+      setViewMode('preview'); // Switch to preview to show the build overlay
     } catch (error) {
       console.error('[SYNC-DEBUG] Step 4 FAILED: API call to /api/trigger-build threw an error.', {
         message: error.message,
