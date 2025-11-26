@@ -103,6 +103,11 @@ export default function ContentEditorPage(props) {
       });
       console.log('[Build] Build trigger API call successful.');
       // The "Building..." overlay will now persist until a manual refresh.
+      // Set a timeout to prevent the overlay from spinning indefinitely.
+      setTimeout(() => {
+        console.log('[Build] Hiding build overlay after 60s timeout.');
+        setIsPreviewBuilding(false);
+      }, 60000); // 60 seconds
     } catch (error) {
       console.error('[Build] Failed to trigger build:', error);
       setIsPreviewBuilding(false); // Turn off overlay on error
