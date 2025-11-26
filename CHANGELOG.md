@@ -1,5 +1,27 @@
 # Project Change Log
 
+Jules #185 (feat): Integrate Rich-Text Toolbar with Section Editor
+Date: 2025-11-26
+Summary:
+Upgraded the content editor to allow the main rich-text toolbar to format text within any of the individual fields of a section (e.g., the title, subtitle, or body of a Hero section). This unifies the editing experience and brings powerful formatting capabilities to the "document-centric" UI.
+
+Details:
+- **New Architecture (EditorContext):** Introduced a new React Context (`EditorContext.jsx`) to act as a central communication channel. This context tracks the currently focused editor field, decoupling the main toolbar from the individual fields.
+- **Upgraded `EditableField` to `LexicalField`:** The basic `contentEditable` component was replaced with a new `LexicalField.jsx` component. Each `LexicalField` now contains its own full Lexical editor instance.
+- **Context-Aware Fields:** `LexicalField.jsx` was integrated with the `EditorContext`. When a field gains focus, it registers its API with the context, making it the "active editor."
+- **Context-Aware Toolbar:** The main `EditorHeader.jsx` was refactored to consume the `EditorContext`. It now sends formatting commands (bold, italic, etc.) to whichever editor is currently active, rather than relying on a static prop.
+- **UI Polish:** Added horizontal spacing to the toolbar icons in `EditorHeader.css` to improve the visual layout and prevent them from feeling cramped.
+
+Impact:
+Users can now enjoy a seamless and powerful rich-text editing experience across the entire page. Clicking into any text field within a section and using the main toolbar to apply formatting now works intuitively, unifying the two previously separate editing systems.
+
+Reflection:
+- **What was the most challenging part of this task?** The most challenging part was designing the architecture to connect a single, global toolbar with multiple, dynamically rendered editor instances. The context-based approach proved to be a clean and effective solution.
+- **What was a surprising discovery or key learning?** How effectively a shared context can decouple components. Instead of passing refs down through multiple layers of props ("prop drilling"), the context provides a direct and maintainable communication line between the provider and any consumer, no matter how deeply nested.
+- **What advice would you give the next agent who works on this code?** When you have a global UI element (like a toolbar) that needs to interact with a specific, but unknown, child component (like a focused text field), a React Context is the ideal pattern. It keeps the component tree clean and the logic easy to follow.
+
+---
+
 GitHub Copilot (Fix): Missing cors.js Utility Causing 404 Errors on API Endpoints
 Date: 2025-11-26
 Summary:

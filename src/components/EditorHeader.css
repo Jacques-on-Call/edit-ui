@@ -25,6 +25,22 @@
 
 .editor-toolbar{color:#FFFFFF!important;z-index:9999!important}.editor-header{overflow:visible!important}
 
+/* New styles for toolbar buttons */
+.toolbar button {
+  margin: 0 4px; /* Add horizontal spacing */
+  padding: 6px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease-in-out;
+}
+.toolbar button:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.toolbar button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+
 /* compact on mobile */
 @media(max-width:640px) {
   .editor-header .page-title { display:none; }

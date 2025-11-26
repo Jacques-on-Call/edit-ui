@@ -7,16 +7,19 @@ This document lists all significant files in the `easy-seo` project, along with 
 ### **Core Application Logic**
 
 -   **`src/app.jsx`**: The main application component. Handles routing and global layout.
--   **`src/contexts/AuthContext.jsx`**: Manages global authentication state.
 -   **`src/pages/LoginPage.jsx`**: The user login page.
 -   **`src/pages/RepoSelectPage.jsx`**: The repository selection page.
 -   **`src/pages/FileExplorerPage.jsx`**: The main file explorer page. Handles the file creation logic (now client-side drafts) and passes data down to the `FileExplorer` component.
--   **`src/pages/ContentEditorPage.jsx`**: The main shell for the content editor. Responsible for loading and saving full draft payloads to `localStorage`.
+-   **`src/pages/ContentEditorPage.jsx`**: The main shell for the content editor. Responsible for loading and saving full draft payloads to `localStorage` and providing the `EditorContext`.
+
+### **Contexts**
+-   **`src/contexts/AuthContext.jsx`**: Manages global authentication state.
+-   **`src/contexts/EditorContext.jsx`**: Manages the currently active editor instance, allowing the global toolbar to communicate with the focused editor field.
 
 ### **Styling**
 
 -   **`src/pages/ContentEditorPage.css`**: Contains the responsive styles for the content editor page, including the mobile-first grid layout and drawer animations.
--   **`src/components/EditorHeader.css`**: Styles specific to the `EditorHeader` component.
+-   **`src/components/EditorHeader.css`**: Styles specific to the `EditorHeader` component, including the toolbar button styles.
 -   **`src/components/BottomActionBar.css`**: Styles specific to the `BottomActionBar` component.
 
 ### **Utilities**
@@ -33,9 +36,10 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/components/ContextMenu.jsx`**: Renders a right-click/long-press context menu.
 -   **`src/components/CreateModal.jsx`**: Renders a modal for creating new files and folders.
 -   **`src/components/SearchBar.jsx`**: A debounced search input component.
--   **`src/components/EditorHeader.jsx`**: The header component for the content editor.
+-   **`src/components/EditorHeader.jsx`**: The header component for the content editor. Now context-aware.
 -   **`src/components/BlockTree.jsx`**: The component for displaying the block structure of a page.
 -   **`src/components/BottomActionBar.jsx`**: The bottom action bar for the content editor.
+-   **`src/components/editor-components/LexicalField.jsx`**: A self-contained, reusable rich-text field powered by Lexical. Replaced the former `EditableField`.
 
 ### **Hooks**
 

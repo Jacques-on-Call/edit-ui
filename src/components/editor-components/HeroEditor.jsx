@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import EditableField from './EditableField';
+import LexicalField from './LexicalField';
 
 export default function HeroEditor({ props, onChange }) {
   const handleFieldChange = (fieldName, fieldValue) => {
@@ -8,19 +8,19 @@ export default function HeroEditor({ props, onChange }) {
 
   return (
     <div class="flex flex-col">
-      <EditableField
+      <LexicalField
         value={props?.title || ''}
         onChange={(newValue) => handleFieldChange('title', newValue)}
         placeholder="Add a title..."
         className="text-4xl font-bold text-white tracking-tight"
       />
-      <EditableField
+      <LexicalField
         value={props?.subtitle || ''}
         onChange={(newValue) => handleFieldChange('subtitle', newValue)}
         placeholder="Add a subtitle..."
         className="mt-2 text-lg text-gray-400"
       />
-      <EditableField
+      <LexicalField
         value={props?.body || ''}
         onChange={(newValue) => handleFieldChange('body', newValue)}
         placeholder="Start writing..."

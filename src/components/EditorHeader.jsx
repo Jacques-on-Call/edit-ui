@@ -1,11 +1,15 @@
 import { h } from 'preact';
 import { Bold, Italic, Heading2, List, Link, Undo, Redo } from 'lucide-preact';
+import { useEditor } from '../../contexts/EditorContext';
 import './EditorHeader.css';
 
-export default function EditorHeader({ editorApiRef }) {
+export default function EditorHeader() {
+  const { activeEditor } = useEditor();
+
   const handleAction = (action) => {
-    console.log(`[EditorToolbar] action -> ${action}`);
-    const api = editorApiRef.current;
+    const api = activeEditor;
+    console.log(`[EditorToolbar] action -> ${action} on active editor:`, api);
+
     if (api) {
       switch (action) {
         case 'bold':
@@ -32,31 +36,35 @@ export default function EditorHeader({ editorApiRef }) {
         default:
           break;
       }
+    } else {
+      console.warn('[EditorToolbar] No active editor to perform action on.');
     }
   };
+
+  const isDisabled = !activeEditor;
 
   return (
     <header class="editor-header">
       <div class="toolbar">
-        <button onClick={() => handleAction('bold')} aria-label="Bold">
+        <button onClick={() => handleAction('bold')} aria-label="Bold" disabled={isDisabled}>
           <Bold size={18} />
         </button>
-        <button onClick={() => handleAction('italic')} aria-label="Italic">
+        <button onClick={() => handleAction('italic')} aria-label="Italic" disabled={isDisabled}>
           <Italic size={18} />
         </button>
-        <button onClick={() => handleAction('heading')} aria-label="Heading">
+        <button onClick={() => handleAction('heading')} aria-label="Heading" disabled={isDisabled}>
           <Heading2 size={18} />
         </button>
-        <button onClick={() => handleAction('list')} aria-label="List">
+        <button onClick={() => handleAction('list')} aria-label="List" disabled={isDisabled}>
           <List size={18} />
         </button>
-        <button onClick={() => handleAction('link')} aria-label="Link">
+        <button onClick={() => handleAction('link')} aria-label="Link" disabled={isDisabled}>
           <Link size={18} />
         </button>
-        <button onClick={() => handleAction('undo')} aria-label="Undo">
+        <button onClick={() => handleAction('undo')} aria-label="Undo" disabled={isDisabled}>
           <Undo size={18} />
         </button>
-        <button onClick={() => handleAction('redo')} aria-label="Redo">
+        <button onClick={() => handleAction('redo')} aria-label="Redo" disabled={isDisabled}>
           <Redo size={18} />
         </button>
       </div>
