@@ -1,5 +1,27 @@
 # Project Change Log
 
+GitHub Copilot (Fix): Preview Shows Stale Content - Wrong JSON Import Path
+Date: 2025-11-26
+Summary:
+Fixed a critical bug where the Content Editor's preview showed stale/old content instead of the user's current edits. The preview displayed "Testing for Jules" (old content) instead of the user's actual edits like "Now its H1 looking".
+
+Details:
+- **Root Cause:** The Astro preview page `src/pages/json-preview/home-from-json.astro` was importing from the wrong JSON file. It imported `content/pages/home.json` but the Content Editor saves to `content/pages/home-from-json.json` (based on slug `home-from-json`).
+- **Fix Applied:** Updated the import statement in `home-from-json.astro` from:
+  - `import pageData from '../../../content/pages/home.json';`
+  - To: `import pageData from '../../../content/pages/home-from-json.json';`
+- **Debug Endpoint:** Verified that `/_debug/version` endpoint is already correctly positioned before authentication middleware in the router and is publicly accessible.
+
+Impact:
+The preview now correctly displays the user's edits from the JSON file that the Content Editor saves to. When users edit content in the editor for `home-from-json`, sync to GitHub, and click Preview, they will see their actual content instead of stale data from a different JSON file.
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the disconnect between where the editor saves content (`home-from-json.json`) and where the Astro page was reading content from (`home.json`). The slug-based naming convention made it clear once identified.
+- **What was a surprising discovery or key learning?** The importance of maintaining consistency between file paths. The Astro page filename (`home-from-json.astro`) implied it should use `home-from-json.json`, but was actually importing `home.json`. This is a subtle but critical mismatch.
+- **What advice would you give the next agent who works on this code?** When creating new JSON-backed Astro pages, always ensure the JSON import path matches the page's slug/name. The naming convention `{slug}.astro` should correspond to `{slug}.json` for consistency.
+
+---
+
 GitHub Copilot (Fix): Stop Infinite Re-renders and UX Improvements
 Date: 2025-11-26
 Summary:
