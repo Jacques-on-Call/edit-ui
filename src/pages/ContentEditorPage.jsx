@@ -65,32 +65,23 @@ export default function ContentEditorPage(props) {
   ], []);
 
   const autosaveCallback = useCallback((dataToSave) => {
-    console.log('[AUTOSAVE-DEBUG] Step 1: autosaveCallback initiated.');
     setSaveStatus('saving');
     try {
       const key = `easy-seo-draft:${pageId}`;
-      console.log(`[AUTOSAVE-DEBUG] Step 2: Using localStorage key: "${key}"`);
-
       const draft = JSON.parse(localStorage.getItem(key) || '{}');
       const payload = { ...draft, slug: pageId, savedAt: new Date().toISOString() };
 
       if (sections) {
-        console.log('[AUTOSAVE-DEBUG] Step 3: Sections mode detected. Saving sections data.');
         payload.sections = dataToSave;
       } else {
-        console.log('[AUTOSAVE-DEBUG] Step 3: Astro mode detected. Saving content body.');
         payload.content = dataToSave;
       }
 
-      console.log('[AUTOSAVE-DEBUG] Step 4: Preparing to save payload:', payload);
       localStorage.setItem(key, JSON.stringify(payload));
-      console.log(`[AUTOSAVE-DEBUG] Step 5: SUCCESS! Draft saved to localStorage.`);
+      console.log(`[ContentEditor] Draft successfully saved to key: ${key}`);
       setSaveStatus('saved');
     } catch (error) {
-      console.error('[AUTOSAVE-DEBUG] Step 5: FAILED! An error occurred during the save process.', {
-        message: error.message,
-        stack: error.stack,
-      });
+      console.error('[ContentEditor] Failed to autosave draft:', error);
       setSaveStatus('unsaved');
     }
   }, [pageId, sections]);
@@ -98,23 +89,20 @@ export default function ContentEditorPage(props) {
   const { triggerSave } = useAutosave(autosaveCallback, 1500);
 
   const triggerBuild = useCallback(async () => {
-    console.log('[SYNC-DEBUG] Step 4: triggerBuild function initiated.');
     if (!selectedRepo) {
-      console.error('[SYNC-DEBUG] Step 4 FAILED: No selectedRepo found.');
-      setIsPreviewBuilding(false);
+      console.warn('[Build] Cannot trigger build: repository not selected.');
       return;
     }
-    console.log(`[SYNC-DEBUG] Step 4: Repository found: ${selectedRepo.full_name}. Setting isPreviewBuilding=true.`);
-    setIsPreviewBuilding(true);
+    console.log('[Build] Triggering background build...');
+    setIsPreviewBuilding(true); // Set building state to true
     try {
       const buildPayload = { repo: selectedRepo.full_name };
-      console.log('[SYNC-DEBUG] Step 4: Calling /api/trigger-build with payload:', buildPayload);
-      const response = await fetchJson('/api/trigger-build', {
+      await fetchJson('/api/trigger-build', {
         method: 'POST',
         body: JSON.stringify(buildPayload),
       });
-      console.log('[SYNC-DEBUG] Step 4 SUCCESS: Build trigger API call successful. Response:', response);
-      setViewMode('preview'); // Switch to preview to show the build overlay
+      console.log('[Build] Build trigger API call successful.');
+      // The "Building..." overlay will now persist until a manual refresh.
     } catch (error) {
       console.error('[Build] Failed to trigger build:', error);
       setIsPreviewBuilding(false); // Turn off overlay on error
@@ -156,26 +144,19 @@ export default function ContentEditorPage(props) {
 
   const handleSync = useCallback(async () => {
     if (!selectedRepo) {
-      console.error('[SYNC-DEBUG] Step 1 FAILED: No selectedRepo. Aborting.');
+      console.error('[Sync] Cannot sync: repository not selected.');
       setSyncStatus('error');
       return;
     }
-    console.log(`[SYNC-DEBUG] Step 1: Found repo: ${selectedRepo.full_name}`);
-
+    setSyncStatus('syncing');
+    console.log('[Sync] Starting sync to GitHub...');
     try {
       const draftKey = `easy-seo-draft:${pageId}`;
-      console.log(`[SYNC-DEBUG] Step 2: Reading from localStorage with key: "${draftKey}"`);
       const savedDraft = localStorage.getItem(draftKey);
-
-      if (!savedDraft) {
-        console.error('[SYNC-DEBUG] Step 2 FAILED: No local draft found in localStorage.');
-        throw new Error('No local draft found to sync.');
-      }
-      console.log('[SYNC-DEBUG] Step 2: Found draft in localStorage.');
+      if (!savedDraft) throw new Error('No local draft found to sync.');
 
       const draftData = JSON.parse(savedDraft);
       if (editorMode !== 'json' || !draftData.sections) {
-        console.error(`[SYNC-DEBUG] Step 2 FAILED: Sync is not supported. editorMode=${editorMode}, hasSections=${!!draftData.sections}`);
         throw new Error('Sync is currently only supported for JSON-mode pages with sections.');
       }
 
@@ -187,10 +168,6 @@ export default function ContentEditorPage(props) {
           sections: draftData.sections,
         },
       };
-      console.log('[SYNC-DEBUG] Step 3: Prepared payload for API call:', savePayload);
-
-      const response = await fetchJson('/api/page-json/update', { method: 'POST', body: JSON.stringify(savePayload) });
-      console.log('[SYNC-DEBUG] Step 3 SUCCESS: API call to /api/page-json/update was successful. Response:', response);
 
       await fetchJson('/api/page-json/update', { method: 'POST', body: JSON.stringify(savePayload) });
       console.log('[Sync] Content save successful.');
@@ -201,7 +178,6 @@ export default function ContentEditorPage(props) {
 
       setSyncStatus('success');
       setTimeout(() => setSyncStatus('idle'), 2500);
-
     } catch (error) {
       console.error('[Sync] An error occurred during sync or build trigger:', error);
       setSyncStatus('error');
