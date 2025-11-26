@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useEffect, useState, useRef, useCallback } from 'preact/hooks';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'preact/hooks';
 import { route } from 'preact-router';
 import matter from 'gray-matter';
 import { useAuth } from '../contexts/AuthContext';
@@ -27,6 +27,8 @@ export default function ContentEditorPage(props) {
   // Ref Hooks
   const editorApiRef = useRef(null);
   const filePathRef = useRef(null);
+
+  console.log('[ContentEditorPage] RENDER - syncStatus:', syncStatus, 'isPreviewBuilding:', isPreviewBuilding);
 
   // --- 2. DERIVED STATE & CONSTANTS ---
   const pathIdentifier = props.filePath ? decodeURIComponent(props.filePath) : (props.pageId || 'home');
@@ -291,35 +293,36 @@ export default function ContentEditorPage(props) {
   }, [pageId, selectedRepo, editorMode, triggerBuild, getDefaultSections]);
 
   // --- 5. RENDER LOGIC ---
-  const generatePreviewPath = (path) => {
-    console.log(`[PREVIEW-URL-GEN] Input path: "${path}"`);
-    let result = path;
+  const previewUrl = useMemo(() => {
+    const generatePreviewPath = (path) => {
+      console.log(`[PREVIEW-URL-GEN] Input path: "${path}"`);
+      let result = path;
 
-    if (result.startsWith('src/pages/')) {
-      result = result.substring('src/pages/'.length);
-    }
+      if (result.startsWith('src/pages/')) {
+        result = result.substring('src/pages/'.length);
+      }
 
-    if (result.endsWith('.astro')) {
-      result = result.slice(0, -'.astro'.length);
-    }
+      if (result.endsWith('.astro')) {
+        result = result.slice(0, -'.astro'.length);
+      }
 
-    if (result.endsWith('index')) {
-      result = result.slice(0, -'index'.length);
-    }
+      if (result.endsWith('index')) {
+        result = result.slice(0, -'index'.length);
+      }
 
-    // Astro treats paths without extensions as directories, so they need a trailing slash.
-    // The root path (from 'index') correctly becomes an empty string and does not get a slash.
-    if (result.length > 0 && !result.endsWith('/')) {
-      result += '/';
-    }
+      if (result.length > 0 && !result.endsWith('/')) {
+        result += '/';
+      }
 
-    console.log(`[PREVIEW-URL-GEN] Final generated path: "${result}"`);
-    return result;
-  };
+      console.log(`[PREVIEW-URL-GEN] Final generated path: "${result}"`);
+      return result;
+    };
 
-  const previewPath = generatePreviewPath(pathIdentifier);
-  const previewUrl = `https://strategycontent.pages.dev/${previewPath}`;
-  console.log(`[DEBUG-PREVIEW] Final preview URL: ${previewUrl}`);
+    const previewPath = generatePreviewPath(pathIdentifier);
+    const finalUrl = `https://strategycontent.pages.dev/${previewPath}`;
+    console.log(`[DEBUG-PREVIEW] Final preview URL: ${finalUrl}`);
+    return finalUrl;
+  }, [pathIdentifier]);
 
   return (
     <div class="flex flex-col h-screen bg-gray-900 text-white">
