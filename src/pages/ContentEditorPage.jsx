@@ -23,6 +23,7 @@ export default function ContentEditorPage(props) {
   const [viewMode, setViewMode] = useState('editor'); // 'editor' or 'preview'
   const [isPreviewBuilding, setIsPreviewBuilding] = useState(false);
   const [previewKey, setPreviewKey] = useState(Date.now());
+  const [buildError, setBuildError] = useState(null);
 
   // Ref Hooks
   const editorApiRef = useRef(null);
@@ -98,41 +99,68 @@ export default function ContentEditorPage(props) {
 
   const { triggerSave } = useAutosave(autosaveCallback, 1500);
 
-  // triggerBuild uses selectedRepoRef to avoid being recreated when selectedRepo changes
-  // This prevents infinite re-render loops in the useEffect that depends on this callback
+  const pollBuildStatus = useCallback(async (startTime = Date.now()) => {
+    const POLLING_INTERVAL = 3000; // 3 seconds
+    const TIMEOUT = 120000; // 2 minutes
+
+    if (Date.now() - startTime > TIMEOUT) {
+      console.error('[Build] Polling timed out after 2 minutes.');
+      setIsPreviewBuilding(false);
+      setBuildError('The live preview build took too long. Please try refreshing the preview manually.');
+      return;
+    }
+
+    try {
+      const data = await fetchJson('/api/check-build-status');
+      console.log(`[Build Poll] Status: ${data.status}, Stage: ${data.stage}`);
+
+      if (data.status === 'success') {
+        console.log('[Build] Build successful! Refreshing preview.');
+        setIsPreviewBuilding(false);
+        setBuildError(null);
+        setPreviewKey(Date.now()); // This refreshes the iframe
+      } else if (data.status === 'failure' || data.status === 'canceled') {
+        console.error('[Build] Build failed or was canceled.');
+        setIsPreviewBuilding(false);
+        setBuildError(`The live preview build failed with status: ${data.status}.`);
+      } else {
+        // If status is 'active' or another ongoing state, poll again
+        setTimeout(() => pollBuildStatus(startTime), POLLING_INTERVAL);
+      }
+    } catch (error) {
+      console.error('[Build Poll] Error fetching build status:', error);
+      setIsPreviewBuilding(false);
+      setBuildError('Could not check the build status. Please try refreshing the preview manually.');
+    }
+  }, []);
+
   const triggerBuild = useCallback(async () => {
     console.log(`[Build] triggerBuild called at ${new Date().toISOString()}`);
-    const repo = selectedRepoRef.current; // Use ref instead of direct state
+    const repo = selectedRepoRef.current;
     if (!repo) {
       console.warn('[Build] Cannot trigger build: repository not selected.');
       return;
     }
+
     console.log('[Build] Triggering background build...');
-    setIsPreviewBuilding(true); // Set building state to true
+    setIsPreviewBuilding(true);
+    setBuildError(null); // Clear previous errors
+
     try {
       const buildPayload = { repo: repo.full_name };
-      console.log('[Build] About to call /api/trigger-build with payload:', JSON.stringify(buildPayload));
       await fetchJson('/api/trigger-build', {
         method: 'POST',
         body: JSON.stringify(buildPayload),
       });
-      console.log('[Build] Build trigger API call successful.');
-      // The "Building..." overlay will now persist until a manual refresh.
-      // Set a timeout to prevent the overlay from spinning indefinitely.
-      setTimeout(() => {
-        console.log('[Build] Hiding build overlay after 60s timeout.');
-        setIsPreviewBuilding(false);
-      }, 60000); // 60 seconds
+      console.log('[Build] Build trigger API call successful. Starting to poll for status.');
+      // Start the polling loop
+      pollBuildStatus();
     } catch (error) {
       console.error('[Build] Failed to trigger build:', error);
-      console.error('[Build] Error details:', {
-        message: error.message,
-        status: error.status,
-        data: error.data,
-      });
-      setIsPreviewBuilding(false); // Turn off overlay on error
+      setIsPreviewBuilding(false);
+      setBuildError('Failed to start the live preview build.');
     }
-  }, []); // Empty dependency array - stable reference using ref
+  }, [pollBuildStatus]);
 
   const handleLexicalChange = useCallback((newContent) => {
     setContentBody(newContent);
@@ -389,13 +417,26 @@ export default function ContentEditorPage(props) {
           <div class="w-full h-full bg-white relative">
             {isPreviewBuilding && (
               <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
-                <div class="text-white text-center">
+                <div class="text-white text-center p-4">
                   <RefreshCw size={48} className="animate-spin mb-4 mx-auto" />
                   <p class="text-lg font-semibold">Live Preview is Building</p>
                   <p class="text-sm">Your changes are being deployed. This may take a minute.</p>
-                  <p class="text-xs mt-2">You can refresh the preview in a bit.</p>
                 </div>
               </div>
+            )}
+            {buildError && (
+               <div class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-10">
+                  <div class="text-white text-center p-4 bg-red-800 rounded-lg shadow-lg">
+                      <p class="text-lg font-semibold">Build Error</p>
+                      <p class="text-sm mt-2">{buildError}</p>
+                      <button
+                        onClick={() => setBuildError(null)}
+                        className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-500 rounded text-white"
+                      >
+                        Dismiss
+                      </button>
+                  </div>
+               </div>
             )}
             <button
               onClick={handleRefreshPreview}
