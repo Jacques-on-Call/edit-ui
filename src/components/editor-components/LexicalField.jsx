@@ -11,15 +11,18 @@ export default function LexicalField({ value, onChange, placeholder, className }
   const handleFocus = () => {
     // When this field is focused, we tell the context about its API ref.
     if (editorApiRef.current) {
-      console.log('[LexicalField] Focused, setting active editor.');
       setActiveEditor(editorApiRef.current);
     }
   };
 
-  // We add a simple wrapper div to catch the focus event.
-  // The LexicalEditor itself doesn't have a simple onFocus prop.
+  const handleBlur = () => {
+    // When this field is blurred, we clear the active editor.
+    setActiveEditor(null);
+  };
+
+  // We add a simple wrapper div to catch the focus and blur events.
   return (
-    <div onFocus={handleFocus} class={className}>
+    <div onFocus={handleFocus} onBlur={handleBlur} class={className}>
       <LexicalEditor
         ref={editorApiRef}
         initialContent={value}

@@ -1,5 +1,20 @@
 # Project Change Log
 
+Jules #185 (fix): Rich-Text Formatting and Build Errors
+Date: 2025-11-26
+Summary:
+Fixed a series of critical bugs that prevented the rich-text editor from working correctly and caused the production build to fail. This patch addresses the full feedback loop from the user and code review.
+
+Details:
+- **Build Failure (Import Paths):** Fixed a production build failure caused by incorrect relative import paths. The rename of `EditableField` to `LexicalField` was not correctly propagated to all section editors, and the `EditorHeader` had an incorrect path to its context. All import paths have been corrected.
+- **Rich-Text Not Rendering:** Fixed a bug where applying formatting (e.g., bold) would not visually update the text. This was caused by a state feedback loop in the `LexicalEditor`. A `useRef` guard was added to prevent the editor from re-rendering with stale content, which now allows formatting to apply correctly.
+- **"Sticky" Toolbar Focus:** Fixed a bug where the editor toolbar would remain "stuck" on a text field even after it was blurred. An `onBlur` handler was added to the `LexicalField` component to correctly clear the active editor from the `EditorContext`, ensuring the toolbar disables itself appropriately.
+
+Impact:
+The `easy-seo` application now builds successfully, and the rich-text editing experience is stable and reliable. Users can apply formatting, see the results immediately, and the toolbar state is correctly managed when fields are focused and blurred.
+
+---
+
 Jules #185 (feat): Integrate Rich-Text Toolbar with Section Editor
 Date: 2025-11-26
 Summary:

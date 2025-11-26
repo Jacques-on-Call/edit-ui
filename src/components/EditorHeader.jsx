@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { Bold, Italic, Heading2, List, Link, Undo, Redo } from 'lucide-preact';
-import { useEditor } from '../../contexts/EditorContext';
+import { useEditor } from '../contexts/EditorContext';
 import './EditorHeader.css';
 
 export default function EditorHeader() {
@@ -8,7 +8,6 @@ export default function EditorHeader() {
 
   const handleAction = (action) => {
     const api = activeEditor;
-    console.log(`[EditorToolbar] action -> ${action} on active editor:`, api);
 
     if (api) {
       switch (action) {

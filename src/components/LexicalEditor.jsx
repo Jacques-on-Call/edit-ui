@@ -53,10 +53,11 @@ const editorConfig = {
 };
 
 // Plugin to load initial content as HTML
-function InitialContentPlugin({ initialContent }) {
+function InitialContentPlugin({ initialContent, lastHtmlRef }) {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
-    if (editor && initialContent) {
+    // GUARD: Only update if the incoming content is different from what we last sent.
+    if (editor && initialContent && initialContent !== lastHtmlRef.current) {
       editor.update(() => {
         const parser = new DOMParser();
         const dom = parser.parseFromString(initialContent, 'text/html');
@@ -65,7 +66,7 @@ function InitialContentPlugin({ initialContent }) {
         $insertNodes(nodes);
       });
     }
-  }, [editor, initialContent]);
+  }, [editor, initialContent, lastHtmlRef]);
   return null;
 }
 
@@ -108,9 +109,13 @@ function EditorApiPlugin({ apiRef }) {
 }
 
 const LexicalEditor = forwardRef(({ slug, initialContent, onChange }, ref) => {
+  const lastHtmlRef = useRef('');
+
   const handleOnChange = (editorState, editor) => {
     editor.update(() => {
       const htmlString = $generateHtmlFromNodes(editor);
+      // Keep track of the last HTML we sent out.
+      lastHtmlRef.current = htmlString;
       onChange(htmlString);
     });
   };
@@ -130,7 +135,7 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange }, ref) => {
         />
         <HistoryPlugin />
         <OnChangePlugin onChange={handleOnChange} />
-        <InitialContentPlugin initialContent={initialContent} />
+        <InitialContentPlugin initialContent={initialContent} lastHtmlRef={lastHtmlRef} />
         <EditorApiPlugin apiRef={ref} />
       </div>
     </LexicalComposer>

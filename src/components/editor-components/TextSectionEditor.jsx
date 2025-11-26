@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import EditableField from './EditableField';
+import LexicalField from './LexicalField';
 
 export default function TextSectionEditor({ props, onChange }) {
   const handleFieldChange = (fieldName, fieldValue) => {
@@ -8,13 +8,13 @@ export default function TextSectionEditor({ props, onChange }) {
 
   return (
     <div class="flex flex-col">
-      <EditableField
+      <LexicalField
         value={props?.title || ''}
         onChange={(newValue) => handleFieldChange('title', newValue)}
         placeholder="Add a section title..."
         className="text-3xl font-bold text-white tracking-tight"
       />
-      <EditableField
+      <LexicalField
         value={props?.body || ''}
         onChange={(newValue) => handleFieldChange('body', newValue)}
         placeholder="Start writing your content for this section..."
