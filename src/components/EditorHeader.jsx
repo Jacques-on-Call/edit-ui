@@ -36,8 +36,12 @@ export default function EditorHeader() {
   const { activeEditor, selectionState } = useEditor();
 
   const handleAction = (action, value) => {
+    console.log(`[EditorHeader] Action triggered: ${action}`, { value });
     const api = activeEditor;
-    if (!api) return;
+    if (!api) {
+      console.warn(`[EditorHeader] Action "${action}" aborted: No active editor.`);
+      return;
+    }
 
     if (api.focus) api.focus();
 

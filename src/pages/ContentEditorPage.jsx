@@ -13,6 +13,7 @@ import BottomActionBar from '../components/BottomActionBar';
 import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
+  console.log('[CEP] Component Init', { props });
   // --- 1. HOOKS ---
   const { selectedRepo } = useAuth();
 
@@ -50,7 +51,7 @@ export default function ContentEditorPage(props) {
   const editorMode = isTestFile ? 'json' : 'astro';
 
   // Debug mode logging - only log once per unique combination to reduce spam
-  // console.log(`[ContentEditorPage] mode=${editorMode} slug=${pageId} path=${pathIdentifier}`);
+  console.log(`[CEP] Derived State: mode=${editorMode} slug=${pageId} path=${pathIdentifier}`);
 
   // --- 3. CALLBACKS & HANDLERS ---
   // getDefaultSections uses empty dependency array for stable reference
@@ -203,18 +204,21 @@ export default function ContentEditorPage(props) {
   }, []);
 
   const handleSync = useCallback(async () => {
-    console.log(`[Sync] handleSync called at ${new Date().toISOString()}`);
+    console.log(`[CEP-handleSync] Sync process initiated.`);
     if (!selectedRepo) {
-      console.error('[Sync] Cannot sync: repository not selected.');
+      console.error('[CEP-handleSync] Aborting: repository not selected.');
       setSyncStatus('error');
       return;
     }
     setSyncStatus('syncing');
-    console.log('[Sync] Starting sync to GitHub...');
+    console.log('[CEP-handleSync] Status set to "syncing". Reading draft from localStorage...');
     try {
       const draftKey = `easy-seo-draft:${pageId}`;
       const savedDraft = localStorage.getItem(draftKey);
-      if (!savedDraft) throw new Error('No local draft found to sync.');
+      if (!savedDraft) {
+        console.error('[CEP-handleSync] No local draft found to sync.');
+        throw new Error('No local draft found to sync.');
+      }
 
       const draftData = JSON.parse(savedDraft);
       if (editorMode !== 'json' || !draftData.sections) {
@@ -231,30 +235,30 @@ export default function ContentEditorPage(props) {
       };
 
       // Log sanitized payload info (exclude actual content for security)
-      console.log('[Sync] About to call /api/page-json/update with payload:', {
+      console.log('[CEP-handleSync] Payload prepared. Calling API endpoint.', {
         repo: savePayload.repo,
         slug: savePayload.pageData.slug,
         sectionCount: savePayload.pageData.sections?.length || 0,
       });
       await fetchJson('/api/page-json/update', { method: 'POST', body: JSON.stringify(savePayload) });
-      console.log('[Sync] Content save successful. Now triggering build...');
+      console.log('[CEP-handleSync] API call successful. Content saved.');
 
       setIsPreviewBuilding(true);
       // Don't auto-switch to preview mode - let user decide when to view preview
       // setViewMode('preview'); // Removed: Clicking Sync should not force preview mode
       
-      console.log('[Sync] About to call triggerBuild...');
+      console.log('[CEP-handleSync] Triggering site build...');
       triggerBuild();
-      console.log('[Sync] triggerBuild called.');
+      console.log('[CEP-handleSync] Build triggered.');
 
       setSyncStatus('success');
       setTimeout(() => setSyncStatus('idle'), 2500);
     } catch (error) {
-      console.error('[Sync] An error occurred during sync or build trigger:', error);
-      console.error('[Sync] Error details:', {
+      console.error('[CEP-handleSync] Sync process failed.', {
         message: error.message,
         status: error.status,
         data: error.data,
+        stack: error.stack,
       });
       setSyncStatus('error');
     }
@@ -262,31 +266,36 @@ export default function ContentEditorPage(props) {
 
   // --- 4. SIDE EFFECTS (useEffect) ---
   useEffect(() => {
-    console.log('[ContentEditor] useEffect running...');
+    console.log('[CEP-useEffect] Main effect hook started.');
     try {
       filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
+      console.log('[CEP-useEffect] Resolved file path:', filePathRef.current);
 
       const loadJsonModeContent = async () => {
         const draftKey = `easy-seo-draft:${pageId}`;
         const savedDraft = localStorage.getItem(draftKey);
+        console.log(`[CEP-useEffect] Checking for draft in localStorage. Key: ${draftKey}`);
 
         if (savedDraft) {
-          console.log('[ContentEditor-JSON] Found local draft. Loading from localStorage.');
+          console.log('[CEP-useEffect] Local draft found. Parsing and loading.');
           try {
             const draft = JSON.parse(savedDraft);
             setSections(draft.sections || getDefaultSections());
+            console.log('[CEP-useEffect] Successfully loaded sections from draft.');
           } catch (e) {
-            console.error('[ContentEditor-JSON] Failed to parse draft. Loading default.', e);
+            console.error('[CEP-useEffect] Failed to parse draft. Loading default sections.', { error: e });
             setSections(getDefaultSections());
           }
           return;
         }
 
-        console.log('[ContentEditor-JSON] No local draft. Fetching from repository...');
+        console.log('[CEP-useEffect] No local draft. Attempting to fetch from repository...');
         const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
         try {
           const url = `/api/page-json?repo=${encodeURIComponent(repo)}&slug=${encodeURIComponent(pageId)}`;
+          console.log('[CEP-useEffect] Fetching from URL:', url);
           const pageJson = await fetchJson(url);
+          console.log('[CEP-useEffect] Successfully fetched JSON data.');
           const fetchedSections = pageJson.sections || getDefaultSections();
           setSections(fetchedSections);
 
@@ -299,12 +308,12 @@ export default function ContentEditorPage(props) {
             savedAt: new Date().toISOString()
           };
           localStorage.setItem(draftKey, JSON.stringify(draftPayload));
-          console.log('[ContentEditor-JSON] Fetched content saved as initial draft:', draftKey);
+          console.log('[CEP-useEffect] Saved fetched content as initial draft.');
         } catch (error) {
           if (error.message.includes('404')) {
-            console.log('[ContentEditor-JSON] No remote JSON found. Initializing with default sections.');
+            console.log('[CEP-useEffect] No remote file found (404). Initializing with default sections.');
           } else {
-            console.error('[ContentEditor-JSON] Failed to fetch remote JSON. Falling back to default.', error);
+            console.error('[CEP-useEffect] Failed to fetch remote JSON. Falling back to default sections.', { error });
           }
           const defaultSections = getDefaultSections();
           setSections(defaultSections);
@@ -364,7 +373,7 @@ export default function ContentEditorPage(props) {
       }
 
     } catch (e) {
-      console.error('[ContentEditor] useEffect crash:', e);
+      console.error('[CEP-useEffect] CRITICAL: The main useEffect hook crashed.', { error: e });
     }
     // Dependencies: Only use primitive values to prevent re-runs when callbacks are recreated
     // getDefaultSections is stable (empty deps), but we inline calls anyway for safety

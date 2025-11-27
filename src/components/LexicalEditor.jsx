@@ -56,7 +56,7 @@ const editorConfig = {
     tableRow: 'editor-table-row',
   },
   onError(error) {
-    console.error('[LexicalEditor] Error:', error);
+    console.error('[LexicalEditor] Uncaught Error:', error.message, '\n', error.stack);
   },
   nodes: [
     HeadingNode,
@@ -268,9 +268,16 @@ function SelectionStatePlugin({ onSelectionChange }) {
 }
 
 const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionChange }, ref) => {
+  useEffect(() => {
+    console.log(`[LexicalEditor] Component mounted for slug: ${slug}`);
+    return () => console.log(`[LexicalEditor] Component unmounted for slug: ${slug}`);
+  }, [slug]);
+
   const lastHtmlRef = useRef('');
 
   const handleOnChange = (editorState, editor) => {
+    // This can be very noisy, so we log conditionally.
+    // console.log(`[LexicalEditor-onChange] Content updated for slug: ${slug}`);
     editor.update(() => {
       const htmlString = $generateHtmlFromNodes(editor);
       // Keep track of the last HTML we sent out.

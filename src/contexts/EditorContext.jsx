@@ -6,7 +6,7 @@ export const EditorContext = createContext(null);
 
 // 2. Create the Provider Component
 export function EditorProvider({ children }) {
-  const [activeEditor, setActiveEditor] = useState(null);
+  const [activeEditor, setActiveEditorInternal] = useState(null);
   const [selectionState, setSelectionState] = useState({
     blockType: 'paragraph',
     alignment: 'left',
@@ -18,6 +18,15 @@ export function EditorProvider({ children }) {
     isHighlight: false,
     hasH1InDocument: false,
   });
+
+  const setActiveEditor = (editor) => {
+    if (editor) {
+      console.log('[EditorContext] Active editor is SET.');
+    } else {
+      console.log('[EditorContext] Active editor is CLEARED.');
+    }
+    setActiveEditorInternal(editor);
+  };
 
   const contextValue = useMemo(() => ({
     activeEditor,
