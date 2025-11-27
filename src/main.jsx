@@ -3,12 +3,15 @@ import VConsole from 'vconsole';
 import './index.css'
 import { App } from './app.jsx'
 
-// Initialize VConsole in development mode
-if (import.meta.env.DEV) {
-  const vConsole = new VConsole();
+// --- VCONSOLE DEBUGGER ---
+// Normally, this is wrapped in `if (import.meta.env.DEV)` to keep it out of production.
+// It is temporarily enabled for all builds to allow for live mobile debugging.
+// TODO: Re-wrap this in the DEV check once debugging is complete.
+const vConsole = new VConsole();
 
-  // Add "Copy All" button to the Log tab toolbar
-  const logPlugin = vConsole.getPlugin('log');
+// Add "Copy All" button to the Log tab toolbar
+const logPlugin = vConsole.getPlugin('log');
+if (logPlugin) {
   logPlugin.once('renderToolbar', (e) => {
     const toolbar = e.target;
     const btn = document.createElement('button');
