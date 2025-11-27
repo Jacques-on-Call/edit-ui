@@ -35,6 +35,10 @@
 .toolbar button:hover:not(:disabled) {
   background-color: rgba(255, 255, 255, 0.1);
 }
+.toolbar button[data-active="true"] {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #a0deff; /* A light blue to indicate active state */
+}
 .toolbar button:disabled {
   opacity: 0.4;
   cursor: not-allowed;

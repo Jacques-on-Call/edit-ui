@@ -7,11 +7,18 @@ export const EditorContext = createContext(null);
 // 2. Create the Provider Component
 export function EditorProvider({ children }) {
   const [activeEditor, setActiveEditor] = useState(null);
+  const [selectionState, setSelectionState] = useState({
+    blockType: 'paragraph',
+    isBold: false,
+    isItalic: false,
+  });
 
   const contextValue = useMemo(() => ({
     activeEditor,
     setActiveEditor,
-  }), [activeEditor]);
+    selectionState,
+    setSelectionState,
+  }), [activeEditor, selectionState]);
 
   return (
     <EditorContext.Provider value={contextValue}>

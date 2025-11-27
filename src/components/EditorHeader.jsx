@@ -1,52 +1,53 @@
 import { h } from 'preact';
-import { Bold, Italic, Heading2, List, Link, Undo, Redo } from 'lucide-preact';
+import { Bold, Italic, Heading2, List, ListOrdered, Link, Undo, Redo } from 'lucide-preact';
 import { useEditor } from '../contexts/EditorContext';
 import './EditorHeader.css';
 
+const HEADING_CYCLE = ['', 'h2', 'h3', 'h4', 'h5', 'h6'];
+const LIST_CYCLE = ['', 'ul', 'ol'];
+
 export default function EditorHeader() {
-  const { activeEditor } = useEditor();
+  const { activeEditor, selectionState } = useEditor();
 
-  const handleAction = (action) => {
+  const handleAction = (action, value) => {
     const api = activeEditor;
+    if (!api) return;
 
-    if (api) {
-      // After performing an action, it's good practice to re-focus the editor
-      // This ensures the user can continue typing immediately.
-      if (api.focus) {
-        api.focus();
-      }
+    if (api.focus) api.focus();
 
-      switch (action) {
-        case 'bold':
-          api.toggleBold();
-          break;
-        case 'italic':
-          api.toggleItalic();
-          break;
-        case 'heading':
-          api.toggleHeading();
-          break;
-        case 'link':
-          const url = prompt('Enter the URL:');
-          if (url) {
-            api.insertLink(url);
-          }
-          break;
-        case 'undo':
-          api.undo();
-          break;
-        case 'redo':
-          api.redo();
-          break;
-        default:
-          break;
-      }
-    } else {
-      console.warn('[EditorToolbar] No active editor to perform action on.');
+    switch (action) {
+      case 'bold': api.toggleBold(); break;
+      case 'italic': api.toggleItalic(); break;
+      case 'heading': api.toggleHeading(value); break;
+      case 'list': api.toggleList(value); break;
+      case 'link':
+        const url = prompt('Enter URL:');
+        if (url) api.insertLink(url);
+        break;
+      case 'undo': api.undo(); break;
+      case 'redo': api.redo(); break;
     }
   };
 
+  const handleHeadingCycle = () => {
+    const currentLevel = selectionState.blockType || 'paragraph';
+    const currentIndex = HEADING_CYCLE.indexOf(currentLevel);
+    const nextIndex = (currentIndex + 1) % HEADING_CYCLE.length;
+    handleAction('heading', HEADING_CYCLE[nextIndex] || null); // null to turn off
+  };
+
+  const handleListCycle = () => {
+    const currentType = selectionState.blockType;
+    const currentIndex = LIST_CYCLE.indexOf(currentType);
+    const nextIndex = (currentIndex + 1) % LIST_CYCLE.length;
+    handleAction('list', LIST_CYCLE[nextIndex]);
+  };
+
   const isDisabled = !activeEditor;
+  const preventDefault = (e) => e.preventDefault();
+
+  const currentHeading = HEADING_CYCLE.find(h => h === selectionState.blockType);
+  const currentList = LIST_CYCLE.find(l => l === selectionState.blockType);
 
   // This simple event handler prevents the buttons from stealing focus.
   const preventDefault = (e) => e.preventDefault();
@@ -54,17 +55,17 @@ export default function EditorHeader() {
   return (
     <header class="editor-header">
       <div class="toolbar">
-        <button onMouseDown={preventDefault} onClick={() => handleAction('bold')} aria-label="Bold" disabled={isDisabled}>
+        <button onMouseDown={preventDefault} onClick={() => handleAction('bold')} data-active={selectionState.isBold} aria-label="Bold" disabled={isDisabled}>
           <Bold size={18} />
         </button>
-        <button onMouseDown={preventDefault} onClick={() => handleAction('italic')} aria-label="Italic" disabled={isDisabled}>
+        <button onMouseDown={preventDefault} onClick={() => handleAction('italic')} data-active={selectionState.isItalic} aria-label="Italic" disabled={isDisabled}>
           <Italic size={18} />
         </button>
-        <button onMouseDown={preventDefault} onClick={() => handleAction('heading')} aria-label="Heading" disabled={isDisabled}>
-          <Heading2 size={18} />
+        <button onMouseDown={preventDefault} onClick={handleHeadingCycle} aria-label="Heading" disabled={isDisabled}>
+          {currentHeading ? currentHeading.toUpperCase() : <Heading2 size={18} />}
         </button>
-        <button onMouseDown={preventDefault} onClick={() => handleAction('list')} aria-label="List" disabled={isDisabled}>
-          <List size={18} />
+        <button onMouseDown={preventDefault} onClick={handleListCycle} aria-label="List" disabled={isDisabled}>
+          {currentList === 'ol' ? <ListOrdered size={18} /> : <List size={18} />}
         </button>
         <button onMouseDown={preventDefault} onClick={() => handleAction('link')} aria-label="Link" disabled={isDisabled}>
           <Link size={18} />

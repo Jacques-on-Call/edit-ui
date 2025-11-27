@@ -1,5 +1,29 @@
 # Project Change Log
 
+Jules #186 (feat): Implement Stateful, Cycling Toolbar
+Date: 2025-11-26
+Summary:
+Upgraded the rich-text editor's toolbar to be fully state-aware and implemented a space-saving "cycling" behavior for the heading and list buttons, significantly improving the editing user experience.
+
+Details:
+- **Stateful Toolbar:** The toolbar buttons now intelligently reflect the formatting of the currently selected text. For example, if the cursor is inside a bolded word or a heading, the corresponding buttons will activate to show the current state.
+- **Cycling Buttons:**
+    - The **Heading** button now cycles through H2, H3, H4, H5, H6, and back to a normal paragraph, with the button's text updating to show the current level.
+    - The **List** button now cycles between unordered (bullet) lists, ordered (numbered) lists, and off.
+- **State Propagation:**
+    - The core `LexicalEditor` was enhanced to detect selection changes and report the active formatting (e.g., 'h2', 'ul', 'bold') up to the UI.
+    - The `EditorContext` was updated to store this selection state, making it available globally to the toolbar.
+
+Impact:
+The editor is now much more intuitive and powerful. Users get immediate visual feedback on their text formatting, and the new cycling buttons provide a wider range of formatting options without cluttering the UI. This creates a more professional and efficient editing workflow.
+
+Reflection:
+- **What was the most challenging part of this task?** The most complex part was plumbing the selection state from deep inside the Lexical editor all the way up to the toolbar. It required creating a clean data flow through multiple components and a shared context.
+- **What was a surprising discovery or key learning?** How powerful Lexical's selection and node-finding utilities are. By using `SELECTION_CHANGE_COMMAND` and utilities like `$findMatchingParent`, we can get very granular, real-time information about the editor's state.
+- **What advice would you give the next agent who works on this code?** When building a stateful UI on top of Lexical, establish a clear, one-way data flow for the selection state. Have the editor be the single source of truth, use a plugin to listen for changes, and pass that state up to a context. This keeps the logic clean and avoids circular dependencies.
+
+---
+
 Jules #186 (fix): Enable Rich-Text Toolbar Formatting
 Date: 2025-11-26
 Summary:

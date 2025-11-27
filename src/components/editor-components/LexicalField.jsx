@@ -6,7 +6,7 @@ import { useEditor } from '../../contexts/EditorContext';
 // This is a new, self-contained Lexical field.
 export default function LexicalField({ value, onChange, placeholder, className }) {
   const editorApiRef = useRef(null);
-  const { setActiveEditor } = useEditor();
+  const { setActiveEditor, setSelectionState } = useEditor();
 
   const handleFocus = () => {
     // When this field is focused, we tell the context about its API ref.
@@ -27,6 +27,7 @@ export default function LexicalField({ value, onChange, placeholder, className }
         ref={editorApiRef}
         initialContent={value}
         onChange={onChange}
+        onSelectionChange={setSelectionState}
         placeholder={placeholder}
       />
     </div>

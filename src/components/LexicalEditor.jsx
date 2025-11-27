@@ -5,15 +5,17 @@ import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useCallback } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { HeadingNode, QuoteNode, $createHeadingNode } from '@lexical/rich-text';
-import { ListItemNode, ListNode } from '@lexical/list';
+import { HeadingNode, QuoteNode, $createHeadingNode, $isHeadingNode } from '@lexical/rich-text';
+import { ListItemNode, ListNode, $createListItemNode, $createListNode, $isListItemNode, INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from '@lexical/list';
 import { CodeHighlightNode, CodeNode } from '@lexical/code';
 import { AutoLinkNode, LinkNode, TOGGLE_LINK_COMMAND } from '@lexical/link';
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
-import { $getRoot, $insertNodes, $getSelection, $isRangeSelection, FORMAT_TEXT_COMMAND, UNDO_COMMAND, REDO_COMMAND } from 'lexical';
+import { $getRoot, $insertNodes, $getSelection, $isRangeSelection, FORMAT_TEXT_COMMAND, UNDO_COMMAND, REDO_COMMAND, SELECTION_CHANGE_COMMAND, $createParagraphNode } from 'lexical';
 import { $setBlocksType } from '@lexical/selection';
+import { $findMatchingParent } from '@lexical/utils';
+
 
 const editorConfig = {
   namespace: 'EasySEOEditor',
@@ -81,13 +83,24 @@ function EditorApiPlugin({ apiRef }) {
     toggleItalic: () => {
       editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
     },
-    toggleHeading: () => {
+    toggleHeading: (level) => {
       editor.update(() => {
         const selection = $getSelection();
         if ($isRangeSelection(selection)) {
-          $setBlocksType(selection, () => $createHeadingNode('h2'));
+          if (level) {
+            $setBlocksType(selection, () => $createHeadingNode(`h${level}`));
+          } else {
+            $setBlocksType(selection, () => $createParagraphNode());
+          }
         }
       });
+    },
+    toggleList: (type) => {
+      if (type === 'ul') {
+        editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
+      } else if (type === 'ol') {
+        editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
+      }
     },
     insertLink: (url) => {
       if (url) {
@@ -108,7 +121,58 @@ function EditorApiPlugin({ apiRef }) {
   return null; // This plugin does not render anything
 }
 
-const LexicalEditor = forwardRef(({ slug, initialContent, onChange }, ref) => {
+function SelectionStatePlugin({ onSelectionChange }) {
+  const [editor] = useLexicalComposerContext();
+
+  const updateSelectionState = useCallback(() => {
+    editor.getEditorState().read(() => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) return;
+
+      const anchorNode = selection.anchor.getNode();
+      const element =
+        anchorNode.getKey() === 'root'
+          ? anchorNode
+          : $findMatchingParent(anchorNode, (e) => {
+              const parent = e.getParent();
+              return parent !== null && $getRoot().contains(parent);
+            });
+
+      let blockType = 'paragraph';
+      if (element) {
+        if ($isHeadingNode(element)) {
+          blockType = element.getTag();
+        } else if ($isListItemNode(element)) {
+          const parentList = $findMatchingParent(element, (node) => $isListNode(node));
+          if (parentList) {
+            blockType = parentList.getListType();
+          }
+        }
+      }
+
+      onSelectionChange({
+        blockType,
+        isBold: selection.hasFormat('bold'),
+        isItalic: selection.hasFormat('italic'),
+      });
+    });
+  }, [editor, onSelectionChange]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      SELECTION_CHANGE_COMMAND,
+      () => {
+        updateSelectionState();
+        return false;
+      },
+      1 // Priority
+    );
+  }, [editor, updateSelectionState]);
+
+  return null;
+}
+
+const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionChange }, ref) => {
   const lastHtmlRef = useRef('');
 
   const handleOnChange = (editorState, editor) => {
@@ -137,6 +201,7 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange }, ref) => {
         <OnChangePlugin onChange={handleOnChange} />
         <InitialContentPlugin initialContent={initialContent} lastHtmlRef={lastHtmlRef} />
         <EditorApiPlugin apiRef={ref} />
+        {onSelectionChange && <SelectionStatePlugin onSelectionChange={onSelectionChange} />}
       </div>
     </LexicalComposer>
   );
