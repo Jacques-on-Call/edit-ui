@@ -1,5 +1,29 @@
 # Project Change Log
 
+Jules #186 (feat): Add Alignment Dropdown and Scrolling Toolbar
+Date: 2025-11-27
+Summary:
+Enhanced the rich-text editor by adding a stateful text alignment dropdown and implementing a horizontally scrolling toolbar to accommodate future buttons.
+
+Details:
+- **Scrolling Toolbar:** The editor's toolbar is now housed in a horizontally scrollable container, providing a scalable foundation for adding more formatting options without cluttering the UI.
+- **Alignment Dropdown:**
+    - A new "Align" button has been added to the toolbar.
+    - The button's icon dynamically updates to show the current text alignment (left, center, or right).
+    - Clicking the button opens a dropdown menu with all available alignment options (Left, Center, Right, Justify).
+- **Core Editor Enhancement:** The underlying `LexicalEditor` was updated to support alignment commands and to report the current alignment state up to the UI.
+- **New Dropdown Component:** A new, reusable `Dropdown.jsx` component was created to power the alignment menu, which can be repurposed for other toolbar items in the future.
+
+Impact:
+Users now have full control over text alignment, a fundamental feature for content creation. The new scrolling toolbar and reusable dropdown component are significant architectural improvements that will make it much easier to extend the editor's capabilities in the future.
+
+Reflection:
+- **What was the most challenging part of this task?** Building the reusable `Dropdown` component with proper focus management (`onMouseDown` and `preventDefault`) was the most delicate part. It's easy to create a dropdown, but harder to make it work seamlessly with a rich-text editor without stealing focus.
+- **What was a surprising discovery or key learning?** How quickly the editor's functionality can be extended once the core state propagation pipeline (from Lexical to the context) is in place. Adding a new stateful feature like alignment was mostly a matter of adding a new property to the state object and a new command to the editor's API.
+- **What advice would you give the next agent who works on this code?** Leverage the new `Dropdown.jsx` component for any future toolbar items that need to present a list of options. It's designed to work correctly with the editor's focus system out of the box. Also, remember to add any new state properties to the `SelectionStatePlugin` to keep the UI in sync.
+
+---
+
 Jules #186 (feat): Implement Stateful, Cycling Toolbar
 Date: 2025-11-26
 Summary:

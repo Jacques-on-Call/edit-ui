@@ -12,7 +12,7 @@ import { ListItemNode, ListNode, $createListItemNode, $createListNode, $isListIt
 import { CodeHighlightNode, CodeNode } from '@lexical/code';
 import { AutoLinkNode, LinkNode, TOGGLE_LINK_COMMAND } from '@lexical/link';
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
-import { $getRoot, $insertNodes, $getSelection, $isRangeSelection, FORMAT_TEXT_COMMAND, UNDO_COMMAND, REDO_COMMAND, SELECTION_CHANGE_COMMAND, $createParagraphNode } from 'lexical';
+import { $getRoot, $insertNodes, $getSelection, $isRangeSelection, FORMAT_TEXT_COMMAND, UNDO_COMMAND, REDO_COMMAND, SELECTION_CHANGE_COMMAND, $createParagraphNode, FORMAT_ELEMENT_COMMAND } from 'lexical';
 import { $setBlocksType } from '@lexical/selection';
 import { $findMatchingParent } from '@lexical/utils';
 
@@ -88,7 +88,7 @@ function EditorApiPlugin({ apiRef }) {
         const selection = $getSelection();
         if ($isRangeSelection(selection)) {
           if (level) {
-            $setBlocksType(selection, () => $createHeadingNode(`h${level}`));
+            $setBlocksType(selection, () => $createHeadingNode(level));
           } else {
             $setBlocksType(selection, () => $createParagraphNode());
           }
@@ -101,6 +101,9 @@ function EditorApiPlugin({ apiRef }) {
       } else if (type === 'ol') {
         editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
       }
+    },
+    alignText: (alignment) => {
+      editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, alignment);
     },
     insertLink: (url) => {
       if (url) {
@@ -150,8 +153,14 @@ function SelectionStatePlugin({ onSelectionChange }) {
         }
       }
 
+      let alignment = 'left';
+      if (element) {
+        alignment = element.getFormatType();
+      }
+
       onSelectionChange({
         blockType,
+        alignment,
         isBold: selection.hasFormat('bold'),
         isItalic: selection.hasFormat('italic'),
       });

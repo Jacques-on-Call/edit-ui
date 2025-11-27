@@ -44,6 +44,18 @@
   cursor: not-allowed;
 }
 
+.toolbar-scroll-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch; /* for smooth scrolling on iOS */
+  scrollbar-width: none; /* for Firefox */
+}
+
+.toolbar-scroll-container::-webkit-scrollbar {
+  display: none; /* for Chrome, Safari, and Opera */
+}
+
 
 /* compact on mobile */
 @media(max-width:640px) {

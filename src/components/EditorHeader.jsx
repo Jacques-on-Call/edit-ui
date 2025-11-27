@@ -1,6 +1,7 @@
 import { h } from 'preact';
-import { Bold, Italic, Heading2, List, ListOrdered, Link, Undo, Redo } from 'lucide-preact';
+import { Bold, Italic, Heading2, List, ListOrdered, Link, Undo, Redo, AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-preact';
 import { useEditor } from '../contexts/EditorContext';
+import Dropdown from './Dropdown';
 import './EditorHeader.css';
 
 const HEADING_CYCLE = ['', 'h2', 'h3', 'h4', 'h5', 'h6'];
@@ -20,6 +21,7 @@ export default function EditorHeader() {
       case 'italic': api.toggleItalic(); break;
       case 'heading': api.toggleHeading(value); break;
       case 'list': api.toggleList(value); break;
+      case 'align': api.alignText(value); break;
       case 'link':
         const url = prompt('Enter URL:');
         if (url) api.insertLink(url);
@@ -49,18 +51,39 @@ export default function EditorHeader() {
   const currentHeading = HEADING_CYCLE.find(h => h === selectionState.blockType);
   const currentList = LIST_CYCLE.find(l => l === selectionState.blockType);
 
-  // This simple event handler prevents the buttons from stealing focus.
-  const preventDefault = (e) => e.preventDefault();
-
   return (
     <header class="editor-header">
-      <div class="toolbar">
-        <button onMouseDown={preventDefault} onClick={() => handleAction('bold')} data-active={selectionState.isBold} aria-label="Bold" disabled={isDisabled}>
-          <Bold size={18} />
-        </button>
+      <div class="toolbar-scroll-container">
+        <div class="toolbar">
+          <button onMouseDown={preventDefault} onClick={() => handleAction('bold')} data-active={selectionState.isBold} aria-label="Bold" disabled={isDisabled}>
+            <Bold size={18} />
+          </button>
         <button onMouseDown={preventDefault} onClick={() => handleAction('italic')} data-active={selectionState.isItalic} aria-label="Italic" disabled={isDisabled}>
           <Italic size={18} />
         </button>
+
+        <Dropdown
+          buttonContent={
+            selectionState.alignment === 'center' ? <AlignCenter size={18} /> :
+            selectionState.alignment === 'right' ? <AlignRight size={18} /> :
+            selectionState.alignment === 'justify' ? <AlignJustify size={18} /> :
+            <AlignLeft size={18} />
+          }
+        >
+          <button onMouseDown={preventDefault} onClick={() => handleAction('align', 'left')} aria-label="Align Left" disabled={isDisabled}>
+            <AlignLeft size={18} />
+          </button>
+          <button onMouseDown={preventDefault} onClick={() => handleAction('align', 'center')} aria-label="Align Center" disabled={isDisabled}>
+            <AlignCenter size={18} />
+          </button>
+          <button onMouseDown={preventDefault} onClick={() => handleAction('align', 'right')} aria-label="Align Right" disabled={isDisabled}>
+            <AlignRight size={18} />
+          </button>
+          <button onMouseDown={preventDefault} onClick={() => handleAction('align', 'justify')} aria-label="Align Justify" disabled={isDisabled}>
+            <AlignJustify size={18} />
+          </button>
+        </Dropdown>
+
         <button onMouseDown={preventDefault} onClick={handleHeadingCycle} aria-label="Heading" disabled={isDisabled}>
           {currentHeading ? currentHeading.toUpperCase() : <Heading2 size={18} />}
         </button>
@@ -76,6 +99,7 @@ export default function EditorHeader() {
         <button onMouseDown={preventDefault} onClick={() => handleAction('redo')} aria-label="Redo" disabled={isDisabled}>
           <Redo size={18} />
         </button>
+        </div>
       </div>
     </header>
   );
