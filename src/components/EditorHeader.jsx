@@ -10,6 +10,12 @@ export default function EditorHeader() {
     const api = activeEditor;
 
     if (api) {
+      // After performing an action, it's good practice to re-focus the editor
+      // This ensures the user can continue typing immediately.
+      if (api.focus) {
+        api.focus();
+      }
+
       switch (action) {
         case 'bold':
           api.toggleBold();
@@ -42,28 +48,31 @@ export default function EditorHeader() {
 
   const isDisabled = !activeEditor;
 
+  // This simple event handler prevents the buttons from stealing focus.
+  const preventDefault = (e) => e.preventDefault();
+
   return (
     <header class="editor-header">
       <div class="toolbar">
-        <button onClick={() => handleAction('bold')} aria-label="Bold" disabled={isDisabled}>
+        <button onMouseDown={preventDefault} onClick={() => handleAction('bold')} aria-label="Bold" disabled={isDisabled}>
           <Bold size={18} />
         </button>
-        <button onClick={() => handleAction('italic')} aria-label="Italic" disabled={isDisabled}>
+        <button onMouseDown={preventDefault} onClick={() => handleAction('italic')} aria-label="Italic" disabled={isDisabled}>
           <Italic size={18} />
         </button>
-        <button onClick={() => handleAction('heading')} aria-label="Heading" disabled={isDisabled}>
+        <button onMouseDown={preventDefault} onClick={() => handleAction('heading')} aria-label="Heading" disabled={isDisabled}>
           <Heading2 size={18} />
         </button>
-        <button onClick={() => handleAction('list')} aria-label="List" disabled={isDisabled}>
+        <button onMouseDown={preventDefault} onClick={() => handleAction('list')} aria-label="List" disabled={isDisabled}>
           <List size={18} />
         </button>
-        <button onClick={() => handleAction('link')} aria-label="Link" disabled={isDisabled}>
+        <button onMouseDown={preventDefault} onClick={() => handleAction('link')} aria-label="Link" disabled={isDisabled}>
           <Link size={18} />
         </button>
-        <button onClick={() => handleAction('undo')} aria-label="Undo" disabled={isDisabled}>
+        <button onMouseDown={preventDefault} onClick={() => handleAction('undo')} aria-label="Undo" disabled={isDisabled}>
           <Undo size={18} />
         </button>
-        <button onClick={() => handleAction('redo')} aria-label="Redo" disabled={isDisabled}>
+        <button onMouseDown={preventDefault} onClick={() => handleAction('redo')} aria-label="Redo" disabled={isDisabled}>
           <Redo size={18} />
         </button>
       </div>

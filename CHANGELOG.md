@@ -1,5 +1,24 @@
 # Project Change Log
 
+Jules #186 (fix): Enable Rich-Text Toolbar Formatting
+Date: 2025-11-26
+Summary:
+Fixed a critical bug that prevented the rich-text formatting toolbar from applying styles. Clicking buttons like "Bold" or "Italic" would cause the editor to lose focus, deactivating the toolbar and preventing the action from completing.
+
+Details:
+- **Focus Stealing Prevention:** Modified the toolbar buttons in `EditorHeader.jsx` to handle the `onMouseDown` event and prevent its default browser action. This allows the buttons to be clicked without stealing focus from the active text editor.
+- **Editor Re-Focus:** As a user experience enhancement, the editor is now programmatically re-focused after a toolbar action is performed, allowing the user to continue typing seamlessly.
+
+Impact:
+The rich-text editor is now fully functional. Users can apply all formatting options from the toolbar (Bold, Italic, Heading, etc.) to text within any section, providing a smooth and intuitive content creation experience.
+
+Reflection:
+- **What was the most challenging part of this task?** The challenge was identifying the subtle root cause. The formatting logic was correct, but the UI event lifecycle (focus and blur) was interfering. It's a classic rich-text editor problem that requires thinking about the browser's event model.
+- **What was a surprising discovery or key learning?** How a single line of code (`e.preventDefault()`) can completely change the behavior of UI interactions. It's a powerful reminder that seemingly complex bugs can sometimes have very simple solutions if the underlying browser behavior is understood.
+- **What advice would you give the next agent who works on this code?** When a UI interaction feels buggy, especially with toolbars or popups, always consider the focus and blur events. Preventing default actions on `mousedown` is a common and effective pattern to solve these kinds of "focus stealing" issues.
+
+---
+
 Jules #185 (fix): Rich-Text Formatting and Build Errors
 Date: 2025-11-26
 Summary:
