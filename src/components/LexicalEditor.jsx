@@ -27,11 +27,15 @@ const editorConfig = {
       italic: 'italic',
       underline: 'underline',
       strikethrough: 'line-through',
+      code: 'bg-gray-700 text-pink-400 px-1 py-0.5 rounded font-mono text-sm',
     },
     heading: {
-      h1: 'text-3xl font-bold',
-      h2: 'text-2xl font-bold',
-      h3: 'text-xl font-bold',
+      h1: 'text-4xl font-bold',
+      h2: 'text-3xl font-bold',
+      h3: 'text-2xl font-bold',
+      h4: 'text-xl font-bold',
+      h5: 'text-lg font-bold',
+      h6: 'text-base font-bold',
     },
     list: {
       ol: 'list-decimal ml-6',
@@ -83,6 +87,15 @@ function EditorApiPlugin({ apiRef }) {
     toggleItalic: () => {
       editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
     },
+    toggleUnderline: () => {
+      editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
+    },
+    toggleStrikethrough: () => {
+      editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
+    },
+    toggleCode: () => {
+      editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code');
+    },
     toggleHeading: (level) => {
       editor.update(() => {
         const selection = $getSelection();
@@ -109,6 +122,22 @@ function EditorApiPlugin({ apiRef }) {
       if (url) {
         editor.dispatchCommand(TOGGLE_LINK_COMMAND, url);
       }
+    },
+    clearFormatting: () => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          // Clear text formatting by dispatching commands to toggle off if they're on
+          const formats = ['bold', 'italic', 'underline', 'strikethrough', 'code'];
+          formats.forEach(format => {
+            if (selection.hasFormat(format)) {
+              editor.dispatchCommand(FORMAT_TEXT_COMMAND, format);
+            }
+          });
+          // Reset to paragraph
+          $setBlocksType(selection, () => $createParagraphNode());
+        }
+      });
     },
     undo: () => {
       editor.dispatchCommand(UNDO_COMMAND, undefined);
@@ -158,11 +187,26 @@ function SelectionStatePlugin({ onSelectionChange }) {
         alignment = element.getFormatType();
       }
 
+      // Check if H1 exists anywhere in the document (for SEO - only one H1 allowed)
+      let hasH1InDocument = false;
+      const root = $getRoot();
+      const children = root.getChildren();
+      for (const child of children) {
+        if ($isHeadingNode(child) && child.getTag() === 'h1') {
+          hasH1InDocument = true;
+          break;
+        }
+      }
+
       onSelectionChange({
         blockType,
         alignment,
         isBold: selection.hasFormat('bold'),
         isItalic: selection.hasFormat('italic'),
+        isUnderline: selection.hasFormat('underline'),
+        isStrikethrough: selection.hasFormat('strikethrough'),
+        isCode: selection.hasFormat('code'),
+        hasH1InDocument,
       });
     });
   }, [editor, onSelectionChange]);

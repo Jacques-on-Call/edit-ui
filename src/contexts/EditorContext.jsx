@@ -9,8 +9,13 @@ export function EditorProvider({ children }) {
   const [activeEditor, setActiveEditor] = useState(null);
   const [selectionState, setSelectionState] = useState({
     blockType: 'paragraph',
+    alignment: 'left',
     isBold: false,
     isItalic: false,
+    isUnderline: false,
+    isStrikethrough: false,
+    isCode: false,
+    hasH1InDocument: false,
   });
 
   const contextValue = useMemo(() => ({

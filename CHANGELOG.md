@@ -1,5 +1,36 @@
 # Project Change Log
 
+GitHub Copilot (feat): Enhanced Toolbar with Logical Grouping and Extended Formatting
+Date: 2025-11-27
+Summary:
+Refined the rich-text editor toolbar by reordering buttons logically, adding new text formatting options, and implementing SEO-aware H1 restriction.
+
+Details:
+- **Toolbar Reordering:** Moved Undo/Redo buttons to the front of the toolbar as requested, making history controls the most accessible.
+- **Logical Button Grouping:** Organized toolbar into distinct groups with visual dividers:
+    1. History (Undo, Redo)
+    2. Text Formatting (Bold, Italic, Underline, Strikethrough, Code)
+    3. Block Format (Heading Dropdown with H1-H6)
+    4. Alignment (Left, Center, Right, Justify)
+    5. Lists (Bullet/Numbered cycle)
+    6. Insert (Link)
+    7. Clear Formatting
+- **New Text Formatting:** Added Underline, Strikethrough, and Inline Code buttons with proper state tracking.
+- **Heading Dropdown:** Converted the cycling heading button into a proper dropdown showing all heading levels (Normal, H1-H6) with labels and icons.
+- **SEO-Aware H1 Restriction:** The H1 option is automatically disabled when one already exists in the document. This enforces the SEO best practice of having only one H1 per page. A helpful "(in use)" hint appears next to disabled H1 option.
+- **Clear Formatting Button:** Added a button to strip all text formatting and convert block back to paragraph.
+- **Visual Polish:** Added toolbar dividers, consistent button styling, improved dropdown menus with proper spacing and hover states.
+
+Impact:
+The toolbar is now more intuitive and feature-complete. The logical grouping makes it easier to find formatting options, and the SEO-aware H1 restriction helps users create well-structured content without manual checking.
+
+Reflection:
+- **What was the most challenging part of this task?** Implementing the H1 document scan efficiently. The solution iterates through root children only when selection changes, keeping performance optimal.
+- **What was a surprising discovery or key learning?** Lexical's `$getRoot().getChildren()` provides a clean way to scan document structure for semantic constraints like single-H1 enforcement.
+- **What advice would you give the next agent who works on this code?** The pattern used for H1 restriction (scanning document in SelectionStatePlugin) can be extended for other semantic constraints like maximum nesting depth or image alt text validation.
+
+---
+
 Jules #186 (feat): Add Alignment Dropdown and Scrolling Toolbar
 Date: 2025-11-27
 Summary:

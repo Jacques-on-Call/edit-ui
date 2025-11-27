@@ -25,12 +25,41 @@
 
 .editor-toolbar{color:#FFFFFF!important;z-index:9999!important}.editor-header{overflow:visible!important}
 
+/* Toolbar layout */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Toolbar groups */
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Toolbar divider */
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0 6px;
+}
+
 /* New styles for toolbar buttons */
 .toolbar button {
-  margin: 0 4px; /* Add horizontal spacing */
+  margin: 0 2px;
   padding: 6px;
   border-radius: 4px;
   transition: background-color 0.2s ease-in-out;
+  background: none;
+  border: none;
+  color: #cfe1ff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .toolbar button:hover:not(:disabled) {
   background-color: rgba(255, 255, 255, 0.1);
@@ -42,6 +71,28 @@
 .toolbar button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* Dropdown button content */
+.dropdown-button-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Dropdown menu labels */
+.dropdown-label {
+  margin-left: 8px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* Dropdown hint for disabled items (e.g., H1 already in use) */
+.dropdown-hint {
+  margin-left: auto;
+  font-size: 11px;
+  color: #888;
+  font-style: italic;
 }
 
 .toolbar-scroll-container {
@@ -62,4 +113,13 @@
   .editor-header .page-title { display:none; }
   .editor-header .page-title-mobile { font-size: 1rem; font-weight: 600; color: #e6f0ff; position: absolute; left: 50%; transform: translateX(-50%); }
   .tabs { display:none; } /* hide tabs in header to save space; use compact UI instead */
+  
+  /* Tighter spacing on mobile */
+  .toolbar-divider {
+    margin: 0 4px;
+  }
+  .toolbar button {
+    margin: 0 1px;
+    padding: 5px;
+  }
 }
