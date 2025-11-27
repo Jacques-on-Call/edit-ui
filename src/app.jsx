@@ -12,6 +12,7 @@ import { CallbackPage } from './pages/CallbackPage';
 import AuthDebugMonitor from './components/AuthDebugMonitor';
 import { BottomToolbar } from './components/BottomToolbar';
 import SearchBar from './components/SearchBar'; // Import SearchBar
+import { FloatingLogButton } from './components/DebugLogButton.jsx';
 
 const AppContent = () => {
   const { isLoading, isAuthenticated } = useAuth();
@@ -71,6 +72,7 @@ const AppContent = () => {
 
       {isExplorerLayout && <BottomToolbar />}
 
+      <FloatingLogButton />
       {import.meta.env.DEV && <AuthDebugMonitor />}
     </div>
   );
