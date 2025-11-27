@@ -15,6 +15,7 @@ export function EditorProvider({ children }) {
     isUnderline: false,
     isStrikethrough: false,
     isCode: false,
+    isHighlight: false,
     hasH1InDocument: false,
   });
 

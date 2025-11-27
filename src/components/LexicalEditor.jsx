@@ -5,16 +5,22 @@ import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
+import { ListPlugin } from '@lexical/react/LexicalListPlugin';
+import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
+import { HorizontalRuleNode, INSERT_HORIZONTAL_RULE_COMMAND, $createHorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
+import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin';
+import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
+import { TableCellNode, TableNode, TableRowNode, INSERT_TABLE_COMMAND } from '@lexical/table';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useCallback } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { HeadingNode, QuoteNode, $createHeadingNode, $isHeadingNode } from '@lexical/rich-text';
-import { ListItemNode, ListNode, $createListItemNode, $createListNode, $isListItemNode, INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from '@lexical/list';
+import { ListItemNode, ListNode, $createListItemNode, $createListNode, $isListItemNode, $isListNode, INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND, REMOVE_LIST_COMMAND } from '@lexical/list';
 import { CodeHighlightNode, CodeNode } from '@lexical/code';
-import { AutoLinkNode, LinkNode, TOGGLE_LINK_COMMAND } from '@lexical/link';
+import { AutoLinkNode, LinkNode, TOGGLE_LINK_COMMAND, $isLinkNode } from '@lexical/link';
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
-import { $getRoot, $insertNodes, $getSelection, $isRangeSelection, FORMAT_TEXT_COMMAND, UNDO_COMMAND, REDO_COMMAND, SELECTION_CHANGE_COMMAND, $createParagraphNode, FORMAT_ELEMENT_COMMAND } from 'lexical';
+import { $getRoot, $insertNodes, $getSelection, $isRangeSelection, FORMAT_TEXT_COMMAND, UNDO_COMMAND, REDO_COMMAND, SELECTION_CHANGE_COMMAND, $createParagraphNode, FORMAT_ELEMENT_COMMAND, $createTextNode } from 'lexical';
 import { $setBlocksType } from '@lexical/selection';
-import { $findMatchingParent } from '@lexical/utils';
+import { $findMatchingParent, $getNearestNodeOfType } from '@lexical/utils';
 
 
 const editorConfig = {
@@ -28,6 +34,7 @@ const editorConfig = {
       underline: 'underline',
       strikethrough: 'line-through',
       code: 'bg-gray-700 text-pink-400 px-1 py-0.5 rounded font-mono text-sm',
+      highlight: 'editor-highlight',
     },
     heading: {
       h1: 'text-4xl font-bold',
@@ -42,6 +49,11 @@ const editorConfig = {
       ul: 'list-disc ml-6',
     },
     link: 'text-blue-400 hover:underline',
+    horizontalRule: 'editor-hr',
+    table: 'editor-table',
+    tableCell: 'editor-table-cell',
+    tableCellHeader: 'editor-table-cell-header',
+    tableRow: 'editor-table-row',
   },
   onError(error) {
     console.error('[LexicalEditor] Error:', error);
@@ -55,6 +67,10 @@ const editorConfig = {
     CodeNode,
     AutoLinkNode,
     LinkNode,
+    HorizontalRuleNode,
+    TableNode,
+    TableCellNode,
+    TableRowNode,
   ],
 };
 
@@ -96,6 +112,9 @@ function EditorApiPlugin({ apiRef }) {
     toggleCode: () => {
       editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code');
     },
+    toggleHighlight: () => {
+      editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'highlight');
+    },
     toggleHeading: (level) => {
       editor.update(() => {
         const selection = $getSelection();
@@ -113,6 +132,9 @@ function EditorApiPlugin({ apiRef }) {
         editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
       } else if (type === 'ol') {
         editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
+      } else {
+        // Remove list formatting - convert back to paragraph
+        editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined);
       }
     },
     alignText: (alignment) => {
@@ -123,12 +145,31 @@ function EditorApiPlugin({ apiRef }) {
         editor.dispatchCommand(TOGGLE_LINK_COMMAND, url);
       }
     },
+    insertHorizontalRule: () => {
+      editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined);
+    },
+    insertTable: (rows = 3, cols = 3) => {
+      editor.dispatchCommand(INSERT_TABLE_COMMAND, { rows: String(rows), columns: String(cols) });
+    },
+    insertDate: () => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          const dateStr = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+          selection.insertText(dateStr);
+        }
+      });
+    },
     clearFormatting: () => {
       editor.update(() => {
         const selection = $getSelection();
         if ($isRangeSelection(selection)) {
           // Clear text formatting by dispatching commands to toggle off if they're on
-          const formats = ['bold', 'italic', 'underline', 'strikethrough', 'code'];
+          const formats = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'highlight'];
           formats.forEach(format => {
             if (selection.hasFormat(format)) {
               editor.dispatchCommand(FORMAT_TEXT_COMMAND, format);
@@ -206,6 +247,7 @@ function SelectionStatePlugin({ onSelectionChange }) {
         isUnderline: selection.hasFormat('underline'),
         isStrikethrough: selection.hasFormat('strikethrough'),
         isCode: selection.hasFormat('code'),
+        isHighlight: selection.hasFormat('highlight'),
         hasH1InDocument,
       });
     });
@@ -246,11 +288,15 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
     <LexicalComposer initialConfig={initialConfig}>
       <div class="relative">
         <RichTextPlugin
-          contentEditable={<ContentEditable class="editor-input" />}
-          placeholder={<div class="editor-placeholder">Start typing...</div>}
+          contentEditable={<ContentEditable className="editor-input" />}
+          placeholder={<div className="editor-placeholder">Start typing...</div>}
           ErrorBoundary={LexicalErrorBoundary}
         />
         <HistoryPlugin />
+        <ListPlugin />
+        <LinkPlugin />
+        <HorizontalRulePlugin />
+        <TablePlugin />
         <OnChangePlugin onChange={handleOnChange} />
         <InitialContentPlugin initialContent={initialContent} lastHtmlRef={lastHtmlRef} />
         <EditorApiPlugin apiRef={ref} />

@@ -7,7 +7,13 @@ import {
   Undo, Redo, 
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   RemoveFormatting,
-  Type
+  Type,
+  Highlighter,
+  Plus,
+  Minus,
+  Table,
+  Calendar,
+  Image
 } from 'lucide-preact';
 import { useEditor } from '../contexts/EditorContext';
 import Dropdown from './Dropdown';
@@ -41,6 +47,7 @@ export default function EditorHeader() {
       case 'underline': api.toggleUnderline(); break;
       case 'strikethrough': api.toggleStrikethrough(); break;
       case 'code': api.toggleCode(); break;
+      case 'highlight': api.toggleHighlight(); break;
       case 'heading': api.toggleHeading(value); break;
       case 'list': api.toggleList(value); break;
       case 'align': api.alignText(value); break;
@@ -48,6 +55,13 @@ export default function EditorHeader() {
         const url = prompt('Enter URL:');
         if (url) api.insertLink(url);
         break;
+      case 'horizontalRule': api.insertHorizontalRule(); break;
+      case 'table': 
+        const rows = prompt('Number of rows:', '3');
+        const cols = prompt('Number of columns:', '3');
+        if (rows && cols) api.insertTable(parseInt(rows), parseInt(cols));
+        break;
+      case 'date': api.insertDate(); break;
       case 'clearFormatting': api.clearFormatting(); break;
       case 'undo': api.undo(); break;
       case 'redo': api.redo(); break;
@@ -86,7 +100,7 @@ export default function EditorHeader() {
 
           <span class="toolbar-divider" />
 
-          {/* GROUP 2: Text Formatting (Bold, Italic, Underline, Strikethrough, Code) */}
+          {/* GROUP 2: Text Formatting (Bold, Italic, Underline, Strikethrough, Code, Highlight) */}
           <div class="toolbar-group">
             <button onMouseDown={preventDefault} onClick={() => handleAction('bold')} data-active={selectionState.isBold} aria-label="Bold" disabled={isDisabled} title="Bold">
               <Bold size={18} />
@@ -102,6 +116,9 @@ export default function EditorHeader() {
             </button>
             <button onMouseDown={preventDefault} onClick={() => handleAction('code')} data-active={selectionState.isCode} aria-label="Inline Code" disabled={isDisabled} title="Inline Code">
               <Code size={18} />
+            </button>
+            <button onMouseDown={preventDefault} onClick={() => handleAction('highlight')} data-active={selectionState.isHighlight} aria-label="Highlight" disabled={isDisabled} title="Highlight">
+              <Highlighter size={18} />
             </button>
           </div>
 
@@ -182,11 +199,27 @@ export default function EditorHeader() {
 
           <span class="toolbar-divider" />
 
-          {/* GROUP 6: Insert (Link) */}
+          {/* GROUP 6: Insert (Link + Insert Dropdown) */}
           <div class="toolbar-group">
             <button onMouseDown={preventDefault} onClick={() => handleAction('link')} aria-label="Link" disabled={isDisabled} title="Insert Link">
               <Link size={18} />
             </button>
+            <Dropdown
+              buttonContent={<Plus size={18} />}
+            >
+              <button onMouseDown={preventDefault} onClick={() => handleAction('horizontalRule')} aria-label="Horizontal Rule" disabled={isDisabled}>
+                <Minus size={16} />
+                <span class="dropdown-label">Horizontal Rule</span>
+              </button>
+              <button onMouseDown={preventDefault} onClick={() => handleAction('table')} aria-label="Table" disabled={isDisabled}>
+                <Table size={16} />
+                <span class="dropdown-label">Table</span>
+              </button>
+              <button onMouseDown={preventDefault} onClick={() => handleAction('date')} aria-label="Date" disabled={isDisabled}>
+                <Calendar size={16} />
+                <span class="dropdown-label">Date</span>
+              </button>
+            </Dropdown>
           </div>
 
           <span class="toolbar-divider" />
