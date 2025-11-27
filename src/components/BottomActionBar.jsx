@@ -8,7 +8,21 @@ export default function BottomActionBar({ saveStatus, syncStatus = 'idle', viewM
   useEffect(() => {
     const handleResize = () => {
       // This gets the height of the keyboard
-      const keyboardInset = window.innerHeight - window.visualViewport.height;
+      let keyboardInset = window.innerHeight - window.visualViewport.height;
+
+      // --- Defensive Guards ---
+      // 1. Prevent negative values which can occur during screen bounce on some mobile browsers.
+      if (keyboardInset < 0) {
+        keyboardInset = 0;
+      }
+
+      // 2. Prevent excessively large values. A keyboard is never larger than the screen.
+      //    This guards against flicker/bugs in the visualViewport API during transitions
+      //    which can cause the toolbar to jump to the top of the screen.
+      if (keyboardInset > window.innerHeight) {
+        keyboardInset = 0; // Reset if the value is clearly erroneous
+      }
+
       // This sets a variable that the CSS can use to move the toolbar
       document.documentElement.style.setProperty('--keyboard-inset', `${keyboardInset}px`);
     };
