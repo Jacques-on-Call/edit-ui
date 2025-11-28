@@ -18,7 +18,7 @@ export default function TextSectionEditor({ props, onChange }) {
         value={props?.body || ''}
         onChange={(newValue) => handleFieldChange('body', newValue)}
         placeholder="Start writing your content for this section..."
-        className="mt-4 text-base text-gray-300"
+        className="mt-2 text-base text-gray-300"
       />
     </div>
   );
