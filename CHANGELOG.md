@@ -1,5 +1,30 @@
 # Project Change Log
 
+Jules #190 (feat): Implement "Add Section" Modal with Configuration
+Date: 2025-11-28
+Summary:
+Introduced a new "Add Section" modal that allows users to choose from different section types and configure them before adding them to the page. This replaces the old, hardcoded "add text section" button with a more powerful and extensible creation flow.
+
+Details:
+- **New UI Context:** Created a `UIContext` to manage the state of global UI components like modals, keeping the logic clean and decoupled.
+- **Two-Step Modal Flow:**
+  1.  **Section Selector:** The modal first presents a choice of available sections ("Hero" and "Text Section") with descriptive thumbnails.
+  2.  **Configuration View:** After selecting a section, the user is shown a view with checkboxes and inputs to configure the section's content.
+- **Configurable Sections:**
+  - **Hero:** Can now be created with or without a slogan and body. Users can also provide URLs for a feature image and a background image.
+  - **Text Section:** Can be created with or without a title.
+- **Full Integration:** The modal is wired up to the `+` button in the editor's action bar and correctly adds the newly configured section to the page content.
+
+Impact:
+The content creation process is now much more flexible and intuitive. Users have granular control over the structure of their pages from the moment of creation, which helps keep the editor workspace clean and focused. This new modal architecture is also highly extensible, making it easy to add new section types in the future.
+
+Reflection:
+- **What was the most challenging part of this task?** The most challenging part was designing the state flow for the two-step modal and ensuring that the configuration options were both flexible and easy to manage.
+- **What was a surprising discovery or key learning?** Using a dedicated context for UI state (like a modal's open/closed status) is a very effective pattern. It prevents "prop drilling" and makes the code much cleaner than if the state were managed directly in the main editor page.
+- **What advice would you give the next agent who works on this code?** When adding new section types, you can simply add a new thumbnail to the `renderSelectStep` and a new configurator component to the `renderConfigureStep` in `AddSectionModal.jsx`. The architecture is designed to be easily extended.
+
+---
+
 Jules #188 (refactor): Final Polish on Editor Typography and Spacing
 Date: 2025-11-28
 Summary:

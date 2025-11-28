@@ -15,6 +15,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 ### **Contexts**
 -   **`src/contexts/AuthContext.jsx`**: Manages global authentication state.
 -   **`src/contexts/EditorContext.jsx`**: Manages the currently active editor instance, allowing the global toolbar to communicate with the focused editor field.
+-   **`src/contexts/UIContext.jsx`**: Manages the state of global UI elements, such as modals.
 
 ### **Styling**
 
@@ -35,6 +36,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/components/Icon.jsx`**: A wrapper for the lucide-preact icon library.
 -   **`src/components/ContextMenu.jsx`**: Renders a right-click/long-press context menu.
 -   **`src/components/CreateModal.jsx`**: Renders a modal for creating new files and folders.
+-   **`src/components/AddSectionModal.jsx`**: Renders a modal for selecting and configuring new content sections before adding them to a page.
 -   **`src/components/SearchBar.jsx`**: A debounced search input component.
 -   **`src/components/EditorHeader.jsx`**: The header component for the content editor. Now context-aware.
 -   **`src/components/BlockTree.jsx`**: The component for displaying the block structure of a page.

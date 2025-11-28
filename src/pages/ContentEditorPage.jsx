@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'preact/hooks'
 import { route } from 'preact-router';
 import matter from 'gray-matter';
 import { useAuth } from '../contexts/AuthContext';
+import { useUI } from '../contexts/UIContext';
 import { EditorProvider } from '../contexts/EditorContext'; // <-- IMPORT THE PROVIDER
 import { fetchJson } from '../lib/fetchJson';
 import useAutosave from '../hooks/useAutosave';
@@ -10,12 +11,14 @@ import LexicalEditor from '../components/LexicalEditor';
 import SectionsEditor from '../components/SectionsEditor';
 import EditorHeader from '../components/EditorHeader';
 import BottomActionBar from '../components/BottomActionBar';
+import AddSectionModal from '../components/AddSectionModal';
 import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
   console.log('[CEP] Component Init', { props });
   // --- 1. HOOKS ---
   const { selectedRepo } = useAuth();
+  const { openAddSectionModal } = useUI();
 
   // State Hooks
   const [contentBody, setContentBody] = useState(null); // For Lexical
@@ -182,12 +185,24 @@ export default function ContentEditorPage(props) {
     triggerSave(newSections);
   }, [triggerSave]);
 
-  const handleAddSection = useCallback(() => {
+  const handleAddSection = useCallback((type, config) => {
     const newSection = {
       id: `section-${Date.now()}`,
-      type: 'textSection',
-      props: { title: 'New Section', body: '<p>Start writing your content here.</p>', ctaText: '', ctaHref: '' },
+      type: type,
+      props: {},
     };
+
+    if (type === 'hero') {
+      newSection.props.title = 'New Hero Title';
+      if (config.includeSlogan) newSection.props.subtitle = 'New Slogan';
+      if (config.includeBody) newSection.props.body = '<p>New body paragraph.</p>';
+      if (config.includeFeatureImage) newSection.props.featureImageUrl = config.featureImageUrl;
+      if (config.includeBackgroundImage) newSection.props.backgroundImageUrl = config.backgroundImageUrl;
+    } else if (type === 'textSection') {
+      if (config.includeTitle) newSection.props.title = 'New Section Title';
+      newSection.props.body = '<p>Start writing your content here.</p>';
+    }
+
     const newSections = [...(sections || []), newSection];
     setSections(newSections);
     triggerSave(newSections);
@@ -480,10 +495,11 @@ export default function ContentEditorPage(props) {
           saveStatus={saveStatus}
           syncStatus={syncStatus}
           viewMode={viewMode}
-          onAdd={handleAddSection}
+          onAdd={openAddSectionModal}
           onSync={handleSync}
           onPreview={editorMode === 'json' ? handlePreview : null}
         />
+        <AddSectionModal onAddSection={handleAddSection} />
       </div>
     </EditorProvider>
   );

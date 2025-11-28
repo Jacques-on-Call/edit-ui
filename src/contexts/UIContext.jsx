@@ -1,16 +1,27 @@
 import { createContext } from 'preact';
 import { useContext, useState } from 'preact/hooks';
 
-const UIContext = createContext();
+export const UIContext = createContext();
 
 export const UIProvider = ({ children }) => {
-  const [isCreateOpen, setCreateOpen] = useState(false);
+  const [isAddSectionModalOpen, setAddSectionModalOpen] = useState(false);
 
-  return (
-    <UIContext.Provider value={{ isCreateOpen, setCreateOpen }}>
-      {children}
-    </UIContext.Provider>
-  );
+  const openAddSectionModal = () => setAddSectionModalOpen(true);
+  const closeAddSectionModal = () => setAddSectionModalOpen(false);
+
+  const value = {
+    isAddSectionModalOpen,
+    openAddSectionModal,
+    closeAddSectionModal,
+  };
+
+  return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 };
 
-export const useUI = () => useContext(UIContext);
+export const useUI = () => {
+  const context = useContext(UIContext);
+  if (!context) {
+    throw new Error('useUI must be used within a UIProvider');
+  }
+  return context;
+};
