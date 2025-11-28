@@ -54,7 +54,7 @@ export default function SectionsEditor({ sections = [], onChange }) {
       {local.map((s, i) => {
         const EditorComponent = editorComponentRegistry[s.type];
         return (
-          <div key={s.id || i} class="group relative py-6 border-l-4 border-transparent hover:border-gray-700 transition-colors duration-200">
+          <div key={s.id || i} class="group relative py-2 border-l-4 border-transparent hover:border-gray-700 transition-colors duration-200">
             <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center z-10">
               <span class="text-xs text-gray-500 mr-2 uppercase">{s.type.replace(/_/g, ' ')}</span>
               <button
@@ -66,7 +66,7 @@ export default function SectionsEditor({ sections = [], onChange }) {
               </button>
             </div>
 
-            <div class="px-4">
+            <div class="">
               {EditorComponent ? (
                 <EditorComponent
                   props={s.props}

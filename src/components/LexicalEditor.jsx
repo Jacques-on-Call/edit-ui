@@ -268,7 +268,7 @@ function SelectionStatePlugin({ onSelectionChange }) {
   return null;
 }
 
-const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionChange, onFocus, onBlur, className }, ref) => {
+const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionChange, onFocus, onBlur, className, placeholder }, ref) => {
   useEffect(() => {
     // console.log(`[LexicalEditor] Component mounted for slug: ${slug}`);
     // return () => console.log(`[LexicalEditor] Component unmounted for slug: ${slug}`);
@@ -301,7 +301,7 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
               <ContentEditable className="editor-input" />
             </div>
           }
-          placeholder={<div className="editor-placeholder">Start typing...</div>}
+          placeholder={<div className="editor-placeholder">{placeholder || 'Start typing...'}</div>}
           ErrorBoundary={LexicalErrorBoundary}
         />
         <HistoryPlugin />
