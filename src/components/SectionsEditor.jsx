@@ -50,7 +50,7 @@ export default function SectionsEditor({ sections = [], onChange }) {
   };
 
   return (
-    <div>
+    <div class="pt-16">
       {local.map((s, i) => {
         const EditorComponent = editorComponentRegistry[s.type];
         return (

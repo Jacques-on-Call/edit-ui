@@ -11,19 +11,19 @@ export default function HeroEditor({ props, onChange }) {
       <LexicalField
         value={props?.title || ''}
         onChange={(newValue) => handleFieldChange('title', newValue)}
-        placeholder="Add a title..."
+        placeholder="Title (H1)"
         className="text-4xl font-bold text-white tracking-tight"
       />
       <LexicalField
         value={props?.subtitle || ''}
         onChange={(newValue) => handleFieldChange('subtitle', newValue)}
-        placeholder="Add a subtitle..."
+        placeholder="Slogan (optional)"
         className="mt-2 text-lg text-gray-400"
       />
       <LexicalField
         value={props?.body || ''}
         onChange={(newValue) => handleFieldChange('body', newValue)}
-        placeholder="Start writing..."
+        placeholder="Paragraph (optional)"
         className="mt-4 text-base text-gray-300"
       />
     </div>

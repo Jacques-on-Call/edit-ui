@@ -8,7 +8,7 @@
 
 .editor-area {
   flex-grow: 1;
-  padding: 24px;
+  padding: 12px 0;
   box-sizing: border-box;
   overflow-y: auto;
   color: #cfe1ff;
