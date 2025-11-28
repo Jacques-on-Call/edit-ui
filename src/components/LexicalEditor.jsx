@@ -268,10 +268,10 @@ function SelectionStatePlugin({ onSelectionChange }) {
   return null;
 }
 
-const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionChange }, ref) => {
+const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionChange, onFocus, onBlur, className }, ref) => {
   useEffect(() => {
-    console.log(`[LexicalEditor] Component mounted for slug: ${slug}`);
-    return () => console.log(`[LexicalEditor] Component unmounted for slug: ${slug}`);
+    // console.log(`[LexicalEditor] Component mounted for slug: ${slug}`);
+    // return () => console.log(`[LexicalEditor] Component unmounted for slug: ${slug}`);
   }, [slug]);
 
   const lastHtmlRef = useRef('');
@@ -294,9 +294,13 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <div class="relative">
+      <div class={`relative ${className || ''}`}>
         <RichTextPlugin
-          contentEditable={<ContentEditable className="editor-input" />}
+          contentEditable={
+            <div onFocus={onFocus} onBlur={onBlur}>
+              <ContentEditable className="editor-input" />
+            </div>
+          }
           placeholder={<div className="editor-placeholder">Start typing...</div>}
           ErrorBoundary={LexicalErrorBoundary}
         />

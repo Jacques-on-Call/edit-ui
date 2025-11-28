@@ -20,16 +20,17 @@ export default function LexicalField({ value, onChange, placeholder, className }
     setActiveEditor(null);
   };
 
-  // We add a simple wrapper div to catch the focus and blur events.
+  // No need for a wrapper div anymore. The events will be passed directly.
   return (
-    <div onFocus={handleFocus} onBlur={handleBlur} class={className}>
-      <LexicalEditor
-        ref={editorApiRef}
-        initialContent={value}
-        onChange={onChange}
-        onSelectionChange={setSelectionState}
-        placeholder={placeholder}
-      />
-    </div>
+    <LexicalEditor
+      ref={editorApiRef}
+      initialContent={value}
+      onChange={onChange}
+      onSelectionChange={setSelectionState}
+      placeholder={placeholder}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      className={className} // Pass className to the editor itself
+    />
   );
 }
