@@ -1,5 +1,25 @@
 # Project Change Log
 
+GitHub Copilot (fix): Fix Text Selection in Content Editor Components
+Date: 2025-11-27
+Summary:
+Fixed a critical bug that prevented text selection and rich-text formatting from working in the content editor's LexicalField components.
+
+Details:
+- **Root Cause:** The `SelectionStatePlugin` in `LexicalEditor.jsx` was using `$getRoot().contains(parent)` to find the top-level block element. However, Lexical nodes do not have a `contains()` method, causing a JavaScript error: `$getRoot(...).contains is not a function`.
+- **Fix Applied:** Changed the condition to use `parent.getKey() === root.getKey()` which correctly checks if the parent node is the root node.
+- **Code Optimization:** Moved the `$getRoot()` call to the beginning of the function and stored it in a `root` variable, removing a duplicate call later in the same function.
+
+Impact:
+Text selection now works correctly in all LexicalField components (Hero title, subtitle, body, TextSection fields, etc.). Users can select text and apply formatting using the toolbar buttons. The rich-text editing experience is fully restored.
+
+Reflection:
+- **What was the most challenging part of this task?** Identifying the root cause from the debug logs. The error message "contains is not a function" pointed directly to the Lexical API misuse, but required understanding of the Lexical node API to fix correctly.
+- **What was a surprising discovery or key learning?** Lexical nodes have a different API than DOM nodes. While DOM elements have `contains()`, Lexical nodes use key-based comparisons (`getKey()`) for identity checks.
+- **What advice would you give the next agent who works on this code?** When working with Lexical, always consult the Lexical documentation for the correct node API. Methods like `$findMatchingParent` expect specific predicate conditions, and using DOM-like methods on Lexical nodes will fail silently or throw errors.
+
+---
+
 GitHub Copilot (feat): Enhanced Toolbar with Logical Grouping and Extended Formatting
 Date: 2025-11-27
 Summary:

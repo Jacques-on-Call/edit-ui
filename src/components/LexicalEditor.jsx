@@ -203,12 +203,14 @@ function SelectionStatePlugin({ onSelectionChange }) {
       if (!$isRangeSelection(selection)) return;
 
       const anchorNode = selection.anchor.getNode();
+      const root = $getRoot();
       const element =
         anchorNode.getKey() === 'root'
           ? anchorNode
           : $findMatchingParent(anchorNode, (e) => {
               const parent = e.getParent();
-              return parent !== null && $getRoot().contains(parent);
+              // Check if the parent is the root - meaning we found the top-level block element
+              return parent !== null && parent.getKey() === root.getKey();
             });
 
       let blockType = 'paragraph';
@@ -230,7 +232,6 @@ function SelectionStatePlugin({ onSelectionChange }) {
 
       // Check if H1 exists anywhere in the document (for SEO - only one H1 allowed)
       let hasH1InDocument = false;
-      const root = $getRoot();
       const children = root.getChildren();
       for (const child of children) {
         if ($isHeadingNode(child) && child.getTag() === 'h1') {
