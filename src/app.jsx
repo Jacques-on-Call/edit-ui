@@ -40,41 +40,44 @@ const AppContent = () => {
     : `relative z-10 ${isLoginPage ? '' : 'p-6 md:p-10'}`;
 
   return (
-    <div className={mainLayoutClasses} style={{ fontFamily: theme.typography.fontFamily }}>
+    <>
+      {/* Background is now a sibling to the main layout container */}
       <div className="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-midnight-blue via-gradient-start to-black animate-pulse-bg">
         <div className="orb orb-white orb-1"></div>
         <div className="orb orb-white orb-2"></div>
         <div className="orb orb-white orb-3"></div>
       </div>
 
-      {/* Hide global header on editor page; it has its own */}
-      {!isEditorLayout && (
-        <header className={isExplorerLayout ? 'relative z-10 flex-shrink-0 p-6 md:p-10 flex justify-between items-center h-24' : 'flex justify-between items-center pb-8 h-16'}>
-          {isExplorerLayout ? <SearchBar onSearch={setSearchQuery} /> : headerContent}
-        </header>
-      )}
-
-      <main className={mainContentClasses}>
-        {isLoading ? (
-          <div className="flex justify-center items-center h-full">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-lime"></div>
-          </div>
-        ) : (
-          <Router>
-            <CallbackPage path="/" />
-            <RepoSelectPage path="/repo-select" />
-            <FileExplorerPage path="/explorer" />
-            <ContentEditorPage path="/editor/:pageId" />
-            <LoginPage default />
-          </Router>
+      <div className={mainLayoutClasses} style={{ fontFamily: theme.typography.fontFamily }}>
+        {/* Hide global header on editor page; it has its own */}
+        {!isEditorLayout && (
+          <header className={isExplorerLayout ? 'relative z-10 flex-shrink-0 p-6 md:p-10 flex justify-between items-center h-24' : 'flex justify-between items-center pb-8 h-16'}>
+            {isExplorerLayout ? <SearchBar onSearch={setSearchQuery} /> : headerContent}
+          </header>
         )}
-      </main>
 
-      {isExplorerLayout && <BottomToolbar />}
+        <main className={mainContentClasses}>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-full">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-lime"></div>
+            </div>
+          ) : (
+            <Router>
+              <CallbackPage path="/" />
+              <RepoSelectPage path="/repo-select" />
+              <FileExplorerPage path="/explorer" />
+              <ContentEditorPage path="/editor/:pageId" />
+              <LoginPage default />
+            </Router>
+          )}
+        </main>
 
-      <FloatingLogButton />
-      {import.meta.env.DEV && <AuthDebugMonitor />}
-    </div>
+        {isExplorerLayout && <BottomToolbar />}
+
+        <FloatingLogButton />
+        {import.meta.env.DEV && <AuthDebugMonitor />}
+      </div>
+    </>
   );
 };
 
