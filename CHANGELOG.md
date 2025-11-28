@@ -1,5 +1,28 @@
 # Project Change Log
 
+Jules #XXX (fix): Stabilize Editor Header on Mobile
+Date: 2025-11-28
+Summary:
+Fixed a persistent and complex bug where the content editor header would be pushed off-screen when the on-screen keyboard appeared on mobile devices. The final solution makes the application layout immune to viewport resizing.
+
+Details:
+- **Root Cause:** The application's root layout was sized using `h-screen` (100vh). On mobile browsers, the visual viewport height changes when the keyboard appears, causing the entire layout to shrink and push fixed/sticky elements upwards.
+- **Solution:**
+  1.  **Stable Root Layout:** The root `html` and `body` elements were given `height: 100%`. The main application container in `app.jsx` was switched from `h-screen` to `h-full` (`height: 100%`) for the editor view. This decouples the application's height from the volatile viewport height.
+  2.  **Fixed Header:** The `EditorHeader`'s CSS was changed from `position: sticky` to `position: fixed` to robustly anchor it to the top of the viewport.
+  3.  **Content Padding:** `padding-top` was added to the main content area to prevent it from being obscured by the fixed header.
+- **Diagnostic Process:** The final solution was reached after several incremental attempts, including debugging `position: sticky` with `overflow` properties and isolating CSS stacking contexts caused by `transform` and `filter` properties.
+
+Impact:
+The content editor header is now completely stable on all devices. It remains fixed at the top of the screen during page scrolling and, critically, is unaffected by the appearance of the on-screen keyboard, providing a reliable and professional user experience.
+
+Reflection:
+- **What was the most challenging part of this task?** Diagnosing why standard CSS solutions like `position: fixed` were failing. The root cause was not in the component itself but in the way the entire application's layout responded to mobile viewport resizing, which was a subtle and non-obvious interaction.
+- **What was a surprising discovery or key learning?** Relying on viewport units (`vh`) for the primary height of a mobile application's layout is fragile. When the on-screen keyboard appears, the viewport shrinks, and any layout based on `vh` will reflow. A more robust pattern is to set `height: 100%` on `html` and `body`, and then use percentage-based heights throughout the application.
+- **What advice would you give the next agent who works on this code?** For mobile layouts, be extremely cautious with `vh` units, especially on the main application container. If you encounter weird resizing or positioning issues when the keyboard appears, immediately suspect the viewport unit dependency and switch to a percentage-based height model.
+
+---
+
 GitHub Copilot (fix): Fix Lexicon Tools Dropdown Options Not Visible on Mobile
 Date: 2025-11-28
 Summary:
