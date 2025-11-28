@@ -421,59 +421,60 @@ export default function ContentEditorPage(props) {
                 {sections ? (
                   <SectionsEditor sections={sections} onChange={handleSectionsChange} />
                 ) : contentBody !== null ? (
-                <LexicalEditor
-                  // This is the legacy editor for 'astro' mode.
-                  // It's not connected to the context for now.
-                  ref={useRef(null)} // Pass a dummy ref
-                  slug={pageId}
-                  initialContent={contentBody}
-                  onChange={handleLexicalChange}
-                />
-              ) : (
-                <div>Loading Editor...</div>
-              )}
-            </div>
-          ) : (
-            <div class="w-full h-full bg-white relative">
-              {isPreviewBuilding && (
-                <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
-                  <div class="text-white text-center p-4">
-                    <RefreshCw size={48} className="animate-spin mb-4 mx-auto" />
-                    <p class="text-lg font-semibold">Live Preview is Building</p>
-                    <p class="text-sm">Your changes are being deployed. This may take a minute.</p>
-                  </div>
-                </div>
-              )}
-              {buildError && (
-                 <div class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-10">
-                    <div class="text-white text-center p-4 bg-red-800 rounded-lg shadow-lg">
-                        <p class="text-lg font-semibold">Build Error</p>
-                        <p class="text-sm mt-2">{buildError}</p>
-                        <button
-                          onClick={() => setBuildError(null)}
-                          className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-500 rounded text-white"
-                        >
-                          Dismiss
-                        </button>
+                  <LexicalEditor
+                    // This is the legacy editor for 'astro' mode.
+                    // It's not connected to the context for now.
+                    ref={useRef(null)} // Pass a dummy ref
+                    slug={pageId}
+                    initialContent={contentBody}
+                    onChange={handleLexicalChange}
+                  />
+                ) : (
+                  <div>Loading Editor...</div>
+                )}
+              </div>
+            ) : (
+              <div class="w-full h-full bg-white relative">
+                {isPreviewBuilding && (
+                  <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+                    <div class="text-white text-center p-4">
+                      <RefreshCw size={48} className="animate-spin mb-4 mx-auto" />
+                      <p class="text-lg font-semibold">Live Preview is Building</p>
+                      <p class="text-sm">Your changes are being deployed. This may take a minute.</p>
                     </div>
-                 </div>
-              )}
-              <button
-                onClick={handleRefreshPreview}
-                className="absolute top-4 right-4 z-20 bg-gray-800 bg-opacity-75 text-white p-2 rounded-full hover:bg-gray-700 transition-colors"
-                aria-label="Refresh Preview"
-              >
-                <RefreshCw size={24} />
-              </button>
-              <iframe
-                key={previewKey}
-                src={previewUrl}
-                title="Live Preview"
-                className="w-full h-full border-0"
-                sandbox="allow-scripts allow-same-origin"
-              />
-            </div>
-          )}
+                  </div>
+                )}
+                {buildError && (
+                  <div class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-10">
+                    <div class="text-white text-center p-4 bg-red-800 rounded-lg shadow-lg">
+                      <p class="text-lg font-semibold">Build Error</p>
+                      <p class="text-sm mt-2">{buildError}</p>
+                      <button
+                        onClick={() => setBuildError(null)}
+                        className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-500 rounded text-white"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <button
+                  onClick={handleRefreshPreview}
+                  className="absolute top-4 right-4 z-20 bg-gray-800 bg-opacity-75 text-white p-2 rounded-full hover:bg-gray-700 transition-colors"
+                  aria-label="Refresh Preview"
+                >
+                  <RefreshCw size={24} />
+                </button>
+                <iframe
+                  key={previewKey}
+                  src={previewUrl}
+                  title="Live Preview"
+                  className="w-full h-full border-0"
+                  sandbox="allow-scripts allow-same-origin"
+                />
+              </div>
+            )}
+          </div>
         </main>
         <BottomActionBar
           saveStatus={saveStatus}

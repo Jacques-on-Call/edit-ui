@@ -7,7 +7,7 @@ export default function TextSectionEditor({ props, onChange }) {
   };
 
   return (
-    <div class="flex flex-col">
+    <div class="flex flex-col px-4">
       <LexicalField
         value={props?.title || ''}
         onChange={(newValue) => handleFieldChange('title', newValue)}
@@ -18,7 +18,7 @@ export default function TextSectionEditor({ props, onChange }) {
         value={props?.body || ''}
         onChange={(newValue) => handleFieldChange('body', newValue)}
         placeholder="Start writing your content for this section..."
-        className="mt-2 text-base text-gray-300"
+        className="text-base text-gray-300"
       />
     </div>
   );
