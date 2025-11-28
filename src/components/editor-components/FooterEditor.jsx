@@ -18,7 +18,7 @@ export default function FooterEditor({ props, onChange }) {
         value={props?.links || ''}
         onChange={(newValue) => handleFieldChange('links', newValue)}
         placeholder="Privacy Policy | Terms of Service"
-        className="mt-2 text-sm text-gray-500"
+        className="text-sm text-gray-500"
       />
     </div>
   );

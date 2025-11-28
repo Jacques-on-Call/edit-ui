@@ -7,7 +7,9 @@ export default function TextSectionEditor({ props, onChange }) {
   };
 
   return (
-    <div class="flex flex-col px-4">
+    // Note: Padding is intentionally managed by the parent layout.
+    // This component is designed to be edge-to-edge on mobile for a document-like feel.
+    <div class="flex flex-col">
       <LexicalField
         value={props?.title || ''}
         onChange={(newValue) => handleFieldChange('title', newValue)}
@@ -18,7 +20,7 @@ export default function TextSectionEditor({ props, onChange }) {
         value={props?.body || ''}
         onChange={(newValue) => handleFieldChange('body', newValue)}
         placeholder="Start writing your content for this section..."
-        className="text-base text-gray-300"
+        className="text-base text-gray-300 mt-1"
       />
     </div>
   );
