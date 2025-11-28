@@ -7,7 +7,6 @@ export default function HeroEditor({ props, onChange }) {
   };
 
   return (
-    // Note: Padding is intentionally managed for a mobile-first, document-like feel.
     <div class="flex flex-col px-2">
       <LexicalField
         value={props?.title || ''}
