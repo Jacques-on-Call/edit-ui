@@ -5,8 +5,10 @@
   justify-content:space-between;
   padding: 8px 12px;
   background: rgba(2,10,30,0.6);
-  position: sticky;
+  position: fixed;
   top:0;
+  left: 0;
+  right: 0;
   z-index:80;
 }
 
