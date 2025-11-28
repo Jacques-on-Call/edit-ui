@@ -5,10 +5,10 @@ import './Dropdown.css';
 export default function Dropdown({ buttonContent, children }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  console.log('[Dropdown] render, isOpen:', isOpen); // Log on render
 
-  const toggleDropdown = () => {
-    console.log('[Dropdown] toggleDropdown called. Current isOpen:', isOpen);
+  const toggleDropdown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsOpen(!isOpen);
   };
 
@@ -26,7 +26,7 @@ export default function Dropdown({ buttonContent, children }) {
 
   return (
     <div class="dropdown" ref={dropdownRef}>
-      <button class="dropdown-toggle" onClick={toggleDropdown} onMouseDown={(e) => e.preventDefault()}>
+      <button class="dropdown-toggle" onMouseDown={toggleDropdown}>
         {buttonContent}
       </button>
       {isOpen && (
