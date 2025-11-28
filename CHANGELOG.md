@@ -1,5 +1,32 @@
 # Project Change Log
 
+GitHub Copilot (fix): Fix Lexicon Tools Dropdown Options Not Visible on Mobile
+Date: 2025-11-28
+Summary:
+Fixed a critical bug where toolbar dropdown menus (for headings, alignment, lists, and insert options) were not visible on mobile devices. The dropdowns would open but immediately close due to re-renders triggered by mobile keyboard resize events.
+
+Details:
+- **Root Cause:** On mobile devices, the appearance/disappearance of the on-screen keyboard triggers frequent `resize` events via `window.visualViewport`. These events caused parent components to re-render, which reset the dropdown's local `isOpen` state before the menu could be seen.
+- **Solution:** Implemented a **React Portal** pattern to render the dropdown menu outside the main component tree. The menu is now rendered into a dedicated `#dropdown-portal` container in the HTML, which is unaffected by re-renders in the editor component hierarchy.
+- **Technical Changes:**
+  1. Added `<div id="dropdown-portal"></div>` to `index.html`
+  2. Refactored `Dropdown.jsx` to use `createPortal` from `preact/compat`
+  3. Menu position is calculated dynamically based on button's `getBoundingClientRect()`
+  4. Added resize/scroll listeners to update menu position when keyboard appears
+  5. Enhanced click-outside detection to work with portal-rendered menu
+  6. Added `useRef` to track `isOpen` state to survive re-renders during transitions
+- **CSS Updates:** Added `.dropdown-menu-portal` styles with hardware acceleration (`transform: translateZ(0)`) for smooth mobile rendering.
+
+Impact:
+All toolbar dropdowns (Block Format/Headings, Alignment, Lists, Insert) now work correctly on mobile devices. Users can tap a dropdown button, see all available options, and select one to apply formatting.
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding that the issue wasn't in the event handling (which previous attempts fixed), but in React's component lifecycle. The dropdown state was being reset not by events, but by parent re-renders triggered by mobile keyboard resize events.
+- **What was a surprising discovery or key learning?** The React Portal pattern is essential for UI elements that need to survive parent re-renders. By rendering outside the component tree, the dropdown menu's DOM and state become independent of the editor's render cycle.
+- **What advice would you give the next agent who works on this code?** When a component's state seems to "reset" mysteriously on mobile, suspect parent re-renders caused by keyboard/viewport events. The Portal pattern is the robust solution for any floating UI (dropdowns, modals, tooltips) that needs to be immune to parent lifecycle.
+
+---
+
 GitHub Copilot (fix): Fix Text Selection in Content Editor Components
 Date: 2025-11-27
 Summary:

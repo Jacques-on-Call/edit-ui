@@ -21,6 +21,7 @@
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Original menu styles (for non-portal fallback) */
 .dropdown-menu {
   position: absolute;
   top: 100%;
@@ -38,7 +39,25 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.dropdown-menu button {
+/* Portal menu styles - rendered outside the component tree */
+.dropdown-menu-portal {
+  background-color: #2d3748;
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 140px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  /* Prevent the menu from being affected by parent transforms */
+  contain: layout;
+  /* Ensure smooth rendering on mobile */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+.dropdown-menu button,
+.dropdown-menu-portal button {
   display: flex;
   align-items: center;
   padding: 8px 12px;
@@ -52,11 +71,19 @@
   text-align: left;
 }
 
-.dropdown-menu button:hover {
+.dropdown-menu button:hover,
+.dropdown-menu-portal button:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.dropdown-menu button[data-active="true"] {
+.dropdown-menu button[data-active="true"],
+.dropdown-menu-portal button[data-active="true"] {
   background-color: rgba(255, 255, 255, 0.15);
   color: #a0deff;
+}
+
+.dropdown-menu button:disabled,
+.dropdown-menu-portal button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
