@@ -123,7 +123,7 @@ export default function AddSectionModal({ onAddSection }) {
       {selectedSection === 'hero' && <HeroConfigurator config={config} setConfig={setConfig} />}
       {selectedSection === 'textSection' && <TextSectionConfigurator config={config} setConfig={setConfig} />}
       <div class="mt-6 flex justify-end">
-        <button onClick={handleCreateSection} class="bg-accent-lime text-black font-bold px-6 py-2 rounded-lg hover:bg-lime-400 transition-colors">Add Section to Page</button>
+        <button onClick={handleCreateSection} class="bg-yellow-green text-black font-bold px-6 py-2 rounded-lg hover:bg-lime-400 transition-colors">Add Section to Page</button>
       </div>
     </div>
   );

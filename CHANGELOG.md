@@ -1,5 +1,23 @@
 # Project Change Log
 
+Jules #191 (fix): Correct Button Color in Add Section Modal
+Date: 2025-11-28
+Summary:
+Corrected the background color of the "Add Section to Page" button within the new modal to ensure UI consistency.
+
+Details:
+- The button's class was changed from `bg-accent-lime` to `bg-yellow-green` to match the application's established color for positive or completed actions, such as the "saved" status indicator.
+
+Impact:
+The UI is now more visually consistent, providing a more polished and professional user experience.
+
+Reflection:
+- **What was the most challenging part of this task?** Identifying the correct color class to use. A quick check of the `BottomActionBar` component confirmed `bg-yellow-green` was the correct choice.
+- **What was a surprising discovery or key learning?** Small UI inconsistencies can have a noticeable impact on the overall feel of an application. It's worth taking the time to fix them.
+- **What advice would you give the next agent who works on this code?** When adding new UI elements, always check existing components to ensure you're using the correct colors and styles from the established design system.
+
+---
+
 Jules #190 (feat): Implement "Add Section" Modal with Configuration
 Date: 2025-11-28
 Summary:
