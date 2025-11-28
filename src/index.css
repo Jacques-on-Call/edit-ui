@@ -5,6 +5,9 @@
 @tailwind utilities;
 
 @layer base {
+  html, body {
+    height: 100%;
+  }
   body {
     @apply bg-midnight-blue text-main-text font-sans;
   }

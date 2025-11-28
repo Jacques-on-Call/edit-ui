@@ -28,7 +28,7 @@ const AppContent = () => {
 
   // Editor needs a full-bleed layout, explorer is flex-col, others are padded
   const mainLayoutClasses = isEditorLayout
-    ? 'h-screen text-text'
+    ? 'h-full text-text'
     : isExplorerLayout
     ? 'relative h-screen flex flex-col text-text overflow-hidden'
     : 'relative min-h-screen text-text';
