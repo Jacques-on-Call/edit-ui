@@ -72,13 +72,6 @@ export default function EditorHeader() {
     }
   };
 
-  const handleListCycle = () => {
-    const currentType = selectionState.blockType;
-    const currentIndex = LIST_CYCLE.indexOf(currentType);
-    const nextIndex = (currentIndex + 1) % LIST_CYCLE.length;
-    handleAction('list', LIST_CYCLE[nextIndex]);
-  };
-
   const isDisabled = !activeEditor;
   const preventDefault = (e) => e.preventDefault();
 
@@ -196,9 +189,20 @@ export default function EditorHeader() {
 
           {/* GROUP 5: Lists */}
           <div class="toolbar-group">
-            <button onMouseDown={preventDefault} onClick={handleListCycle} aria-label="List" disabled={isDisabled} title="Toggle List">
-              {currentList === 'ol' ? <ListOrdered size={18} /> : <List size={18} />}
-            </button>
+            <Dropdown
+              buttonContent={
+                currentList === 'ol' ? <ListOrdered size={18} /> : <List size={18} />
+              }
+            >
+              <button onMouseDown={preventDefault} onClick={() => handleAction('list', 'ul')} aria-label="Bulleted List" disabled={isDisabled} data-active={currentList === 'ul'}>
+                <List size={18} />
+                <span class="dropdown-label">Bulleted List</span>
+              </button>
+              <button onMouseDown={preventDefault} onClick={() => handleAction('list', 'ol')} aria-label="Numbered List" disabled={isDisabled} data-active={currentList === 'ol'}>
+                <ListOrdered size={18} />
+                <span class="dropdown-label">Numbered List</span>
+              </button>
+            </Dropdown>
           </div>
 
           <span class="toolbar-divider" />

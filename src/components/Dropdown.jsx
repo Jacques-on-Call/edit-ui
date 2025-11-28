@@ -5,8 +5,12 @@ import './Dropdown.css';
 export default function Dropdown({ buttonContent, children }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  console.log('[Dropdown] render, isOpen:', isOpen); // Log on render
 
-  const toggleDropdown = () => setIsOpen(!isOpen);
+  const toggleDropdown = () => {
+    console.log('[Dropdown] toggleDropdown called. Current isOpen:', isOpen);
+    setIsOpen(!isOpen);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
