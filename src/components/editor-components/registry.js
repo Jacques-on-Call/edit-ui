@@ -8,6 +8,7 @@ import FooterEditor from './FooterEditor';
 const editorComponentRegistry = {
   'hero': HeroEditor,
   'bodySection': BodySectionEditor,
+  'textSection': BodySectionEditor, // <-- ADDED: alias to restore previously-saved sections
   'footer': FooterEditor,
 };
 
