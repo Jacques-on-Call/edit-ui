@@ -2,6 +2,7 @@ import { h } from 'preact';
 import { useState, useCallback } from 'preact/hooks';
 import { useUI } from '../contexts/UIContext';
 import { X, ArrowLeft } from 'lucide-preact';
+import ImageUploader from './ImageUploader';
 
 const SectionThumbnail = ({ title, description, onClick, children }) => (
   <button
@@ -58,16 +59,47 @@ const HeroConfigurator = ({ config, setConfig }) => {
 };
 
 const TextSectionConfigurator = ({ config, setConfig }) => {
+  const [uploadMode, setUploadMode] = useState('url'); // 'url' or 'upload'
+
+  const handleImageComplete = ({ path, alt }) => {
+    setConfig({ ...config, headerImageUrl: path, headerImageAlt: alt });
+  };
+
   return (
     <div class="space-y-4">
       <CheckboxInput label="Include Title" checked={config.includeTitle} onChange={e => setConfig({ ...config, includeTitle: e.target.checked })} />
+      <div>
+        <CheckboxInput label="Add Header Image" checked={config.includeHeaderImage} onChange={e => setConfig({ ...config, includeHeaderImage: e.target.checked })} />
+        {config.includeHeaderImage && (
+          <div class="mt-2 pl-6 space-y-3">
+            <div class="flex items-center space-x-4">
+              <label class="flex items-center space-x-2">
+                <input type="radio" name="imageSource" value="url" checked={uploadMode === 'url'} onChange={() => setUploadMode('url')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
+                <span class="text-white">From URL</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="radio" name="imageSource" value="upload" checked={uploadMode === 'upload'} onChange={() => setUploadMode('upload')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
+                <span class="text-white">Upload</span>
+              </label>
+            </div>
+            {uploadMode === 'url' ? (
+              <div>
+                <UrlInput placeholder="https://example.com/header.jpg" value={config.headerImageUrl} onInput={e => setConfig({...config, headerImageUrl: e.target.value})} />
+                <input type="text" placeholder="Enter Alt Text" value={config.headerImageAlt} onInput={e => setConfig({...config, headerImageAlt: e.target.value})} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
+              </div>
+            ) : (
+              <ImageUploader onComplete={handleImageComplete} />
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
 const DEFAULT_CONFIGS = {
   hero: { includeSlogan: true, includeBody: true, includeFeatureImage: false, featureImageUrl: '', includeBackgroundImage: false, backgroundImageUrl: '' },
-  textSection: { includeTitle: true },
+  textSection: { includeTitle: true, includeHeaderImage: false, headerImageUrl: '', headerImageAlt: '' },
 };
 
 export default function AddSectionModal({ onAddSection }) {

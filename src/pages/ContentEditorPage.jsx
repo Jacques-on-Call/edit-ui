@@ -201,6 +201,10 @@ export default function ContentEditorPage(props) {
     } else if (type === 'textSection') {
       if (config.includeTitle) newSection.props.title = 'New Section Title';
       newSection.props.body = '<p>Start writing your content here.</p>';
+      if (config.includeHeaderImage) {
+        newSection.props.headerImageUrl = config.headerImageUrl;
+        newSection.props.headerImageAlt = config.headerImageAlt;
+      }
     }
 
     const newSections = [...(sections || []), newSection];
