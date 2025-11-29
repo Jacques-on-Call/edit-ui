@@ -8,9 +8,9 @@ export default function BodySectionEditor({ props, onChange }) {
   };
 
   return (
-    // DEV NOTE: Do not add horizontal padding (e.g., px-2) to this container.
-    // The parent layout is responsible for managing horizontal spacing.
-    // This ensures a consistent edge-to-edge look for all sections.
+    // DEV NOTE: All styling in this component, including padding and negative
+    // margins, is highly specific to the design. Do not make any style
+    // changes without explicit consent from the project lead.
     <div class="flex flex-col">
       {props?.featureImage && (
         <img
@@ -25,13 +25,13 @@ export default function BodySectionEditor({ props, onChange }) {
           value={props?.title || ''}
           onChange={(newValue) => handleFieldChange('title', newValue)}
           placeholder="Add a section title..."
-          className="text-4xl font-extrabold text-white tracking-tight"
+          className="text-4xl font-extrabold text-white tracking-tight px-2"
         />
         <LexicalField
           value={props?.body || ''}
           onChange={(newValue) => handleFieldChange('body', newValue)}
           placeholder="Start writing your content for this section..."
-          className="text-lg text-gray-300 -mt-8"
+          className="text-lg text-gray-300 -mt-8 px-2"
         />
       </div>
     </div>
