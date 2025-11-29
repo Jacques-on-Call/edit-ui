@@ -1,23 +1,23 @@
 # Project Change Log
 
-Jules #189 (fix): Stabilize Content Editor
+Jules #189 (fix): Stabilize Editor, Restore Styles, and Fix Image Deploys
 Date: 2025-11-29
 Summary:
-Fixed a critical "Maximum call stack size exceeded" error in the content editor caused by an infinite re-render loop. Also renamed `TextSectionEditor` to `BodySectionEditor` to better reflect its purpose and restored lost styling after a workspace reset.
+Fixed a critical "Maximum call stack size exceeded" error, restored lost styling by correcting the Tailwind CSS configuration, and fixed a bug where new image uploads were not triggering a site rebuild.
 
 Details:
-- **Infinite Loop Fix:** The root cause was a feedback loop in `LexicalEditor.jsx`. The `onChange` event would trigger a state update, which would cause a re-render, which the editor would then interpret as a new change, leading to an infinite cycle. A guard was added to the `handleOnChange` function to ensure the `onChange` callback is only fired when the HTML content has actually changed.
-- **Style Restoration:** Re-applied the correct `px-2` horizontal padding and `-mt-4` vertical spacing to `HeroEditor.jsx` and `BodySectionEditor.jsx` to restore the intended document-like feel that was lost during a workspace reset.
-- **Component Rename:** Renamed `TextSectionEditor.jsx` to `BodySectionEditor.jsx` for clarity.
-- **Registry Update:** Updated the component registry in `registry.js` to reflect the component rename and map the `bodySection` type correctly.
+- **Infinite Loop Fix:** The root cause of the editor crash was a feedback loop in `LexicalEditor.jsx`. A guard was added to the `handleOnChange` function to prevent re-renders unless the content has actually changed.
+- **Styling Fix:** The missing styles were caused by an incorrect `content` path in `tailwind.config.cjs`. The path was updated to correctly scan all `.jsx` files within the `src` directory, ensuring Tailwind generates the necessary classes for all components.
+- **Image Deployment Fix:** New images were not appearing on the live site because the image upload handler was not triggering a Cloudflare Pages deployment. The deploy hook trigger was added to the `handleImageUploadRequest` function in the backend, ensuring the site is rebuilt after every new image upload.
+- **Component Rename:** Renamed `TextSectionEditor.jsx` to `BodySectionEditor.jsx` for clarity and updated the component registry.
 
 Impact:
-The content editor is now stable and no longer crashes when typing. The component name is more descriptive, and the intended styling has been restored, improving both stability and user experience.
+The content editor is now stable. The UI styling is fully restored, providing the intended user experience. The image upload workflow is now complete, with new images correctly triggering a site rebuild and appearing on the live site.
 
 Reflection:
-- **What was the most challenging part of this task?** Recovering from the accidental workspace reset. It required carefully reviewing the changelog to identify and re-apply the specific styling changes that had been lost, while ensuring the primary bug fix remained intact.
-- **What was a surprising discovery or key learning?** The `reset_all` command is a powerful but blunt instrument. It's a reminder to be extremely careful when performing destructive git operations and to always have a clear understanding of the state you are reverting to. The changelog proved to be an invaluable resource for recovering the lost code.
-- **What advice would you give the next agent who works on this code?** Before using `reset_all`, consider if there are more targeted ways to undo changes, like `restore_file`. If a full reset is necessary, be prepared to use the `CHANGELOG.md` to reconstruct any recent, valuable changes that might be lost.
+- **What was the most challenging part of this task?** The most challenging part was correctly diagnosing the styling issue after multiple failed attempts. The problem wasn't in the component code itself but in the build tooling (Tailwind's configuration), which was a much more subtle and difficult-to-find error.
+- **What was a surprising discovery or key learning?** When UI styles are missing, and the classes appear correct in the JSX, the problem is almost certainly in the build configuration. Always verify that the CSS framework's content scanner is correctly configured to see all relevant source files, especially after renaming or moving them.
+- **What advice would you give the next agent who works on this code?** Don't assume a problem is in the component logic. If a fix seems obvious but doesn't work, take a step back and investigate the entire rendering pipeline, from the build tools to the final CSS output. Also, for backend handlers, ensure that any action that modifies site content (like uploading an image) is followed by the necessary build trigger.
 
 ---
 
