@@ -9,6 +9,14 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8787',
         changeOrigin: true,
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            const cookie = req.headers.cookie;
+            if (cookie) {
+              proxyReq.setHeader('Cookie', cookie);
+            }
+          });
+        },
       },
     },
   },

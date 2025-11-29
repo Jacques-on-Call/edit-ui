@@ -1,5 +1,24 @@
 # Project Change Log
 
+Jules #193 (fix): Correct Vite Proxy for Authenticated Image Uploads
+Date: 2025-11-28
+Summary:
+Fixed a critical bug where image uploads were failing silently. The root cause was that the Vite development proxy was not forwarding the browser's `Cookie` header on `multipart/form-data` requests, causing the backend to reject the upload with an authentication error.
+
+Details:
+- **Vite Proxy Fix:** Updated `easy-seo/vite.config.js` to include a `configure` function for the `/api` proxy. This function manually reads the `Cookie` header from the original client request and sets it on the proxied request to the backend.
+- **Diagnostic Logging:** Kept the detailed diagnostic logs in both the frontend (`ImageUploader.jsx`) and backend (`content.js`) to confirm the fix and monitor the feature's stability.
+
+Impact:
+Image uploads from the "Add Section" modal now work correctly in the local development environment. This unblocks the final phase of the image upload feature integration.
+
+Reflection:
+- **What was the most challenging part of this task?** The challenge was the "silent" nature of the failure. The frontend thought the request was sent, but the backend never received it due to the proxy's misconfiguration. The breakthrough came from analyzing the user-provided logs which showed a complete absence of backend log entries.
+- **What was a surprising discovery or key learning?** Vite's proxy, by default, may not forward all necessary headers for every type of request. For complex requests like `multipart/form-data` that require authentication, you may need to explicitly configure the proxy to pass specific headers like `Cookie`.
+- **What advice would you give the next agent who works on this code?** When a proxied API call fails for no apparent reason, especially if it involves authentication, your first step should be to verify the proxy configuration. Check if it's correctly forwarding essential headers like `Authorization` or `Cookie`.
+
+---
+
 Jules #192 (debug): Instrument Image Upload Flow
 Date: 2025-11-28
 Summary:
