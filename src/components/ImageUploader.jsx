@@ -27,38 +27,51 @@ export default function ImageUploader({ onComplete }) {
   };
 
   const handleUpload = async () => {
+    console.log('[ImageUploader] handleUpload triggered.');
     if (!file || !selectedRepo) {
+      console.error('[ImageUploader] Pre-flight check failed. File or repo missing.', { hasFile: !!file, hasRepo: !!selectedRepo });
       setError('Please select a file and ensure a repository is selected.');
       return;
     }
 
+    console.log('[ImageUploader] Setting status to "uploading".');
     setStatus('uploading');
     setError(null);
 
     const formData = new FormData();
     formData.append('image', file);
     formData.append('repo', selectedRepo.full_name);
-    // Note: Alt text is handled by the parent component for now.
+    console.log('[ImageUploader] FormData prepared.', { fileName: file.name, repo: selectedRepo.full_name });
 
     try {
+      console.log('[ImageUploader] Initiating fetch to /api/image/upload...');
       const response = await fetch('/api/image/upload', {
         method: 'POST',
         body: formData,
         // Don't set Content-Type header; browser does it for FormData
       });
+      console.log('[ImageUploader] Fetch call completed.', { status: response.status, ok: response.ok });
 
       const result = await response.json();
+      console.log('[ImageUploader] Response JSON parsed.', { result });
 
       if (!response.ok) {
-        throw new Error(result.message || 'Unknown upload error');
+        console.error('[ImageUploader] Response was not OK. Throwing error.');
+        throw new Error(result.message || `Upload failed with status ${response.status}`);
       }
 
+      console.log('[ImageUploader] Upload successful. Setting status to "success".');
       setStatus('success');
       if (onComplete) {
+        console.log('[ImageUploader] Calling onComplete callback with result.');
         onComplete({ path: result.path, alt: altText });
       }
     } catch (err) {
-      console.error('Upload failed:', err);
+      console.error('[ImageUploader] CATCH BLOCK: An error occurred during upload.', {
+        errorMessage: err.message,
+        errorStack: err.stack,
+        error: err,
+      });
       setStatus('error');
       setError(err.message);
     }

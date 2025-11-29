@@ -1,5 +1,24 @@
 # Project Change Log
 
+Jules #192 (debug): Instrument Image Upload Flow
+Date: 2025-11-28
+Summary:
+Added detailed, prefixed console logging to the entire image upload flow to diagnose a silent failure.
+
+Details:
+- **Frontend:** Instrumented the `handleUpload` function in `ImageUploader.jsx` with logs at every step: pre-flight checks, FormData creation, fetch initiation, and the `try`/`catch` blocks.
+- **Backend:** Instrumented the `handleImageUploadRequest` function in `cloudflare-worker-src/routes/content.js` to trace FormData parsing, filename generation, Base64 conversion, and the request/response cycle with the GitHub API.
+
+Impact:
+This change is for debugging purposes only and has no impact on user-facing functionality. The new logs will provide the necessary visibility to pinpoint the exact cause of the image upload failure.
+
+Reflection:
+- **What was the most challenging part of this task?** The challenge is the unknown nature of the bug. A silent failure means we need to be methodical in our instrumentation.
+- **What was a surprising discovery or key learning?** This reinforces the value of having a robust debugging process. When a feature fails silently, adding detailed logging is the most reliable way to uncover the root cause.
+- **What advice would you give the next agent who works on this code?** Use the logs from this instrumentation to trace the data flow. The issue is likely a silent error in one of the async steps (e.g., a network error that isn't being caught correctly, or a malformed response from the GitHub API).
+
+---
+
 Jules #191 (fix): Correct Button Color in Add Section Modal
 Date: 2025-11-28
 Summary:
