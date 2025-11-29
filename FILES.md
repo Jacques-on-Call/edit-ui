@@ -41,7 +41,15 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/components/EditorHeader.jsx`**: The header component for the content editor. Now context-aware.
 -   **`src/components/BlockTree.jsx`**: The component for displaying the block structure of a page.
 -   **`src/components/BottomActionBar.jsx`**: The bottom action bar for the content editor.
--   **`src/components/editor-components/LexicalField.jsx`**: A self-contained, reusable rich-text field powered by Lexical. Replaced the former `EditableField`.
+-   **`src/components/SectionsEditor.jsx`**: The main component for rendering and managing the different sections of a page.
+-   **`src/components/LexicalEditor.jsx`**: The core rich-text editor component, built on Lexical.
+
+#### **Editor Components (`src/components/editor-components`)**
+-   **`registry.js`**: Maps section type strings (e.g., 'hero', 'bodySection') to their corresponding editor components.
+-   **`BodySectionEditor.jsx`**: The editor component for a standard block of text with a title and a body.
+-   **`HeroEditor.jsx`**: The editor component for the hero section.
+-   **`FooterEditor.jsx`**: The editor component for the footer section.
+-   **`LexicalField.jsx`**: A self-contained, reusable rich-text field powered by Lexical.
 
 ### **Hooks**
 

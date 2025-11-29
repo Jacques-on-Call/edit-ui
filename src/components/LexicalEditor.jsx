@@ -279,11 +279,14 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
   const handleOnChange = (editorState, editor) => {
     // This can be very noisy, so we log conditionally.
     // console.log(`[LexicalEditor-onChange] Content updated for slug: ${slug}`);
-    editor.update(() => {
+    editor.getEditorState().read(() => {
       const htmlString = $generateHtmlFromNodes(editor);
-      // Keep track of the last HTML we sent out.
-      lastHtmlRef.current = htmlString;
-      onChange(htmlString);
+      // GUARD: Only call onChange if the HTML has actually changed.
+      // This prevents the infinite loop.
+      if (htmlString !== lastHtmlRef.current) {
+        lastHtmlRef.current = htmlString;
+        onChange(htmlString);
+      }
     });
   };
 

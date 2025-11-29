@@ -1,5 +1,25 @@
 # Project Change Log
 
+Jules #189 (fix): Stabilize Content Editor
+Date: 2025-11-29
+Summary:
+Fixed a critical "Maximum call stack size exceeded" error in the content editor caused by an infinite re-render loop. Also renamed `TextSectionEditor` to `BodySectionEditor` to better reflect its purpose.
+
+Details:
+- **Infinite Loop Fix:** The root cause was a feedback loop in `LexicalEditor.jsx`. The `onChange` event would trigger a state update, which would cause a re-render, which the editor would then interpret as a new change, leading to an infinite cycle. A guard was added to the `handleOnChange` function to ensure the `onChange` callback is only fired when the HTML content has actually changed.
+- **Component Rename:** Renamed `TextSectionEditor.jsx` to `BodySectionEditor.jsx` for clarity.
+- **Registry Update:** Updated the component registry in `registry.js` to reflect the component rename and map the `bodySection` type correctly.
+
+Impact:
+The content editor is now stable and no longer crashes when typing. The component name is more descriptive, improving code clarity for future development.
+
+Reflection:
+- **What was the most challenging part of this task?** Tracing the source of the infinite loop. The error message pointed to a recursion, but the actual cause was a subtle feedback loop between the editor's state and its props.
+- **What was a surprising discovery or key learning?** How critical it is to guard `onChange` handlers in controlled components, especially with complex editors like Lexical. A simple check to see if the value has actually changed is essential to prevent these kinds of feedback loops.
+- **What advice would you give the next agent who works on this code?** When dealing with a "Maximum call stack size exceeded" error in a React/Preact component, immediately investigate any `onChange` or `useEffect` hooks that update state. Look for cycles where a state update could be causing the very event that triggers it.
+
+---
+
 Jules #193 (fix): Correct Vite Proxy for Authenticated Image Uploads
 Date: 2025-11-28
 Summary:
