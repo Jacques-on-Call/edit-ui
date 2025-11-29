@@ -8,9 +8,6 @@ export default function BodySectionEditor({ props, onChange }) {
   };
 
   return (
-    // DEV NOTE: All styling in this component, including padding and negative
-    // margins, is highly specific to the design. Do not make any style
-    // changes without explicit consent from the project lead.
     <div class="flex flex-col">
       {props?.featureImage && (
         <img

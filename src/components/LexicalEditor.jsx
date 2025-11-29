@@ -300,11 +300,18 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
       <div class={`relative ${className || ''}`}>
         <RichTextPlugin
           contentEditable={
-            <div onFocus={onFocus} onBlur={onBlur}>
+            // DEV NOTE: The `px-2` class here is CRITICAL for the mobile-first
+            // design. It prevents text from touching the screen edges.
+            // DO NOT REMOVE OR ALTER without explicit consent from the project lead,
+            // as this has been a recurring issue.
+            <div onFocus={onFocus} onBlur={onBlur} class="px-2">
               <ContentEditable className="editor-input" />
             </div>
           }
-          placeholder={<div className="editor-placeholder">{placeholder || 'Start typing...'}</div>}
+          placeholder={
+            // DEV NOTE: This padding must match the ContentEditable wrapper.
+            <div className="editor-placeholder px-2">{placeholder || 'Start typing...'}</div>
+          }
           ErrorBoundary={LexicalErrorBoundary}
         />
         <HistoryPlugin />
