@@ -1,5 +1,31 @@
 # Project Change Log
 
+Jules #195 (refactor): Unify Editor Styles and Establish Visual Hierarchy
+Date: 2025-11-29
+Summary:
+Refactored the `HeroEditor` and `BodySectionEditor` to share a consistent "document-like" feel, and critically, established a clear visual hierarchy between the H1 and H2 titles by adjusting their font sizes.
+
+Details:
+- **Visual Hierarchy:**
+  - The `HeroEditor`'s title (H1) was increased to `text-5xl` to give it clear prominence as the primary page heading.
+  - The `BodySectionEditor`'s title (H2) remains at `text-4xl`, creating a distinct and correct visual hierarchy.
+- **Consistent Typography:**
+  - The `HeroEditor`'s body text was changed from `text-base` to `text-lg` to match the `BodySectionEditor`.
+- **Unified Spacing:**
+  - A consistent, tight vertical spacing (`-mt-8`) was applied between all fields in both components, creating a natural document flow.
+- **Simplified Structure:**
+  - The container-specific styling (background, shadow, etc.) was removed from the `BodySectionEditor`, making it a transparent component just like the `HeroEditor`.
+
+Impact:
+The content editor now has a cohesive and visually hierarchical design that aligns with the "document, not a form" goal. The clear distinction between H1 and H2 titles improves the user's understanding of the document structure, while the unified styling creates a seamless editing experience.
+
+Reflection:
+- **What was the most challenging part of this task?** The most challenging part was correctly interpreting the user's feedback about the H1 and H2 titles. The initial implementation incorrectly made them identical. This was a crucial lesson in understanding that "consistency" does not always mean "identical," especially when it comes to semantic elements like headings.
+- **What was a surprising discovery or key learning?** A small change in font size (`text-4xl` vs. `text-5xl`) is a powerful and sufficient tool to create a clear and immediate sense of hierarchy.
+- **What advice would you give the next agent who works on this code?** When feedback mentions two elements looking "the same," the solution is often to find a single, strong visual property (like font size or weight) to differentiate them, rather than changing multiple properties. Always prioritize semantic correctness in the visual design.
+
+---
+
 Jules #195 (fix): Refine Body Section Editor Styles
 Date: 2025-11-29
 Summary:

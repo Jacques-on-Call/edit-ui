@@ -12,19 +12,19 @@ export default function HeroEditor({ props, onChange }) {
         value={props?.title || ''}
         onChange={(newValue) => handleFieldChange('title', newValue)}
         placeholder="Enter your title (H1)"
-        className="text-4xl font-bold text-white tracking-tight"
+        className="text-5xl font-extrabold text-white tracking-tight"
       />
       <LexicalField
         value={props?.subtitle || ''}
         onChange={(newValue) => handleFieldChange('subtitle', newValue)}
         placeholder="Enter your slogan (optional)"
-        className="text-lg text-gray-400"
+        className="text-lg text-gray-400 -mt-8"
       />
       <LexicalField
         value={props?.body || ''}
         onChange={(newValue) => handleFieldChange('body', newValue)}
         placeholder="Enter your paragraph (optional)"
-        className="text-base text-gray-300"
+        className="text-lg text-gray-300 -mt-8"
       />
     </div>
   );

@@ -8,12 +8,12 @@ export default function BodySectionEditor({ props, onChange }) {
   };
 
   return (
-    <div class="flex flex-col px-2 bg-gray-800 rounded-lg shadow-lg mb-4">
+    <div class="flex flex-col px-2">
       {props?.featureImage && (
         <img
           src={props.featureImage}
           alt={props?.title || 'Section image'}
-          class="w-full h-64 object-cover rounded-t-lg mb-4"
+          class="w-full h-64 object-cover rounded-lg mb-4"
         />
       )}
 
@@ -28,7 +28,7 @@ export default function BodySectionEditor({ props, onChange }) {
           value={props?.body || ''}
           onChange={(newValue) => handleFieldChange('body', newValue)}
           placeholder="Start writing your content for this section..."
-          className="text-lg text-gray-300 -mt-6"
+          className="text-lg text-gray-300 -mt-8"
         />
       </div>
     </div>
