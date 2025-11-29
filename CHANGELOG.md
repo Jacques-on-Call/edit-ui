@@ -1,5 +1,24 @@
 # Project Change Log
 
+Jules #196 (fix): Standardize and Protect Editor Padding
+Date: 2025-11-29
+Summary:
+Resolved a recurring horizontal padding inconsistency in the content editor. This fix ensures all editor sections have edge-to-edge containers while maintaining consistent internal text padding, and adds protective developer notes to prevent future regressions.
+
+Details:
+- **Standardized Padding:** Confirmed that the correct `px-2` horizontal padding is applied *inside* the shared `LexicalEditor` component. This allows parent containers like `HeroEditor` and `BodySectionEditor` to be full-width, creating the desired edge-to-edge visual effect.
+- **Protective Developer Notes:** To prevent this specific styling from being accidentally reverted in the future, clear, explanatory comments were added to the top of all three relevant files: `LexicalEditor.jsx`, `HeroEditor.jsx`, and `BodySectionEditor.jsx`. The notes explain the padding strategy and warn against applying horizontal padding to the outer containers.
+
+Impact:
+The editor's visual design is now stable and correct, adhering to the user's specification. The protective notes will help maintain this consistency and prevent future developer effort from being wasted on re-solving this same issue.
+
+Reflection:
+- **What was the most challenging part of this task?** The core challenge was not in the code, but in ensuring the solution was permanent. The user's feedback made it clear this was a recurring issue. The most important part of the task was adding the developer notes to safeguard the fix.
+- **What was a surprising discovery or key learning?** This task highlights that sometimes the most important part of a fix isn't the code itself, but the documentation and communication around it. A well-placed comment can be more valuable than a line of code.
+- **What advice would you give the next agent who works on this code?** Read the comments at the top of the editor components. They contain important, hard-won context about the styling architecture. Respect the established pattern of keeping container components full-width and applying padding at the lowest possible level.
+
+---
+
 Jules #195 (refactor): Unify Editor Styles and Establish Visual Hierarchy
 Date: 2025-11-29
 Summary:
