@@ -3,20 +3,21 @@
 Jules #189 (fix): Stabilize Content Editor
 Date: 2025-11-29
 Summary:
-Fixed a critical "Maximum call stack size exceeded" error in the content editor caused by an infinite re-render loop. Also renamed `TextSectionEditor` to `BodySectionEditor` to better reflect its purpose.
+Fixed a critical "Maximum call stack size exceeded" error in the content editor caused by an infinite re-render loop. Also renamed `TextSectionEditor` to `BodySectionEditor` to better reflect its purpose and restored lost styling after a workspace reset.
 
 Details:
 - **Infinite Loop Fix:** The root cause was a feedback loop in `LexicalEditor.jsx`. The `onChange` event would trigger a state update, which would cause a re-render, which the editor would then interpret as a new change, leading to an infinite cycle. A guard was added to the `handleOnChange` function to ensure the `onChange` callback is only fired when the HTML content has actually changed.
+- **Style Restoration:** Re-applied the correct `px-2` horizontal padding and `-mt-4` vertical spacing to `HeroEditor.jsx` and `BodySectionEditor.jsx` to restore the intended document-like feel that was lost during a workspace reset.
 - **Component Rename:** Renamed `TextSectionEditor.jsx` to `BodySectionEditor.jsx` for clarity.
 - **Registry Update:** Updated the component registry in `registry.js` to reflect the component rename and map the `bodySection` type correctly.
 
 Impact:
-The content editor is now stable and no longer crashes when typing. The component name is more descriptive, improving code clarity for future development.
+The content editor is now stable and no longer crashes when typing. The component name is more descriptive, and the intended styling has been restored, improving both stability and user experience.
 
 Reflection:
-- **What was the most challenging part of this task?** Tracing the source of the infinite loop. The error message pointed to a recursion, but the actual cause was a subtle feedback loop between the editor's state and its props.
-- **What was a surprising discovery or key learning?** How critical it is to guard `onChange` handlers in controlled components, especially with complex editors like Lexical. A simple check to see if the value has actually changed is essential to prevent these kinds of feedback loops.
-- **What advice would you give the next agent who works on this code?** When dealing with a "Maximum call stack size exceeded" error in a React/Preact component, immediately investigate any `onChange` or `useEffect` hooks that update state. Look for cycles where a state update could be causing the very event that triggers it.
+- **What was the most challenging part of this task?** Recovering from the accidental workspace reset. It required carefully reviewing the changelog to identify and re-apply the specific styling changes that had been lost, while ensuring the primary bug fix remained intact.
+- **What was a surprising discovery or key learning?** The `reset_all` command is a powerful but blunt instrument. It's a reminder to be extremely careful when performing destructive git operations and to always have a clear understanding of the state you are reverting to. The changelog proved to be an invaluable resource for recovering the lost code.
+- **What advice would you give the next agent who works on this code?** Before using `reset_all`, consider if there are more targeted ways to undo changes, like `restore_file`. If a full reset is necessary, be prepared to use the `CHANGELOG.md` to reconstruct any recent, valuable changes that might be lost.
 
 ---
 
@@ -815,7 +816,7 @@ Challenge: The most challenging part was recovering from a state of cascading fa
 Discovery: The "baby steps" principle is not just a suggestion; it's a critical safety mechanism. Attempting to bundle even closely related changes can lead to unpredictable outcomes and make rollbacks nearly impossible. The process is as important as the code.
 Advice: If the development environment's tools become unstable, do not try to fight them. Fall back to a known-good state. A full reset, while seemingly drastic, is often faster and safer than trying to untangle a corrupted workspace. Always, always, always make the smallest possible change and verify it completely before moving on.
 
-Jacques 25/11/18 reset for the third time the process of getting the home.astro live is breaking the app in vaious ways . the ideal is to do this process safly so as to be able to solve the challenges without serios regression. after being burnt by days of bug hunting im taking the reset path now.
+Jacques 251118 reset for the third time the process of getting the home.astro live is breaking the app in vaious ways . the ideal is to do this process safly so as to be able to solve the challenges without serios regression. after being burnt by days of bug hunting im taking the reset path now.
 Jules #167 (Draft Workflow Implementation)
 Date: 2025-11-16
 Summary:

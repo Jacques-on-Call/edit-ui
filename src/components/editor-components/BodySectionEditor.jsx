@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import LexicalField from './LexicalField';
 
-export default function TextSectionEditor({ props, onChange }) {
+export default function BodySectionEditor({ props, onChange }) {
   const handleFieldChange = (fieldName, fieldValue) => {
     onChange({ ...props, [fieldName]: fieldValue });
   };
