@@ -7,7 +7,10 @@ export default function HeroEditor({ props, onChange }) {
   };
 
   return (
-    <div class="flex flex-col px-2">
+    // DEV NOTE: Do not add horizontal padding (e.g., px-2) to this container.
+    // The parent layout is responsible for managing horizontal spacing.
+    // This ensures a consistent edge-to-edge look for all sections.
+    <div class="flex flex-col">
       <LexicalField
         value={props?.title || ''}
         onChange={(newValue) => handleFieldChange('title', newValue)}
