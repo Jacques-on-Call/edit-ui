@@ -1,5 +1,24 @@
 # Project Change Log
 
+Jules #198 (fix): Correct Editor Spacing and Placeholder Behavior
+Date: 2025-11-30
+Summary:
+Fixed two distinct visual bugs in the content editor: corrected overlapping fields in the Hero section and resolved an issue where new pages were created with placeholder text as real content.
+
+Details:
+- **Vertical Spacing Fix:** In `HeroEditor.jsx`, the aggressive negative margin (`-mt-8`) was causing the "slogan" and "body" fields to be pulled up and hidden behind the main title. These negative margin classes have been removed, restoring the correct vertical layout.
+- **Placeholder Behavior Fix:** The root cause of the placeholder issue was traced to the `getDefaultSections` function in `ContentEditorPage.jsx`. This function was incorrectly initializing new sections with hardcoded strings (e.g., "Placeholder Hero Title"). The function was updated to initialize all content fields with an empty string (`''`), which allows the editor's native placeholder functionality to work as intended.
+
+Impact:
+The content editor is now more visually correct and intuitive. The layout of the Hero section is no longer broken, and users creating new pages will start with a clean, empty slate, improving the overall authoring experience.
+
+Reflection:
+- **What was the most challenging part of this task?** The most challenging part was correctly diagnosing the placeholder issue. My initial assumption was that the bug was in the `LexicalField` component itself. It required tracing the data flow all the way up the component tree to the initial data source in `ContentEditorPage.jsx` to find the true root cause.
+- **What was a surprising discovery or key learning?** This was a powerful lesson in "garbage in, garbage out." The editor components were behaving correctly based on the props they were given; the problem was that the initial props were flawed. It's a reminder to always validate the data a component receives before assuming its internal logic is broken.
+- **What advice would you give the next agent who works on this code?** When a component displays incorrect initial data, don't just debug the component. Your first step should be to log the incoming props to see exactly what data it's receiving. The problem is often further upstream, where the data is first created or loaded.
+
+---
+
 Jules #198 (fix): Make editor page background transparent
 Date: 2025-11-30
 Summary:

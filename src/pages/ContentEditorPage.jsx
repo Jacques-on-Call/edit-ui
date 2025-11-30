@@ -63,19 +63,19 @@ export default function ContentEditorPage(props) {
       id: `section-${Date.now()}-1`,
       type: 'hero',
       props: {
-        title: 'Placeholder Hero Title',
-        subtitle: 'Placeholder hero subtitle text.',
-        body: '<p>This is the default body content for the hero section. You can edit this.</p>',
+        title: '',
+        subtitle: '',
+        body: '',
       },
     },
     {
       id: `section-${Date.now()}-2`,
       type: 'textSection',
       props: {
-        title: 'Placeholder Text Section',
-        body: '<p>This is some default placeholder text for a standard text section.</p>',
-        ctaText: 'Learn More',
-        ctaHref: '#',
+        title: '',
+        body: '',
+        ctaText: '',
+        ctaHref: '',
       },
     },
   ], []);
