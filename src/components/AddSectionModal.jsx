@@ -72,6 +72,7 @@ const TextSectionConfigurator = ({ config, setConfig, pageSlug }) => {
 
   return (
     <div class="space-y-4">
+      {/* Force redeploy */}
       <CheckboxInput label="Include Title" checked={config.includeTitle} onChange={e => setConfig({ ...config, includeTitle: e.target.checked })} />
       <div>
         <CheckboxInput label="Add Header Image" checked={config.includeHeaderImage} onChange={e => setConfig({ ...config, includeHeaderImage: e.target.checked })} />
