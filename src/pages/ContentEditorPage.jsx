@@ -431,7 +431,7 @@ export default function ContentEditorPage(props) {
 
   return (
     <EditorProvider> {/* <-- WRAP WITH PROVIDER */}
-      <div class="flex flex-col h-full bg-gray-900 text-white">
+      <div class="flex flex-col h-full bg-transparent text-white">
         <EditorHeader /> {/* <-- REMOVED editorApiRef prop */}
         <main class="flex-grow overflow-y-auto" style={{ paddingBottom: 'calc(64px + 1rem + env(safe-area-inset-bottom))' }}>
           <div style={{ paddingTop: 'var(--header-h)' }}>
