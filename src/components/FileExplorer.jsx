@@ -133,7 +133,6 @@ const fetchDetailsForFile = useCallback(async (file) => {
       }
 
       setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
-
     } catch (err) {
       // This is the global catch block for the entire process
       console.error(`CRITICAL: An unexpected error occurred while processing ${file.path}:`, err);
