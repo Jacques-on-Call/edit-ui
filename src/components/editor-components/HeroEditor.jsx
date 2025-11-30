@@ -14,8 +14,8 @@ export default function HeroEditor({ props, onChange }) {
   };
 
   return (
-    <div class="bg-black">
-      <div class="bg-gray-800 mx-px">
+    <div class="bg-transparent">
+      <div class="bg-gray-800 mx-px" style="box-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
         <div class="px-[2px]">
           <LexicalField
             value={props?.title || ''}
