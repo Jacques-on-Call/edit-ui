@@ -8,14 +8,19 @@
 import { h } from 'preact';
 import LexicalField from './LexicalField';
 import { Image } from 'lucide-preact';
+import { useAuth } from '../../contexts/AuthContext';
+import { getPreviewImageUrl } from '../../lib/imageHelpers';
 
 export default function BodySectionEditor({ props, onChange }) {
   console.log('[BodySectionEditor] RENDER', { props });
+  const { selectedRepo } = useAuth();
+  
   const handleFieldChange = (fieldName, fieldValue) => {
     onChange({ ...props, [fieldName]: fieldValue });
   };
 
-  const imageUrl = props?.featureImage || props?.headerImageUrl;
+  const rawImagePath = props?.featureImage || props?.headerImageUrl;
+  const imageUrl = getPreviewImageUrl(rawImagePath, selectedRepo?.full_name);
 
   return (
     <div class="bg-transparent">

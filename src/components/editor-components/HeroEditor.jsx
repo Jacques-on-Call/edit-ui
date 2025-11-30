@@ -7,16 +7,40 @@
 
 import { h } from 'preact';
 import LexicalField from './LexicalField';
+import { useAuth } from '../../contexts/AuthContext';
+import { getPreviewImageUrl } from '../../lib/imageHelpers';
 
 export default function HeroEditor({ props, onChange }) {
+  const { selectedRepo } = useAuth();
+  
   const handleFieldChange = (fieldName, fieldValue) => {
     onChange({ ...props, [fieldName]: fieldValue });
   };
 
+  const featureImageUrl = getPreviewImageUrl(props?.featureImageUrl, selectedRepo?.full_name);
+  const backgroundImageUrl = getPreviewImageUrl(props?.backgroundImageUrl, selectedRepo?.full_name);
+
+  // Background style if background image is present
+  const containerStyle = backgroundImageUrl
+    ? {
+        boxShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+        backgroundImage: `url(${backgroundImageUrl})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }
+    : { boxShadow: '2px 2px 4px rgba(0,0,0,0.5)' };
+
   return (
     <div class="bg-transparent">
-      <div class="bg-gray-800 mx-px" style="box-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+      <div class="bg-gray-800 mx-px" style={containerStyle}>
         <div class="px-[2px]">
+          {featureImageUrl && (
+            <img
+              src={featureImageUrl}
+              alt={props?.title || 'Hero feature image'}
+              class="w-full h-64 object-cover rounded-lg mb-4"
+            />
+          )}
           <LexicalField
             value={props?.title || ''}
             onChange={(newValue) => handleFieldChange('title', newValue)}

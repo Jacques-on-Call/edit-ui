@@ -1,5 +1,29 @@
 # Project Change Log
 
+GitHub Copilot (fix): Fix Image Preview in Editor Components
+Date: 2025-11-30
+Summary:
+Fixed a critical bug where uploaded images would show only their alt text instead of the actual image in the content editor. The root cause was that image paths stored in the JSON data were repository paths (e.g., `src/assets/images/...`) which browsers cannot load directly.
+
+Details:
+- **Root Cause Analysis:** When images are uploaded via the ImageUploader component, the API returns the repository path where the image is stored (e.g., `src/assets/images/home-from-json/my-image.png`). This path is correctly saved in the section's `headerImageUrl` or `featureImageUrl` property. However, the browser cannot load images using repository paths - it needs a valid URL.
+- **The Fix:** Added a `getPreviewImageUrl` helper function to both `BodySectionEditor.jsx` and `HeroEditor.jsx`. This function transforms repository paths to GitHub raw URLs that browsers can load during editing:
+  - Repository paths like `src/assets/images/...` are converted to `https://raw.githubusercontent.com/{owner}/{repo}/main/{path}`
+  - Full URLs (http/https) are passed through unchanged
+  - Other paths (like `/images/...`) are returned as-is for fallback
+- **Context Integration:** Both editor components now use the `useAuth` hook to get the current repository name, which is needed to construct the GitHub raw URL.
+- **Hero Image Support:** Also enhanced `HeroEditor.jsx` to display feature images and background images, which were defined in the AddSectionModal but not rendered in the editor.
+
+Impact:
+Images uploaded through the content editor now display correctly in the preview. Existing images with repository paths will also display correctly after this fix. The data model remains unchanged - repository paths are still stored in the JSON, which is correct for the final Astro build process.
+
+Reflection:
+- **What was the most challenging part of this task?** Tracing the data flow from the image upload through the configurator to the section editor to understand exactly where the disconnect was happening. The console logs showing `[object Object]` made debugging more difficult.
+- **What was a surprising discovery or key learning?** The API was correctly returning both `path` (repository path) and `url` (GitHub raw URL), but only the `path` was being used. The architecture decision to store the repository path is correct for the build process, but the editor needs to transform it for preview.
+- **What advice would you give the next agent who works on this code?** When dealing with images in a CMS that stores to GitHub, remember that there are two contexts: editing (where images need to be loaded from GitHub's raw URLs) and building (where Astro handles the image paths). The transformation should happen at the display layer, not the storage layer.
+
+---
+
 Jules #198 (fix): Correct Editor Spacing and Placeholder Behavior
 Date: 2025-11-30
 Summary:
