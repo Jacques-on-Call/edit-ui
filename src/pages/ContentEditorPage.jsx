@@ -186,6 +186,7 @@ export default function ContentEditorPage(props) {
   }, [triggerSave]);
 
   const handleAddSection = useCallback((type, config) => {
+    console.log('[ContentEditorPage] handleAddSection called', { type, config });
     const newSection = {
       id: `section-${Date.now()}`,
       type: type,

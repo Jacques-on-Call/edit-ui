@@ -10,18 +10,21 @@ import LexicalField from './LexicalField';
 import { Image } from 'lucide-preact';
 
 export default function BodySectionEditor({ props, onChange }) {
+  console.log('[BodySectionEditor] RENDER', { props });
   const handleFieldChange = (fieldName, fieldValue) => {
     onChange({ ...props, [fieldName]: fieldValue });
   };
+
+  const imageUrl = props?.featureImage || props?.headerImageUrl;
 
   return (
     <div class="bg-transparent">
       <div class="bg-gray-800 mx-px" style="box-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
         <div class="px-[2px]">
-          {props?.featureImage && (
+          {imageUrl && (
             <img
-              src={props.featureImage}
-              alt={props?.title || 'Section image'}
+              src={imageUrl}
+              alt={props?.headerImageAlt || props?.title || 'Section image'}
               class="w-full h-64 object-cover rounded-lg mb-4"
             />
           )}
