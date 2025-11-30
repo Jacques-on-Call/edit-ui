@@ -1,11 +1,9 @@
-// DEVELOPER NOTE:
-// This component is designed to be a full-width, edge-to-edge container.
-// All horizontal padding is handled by the inner `LexicalEditor` component
-// to ensure consistent text alignment across all sections.
-//
-// DO NOT ADD PADDING OR MARGINS TO THE ROOT ELEMENT OF THIS COMPONENT.
-// This is a critical design requirement. Please consult the project lead
-// before making any changes to this file's layout.
+// Developer Note:
+// This component uses a specific three-layer nested structure to achieve the desired visual effect.
+// 1. Outermost `div` (bg-black): Provides the full edge-to-edge black background.
+// 2. Middle `div` (bg-gray-800 mx-px): Creates the grey container that is "1px shy" of the screen edge.
+// 3. Innermost `div` (px-[2px]): Wraps the text fields and provides the 2px internal padding.
+// Please do not alter this structure without a clear understanding of the design goal.
 
 import { h } from 'preact';
 import LexicalField from './LexicalField';
@@ -16,25 +14,29 @@ export default function HeroEditor({ props, onChange }) {
   };
 
   return (
-    <div class="flex flex-col">
-      <LexicalField
-        value={props?.title || ''}
-        onChange={(newValue) => handleFieldChange('title', newValue)}
-        placeholder="Enter your title (H1)"
-        className="text-5xl font-extrabold text-white tracking-tight px-2"
-      />
-      <LexicalField
-        value={props?.subtitle || ''}
-        onChange={(newValue) => handleFieldChange('subtitle', newValue)}
-        placeholder="Enter your slogan (optional)"
-        className="text-lg text-gray-400 -mt-8 px-2"
-      />
-      <LexicalField
-        value={props?.body || ''}
-        onChange={(newValue) => handleFieldChange('body', newValue)}
-        placeholder="Enter your paragraph (optional)"
-        className="text-lg text-gray-300 -mt-8 px-2"
-      />
+    <div class="bg-black">
+      <div class="bg-gray-800 mx-px">
+        <div class="px-[2px]">
+          <LexicalField
+            value={props?.title || ''}
+            onChange={(newValue) => handleFieldChange('title', newValue)}
+            placeholder="Enter your title (H1)"
+            className="text-5xl font-extrabold text-white tracking-tight"
+          />
+          <LexicalField
+            value={props?.subtitle || ''}
+            onChange={(newValue) => handleFieldChange('subtitle', newValue)}
+            placeholder="Enter your slogan (optional)"
+            className="text-lg text-gray-400 -mt-8"
+          />
+          <LexicalField
+            value={props?.body || ''}
+            onChange={(newValue) => handleFieldChange('body', newValue)}
+            placeholder="Enter your paragraph (optional)"
+            className="text-lg text-gray-300 -mt-8"
+          />
+        </div>
+      </div>
     </div>
   );
 }
