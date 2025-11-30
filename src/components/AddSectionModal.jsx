@@ -58,7 +58,7 @@ const HeroConfigurator = ({ config, setConfig }) => {
   );
 };
 
-const TextSectionConfigurator = ({ config, setConfig }) => {
+const TextSectionConfigurator = ({ config, setConfig, pageSlug }) => {
   const [uploadMode, setUploadMode] = useState('url'); // 'url' or 'upload'
 
   const handleImageComplete = ({ path, alt }) => {
@@ -88,7 +88,7 @@ const TextSectionConfigurator = ({ config, setConfig }) => {
                 <input type="text" placeholder="Enter Alt Text" value={config.headerImageAlt} onInput={e => setConfig({...config, headerImageAlt: e.target.value})} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
               </div>
             ) : (
-              <ImageUploader onComplete={handleImageComplete} />
+              <ImageUploader pageSlug={pageSlug} onComplete={handleImageComplete} />
             )}
           </div>
         )}
@@ -102,7 +102,7 @@ const DEFAULT_CONFIGS = {
   textSection: { includeTitle: true, includeHeaderImage: false, headerImageUrl: '', headerImageAlt: '' },
 };
 
-export default function AddSectionModal({ onAddSection }) {
+export default function AddSectionModal({ pageSlug, onAddSection }) {
   const { isAddSectionModalOpen, closeAddSectionModal } = useUI();
   const [step, setStep] = useState('select'); // 'select' or 'configure'
   const [selectedSection, setSelectedSection] = useState(null);
@@ -153,7 +153,7 @@ export default function AddSectionModal({ onAddSection }) {
   const renderConfigureStep = () => (
     <div>
       {selectedSection === 'hero' && <HeroConfigurator config={config} setConfig={setConfig} />}
-      {selectedSection === 'textSection' && <TextSectionConfigurator config={config} setConfig={setConfig} />}
+      {selectedSection === 'textSection' && <TextSectionConfigurator config={config} setConfig={setConfig} pageSlug={pageSlug} />}
       <div class="mt-6 flex justify-end">
         <button onClick={handleCreateSection} class="bg-yellow-green text-black font-bold px-6 py-2 rounded-lg hover:bg-lime-400 transition-colors">Add Section to Page</button>
       </div>

@@ -3,7 +3,7 @@ import { useState, useRef } from 'preact/hooks';
 import { useAuth } from '../contexts/AuthContext';
 import { UploadCloud, RefreshCw, CheckCircle, AlertCircle } from 'lucide-preact';
 
-export default function ImageUploader({ onComplete }) {
+export default function ImageUploader({ pageSlug, onComplete }) {
   const { selectedRepo } = useAuth();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -41,7 +41,8 @@ export default function ImageUploader({ onComplete }) {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('repo', selectedRepo.full_name);
-    console.log('[ImageUploader] FormData prepared.', { fileName: file.name, repo: selectedRepo.full_name });
+    formData.append('pageSlug', pageSlug);
+    console.log('[ImageUploader] FormData prepared.', { fileName: file.name, repo: selectedRepo.full_name, pageSlug });
 
     try {
       console.log('[ImageUploader] Initiating fetch to /api/image/upload...');

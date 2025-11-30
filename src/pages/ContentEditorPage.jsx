@@ -503,7 +503,7 @@ export default function ContentEditorPage(props) {
           onSync={handleSync}
           onPreview={editorMode === 'json' ? handlePreview : null}
         />
-        <AddSectionModal onAddSection={handleAddSection} />
+        <AddSectionModal pageSlug={pageId} onAddSection={handleAddSection} />
       </div>
     </EditorProvider>
   );
