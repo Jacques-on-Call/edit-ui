@@ -59,7 +59,6 @@ const HeroConfigurator = ({ config, setConfig }) => {
 };
 
 const TextSectionConfigurator = ({ config, setConfig, pageSlug }) => {
-  console.log('[TextSectionConfigurator] RENDER', { config, pageSlug });
   const [uploadMode, setUploadMode] = useState('url'); // 'url' or 'upload'
 
   const handleImageComplete = ({ path, alt }) => {
@@ -109,7 +108,6 @@ const DEFAULT_CONFIGS = {
 };
 
 export default function AddSectionModal({ pageSlug, onAddSection }) {
-  console.log('[AddSectionModal] RENDER', { pageSlug });
   const { isAddSectionModalOpen, closeAddSectionModal } = useUI();
   const [step, setStep] = useState('select'); // 'select' or 'configure'
   const [selectedSection, setSelectedSection] = useState(null);
