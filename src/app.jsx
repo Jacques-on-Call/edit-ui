@@ -74,7 +74,8 @@ const AppContent = () => {
 
         {isExplorerLayout && <BottomToolbar />}
 
-        <FloatingLogButton />
+        {/* Only show debug log button in development mode */}
+        {import.meta.env.DEV && <FloatingLogButton />}
         {import.meta.env.DEV && <AuthDebugMonitor />}
       </div>
     </>

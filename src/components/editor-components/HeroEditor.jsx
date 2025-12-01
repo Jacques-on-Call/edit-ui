@@ -62,10 +62,10 @@ export default function HeroEditor({ props, onChange }) {
                   onError={handleImageError}
                 />
               ) : (
-                <div class="flex flex-col items-center justify-center p-4 text-red-400 text-sm">
-                  <p>Image failed to load</p>
-                  <p class="text-xs text-gray-500 mt-1 break-all">{rawFeatureImage}</p>
-                  <p class="text-xs text-gray-500 mt-1 break-all">Attempted URL: {featureImageUrl}</p>
+                <div class="flex flex-col items-center justify-center p-4 text-amber-400 text-sm">
+                  <p class="font-medium">Image will appear after next deploy</p>
+                  <p class="text-xs text-gray-400 mt-1">The image has been uploaded but may not be available from GitHub yet.</p>
+                  <p class="text-xs text-gray-500 mt-2 break-all">Path: {rawFeatureImage}</p>
                 </div>
               )}
             </div>

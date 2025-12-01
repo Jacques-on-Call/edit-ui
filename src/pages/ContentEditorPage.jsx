@@ -525,15 +525,12 @@ export default function ContentEditorPage(props) {
     if (viewMode === 'localPreview') {
       return (
         <div class="w-full h-full relative">
-          <div class="absolute top-4 left-4 z-20 bg-gray-800 bg-opacity-90 text-white px-3 py-1 rounded text-sm">
-            Local Preview (instant, before sync)
-          </div>
           <LocalPreview sections={sections} />
         </div>
       );
     }
 
-    // Live preview mode
+    // Live preview mode - clean iframe without overlay labels (moved to bottom bar)
     return (
       <div class="w-full h-full bg-white relative">
         {isPreviewBuilding && (
@@ -561,16 +558,6 @@ export default function ContentEditorPage(props) {
             </div>
           </div>
         )}
-        <div class="absolute top-4 left-4 z-20 bg-gray-800 bg-opacity-90 text-white px-3 py-1 rounded text-sm">
-          Live Preview (from deployed site)
-        </div>
-        <button
-          onClick={handleRefreshPreview}
-          className="absolute top-4 right-4 z-20 bg-gray-800 bg-opacity-75 text-white p-2 rounded-full hover:bg-gray-700 transition-colors"
-          aria-label="Refresh Preview"
-        >
-          <RefreshCw size={24} />
-        </button>
         <iframe
           ref={iframeRef}
           key={previewKey}
@@ -597,9 +584,11 @@ export default function ContentEditorPage(props) {
           saveStatus={saveStatus}
           syncStatus={syncStatus}
           viewMode={viewMode}
+          previewState={isPreviewBuilding ? 'building' : (viewMode !== 'editor' ? 'ready' : 'idle')}
           onAdd={openAddSectionModal}
           onPreview={editorMode === 'json' ? handlePreview : null}
           onSync={editorMode === 'json' ? handleSync : null}
+          onRefreshPreview={handleRefreshPreview}
         />
         <AddSectionModal pageSlug={pageId} onAddSection={handleAddSection} />
       </div>

@@ -3,7 +3,16 @@ import { route } from 'preact-router';
 import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil, Monitor } from 'lucide-preact';
 import './BottomActionBar.css';
 
-export default function BottomActionBar({ saveStatus, syncStatus = 'idle', viewMode = 'editor', onSync, onAdd, onPreview }) {
+export default function BottomActionBar({ 
+  saveStatus, 
+  syncStatus = 'idle', 
+  viewMode = 'editor', 
+  previewState = 'idle', // 'idle' | 'building' | 'ready'
+  onSync, 
+  onAdd, 
+  onPreview,
+  onRefreshPreview
+}) {
   const getStatusColor = () => {
     if (saveStatus === 'saved') return 'bg-yellow-green';
     return 'bg-scarlet';
@@ -49,6 +58,21 @@ export default function BottomActionBar({ saveStatus, syncStatus = 'idle', viewM
     }
   };
 
+  // Get preview status indicator class
+  const getPreviewStatusClass = () => {
+    switch (previewState) {
+      case 'building':
+        return 'bg-yellow-500 animate-pulse';
+      case 'ready':
+        return 'bg-green-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  // Check if we're in a preview mode (either local or live)
+  const isInPreviewMode = viewMode === 'localPreview' || viewMode === 'livePreview';
+
   return (
     <footer className="bottom-action-bar" role="toolbar" aria-label="Editor actions">
       <button type="button" onClick={() => route('/explorer')} className="bar-btn" aria-label="Home">
@@ -67,10 +91,31 @@ export default function BottomActionBar({ saveStatus, syncStatus = 'idle', viewM
             e.stopPropagation();
             onPreview(e);
           }}
-          className="bar-btn"
+          className="bar-btn relative"
           aria-label={getPreviewLabel()}
         >
           {renderPreviewIcon()}
+          {/* Preview status indicator dot */}
+          {isInPreviewMode && (
+            <span className={`absolute top-0 right-0 w-2 h-2 rounded-full ${getPreviewStatusClass()}`} />
+          )}
+        </button>
+      )}
+
+      {/* Refresh button - only visible in preview modes */}
+      {isInPreviewMode && onRefreshPreview && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onRefreshPreview(e);
+          }}
+          className="bar-btn"
+          aria-label="Refresh Preview"
+          disabled={previewState === 'building'}
+        >
+          <RefreshCw size={28} className={previewState === 'building' ? 'animate-spin' : ''} />
         </button>
       )}
 

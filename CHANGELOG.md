@@ -1,5 +1,36 @@
 # Project Change Log
 
+GitHub Copilot (fix): Editor Image URLs, Container Sizing & UI Cleanup
+Date: 2025-12-01
+Summary:
+Addressed four key issues: enhanced image URL resolution with better fallback messaging, fixed hero container height restrictions, moved site assets for Astro optimization, and cleaned up preview UI controls.
+
+Details:
+- **Image URL Enhancement:** Extended `imageHelpers.js` with new utility functions (`getDeployedSiteUrl`, `getGitHubRawUrl`) and improved documentation explaining the two-tier URL strategy. The primary URL uses GitHub raw URLs (works immediately), with fallback handling in components.
+- **Improved Image Error Messaging:** Updated HeroEditor.jsx and BodySectionEditor.jsx to show user-friendly amber-colored messages like "Image will appear after next deploy" instead of technical error messages, improving UX for newly uploaded images.
+- **Container Height Fix:** Removed the fixed `height: 550px` and `overflow: hidden` from `.hero-banner` in `style.css`, changing to `min-height: 400px` to allow content to display without being cut off.
+- **Site Assets Optimization:** Moved header assets from `public/img/` to `src/assets/img/` and updated Header.astro to use Astro's `Image` component with proper imports, enabling Astro's image optimization pipeline.
+- **UI Cleanup - Preview Controls:**
+  - Removed overlay labels ("Live Preview (from deployed site)") and floating refresh button from preview pane in ContentEditorPage
+  - Added new props to BottomActionBar: `previewState` and `onRefreshPreview`
+  - Refresh button now appears in bottom bar only when in preview mode
+  - Added preview status indicator dot (yellow=building, green=ready)
+- **Debug Button Hidden in Production:** The FloatingLogButton is now wrapped with `import.meta.env.DEV` check so it only appears in development mode.
+
+Impact:
+- Preview UI is cleaner with controls consolidated in the bottom action bar
+- Users get clearer feedback about image loading status
+- Hero sections no longer risk content being cut off by fixed heights
+- Site images are now optimized by Astro's build process
+- Debug tools are hidden in production builds
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the different contexts where images are used - the editor needs GitHub raw URLs that work immediately, while the deployed site has Astro-hashed URLs. The key insight was that GitHub raw URLs are the reliable fallback for the editor preview.
+- **What was a surprising discovery or key learning?** The `height: 550px` with `overflow: hidden` in the global CSS was causing hero content to be cut off. Global styles can have unexpected effects on components that don't explicitly override them.
+- **What advice would you give the next agent who works on this code?** When working on image display issues, trace the entire path from upload → storage → editor preview → build → deploy. Each stage has different requirements. For UI cleanup, consolidate controls in consistent locations (like the bottom bar) rather than scattering overlays.
+
+---
+
 GitHub Copilot (fix): Image Display & Header Assets Fix
 Date: 2025-12-01
 Summary:
