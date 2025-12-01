@@ -133,18 +133,9 @@ export default function ContentEditorPage(props) {
           setIsPreviewBuilding(false);
           setBuildError(null);
           setBuildStage('Success!');
-          // Force iframe reload with cache bust
+          // Force iframe reload by updating the previewKey.
+          // The useMemo hook for previewUrl will handle the cache-busting.
           setPreviewKey(Date.now());
-          if (iframeRef.current && iframeRef.current.src) {
-            try {
-              const url = new URL(iframeRef.current.src);
-              url.searchParams.set('_t', Date.now());
-              iframeRef.current.src = url.toString();
-            } catch (urlError) {
-              console.warn('[Build] Could not add cache-bust to iframe URL:', urlError);
-              // Fallback: just force a reload by resetting the key
-            }
-          }
         }, 2000);
       } else if (data.status === 'failure' || data.status === 'canceled') {
         console.error('[Build] Build failed or was canceled.');
@@ -315,16 +306,6 @@ export default function ContentEditorPage(props) {
     console.log('[Preview] Manual refresh triggered.');
     setPreviewKey(Date.now());
     setIsPreviewBuilding(false); // Hide the overlay on manual refresh
-    // Force iframe reload with cache bust
-    if (iframeRef.current && iframeRef.current.src) {
-      try {
-        const url = new URL(iframeRef.current.src);
-        url.searchParams.set('_t', Date.now());
-        iframeRef.current.src = url.toString();
-      } catch (urlError) {
-        console.warn('[Preview] Could not add cache-bust to iframe URL:', urlError);
-      }
-    }
   }, []);
 
   // --- 4. SIDE EFFECTS (useEffect) ---
@@ -469,9 +450,10 @@ export default function ContentEditorPage(props) {
     };
 
     const previewPath = generatePreviewPath(pathIdentifier);
-    const finalUrl = `https://strategycontent.pages.dev/${previewPath}`;
+    // Add the previewKey as a cache-busting query parameter
+    const finalUrl = `https://strategycontent.pages.dev/${previewPath}?_t=${previewKey}`;
     return finalUrl;
-  }, [pathIdentifier]);
+  }, [pathIdentifier, previewKey]);
 
   // Render the appropriate view based on viewMode
   const renderContent = () => {
