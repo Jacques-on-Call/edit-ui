@@ -1,5 +1,4 @@
 import { h } from 'preact';
-import { useEffect } from 'preact/hooks';
 import { route } from 'preact-router';
 import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil, Monitor } from 'lucide-preact';
 import './BottomActionBar.css';
@@ -72,6 +71,22 @@ export default function BottomActionBar({ saveStatus, syncStatus = 'idle', viewM
           aria-label={getPreviewLabel()}
         >
           {renderPreviewIcon()}
+        </button>
+      )}
+
+      {onSync && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onSync(e);
+          }}
+          className="bar-btn"
+          aria-label="Sync Publish"
+          disabled={syncStatus === 'syncing'}
+        >
+          {renderSyncIcon()}
         </button>
       )}
 

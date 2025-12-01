@@ -1,5 +1,28 @@
 # Project Change Log
 
+GitHub Copilot (fix): Preview Workflow Improvements
+Date: 2025-12-01
+Summary:
+Fixed multiple issues with the content editor preview workflow including restoring the missing Sync Publish button, preventing duplicate builds when clicking Preview, hiding the editor toolbar during preview mode, and adding error handling for multiple preview clicks.
+
+Details:
+- **Restored Sync Publish Button:** Added back the missing Sync Publish button in `BottomActionBar.jsx`. The button shows the sync status with appropriate icons (upload cloud, spinning refresh, checkmark, or error) and is disabled during syncing to prevent duplicate operations.
+- **Smart Preview Building:** Updated `handlePreview` in `ContentEditorPage.jsx` to check if content has changed since the last sync before triggering a new build. Uses a `lastSyncedContentRef` to track the last synced content.
+- **Duplicate Build Prevention:** Added guards in both `handleSync` and `handlePreview` to prevent triggering multiple simultaneous builds. If a build is already in progress, clicking Preview just switches to preview mode without starting a new build.
+- **Hidden Editor Header in Preview:** The `EditorHeader` (containing lexicon/rich-text tools) is now conditionally rendered only when in editor mode, providing a cleaner preview experience.
+- **Fresh Preview on Return:** When returning to preview without content changes, the preview key is still refreshed to ensure the iframe reloads with the latest deployed content.
+- **Error Handling:** Added proper error handling in `handleSync` to reset status after errors, and wrapped `handleSync` call in `handlePreview` with try-catch to gracefully handle failures.
+
+Impact:
+The preview workflow is now more robust and user-friendly. Users can use the dedicated Sync button for publishing without preview, and the Preview button intelligently avoids unnecessary builds when content hasn't changed. Error popups from duplicate clicks are prevented.
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the relationship between the Preview and Sync functionality - they were tightly coupled but needed different behaviors. The Preview button was calling handleSync internally, which made sense for the "sync and preview" workflow, but caused issues with duplicate builds.
+- **What was a surprising discovery or key learning?** The Sync Publish button had `renderSyncIcon()` function defined but the button itself was never rendered in the JSX - this was a clear accidental removal during a previous refactoring.
+- **What advice would you give the next agent who works on this code?** When modifying the preview workflow, keep in mind the three modes (editor, localPreview, livePreview) and ensure all transitions between them handle edge cases like in-progress builds and error states.
+
+---
+
 GitHub Copilot (feat): Image System and Preview System Improvements
 Date: 2025-12-01
 Summary:

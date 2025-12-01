@@ -15,6 +15,9 @@ import AddSectionModal from '../components/AddSectionModal';
 import LocalPreview from '../components/LocalPreview';
 import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 
+// Constants
+const STATUS_DISPLAY_DURATION = 2500; // Time in ms to display sync status before resetting
+
 export default function ContentEditorPage(props) {
   console.log('[CEP] Component Init', { props });
   // --- 1. HOOKS ---
@@ -38,6 +41,8 @@ export default function ContentEditorPage(props) {
   const iframeRef = useRef(null);
   // Use ref for selectedRepo to avoid recreating callbacks on every render
   const selectedRepoRef = useRef(selectedRepo);
+  // Track the last synced content to avoid unnecessary builds
+  const lastSyncedContentRef = useRef(null);
 
   // Keep selectedRepoRef in sync with selectedRepo state
   useEffect(() => {
@@ -235,6 +240,13 @@ export default function ContentEditorPage(props) {
       setSyncStatus('error');
       return;
     }
+    
+    // Prevent multiple sync operations at once
+    if (syncStatus === 'syncing' || isPreviewBuilding) {
+      console.log('[CEP-handleSync] Sync already in progress, ignoring duplicate request.');
+      return;
+    }
+    
     setSyncStatus('syncing');
     console.log('[CEP-handleSync] Status set to "syncing". Reading draft from localStorage...');
     try {
@@ -268,6 +280,9 @@ export default function ContentEditorPage(props) {
       await fetchJson('/api/page-json/update', { method: 'POST', body: JSON.stringify(savePayload) });
       console.log('[CEP-handleSync] API call successful. Content saved.');
 
+      // Store the synced content to compare later
+      lastSyncedContentRef.current = savedDraft;
+
       setIsPreviewBuilding(true);
       // Don't auto-switch to preview mode - let user decide when to view preview
       // setViewMode('preview'); // Removed: Clicking Sync should not force preview mode
@@ -277,7 +292,7 @@ export default function ContentEditorPage(props) {
       console.log('[CEP-handleSync] Build triggered.');
 
       setSyncStatus('success');
-      setTimeout(() => setSyncStatus('idle'), 2500);
+      setTimeout(() => setSyncStatus('idle'), STATUS_DISPLAY_DURATION);
     } catch (error) {
       console.error('[CEP-handleSync] Sync process failed.', {
         message: error.message,
@@ -286,21 +301,48 @@ export default function ContentEditorPage(props) {
         stack: error.stack,
       });
       setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), STATUS_DISPLAY_DURATION);
     }
-  }, [selectedRepo, pageId, editorMode, triggerBuild]);
+  }, [selectedRepo, pageId, editorMode, triggerBuild, syncStatus, isPreviewBuilding]);
 
   const handlePreview = useCallback(async () => {
-    // If we're in the editor, sync and then switch to the live preview
-    if (viewMode === 'editor') {
-      // handleSync will save the latest draft and trigger the build.
-      // It also sets isPreviewBuilding to true, which will show the overlay.
+    // If we're in a preview mode, switch back to the editor
+    if (viewMode !== 'editor') {
+      setViewMode('editor');
+      return;
+    }
+    
+    // Prevent action if a build is already in progress
+    if (isPreviewBuilding) {
+      console.log('[CEP-handlePreview] Build already in progress, switching to preview view.');
+      setViewMode('livePreview');
+      return;
+    }
+
+    // Check if content has changed since the last sync
+    const draftKey = `easy-seo-draft:${pageId}`;
+    const currentDraft = localStorage.getItem(draftKey);
+    
+    if (currentDraft && lastSyncedContentRef.current === currentDraft) {
+      // Content hasn't changed since last sync, just show the preview without triggering a new build
+      console.log('[CEP-handlePreview] Content unchanged since last sync, showing preview without new build.');
+      // Refresh the preview key to ensure iframe reloads with fresh content
+      setPreviewKey(Date.now());
+      setViewMode('livePreview');
+      return;
+    }
+
+    // Content has changed or hasn't been synced yet - trigger sync and build
+    try {
       await handleSync();
       setViewMode('livePreview');
-    } else {
-      // If we're in any preview mode, switch back to the editor
-      setViewMode('editor');
+    } catch (error) {
+      console.error('[CEP-handlePreview] Error during preview sync:', error);
+      // Still show preview even if sync failed - user can see the last deployed version
+      setPreviewKey(Date.now());
+      setViewMode('livePreview');
     }
-  }, [viewMode, handleSync]);
+  }, [viewMode, handleSync, pageId, isPreviewBuilding]);
 
   const handleRefreshPreview = useCallback(() => {
     console.log('[Preview] Manual refresh triggered.');
@@ -542,9 +584,10 @@ export default function ContentEditorPage(props) {
   return (
     <EditorProvider> {/* <-- WRAP WITH PROVIDER */}
       <div class="flex flex-col h-full bg-transparent text-white">
-        <EditorHeader /> {/* <-- REMOVED editorApiRef prop */}
+        {/* Only show editor header when in editor mode, hide in preview modes */}
+        {viewMode === 'editor' && <EditorHeader />}
         <main class="flex-grow overflow-y-auto" style={{ paddingBottom: 'calc(64px + 1rem + env(safe-area-inset-bottom))' }}>
-          <div style={{ paddingTop: 'var(--header-h)' }}>
+          <div style={{ paddingTop: viewMode === 'editor' ? 'var(--header-h)' : '0' }}>
             {renderContent()}
           </div>
         </main>
@@ -554,6 +597,7 @@ export default function ContentEditorPage(props) {
           viewMode={viewMode}
           onAdd={openAddSectionModal}
           onPreview={editorMode === 'json' ? handlePreview : null}
+          onSync={editorMode === 'json' ? handleSync : null}
         />
         <AddSectionModal pageSlug={pageId} onAddSection={handleAddSection} />
       </div>
