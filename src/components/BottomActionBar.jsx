@@ -75,24 +75,8 @@ export default function BottomActionBar({ saveStatus, syncStatus = 'idle', viewM
         </button>
       )}
 
-      <div class="publish-container">
-        <button
-          type="button"
-          onClick={() => {
-            console.log('[BottomActionBar] Sync button clicked.');
-            if (onSync) {
-              onSync();
-            } else {
-              console.error('[BottomActionBar] onSync handler is not defined!');
-            }
-          }}
-          className="bar-btn bar-publish"
-          aria-label="Sync to GitHub"
-          disabled={syncStatus === 'syncing'}
-        >
-          {renderSyncIcon()}
-        </button>
-        <span class={`save-status-dot ${getStatusColor()}`}></span>
+      <div class="save-status-indicator">
+         <span class={`save-status-dot ${getStatusColor()}`}></span>
       </div>
     </footer>
   );

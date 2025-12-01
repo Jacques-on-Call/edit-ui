@@ -28,6 +28,7 @@ export default function ContentEditorPage(props) {
   const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, success, error
   const [viewMode, setViewMode] = useState('editor'); // 'editor', 'localPreview', or 'livePreview'
   const [isPreviewBuilding, setIsPreviewBuilding] = useState(false);
+  const [buildStage, setBuildStage] = useState(''); // To hold the current build stage text
   const [previewKey, setPreviewKey] = useState(Date.now());
   const [buildError, setBuildError] = useState(null);
 
@@ -120,26 +121,35 @@ export default function ContentEditorPage(props) {
     try {
       const data = await fetchJson('/api/check-build-status');
       console.log(`[Build Poll] Status: ${data.status}, Stage: ${data.stage}`);
+      setBuildStage(data.stage || 'Initializing...'); // Update the build stage state
 
       if (data.status === 'success') {
-        console.log('[Build] Build successful! Refreshing preview.');
-        setIsPreviewBuilding(false);
-        setBuildError(null);
-        // Force iframe reload with cache bust
-        setPreviewKey(Date.now());
-        if (iframeRef.current && iframeRef.current.src) {
-          try {
-            const url = new URL(iframeRef.current.src);
-            url.searchParams.set('_t', Date.now());
-            iframeRef.current.src = url.toString();
-          } catch (urlError) {
-            console.warn('[Build] Could not add cache-bust to iframe URL:', urlError);
-            // Fallback: just force a reload by resetting the key
+        console.log('[Build] Build successful! Waiting 2s before refreshing preview.');
+        setBuildStage('Finalizing...');
+
+        // Wait 2 seconds before refreshing to allow deployment to propagate
+        setTimeout(() => {
+          console.log('[Build] Refreshing preview now.');
+          setIsPreviewBuilding(false);
+          setBuildError(null);
+          setBuildStage('Success!');
+          // Force iframe reload with cache bust
+          setPreviewKey(Date.now());
+          if (iframeRef.current && iframeRef.current.src) {
+            try {
+              const url = new URL(iframeRef.current.src);
+              url.searchParams.set('_t', Date.now());
+              iframeRef.current.src = url.toString();
+            } catch (urlError) {
+              console.warn('[Build] Could not add cache-bust to iframe URL:', urlError);
+              // Fallback: just force a reload by resetting the key
+            }
           }
-        }
+        }, 2000);
       } else if (data.status === 'failure' || data.status === 'canceled') {
         console.error('[Build] Build failed or was canceled.');
         setIsPreviewBuilding(false);
+        setBuildStage('');
         setBuildError(`The live preview build failed with status: ${data.status}.`);
       } else {
         // If status is 'active' or another ongoing state, poll again
@@ -168,6 +178,7 @@ export default function ContentEditorPage(props) {
 
     console.log('[Build] Triggering background build...');
     setIsPreviewBuilding(true);
+    setBuildStage('Queued...'); // Set initial stage
     setBuildError(null); // Clear previous errors
 
     try {
@@ -225,31 +236,6 @@ export default function ContentEditorPage(props) {
     setSections(newSections);
     triggerSave(newSections);
   }, [sections, triggerSave]);
-
-  // Cycle through view modes: editor -> localPreview -> livePreview -> editor
-  const handlePreview = useCallback(() => {
-    setViewMode(prevMode => {
-      if (prevMode === 'editor') return 'localPreview';
-      if (prevMode === 'localPreview') return 'livePreview';
-      return 'editor';
-    });
-  }, []);
-
-  const handleRefreshPreview = useCallback(() => {
-    console.log('[Preview] Manual refresh triggered.');
-    setPreviewKey(Date.now());
-    setIsPreviewBuilding(false); // Hide the overlay on manual refresh
-    // Force iframe reload with cache bust
-    if (iframeRef.current && iframeRef.current.src) {
-      try {
-        const url = new URL(iframeRef.current.src);
-        url.searchParams.set('_t', Date.now());
-        iframeRef.current.src = url.toString();
-      } catch (urlError) {
-        console.warn('[Preview] Could not add cache-bust to iframe URL:', urlError);
-      }
-    }
-  }, []);
 
   const handleSync = useCallback(async () => {
     console.log(`[CEP-handleSync] Sync process initiated.`);
@@ -311,6 +297,35 @@ export default function ContentEditorPage(props) {
       setSyncStatus('error');
     }
   }, [selectedRepo, pageId, editorMode, triggerBuild]);
+
+  const handlePreview = useCallback(async () => {
+    // If we're in the editor, sync and then switch to the live preview
+    if (viewMode === 'editor') {
+      // handleSync will save the latest draft and trigger the build.
+      // It also sets isPreviewBuilding to true, which will show the overlay.
+      await handleSync();
+      setViewMode('livePreview');
+    } else {
+      // If we're in any preview mode, switch back to the editor
+      setViewMode('editor');
+    }
+  }, [viewMode, handleSync]);
+
+  const handleRefreshPreview = useCallback(() => {
+    console.log('[Preview] Manual refresh triggered.');
+    setPreviewKey(Date.now());
+    setIsPreviewBuilding(false); // Hide the overlay on manual refresh
+    // Force iframe reload with cache bust
+    if (iframeRef.current && iframeRef.current.src) {
+      try {
+        const url = new URL(iframeRef.current.src);
+        url.searchParams.set('_t', Date.now());
+        iframeRef.current.src = url.toString();
+      } catch (urlError) {
+        console.warn('[Preview] Could not add cache-bust to iframe URL:', urlError);
+      }
+    }
+  }, []);
 
   // --- 4. SIDE EFFECTS (useEffect) ---
   useEffect(() => {
@@ -499,7 +514,9 @@ export default function ContentEditorPage(props) {
           <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
             <div class="text-white text-center p-4">
               <RefreshCw size={48} className="animate-spin mb-4 mx-auto" />
-              <p class="text-lg font-semibold">Live Preview is Building</p>
+              <p class="text-lg font-semibold">
+                {buildStage.charAt(0).toUpperCase() + buildStage.slice(1)}
+              </p>
               <p class="text-sm">Your changes are being deployed. This may take a minute.</p>
             </div>
           </div>
@@ -554,7 +571,6 @@ export default function ContentEditorPage(props) {
           syncStatus={syncStatus}
           viewMode={viewMode}
           onAdd={openAddSectionModal}
-          onSync={handleSync}
           onPreview={editorMode === 'json' ? handlePreview : null}
         />
         <AddSectionModal pageSlug={pageId} onAddSection={handleAddSection} />
