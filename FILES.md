@@ -10,7 +10,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/pages/LoginPage.jsx`**: The user login page.
 -   **`src/pages/RepoSelectPage.jsx`**: The repository selection page.
 -   **`src/pages/FileExplorerPage.jsx`**: The main file explorer page. Handles the file creation logic (now client-side drafts) and passes data down to the `FileExplorer` component.
--   **`src/pages/ContentEditorPage.jsx`**: The main shell for the content editor. Responsible for loading and saving full draft payloads to `localStorage` and providing the `EditorContext`.
+-   **`src/pages/ContentEditorPage.jsx`**: The main shell for the content editor. Responsible for loading and saving full draft payloads to `localStorage` and providing the `EditorContext`. Supports three view modes: editor, localPreview, and livePreview.
 
 ### **Contexts**
 -   **`src/contexts/AuthContext.jsx`**: Manages global authentication state.
@@ -27,6 +27,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 
 -   **`src/lib/fetchJson.js`**: A robust, centralized utility for making `fetch` requests to the backend API.
 -   **`src/lib/mockApi.js`**: A mock API for the content editor, used for fetching and saving page data to `localStorage`.
+-   **`src/lib/imageHelpers.js`**: Helper functions for transforming repository image paths to GitHub raw URLs for editor preview.
 
 ### **Components**
 
@@ -36,18 +37,20 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/components/Icon.jsx`**: A wrapper for the lucide-preact icon library.
 -   **`src/components/ContextMenu.jsx`**: Renders a right-click/long-press context menu.
 -   **`src/components/CreateModal.jsx`**: Renders a modal for creating new files and folders.
--   **`src/components/AddSectionModal.jsx`**: Renders a modal for selecting and configuring new content sections before adding them to a page.
+-   **`src/components/AddSectionModal.jsx`**: Renders a modal for selecting and configuring new content sections before adding them to a page. Supports image upload for both Hero and Text sections.
+-   **`src/components/ImageUploader.jsx`**: Component for uploading images to the repository. Shows upload status (idle, uploading, success, error).
+-   **`src/components/LocalPreview.jsx`**: Renders content locally for instant feedback before syncing to GitHub. No build required.
 -   **`src/components/SearchBar.jsx`**: A debounced search input component.
 -   **`src/components/EditorHeader.jsx`**: The header component for the content editor. Now context-aware.
 -   **`src/components/BlockTree.jsx`**: The component for displaying the block structure of a page.
--   **`src/components/BottomActionBar.jsx`**: The bottom action bar for the content editor.
+-   **`src/components/BottomActionBar.jsx`**: The bottom action bar for the content editor. Supports three view modes with appropriate icons.
 -   **`src/components/SectionsEditor.jsx`**: The main component for rendering and managing the different sections of a page.
 -   **`src/components/LexicalEditor.jsx`**: The core rich-text editor component, built on Lexical.
 
 #### **Editor Components (`src/components/editor-components`)**
 -   **`registry.js`**: Maps section type strings (e.g., 'hero', 'bodySection') to their corresponding editor components.
--   **`BodySectionEditor.jsx`**: The editor component for a standard block of text with a title and a body.
--   **`HeroEditor.jsx`**: The editor component for the hero section.
+-   **`BodySectionEditor.jsx`**: The editor component for a standard block of text with a title and a body. Includes error handling for images.
+-   **`HeroEditor.jsx`**: The editor component for the hero section. Supports feature images and background images with error handling.
 -   **`FooterEditor.jsx`**: The editor component for the footer section.
 -   **`LexicalField.jsx`**: A self-contained, reusable rich-text field powered by Lexical.
 

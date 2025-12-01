@@ -1,6 +1,6 @@
 /**
  * Transforms a repository path to a GitHub raw URL for editor preview.
- * Repository paths like 'src/assets/images/...' need to be converted to
+ * Repository paths like 'src/assets/images/...' or 'content/...' need to be converted to
  * accessible URLs for the browser to display during editing.
  * 
  * @param {string} path - The image path (could be a repo path or already a URL)
@@ -15,8 +15,8 @@ export function getPreviewImageUrl(path, repoFullName) {
     return path;
   }
   
-  // If it's a repository path (e.g., 'src/assets/images/...'), transform to GitHub raw URL
-  if (path.startsWith('src/') && repoFullName) {
+  // If it's a repository path (e.g., 'src/assets/images/...' or 'content/...'), transform to GitHub raw URL
+  if ((path.startsWith('src/') || path.startsWith('content/')) && repoFullName) {
     return `https://raw.githubusercontent.com/${repoFullName}/main/${path}`;
   }
   

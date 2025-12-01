@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { route } from 'preact-router';
-import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil } from 'lucide-preact';
+import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil, Monitor } from 'lucide-preact';
 import './BottomActionBar.css';
 
 export default function BottomActionBar({ saveStatus, syncStatus = 'idle', viewMode = 'editor', onSync, onAdd, onPreview }) {
@@ -24,6 +24,32 @@ export default function BottomActionBar({ saveStatus, syncStatus = 'idle', viewM
     }
   };
 
+  // Determine preview button icon based on current view mode
+  const renderPreviewIcon = () => {
+    switch (viewMode) {
+      case 'editor':
+        return <Eye size={28} />; // Show eye icon to indicate "preview"
+      case 'localPreview':
+        return <Monitor size={28} />; // Show monitor icon for live preview
+      case 'livePreview':
+      default:
+        return <Pencil size={28} />; // Show pencil to go back to editor
+    }
+  };
+
+  // Get accessible label for preview button
+  const getPreviewLabel = () => {
+    switch (viewMode) {
+      case 'editor':
+        return 'Local Preview';
+      case 'localPreview':
+        return 'Live Preview';
+      case 'livePreview':
+      default:
+        return 'Edit';
+    }
+  };
+
   return (
     <footer className="bottom-action-bar" role="toolbar" aria-label="Editor actions">
       <button type="button" onClick={() => route('/explorer')} className="bar-btn" aria-label="Home">
@@ -43,9 +69,9 @@ export default function BottomActionBar({ saveStatus, syncStatus = 'idle', viewM
             onPreview(e);
           }}
           className="bar-btn"
-          aria-label={viewMode === 'editor' ? 'Preview' : 'Edit'}
+          aria-label={getPreviewLabel()}
         >
-          {viewMode === 'editor' ? <Eye size={28} /> : <Pencil size={28} />}
+          {renderPreviewIcon()}
         </button>
       )}
 

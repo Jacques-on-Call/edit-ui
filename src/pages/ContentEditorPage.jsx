@@ -12,6 +12,7 @@ import SectionsEditor from '../components/SectionsEditor';
 import EditorHeader from '../components/EditorHeader';
 import BottomActionBar from '../components/BottomActionBar';
 import AddSectionModal from '../components/AddSectionModal';
+import LocalPreview from '../components/LocalPreview';
 import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
@@ -25,7 +26,7 @@ export default function ContentEditorPage(props) {
   const [sections, setSections] = useState(null); // For SectionsEditor
   const [saveStatus, setSaveStatus] = useState('saved');
   const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, success, error
-  const [viewMode, setViewMode] = useState('editor'); // 'editor' or 'preview'
+  const [viewMode, setViewMode] = useState('editor'); // 'editor', 'localPreview', or 'livePreview'
   const [isPreviewBuilding, setIsPreviewBuilding] = useState(false);
   const [previewKey, setPreviewKey] = useState(Date.now());
   const [buildError, setBuildError] = useState(null);
@@ -33,6 +34,7 @@ export default function ContentEditorPage(props) {
   // Ref Hooks
   // const editorApiRef = useRef(null); // No longer needed for the header
   const filePathRef = useRef(null);
+  const iframeRef = useRef(null);
   // Use ref for selectedRepo to avoid recreating callbacks on every render
   const selectedRepoRef = useRef(selectedRepo);
 
@@ -105,7 +107,7 @@ export default function ContentEditorPage(props) {
   const { triggerSave } = useAutosave(autosaveCallback, 1500);
 
   const pollBuildStatus = useCallback(async (startTime = Date.now()) => {
-    const POLLING_INTERVAL = 3000; // 3 seconds
+    const POLLING_INTERVAL = 5000; // 5 seconds (increased from 3s for more reliable polling)
     const TIMEOUT = 120000; // 2 minutes
 
     if (Date.now() - startTime > TIMEOUT) {
@@ -123,7 +125,18 @@ export default function ContentEditorPage(props) {
         console.log('[Build] Build successful! Refreshing preview.');
         setIsPreviewBuilding(false);
         setBuildError(null);
-        setPreviewKey(Date.now()); // This refreshes the iframe
+        // Force iframe reload with cache bust
+        setPreviewKey(Date.now());
+        if (iframeRef.current && iframeRef.current.src) {
+          try {
+            const url = new URL(iframeRef.current.src);
+            url.searchParams.set('_t', Date.now());
+            iframeRef.current.src = url.toString();
+          } catch (urlError) {
+            console.warn('[Build] Could not add cache-bust to iframe URL:', urlError);
+            // Fallback: just force a reload by resetting the key
+          }
+        }
       } else if (data.status === 'failure' || data.status === 'canceled') {
         console.error('[Build] Build failed or was canceled.');
         setIsPreviewBuilding(false);
@@ -213,14 +226,29 @@ export default function ContentEditorPage(props) {
     triggerSave(newSections);
   }, [sections, triggerSave]);
 
+  // Cycle through view modes: editor -> localPreview -> livePreview -> editor
   const handlePreview = useCallback(() => {
-    setViewMode(prevMode => prevMode === 'editor' ? 'preview' : 'editor');
+    setViewMode(prevMode => {
+      if (prevMode === 'editor') return 'localPreview';
+      if (prevMode === 'localPreview') return 'livePreview';
+      return 'editor';
+    });
   }, []);
 
   const handleRefreshPreview = useCallback(() => {
     console.log('[Preview] Manual refresh triggered.');
     setPreviewKey(Date.now());
     setIsPreviewBuilding(false); // Hide the overlay on manual refresh
+    // Force iframe reload with cache bust
+    if (iframeRef.current && iframeRef.current.src) {
+      try {
+        const url = new URL(iframeRef.current.src);
+        url.searchParams.set('_t', Date.now());
+        iframeRef.current.src = url.toString();
+      } catch (urlError) {
+        console.warn('[Preview] Could not add cache-bust to iframe URL:', urlError);
+      }
+    }
   }, []);
 
   const handleSync = useCallback(async () => {
@@ -430,70 +458,95 @@ export default function ContentEditorPage(props) {
     return finalUrl;
   }, [pathIdentifier]);
 
+  // Render the appropriate view based on viewMode
+  const renderContent = () => {
+    if (viewMode === 'editor') {
+      return (
+        <div class="w-full">
+          {sections ? (
+            <SectionsEditor sections={sections} onChange={handleSectionsChange} />
+          ) : contentBody !== null ? (
+            <LexicalEditor
+              // This is the legacy editor for 'astro' mode.
+              // It's not connected to the context for now.
+              ref={useRef(null)} // Pass a dummy ref
+              slug={pageId}
+              initialContent={contentBody}
+              onChange={handleLexicalChange}
+            />
+          ) : (
+            <div>Loading Editor...</div>
+          )}
+        </div>
+      );
+    }
+
+    if (viewMode === 'localPreview') {
+      return (
+        <div class="w-full h-full relative">
+          <div class="absolute top-4 left-4 z-20 bg-gray-800 bg-opacity-90 text-white px-3 py-1 rounded text-sm">
+            Local Preview (instant, before sync)
+          </div>
+          <LocalPreview sections={sections} />
+        </div>
+      );
+    }
+
+    // Live preview mode
+    return (
+      <div class="w-full h-full bg-white relative">
+        {isPreviewBuilding && (
+          <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+            <div class="text-white text-center p-4">
+              <RefreshCw size={48} className="animate-spin mb-4 mx-auto" />
+              <p class="text-lg font-semibold">Live Preview is Building</p>
+              <p class="text-sm">Your changes are being deployed. This may take a minute.</p>
+            </div>
+          </div>
+        )}
+        {buildError && (
+          <div class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-10">
+            <div class="text-white text-center p-4 bg-red-800 rounded-lg shadow-lg">
+              <p class="text-lg font-semibold">Build Error</p>
+              <p class="text-sm mt-2">{buildError}</p>
+              <button
+                onClick={() => setBuildError(null)}
+                className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-500 rounded text-white"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+        <div class="absolute top-4 left-4 z-20 bg-gray-800 bg-opacity-90 text-white px-3 py-1 rounded text-sm">
+          Live Preview (from deployed site)
+        </div>
+        <button
+          onClick={handleRefreshPreview}
+          className="absolute top-4 right-4 z-20 bg-gray-800 bg-opacity-75 text-white p-2 rounded-full hover:bg-gray-700 transition-colors"
+          aria-label="Refresh Preview"
+        >
+          <RefreshCw size={24} />
+        </button>
+        <iframe
+          ref={iframeRef}
+          key={previewKey}
+          src={previewUrl}
+          title="Live Preview"
+          className="w-full h-full border-0"
+          sandbox="allow-scripts allow-same-origin"
+        />
+      </div>
+    );
+  };
+
   return (
     <EditorProvider> {/* <-- WRAP WITH PROVIDER */}
       <div class="flex flex-col h-full bg-transparent text-white">
         <EditorHeader /> {/* <-- REMOVED editorApiRef prop */}
         <main class="flex-grow overflow-y-auto" style={{ paddingBottom: 'calc(64px + 1rem + env(safe-area-inset-bottom))' }}>
           <div style={{ paddingTop: 'var(--header-h)' }}>
-            {viewMode === 'editor' ? (
-              <div class="w-full">
-                {sections ? (
-                  <SectionsEditor sections={sections} onChange={handleSectionsChange} />
-                ) : contentBody !== null ? (
-                  <LexicalEditor
-                    // This is the legacy editor for 'astro' mode.
-                    // It's not connected to the context for now.
-                    ref={useRef(null)} // Pass a dummy ref
-                    slug={pageId}
-                    initialContent={contentBody}
-                    onChange={handleLexicalChange}
-                  />
-                ) : (
-                  <div>Loading Editor...</div>
-                )}
-              </div>
-            ) : (
-              <div class="w-full h-full bg-white relative">
-                {isPreviewBuilding && (
-                  <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
-                    <div class="text-white text-center p-4">
-                      <RefreshCw size={48} className="animate-spin mb-4 mx-auto" />
-                      <p class="text-lg font-semibold">Live Preview is Building</p>
-                      <p class="text-sm">Your changes are being deployed. This may take a minute.</p>
-                    </div>
-                  </div>
-                )}
-                {buildError && (
-                  <div class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-10">
-                    <div class="text-white text-center p-4 bg-red-800 rounded-lg shadow-lg">
-                      <p class="text-lg font-semibold">Build Error</p>
-                      <p class="text-sm mt-2">{buildError}</p>
-                      <button
-                        onClick={() => setBuildError(null)}
-                        className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-500 rounded text-white"
-                      >
-                        Dismiss
-                      </button>
-                    </div>
-                  </div>
-                )}
-                <button
-                  onClick={handleRefreshPreview}
-                  className="absolute top-4 right-4 z-20 bg-gray-800 bg-opacity-75 text-white p-2 rounded-full hover:bg-gray-700 transition-colors"
-                  aria-label="Refresh Preview"
-                >
-                  <RefreshCw size={24} />
-                </button>
-                <iframe
-                  key={previewKey}
-                  src={previewUrl}
-                  title="Live Preview"
-                  className="w-full h-full border-0"
-                  sandbox="allow-scripts allow-same-origin"
-                />
-              </div>
-            )}
+            {renderContent()}
           </div>
         </main>
         <BottomActionBar

@@ -6,6 +6,7 @@
 // Please do not alter this structure without a clear understanding of the design goal.
 
 import { h } from 'preact';
+import { useState } from 'preact/hooks';
 import LexicalField from './LexicalField';
 import { Image } from 'lucide-preact';
 import { useAuth } from '../../contexts/AuthContext';
@@ -14,6 +15,7 @@ import { getPreviewImageUrl } from '../../lib/imageHelpers';
 export default function BodySectionEditor({ props, onChange }) {
   console.log('[BodySectionEditor] RENDER', { props });
   const { selectedRepo } = useAuth();
+  const [imageError, setImageError] = useState(false);
   
   const handleFieldChange = (fieldName, fieldValue) => {
     onChange({ ...props, [fieldName]: fieldValue });
@@ -22,15 +24,22 @@ export default function BodySectionEditor({ props, onChange }) {
   const rawImagePath = props?.featureImage || props?.headerImageUrl;
   const imageUrl = getPreviewImageUrl(rawImagePath, selectedRepo?.full_name);
 
+  // Handle image load error - use state to conditionally render
+  const handleImageError = () => {
+    setImageError(true);
+    console.warn('[BodySectionEditor] Image failed to load:', rawImagePath);
+  };
+
   return (
     <div class="bg-transparent">
       <div class="bg-gray-800 mx-px" style="box-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
         <div class="px-[2px]">
-          {imageUrl && (
+          {imageUrl && !imageError && (
             <img
               src={imageUrl}
               alt={props?.headerImageAlt || props?.title || 'Section image'}
               class="w-full h-64 object-cover rounded-lg mb-4"
+              onError={handleImageError}
             />
           )}
 

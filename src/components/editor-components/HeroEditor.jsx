@@ -6,19 +6,29 @@
 // Please do not alter this structure without a clear understanding of the design goal.
 
 import { h } from 'preact';
+import { useState } from 'preact/hooks';
 import LexicalField from './LexicalField';
 import { useAuth } from '../../contexts/AuthContext';
 import { getPreviewImageUrl } from '../../lib/imageHelpers';
 
 export default function HeroEditor({ props, onChange }) {
   const { selectedRepo } = useAuth();
+  const [imageError, setImageError] = useState(false);
   
   const handleFieldChange = (fieldName, fieldValue) => {
     onChange({ ...props, [fieldName]: fieldValue });
   };
 
-  const featureImageUrl = getPreviewImageUrl(props?.featureImageUrl, selectedRepo?.full_name);
+  // Support both featureImage and featureImageUrl props for compatibility
+  const rawFeatureImage = props?.featureImage || props?.featureImageUrl;
+  const featureImageUrl = getPreviewImageUrl(rawFeatureImage, selectedRepo?.full_name);
   const backgroundImageUrl = getPreviewImageUrl(props?.backgroundImageUrl, selectedRepo?.full_name);
+
+  // Handle image load error - use state to conditionally render
+  const handleImageError = () => {
+    setImageError(true);
+    console.warn('[HeroEditor] Image failed to load:', rawFeatureImage);
+  };
 
   // Background style if background image is present
   const containerStyle = backgroundImageUrl
@@ -34,11 +44,12 @@ export default function HeroEditor({ props, onChange }) {
     <div class="bg-transparent">
       <div class="bg-gray-800 mx-px" style={containerStyle}>
         <div class="px-[2px]">
-          {featureImageUrl && (
+          {featureImageUrl && !imageError && (
             <img
               src={featureImageUrl}
-              alt={props?.title || 'Hero feature image'}
+              alt={props?.featureImageAlt || props?.title || 'Hero feature image'}
               class="w-full h-64 object-cover rounded-lg mb-4"
+              onError={handleImageError}
             />
           )}
           <LexicalField

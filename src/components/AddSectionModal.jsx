@@ -41,18 +41,68 @@ const UrlInput = ({ placeholder, value, onInput }) => (
     />
 );
 
-const HeroConfigurator = ({ config, setConfig }) => {
+const HeroConfigurator = ({ config, setConfig, pageSlug }) => {
+  const [featureUploadMode, setFeatureUploadMode] = useState('url');
+  const [bgUploadMode, setBgUploadMode] = useState('url');
+
+  const handleFeatureImageComplete = ({ path, alt }) => {
+    console.log('[HeroConfigurator] handleFeatureImageComplete triggered', { path, alt });
+    // Set both featureImage and featureImageUrl for compatibility with HeroEditor
+    setConfig({ ...config, featureImage: path, featureImageUrl: path, featureImageAlt: alt });
+  };
+
+  const handleBackgroundImageComplete = ({ path, alt }) => {
+    console.log('[HeroConfigurator] handleBackgroundImageComplete triggered', { path, alt });
+    setConfig({ ...config, backgroundImageUrl: path });
+  };
+
   return (
     <div class="space-y-4">
       <CheckboxInput label="Include Slogan" checked={config.includeSlogan} onChange={e => setConfig({ ...config, includeSlogan: e.target.checked })} />
       <CheckboxInput label="Include Body Paragraph" checked={config.includeBody} onChange={e => setConfig({ ...config, includeBody: e.target.checked })} />
       <div>
         <CheckboxInput label="Add Feature Image" checked={config.includeFeatureImage} onChange={e => setConfig({ ...config, includeFeatureImage: e.target.checked })} />
-        {config.includeFeatureImage && <UrlInput placeholder="https://example.com/feature.jpg" value={config.featureImageUrl} onInput={e => setConfig({...config, featureImageUrl: e.target.value})} />}
+        {config.includeFeatureImage && (
+          <div class="mt-2 pl-6 space-y-3">
+            <div class="flex items-center space-x-4">
+              <label class="flex items-center space-x-2">
+                <input type="radio" name="featureImageSource" value="url" checked={featureUploadMode === 'url'} onChange={() => setFeatureUploadMode('url')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
+                <span class="text-white">From URL</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="radio" name="featureImageSource" value="upload" checked={featureUploadMode === 'upload'} onChange={() => setFeatureUploadMode('upload')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
+                <span class="text-white">Upload</span>
+              </label>
+            </div>
+            {featureUploadMode === 'url' ? (
+              <UrlInput placeholder="https://example.com/feature.jpg" value={config.featureImageUrl} onInput={e => setConfig({...config, featureImageUrl: e.target.value})} />
+            ) : (
+              <ImageUploader pageSlug={pageSlug} onComplete={handleFeatureImageComplete} />
+            )}
+          </div>
+        )}
       </div>
       <div>
         <CheckboxInput label="Add Background Image" checked={config.includeBackgroundImage} onChange={e => setConfig({ ...config, includeBackgroundImage: e.target.checked })} />
-        {config.includeBackgroundImage && <UrlInput placeholder="https://example.com/background.jpg" value={config.backgroundImageUrl} onInput={e => setConfig({...config, backgroundImageUrl: e.target.value})} />}
+        {config.includeBackgroundImage && (
+          <div class="mt-2 pl-6 space-y-3">
+            <div class="flex items-center space-x-4">
+              <label class="flex items-center space-x-2">
+                <input type="radio" name="bgImageSource" value="url" checked={bgUploadMode === 'url'} onChange={() => setBgUploadMode('url')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
+                <span class="text-white">From URL</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="radio" name="bgImageSource" value="upload" checked={bgUploadMode === 'upload'} onChange={() => setBgUploadMode('upload')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
+                <span class="text-white">Upload</span>
+              </label>
+            </div>
+            {bgUploadMode === 'url' ? (
+              <UrlInput placeholder="https://example.com/background.jpg" value={config.backgroundImageUrl} onInput={e => setConfig({...config, backgroundImageUrl: e.target.value})} />
+            ) : (
+              <ImageUploader pageSlug={pageSlug} onComplete={handleBackgroundImageComplete} />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -157,7 +207,7 @@ export default function AddSectionModal({ pageSlug, onAddSection }) {
 
   const renderConfigureStep = () => (
     <div>
-      {selectedSection === 'hero' && <HeroConfigurator config={config} setConfig={setConfig} />}
+      {selectedSection === 'hero' && <HeroConfigurator config={config} setConfig={setConfig} pageSlug={pageSlug} />}
       {selectedSection === 'textSection' && <TextSectionConfigurator config={config} setConfig={setConfig} pageSlug={pageSlug} />}
       <div class="mt-6 flex justify-end">
         <button onClick={handleCreateSection} class="bg-yellow-green text-black font-bold px-6 py-2 rounded-lg hover:bg-lime-400 transition-colors">Add Section to Page</button>

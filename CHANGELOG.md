@@ -1,5 +1,33 @@
 # Project Change Log
 
+GitHub Copilot (feat): Image System and Preview System Improvements
+Date: 2025-12-01
+Summary:
+Implemented comprehensive improvements to the image upload and display system, and added a new local preview feature for instant feedback before syncing content to GitHub.
+
+Details:
+- **Sprint 1: Image System Completion**
+  - **Enhanced `getPreviewImageUrl`:** Extended the helper function in `imageHelpers.js` to handle `content/` prefixed paths in addition to `src/` paths, ensuring all repository image paths are correctly transformed to GitHub raw URLs.
+  - **Improved HeroEditor:** Added support for both `featureImage` and `featureImageUrl` props for compatibility. Added error handling with `onError` callback to gracefully hide broken images. Added `featureImageAlt` support.
+  - **Improved BodySectionEditor:** Added consistent error handling with `onError` callback and useState to track image load errors.
+  - **Hero Image Upload:** Added image upload capability to the HeroConfigurator in AddSectionModal, allowing users to upload feature images and background images directly instead of only providing URLs.
+
+- **Sprint 2: Preview System Stabilization**
+  - **New LocalPreview Component:** Created a new `LocalPreview.jsx` component that renders content locally using the same structure as Astro components for instant feedback before syncing. No build required - immediate feedback.
+  - **Three-Mode Preview System:** Updated the view mode to cycle through three states: editor → localPreview → livePreview → editor. Each mode shows a label indicating which preview mode is active.
+  - **Enhanced Preview Polling:** Increased polling interval to 5 seconds for more reliable status checking. Added iframe cache-busting using `iframeRef` to force reload after successful builds.
+  - **Updated BottomActionBar:** Added new icons and labels for the three view modes - Eye (local preview), Monitor (live preview), Pencil (edit).
+
+Impact:
+The image system is now more robust with proper error handling and support for both URL-based and upload-based image addition. The new local preview feature provides instant visual feedback without waiting for builds, significantly improving the content editing workflow.
+
+Reflection:
+- **What was the most challenging part of this task?** Designing the three-mode preview system while maintaining backward compatibility with the existing two-mode (editor/preview) logic. The LocalPreview component needed to replicate the styling of the Astro components without direct access to them.
+- **What was a surprising discovery or key learning?** The existing image upload flow was already well-structured - the main gap was in the display layer where images needed proper error handling and path transformation.
+- **What advice would you give the next agent who works on this code?** When adding new preview modes, ensure the BottomActionBar icons and labels are updated to provide clear visual feedback about the current state. The local preview is great for quick iteration but the live preview should be used for final verification.
+
+---
+
 GitHub Copilot (fix): Fix Image Preview in Editor Components
 Date: 2025-11-30
 Summary:
