@@ -1,5 +1,34 @@
 # Project Change Log
 
+GitHub Copilot (fix): Image Display & Header Assets Fix
+Date: 2025-12-01
+Summary:
+Fixed three critical issues: missing header logo/icons in Astro build, editor image preview failing when auth context missing, and enhanced diagnostic logging for debugging image display issues.
+
+Details:
+- **Header Assets Fix:** Created `public/img/` folder with required images (logo.webp, social icons). The Header.astro component references images via `/img/` paths which Astro expects in the `public/` folder.
+- **Editor Image Preview Enhancement:** Enhanced `getPreviewImageUrl` function in `imageHelpers.js` with:
+  - Comprehensive diagnostic logging to trace path transformation
+  - Support for `public/` path prefix in addition to `src/` and `content/`
+  - Clear error messages when repoFullName is missing
+- **Error Handling Improvements:** Updated HeroEditor.jsx and BodySectionEditor.jsx with:
+  - Better error display showing both original path and attempted URL
+  - Yellow warning message when URL cannot be constructed (missing auth context)
+  - Success logging when images load correctly
+- **Images Registry Update:** Updated `src/assets/images.json` to include the home-from-json folder image.
+
+Impact:
+- Header logo and social icons now display correctly in Astro build output
+- Editor provides clear diagnostic information when images fail to load
+- Developers can easily trace image URL construction through console logs
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the dual context problem - the editor runs in browser and needs GitHub raw URLs, while Astro runs at build time and uses import.meta.glob. The `public/` folder was missing entirely, causing all static assets to 404.
+- **What was a surprising discovery or key learning?** Astro's `public/` folder is essential for static assets referenced with absolute paths like `/img/logo.webp`. Without it, even though images existed in `img/` at repo root, they weren't being served.
+- **What advice would you give the next agent who works on this code?** When debugging image issues, check both contexts: 1) Editor preview uses GitHub raw URLs (needs selectedRepo.full_name), 2) Astro build uses either public/ folder (static) or src/assets/ (processed). Add diagnostic logging first before making changes.
+
+---
+
 GitHub Copilot (fix): Easy-SEO Editor → Astro Preview Pipeline Fix
 Date: 2025-12-01
 Summary:

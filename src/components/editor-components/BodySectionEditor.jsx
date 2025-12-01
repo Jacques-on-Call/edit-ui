@@ -14,7 +14,13 @@ import { getPreviewImageUrl } from '../../lib/imageHelpers';
 
 export default function BodySectionEditor({ props, onChange }) {
   console.log('[BodySectionEditor] RENDER', { props });
-  const { selectedRepo } = useAuth();
+  const authContext = useAuth();
+  const { selectedRepo } = authContext;
+  console.log('[BodySectionEditor] authContext:', JSON.stringify({ 
+    hasUser: !!authContext.user,
+    hasSelectedRepo: !!selectedRepo,
+    selectedRepoFullName: selectedRepo?.full_name 
+  }));
   const [imageError, setImageError] = useState(false);
   
   const handleFieldChange = (fieldName, fieldValue) => {
@@ -42,13 +48,23 @@ export default function BodySectionEditor({ props, onChange }) {
                   alt={props?.headerImageAlt || props?.title || 'Section image'}
                   class="w-full h-64 object-cover rounded-lg"
                   style={{ minHeight: '100px' }}
+                  onLoad={() => console.log('[BodySectionEditor] Image loaded successfully:', imageUrl)}
                   onError={handleImageError}
                 />
               ) : (
-                <div class="flex items-center justify-center h-24 text-red-400 text-sm p-4">
-                  Image failed to load: {rawImagePath}
+                <div class="flex flex-col items-center justify-center p-4 text-red-400 text-sm">
+                  <p>Image failed to load</p>
+                  <p class="text-xs text-gray-500 mt-1 break-all">{rawImagePath}</p>
+                  <p class="text-xs text-gray-500 mt-1 break-all">Attempted URL: {imageUrl}</p>
                 </div>
               )}
+            </div>
+          )}
+          {rawImagePath && !imageUrl && (
+            <div class="flex flex-col items-center justify-center p-4 text-yellow-400 text-sm bg-gray-800/50 rounded-lg mb-4">
+              <p>Could not construct image URL</p>
+              <p class="text-xs text-gray-500 mt-1 break-all">Path: {rawImagePath}</p>
+              <p class="text-xs text-gray-500 mt-1">Check console for auth context details</p>
             </div>
           )}
 
