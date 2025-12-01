@@ -34,13 +34,22 @@ export default function BodySectionEditor({ props, onChange }) {
     <div class="bg-transparent">
       <div class="bg-gray-800 mx-px" style="box-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
         <div class="px-[2px]">
-          {imageUrl && !imageError && (
-            <img
-              src={imageUrl}
-              alt={props?.headerImageAlt || props?.title || 'Section image'}
-              class="w-full h-64 object-cover rounded-lg mb-4"
-              onError={handleImageError}
-            />
+          {imageUrl && (
+            <div class="relative min-h-[50px] bg-gray-800/50 rounded-lg overflow-hidden mb-4">
+              {!imageError ? (
+                <img
+                  src={imageUrl}
+                  alt={props?.headerImageAlt || props?.title || 'Section image'}
+                  class="w-full h-64 object-cover rounded-lg"
+                  style={{ minHeight: '100px' }}
+                  onError={handleImageError}
+                />
+              ) : (
+                <div class="flex items-center justify-center h-24 text-red-400 text-sm p-4">
+                  Image failed to load: {rawImagePath}
+                </div>
+              )}
+            </div>
           )}
 
           <div class="flex flex-col">

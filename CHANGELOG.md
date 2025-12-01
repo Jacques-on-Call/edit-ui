@@ -1,5 +1,30 @@
 # Project Change Log
 
+GitHub Copilot (fix): Easy-SEO Editor → Astro Preview Pipeline Fix
+Date: 2025-12-01
+Summary:
+Fixed 4 critical pipeline failures preventing V1 launch: character encoding corruption, images collapsing in editor, HTML/styles not rendering properly, and images not building into Astro preview.
+
+Details:
+- **Character Encoding Fix:** Fixed UTF-8 encoding corruption that was causing "it's" → "itÃÂ¢ÃÂÃÂs" by properly using `decodeURIComponent(escape(atob(...)))` pattern in:
+  - `cloudflare-worker-src/routes/content.js` (handleGetPageJsonRequest)
+  - `easy-seo/src/pages/ContentEditorPage.jsx`
+  - `easy-seo/src/components/FileExplorer.jsx`
+- **Image Collapse Prevention:** Added minimum height containers and better error handling to HeroEditor.jsx and BodySectionEditor.jsx. Images now display in a container with `min-h-[50px]` and show error messages instead of silently collapsing.
+- **HTML Rendering Fix:** Updated PageRenderer.astro to properly use `set:html` for Lexical editor HTML output instead of treating it as Markdown. Added prose styling classes for consistent text rendering.
+- **Image Build Integration:** PageRenderer.astro now uses the `getImageUrl` helper from `src/lib/images.js` to resolve image paths to build-time URLs, enabling proper Astro image optimization.
+- **Hero Component Enhancement:** Updated Hero.astro to use `set:html` for title and subtitle props, with proper styling inheritance for nested HTML elements.
+
+Impact:
+The content editor pipeline now properly handles UTF-8 characters, displays images without collapse, renders HTML content correctly with proper styling, and builds images into the Astro preview.
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the dual encoding issue - base64 contains raw UTF-8 bytes, but `atob()` decodes to Latin-1. The `decodeURIComponent(escape(...))` pattern was the key fix.
+- **What was a surprising discovery or key learning?** The Lexical editor outputs HTML, but the TextBlock component was treating it as Markdown via `marked()`. This was causing double rendering issues.
+- **What advice would you give the next agent who works on this code?** When dealing with content from GitHub API → editor → Astro build, always trace the encoding at each step. Use consistent UTF-8 handling patterns throughout.
+
+---
+
 GitHub Copilot (fix): Preview Workflow Improvements
 Date: 2025-12-01
 Summary:

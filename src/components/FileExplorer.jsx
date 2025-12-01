@@ -120,7 +120,9 @@ const fetchDetailsForFile = useCallback(async (file) => {
 
         if (response && typeof response.content === 'string') {
           try {
-            const decodedContent = atob(response.content);
+            // Decode base64 content with proper UTF-8 handling
+            const binaryString = atob(response.content);
+            const decodedContent = decodeURIComponent(escape(binaryString));
             const { data: frontmatter } = matter(decodedContent);
             metadata = { ...metadata, ...frontmatter };
           } catch (e) {
@@ -192,7 +194,9 @@ if (readmeFile) {
 setReadmeLoading(true);
 try {
 const readmeData = await fetchJson(`/api/files?repo=${repo}&path=${readmeFile.path}`);
-const decodedContent = atob(readmeData.content);
+// Decode base64 content with proper UTF-8 handling
+const binaryString = atob(readmeData.content);
+const decodedContent = decodeURIComponent(escape(binaryString));
 setReadmeContent(decodedContent);
 } catch (readmeErr) {
 console.error("Failed to fetch or decode README:", readmeErr);

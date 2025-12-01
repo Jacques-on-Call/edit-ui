@@ -44,13 +44,22 @@ export default function HeroEditor({ props, onChange }) {
     <div class="bg-transparent">
       <div class="bg-gray-800 mx-px" style={containerStyle}>
         <div class="px-[2px]">
-          {featureImageUrl && !imageError && (
-            <img
-              src={featureImageUrl}
-              alt={props?.featureImageAlt || props?.title || 'Hero feature image'}
-              class="w-full h-64 object-cover rounded-lg mb-4"
-              onError={handleImageError}
-            />
+          {featureImageUrl && (
+            <div class="relative min-h-[50px] bg-gray-800/50 rounded-lg overflow-hidden mb-4">
+              {!imageError ? (
+                <img
+                  src={featureImageUrl}
+                  alt={props?.featureImageAlt || props?.title || 'Hero feature image'}
+                  class="w-full h-64 object-cover rounded-lg"
+                  style={{ minHeight: '100px' }}
+                  onError={handleImageError}
+                />
+              ) : (
+                <div class="flex items-center justify-center h-24 text-red-400 text-sm p-4">
+                  Image failed to load: {rawFeatureImage}
+                </div>
+              )}
+            </div>
           )}
           <LexicalField
             value={props?.title || ''}

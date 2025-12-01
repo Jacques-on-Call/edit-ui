@@ -438,7 +438,9 @@ export default function ContentEditorPage(props) {
         try {
           const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`;
           const json = await fetchJson(url);
-          const decodedContent = atob(json.content || '');
+          // Decode base64 content with proper UTF-8 handling
+          const binaryString = atob(json.content || '');
+          const decodedContent = decodeURIComponent(escape(binaryString));
           const { data: frontmatter, content: body } = matter(decodedContent);
 
           if (frontmatter && frontmatter.sections && Array.isArray(frontmatter.sections)) {
