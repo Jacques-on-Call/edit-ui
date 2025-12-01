@@ -352,6 +352,23 @@ export default function ContentEditorPage(props) {
 
   // --- 4. SIDE EFFECTS (useEffect) ---
   useEffect(() => {
+    const handleMessage = (e) => {
+      // Optional: verify origin e.origin
+      if (!e.data || e.data.type !== 'content-height') return;
+      const iframe = document.getElementById('content-preview-iframe');
+      if (!iframe) return;
+      const height = Math.max(300, Number(e.data.height) || 0);
+      iframe.style.height = height + 'px';
+    };
+
+    window.addEventListener('message', handleMessage);
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []);
+
+  useEffect(() => {
     console.log('[CEP-useEffect] Main effect hook started.');
     try {
       filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
@@ -559,6 +576,7 @@ export default function ContentEditorPage(props) {
           </div>
         )}
         <iframe
+          id="content-preview-iframe"
           ref={iframeRef}
           key={previewKey}
           src={previewUrl}

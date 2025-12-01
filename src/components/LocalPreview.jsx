@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useState } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import { useAuth } from '../contexts/AuthContext';
 import { getPreviewImageUrl } from '../lib/imageHelpers';
 
@@ -106,6 +106,34 @@ const UnknownSection = ({ type, props }) => {
 export default function LocalPreview({ sections = [], layout = 'default' }) {
   const { selectedRepo } = useAuth();
   const repoFullName = selectedRepo?.full_name;
+  const previewRef = useRef(null);
+
+  useEffect(() => {
+    // 1. Set --vh custom property for mobile viewport height correction
+    const updateVh = () => {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    };
+    updateVh();
+    window.addEventListener('resize', updateVh);
+
+    // 2. Observe content height and post message to parent
+    const observer = new ResizeObserver(entries => {
+      if (entries[0]) {
+        const contentHeight = entries[0].target.scrollHeight;
+        window.parent.postMessage({ type: 'content-height', height: contentHeight }, '*');
+      }
+    });
+
+    if (previewRef.current) {
+      observer.observe(previewRef.current);
+    }
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', updateVh);
+      observer.disconnect();
+    };
+  }, []); // Run only on mount and unmount
 
   if (!sections || sections.length === 0) {
     return (
@@ -116,7 +144,12 @@ export default function LocalPreview({ sections = [], layout = 'default' }) {
   }
 
   return (
-    <div class="local-preview bg-gray-900 min-h-full" data-layout={layout}>
+    <div
+      ref={previewRef}
+      class="local-preview bg-gray-900"
+      data-layout={layout}
+      style={{ minHeight: 'calc(var(--vh, 1vh) * 100)' }}
+    >
       {sections.map((section, index) => {
         const key = section.id || `section-${index}`;
         const props = { ...section.props, repoFullName };
