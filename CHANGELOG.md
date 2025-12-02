@@ -1,5 +1,51 @@
 # Project Change Log
 
+GitHub Copilot (feat): Enhanced Image Editing in AddSectionModal
+Date: 2025-12-02
+Summary:
+Implemented comprehensive image editing capabilities when editing existing sections. Users can now edit image filename (SEO-friendly), alt text, title, description, and loading strategy without showing confusing full paths. The backend properly handles image renames in GitHub.
+
+Details:
+- **New ImageEditor Component:** Created `ImageEditor.jsx` that provides a user-friendly interface for editing existing images. It shows:
+  - Image preview from the repository
+  - Editable filename (auto-generated from alt text for SEO)
+  - Alt text with length validation (10-125 characters optimal)
+  - Title and description fields
+  - Loading strategy (lazy/eager)
+  - SEO score indicator (0-100)
+  - Option to replace the image entirely
+
+- **AddSectionModal Improvements:**
+  - When editing existing sections with images, the modal now shows the `ImageEditor` instead of the URL input
+  - The `isEditing` prop is passed to configurators to enable edit-mode-specific UI
+  - Tracks original image paths to enable proper rename operations
+  - All image SEO properties (title, description, loading) are now properly saved and restored
+
+- **ContentEditorPage Image Rename Fix:**
+  - Refactored `handleUpdateSection` to dynamically fetch SHA for each image being renamed
+  - Removed the single `editingSectionSha` state that couldn't handle multiple images
+  - Each image rename now independently fetches its SHA and handles errors gracefully
+  - Uses internal `_originalPath` properties to track which images need renaming
+
+- **Backend Integration:**
+  - Uses existing `/api/files/rename` endpoint for image filename changes
+  - Properly handles path construction (keeps directory, changes filename)
+  - Error handling allows updates to continue even if rename fails
+
+Impact:
+- Users can now edit image SEO properties (filename, alt, title, description) when editing existing sections
+- The edit modal no longer shows confusing full repository paths
+- Image renames properly update the file in GitHub
+- After saving, the user sees the same component with updated properties (not a new empty one)
+- SEO score helps users optimize their images for search engines
+
+Reflection:
+- **What was the most challenging part of this task?** Handling multiple images in a section that each need their own SHA for rename operations. The previous implementation used a single SHA state which couldn't handle multiple images. The solution was to fetch SHA dynamically for each image being renamed.
+- **What was a surprising discovery or key learning?** The edit mode UI needed a completely different component (ImageEditor) than the create mode (ImageUploader). Trying to reuse the uploader for editing would have been confusing for users who just want to change metadata.
+- **What advice would you give the next agent who works on this code?** When handling file operations (rename, move, delete), always fetch the SHA just before the operation to ensure you have the latest version. Using stale SHAs will cause GitHub API errors.
+
+---
+
 GitHub Copilot (fix): HeroEditor Background Image + Adaptive Text Color
 Date: 2025-12-02
 Summary:

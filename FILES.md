@@ -37,8 +37,9 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/components/Icon.jsx`**: A wrapper for the lucide-preact icon library.
 -   **`src/components/ContextMenu.jsx`**: Renders a right-click/long-press context menu.
 -   **`src/components/CreateModal.jsx`**: Renders a modal for creating new files and folders.
--   **`src/components/AddSectionModal.jsx`**: Renders a modal for selecting and configuring new content sections before adding them to a page. Supports image upload for both Hero and Text sections.
--   **`src/components/ImageUploader.jsx`**: Component for uploading images to the repository. Shows upload status (idle, uploading, success, error).
+-   **`src/components/AddSectionModal.jsx`**: Renders a modal for selecting and configuring new content sections before adding them to a page. Supports image upload for both Hero and Text sections. In edit mode, shows ImageEditor for existing images.
+-   **`src/components/ImageUploader.jsx`**: Component for uploading new images to the repository. Shows upload status (idle, uploading, success, error). Includes SEO score, alt text, filename, title, description, and resize options.
+-   **`src/components/ImageEditor.jsx`**: Component for editing existing images in sections. Shows image preview, allows editing filename (SEO-friendly), alt text, title, description, and loading strategy. Includes SEO score and option to replace the image.
 -   **`src/components/LocalPreview.jsx`**: Renders content locally for instant feedback before syncing to GitHub. No build required.
 -   **`src/components/SearchBar.jsx`**: A debounced search input component.
 -   **`src/components/EditorHeader.jsx`**: The header component for the content editor. Now context-aware.

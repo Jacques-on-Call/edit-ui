@@ -35,7 +35,6 @@ export default function ContentEditorPage(props) {
   const [previewKey, setPreviewKey] = useState(Date.now());
   const [buildError, setBuildError] = useState(null);
   const [editingSectionIndex, setEditingSectionIndex] = useState(null); // Track which section is being edited
-  const [editingSectionSha, setEditingSectionSha] = useState(null);
 
   // Ref Hooks
   // const editorApiRef = useRef(null); // No longer needed for the header
@@ -246,40 +245,103 @@ export default function ContentEditorPage(props) {
     console.log('[ContentEditorPage] handleUpdateSection called', { updatedSection });
     if (editingSectionIndex === null) return;
 
-    const originalSection = sections[editingSectionIndex];
-
-    const originalFeatureUrl = originalSection.props.featureImageUrl;
-    const updatedFeatureUrl = updatedSection.props.featureImageUrl;
-    const originalBackgroundUrl = originalSection.props.backgroundImageUrl;
-    const updatedBackgroundUrl = updatedSection.props.backgroundImageUrl;
-    const originalHeaderUrl = originalSection.props.headerImageUrl;
-    const updatedHeaderUrl = updatedSection.props.headerImageUrl;
-
-    const renameImage = async (originalUrl, updatedUrl) => {
-      if (originalUrl && updatedUrl && originalUrl !== updatedUrl) {
-        const newFilename = updatedUrl.split('/').pop();
-        await fetchJson('/api/files/rename', {
-          method: 'POST',
-          body: JSON.stringify({
-            repo: selectedRepoRef.current.full_name,
-            path: originalUrl,
-            newFilename: newFilename,
-            sha: editingSectionSha,
-          }),
-        });
-        return originalUrl.replace(/[^/]*$/, newFilename);
+    // Helper function to get SHA for a specific image path
+    const getImageSha = async (imagePath) => {
+      if (!imagePath) return null;
+      try {
+        const repo = selectedRepoRef.current.full_name;
+        const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(imagePath)}`;
+        const { sha } = await fetchJson(url);
+        return sha;
+      } catch (error) {
+        console.error('Failed to get SHA for image:', imagePath, error);
+        return null;
       }
-      return updatedUrl;
+    };
+
+    // Helper function to rename an image
+    const renameImage = async (originalPath, newPath) => {
+      if (!originalPath || !newPath || originalPath === newPath) {
+        return newPath;
+      }
+      
+      console.log('[ContentEditorPage] Renaming image:', { originalPath, newPath });
+      
+      // Get the SHA for the original file
+      const sha = await getImageSha(originalPath);
+      if (!sha) {
+        console.error('Could not get SHA for image rename:', originalPath);
+        throw new Error(`Could not get SHA for image: ${originalPath}`);
+      }
+      
+      const newFilename = newPath.split('/').pop();
+      
+      await fetchJson('/api/files/rename', {
+        method: 'POST',
+        body: JSON.stringify({
+          repo: selectedRepoRef.current.full_name,
+          path: originalPath,
+          newFilename: newFilename,
+          sha: sha,
+        }),
+      });
+      
+      // Return the new path (with same directory as original, but new filename)
+      return originalPath.replace(/[^/]*$/, newFilename);
     };
 
     try {
-      updatedSection.props.featureImageUrl = await renameImage(originalFeatureUrl, updatedFeatureUrl);
-      updatedSection.props.backgroundImageUrl = await renameImage(originalBackgroundUrl, updatedBackgroundUrl);
-      updatedSection.props.headerImageUrl = await renameImage(originalHeaderUrl, updatedHeaderUrl);
+      // Handle feature image rename if original path is tracked
+      if (updatedSection.props._originalFeatureImagePath && updatedSection.props.featureImageUrl) {
+        const newPath = await renameImage(
+          updatedSection.props._originalFeatureImagePath,
+          updatedSection.props.featureImageUrl
+        );
+        updatedSection.props.featureImageUrl = newPath;
+        delete updatedSection.props._originalFeatureImagePath;
+      }
+      
+      // Handle background image rename if original path is tracked
+      if (updatedSection.props._originalBackgroundImagePath && updatedSection.props.backgroundImageUrl) {
+        const newPath = await renameImage(
+          updatedSection.props._originalBackgroundImagePath,
+          updatedSection.props.backgroundImageUrl
+        );
+        updatedSection.props.backgroundImageUrl = newPath;
+        delete updatedSection.props._originalBackgroundImagePath;
+      }
+      
+      // Handle header image rename if original path is tracked
+      if (updatedSection.props._originalHeaderImagePath && updatedSection.props.headerImageUrl) {
+        const newPath = await renameImage(
+          updatedSection.props._originalHeaderImagePath,
+          updatedSection.props.headerImageUrl
+        );
+        updatedSection.props.headerImageUrl = newPath;
+        delete updatedSection.props._originalHeaderImagePath;
+      }
     } catch (error) {
-      console.error('Failed to rename image', error);
-      // Optionally, show an error to the user
-      return; // Abort the update if rename fails
+      // Log detailed error information for debugging
+      const failedImages = [];
+      if (updatedSection.props._originalFeatureImagePath) {
+        failedImages.push(`feature image: ${updatedSection.props._originalFeatureImagePath}`);
+      }
+      if (updatedSection.props._originalBackgroundImagePath) {
+        failedImages.push(`background image: ${updatedSection.props._originalBackgroundImagePath}`);
+      }
+      if (updatedSection.props._originalHeaderImagePath) {
+        failedImages.push(`header image: ${updatedSection.props._originalHeaderImagePath}`);
+      }
+      console.error(`Failed to rename image(s): ${failedImages.join(', ')}`, {
+        error: error.message,
+        sectionType: updatedSection.type,
+        sectionId: updatedSection.id
+      });
+      // Continue with the update even if rename fails - user can try again
+      // Remove the _original tracking properties to prevent confusion
+      delete updatedSection.props._originalFeatureImagePath;
+      delete updatedSection.props._originalBackgroundImagePath;
+      delete updatedSection.props._originalHeaderImagePath;
     }
 
     const newSections = [...(sections || [])];
@@ -288,7 +350,7 @@ export default function ContentEditorPage(props) {
     setSections(newSections);
     triggerSave(newSections);
     setEditingSectionIndex(null); // Reset after update
-  }, [sections, editingSectionIndex, triggerSave, editingSectionSha]);
+  }, [sections, editingSectionIndex, triggerSave]);
 
   const handleSync = useCallback(async () => {
     console.log(`[CEP-handleSync] Sync process initiated.`);
@@ -524,34 +586,6 @@ export default function ContentEditorPage(props) {
     // getDefaultSections is stable (empty deps), but we inline calls anyway for safety
     // selectedRepo?.full_name extracts the primitive string value from the object
   }, [pageId, selectedRepo?.full_name, editorMode]);
-
-  useEffect(() => {
-    if (editingSectionIndex === null) {
-      setEditingSectionSha(null);
-      return;
-    }
-
-    const getSha = async () => {
-      const section = sections[editingSectionIndex];
-      const imageUrl = section.props.featureImageUrl || section.props.backgroundImageUrl || section.props.headerImageUrl;
-      if (!imageUrl) {
-        setEditingSectionSha(null);
-        return;
-      }
-
-      try {
-        const repo = selectedRepoRef.current.full_name;
-        const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(imageUrl)}`;
-        const { sha } = await fetchJson(url);
-        setEditingSectionSha(sha);
-      } catch (error) {
-        console.error('Failed to get SHA for image', error);
-        setEditingSectionSha(null);
-      }
-    };
-
-    getSha();
-  }, [editingSectionIndex, sections]);
 
   // --- 5. RENDER LOGIC ---
   const previewUrl = useMemo(() => {

@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from 'preact/hooks';
 import { useUI } from '../contexts/UIContext';
 import { X, ArrowLeft } from 'lucide-preact';
 import ImageUploader from './ImageUploader';
+import ImageEditor from './ImageEditor';
 
 const SectionThumbnail = ({ title, description, onClick, children }) => (
   <button
@@ -41,9 +42,13 @@ const UrlInput = ({ placeholder, value, onInput }) => (
   />
 );
 
-const HeroConfigurator = ({ config, setConfig, pageSlug }) => {
+const HeroConfigurator = ({ config, setConfig, pageSlug, isEditing = false }) => {
   const [featureUploadMode, setFeatureUploadMode] = useState('url');
   const [bgUploadMode, setBgUploadMode] = useState('url');
+  
+  // Check if we have existing images (for edit mode)
+  const hasExistingFeatureImage = isEditing && config.featureImageUrl && config.featureImageUrl.startsWith('src/');
+  const hasExistingBackgroundImage = isEditing && config.backgroundImageUrl && config.backgroundImageUrl.startsWith('src/');
 
   const handleFeatureImageComplete = ({ path, alt, title, description, loading }) => {
     console.log('[HeroConfigurator] handleFeatureImageComplete triggered', { path, alt, title, description, loading });
@@ -70,6 +75,61 @@ const HeroConfigurator = ({ config, setConfig, pageSlug }) => {
       backgroundImageLoading: loading
     });
   };
+  
+  // Handler for ImageEditor updates (for existing images)
+  const handleFeatureImageUpdate = ({ path, alt, title, description, loading, originalPath }) => {
+    console.log('[HeroConfigurator] handleFeatureImageUpdate', { path, alt, title, description, loading, originalPath });
+    setConfig({
+      ...config,
+      featureImage: path,
+      featureImageUrl: path,
+      featureImageAlt: alt,
+      featureImageTitle: title,
+      featureImageDescription: description,
+      featureImageLoading: loading,
+      // Track original path for rename operation
+      _originalFeatureImagePath: originalPath !== path ? originalPath : undefined
+    });
+  };
+  
+  const handleBackgroundImageUpdate = ({ path, alt, title, description, loading, originalPath }) => {
+    console.log('[HeroConfigurator] handleBackgroundImageUpdate', { path, alt, title, description, loading, originalPath });
+    setConfig({
+      ...config,
+      backgroundImageUrl: path,
+      backgroundImageAlt: alt,
+      backgroundImageTitle: title,
+      backgroundImageDescription: description,
+      backgroundImageLoading: loading,
+      // Track original path for rename operation
+      _originalBackgroundImagePath: originalPath !== path ? originalPath : undefined
+    });
+  };
+  
+  const handleRemoveFeatureImage = () => {
+    setConfig({
+      ...config,
+      includeFeatureImage: false,
+      featureImage: undefined,
+      featureImageUrl: undefined,
+      featureImageAlt: undefined,
+      featureImageTitle: undefined,
+      featureImageDescription: undefined,
+      featureImageLoading: undefined
+    });
+  };
+  
+  const handleRemoveBackgroundImage = () => {
+    setConfig({
+      ...config,
+      includeBackgroundImage: false,
+      backgroundImageUrl: undefined,
+      backgroundImageAlt: undefined,
+      backgroundImageTitle: undefined,
+      backgroundImageDescription: undefined,
+      backgroundImageLoading: undefined
+    });
+  };
 
   return (
     <div class="space-y-4">
@@ -79,23 +139,40 @@ const HeroConfigurator = ({ config, setConfig, pageSlug }) => {
         <CheckboxInput label="Add Feature Image" checked={config.includeFeatureImage} onChange={e => setConfig({ ...config, includeFeatureImage: e.target.checked })} />
         {config.includeFeatureImage && (
           <div class="mt-2 pl-6 space-y-3">
-            <div class="flex items-center space-x-4">
-              <label class="flex items-center space-x-2">
-                <input type="radio" name="featureImageSource" value="url" checked={featureUploadMode === 'url'} onChange={() => setFeatureUploadMode('url')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
-                <span class="text-white">From URL</span>
-              </label>
-              <label class="flex items-center space-x-2">
-                <input type="radio" name="featureImageSource" value="upload" checked={featureUploadMode === 'upload'} onChange={() => setFeatureUploadMode('upload')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
-                <span class="text-white">Upload</span>
-              </label>
-            </div>
-            {featureUploadMode === 'url' ? (
-              <div>
-                <UrlInput placeholder="src/assets/images/your-image.jpg" value={config.featureImageUrl} onInput={e => setConfig({ ...config, featureImageUrl: e.target.value })} />
-                <input type="text" placeholder="Enter Alt Text" value={config.featureImageAlt} onInput={e => setConfig({ ...config, featureImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
-              </div>
+            {/* Show ImageEditor for existing images, otherwise show upload options */}
+            {hasExistingFeatureImage ? (
+              <ImageEditor
+                imagePath={config.featureImageUrl}
+                imageAlt={config.featureImageAlt || ''}
+                imageTitle={config.featureImageTitle || ''}
+                imageDescription={config.featureImageDescription || ''}
+                imageLoading={config.featureImageLoading || 'lazy'}
+                pageSlug={pageSlug}
+                onUpdate={handleFeatureImageUpdate}
+                onRemove={handleRemoveFeatureImage}
+                label="Feature Image"
+              />
             ) : (
-              <ImageUploader pageSlug={pageSlug} onComplete={handleFeatureImageComplete} />
+              <>
+                <div class="flex items-center space-x-4">
+                  <label class="flex items-center space-x-2">
+                    <input type="radio" name="featureImageSource" value="url" checked={featureUploadMode === 'url'} onChange={() => setFeatureUploadMode('url')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
+                    <span class="text-white">From URL</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="radio" name="featureImageSource" value="upload" checked={featureUploadMode === 'upload'} onChange={() => setFeatureUploadMode('upload')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
+                    <span class="text-white">Upload</span>
+                  </label>
+                </div>
+                {featureUploadMode === 'url' ? (
+                  <div>
+                    <UrlInput placeholder="src/assets/images/your-image.jpg" value={config.featureImageUrl} onInput={e => setConfig({ ...config, featureImageUrl: e.target.value })} />
+                    <input type="text" placeholder="Enter Alt Text" value={config.featureImageAlt} onInput={e => setConfig({ ...config, featureImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
+                  </div>
+                ) : (
+                  <ImageUploader pageSlug={pageSlug} onComplete={handleFeatureImageComplete} />
+                )}
+              </>
             )}
           </div>
         )}
@@ -104,23 +181,40 @@ const HeroConfigurator = ({ config, setConfig, pageSlug }) => {
         <CheckboxInput label="Add Background Image" checked={config.includeBackgroundImage} onChange={e => setConfig({ ...config, includeBackgroundImage: e.target.checked })} />
         {config.includeBackgroundImage && (
           <div class="mt-2 pl-6 space-y-3">
-            <div class="flex items-center space-x-4">
-              <label class="flex items-center space-x-2">
-                <input type="radio" name="bgImageSource" value="url" checked={bgUploadMode === 'url'} onChange={() => setBgUploadMode('url')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
-                <span class="text-white">From URL</span>
-              </label>
-              <label class="flex items-center space-x-2">
-                <input type="radio" name="bgImageSource" value="upload" checked={bgUploadMode === 'upload'} onChange={() => setBgUploadMode('upload')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
-                <span class="text-white">Upload</span>
-              </label>
-            </div>
-            {bgUploadMode === 'url' ? (
-              <div>
-                <UrlInput placeholder="src/assets/images/your-background.jpg" value={config.backgroundImageUrl} onInput={e => setConfig({ ...config, backgroundImageUrl: e.target.value })} />
-                <input type="text" placeholder="Enter Alt Text" value={config.backgroundImageAlt} onInput={e => setConfig({ ...config, backgroundImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
-              </div>
+            {/* Show ImageEditor for existing images, otherwise show upload options */}
+            {hasExistingBackgroundImage ? (
+              <ImageEditor
+                imagePath={config.backgroundImageUrl}
+                imageAlt={config.backgroundImageAlt || ''}
+                imageTitle={config.backgroundImageTitle || ''}
+                imageDescription={config.backgroundImageDescription || ''}
+                imageLoading={config.backgroundImageLoading || 'lazy'}
+                pageSlug={pageSlug}
+                onUpdate={handleBackgroundImageUpdate}
+                onRemove={handleRemoveBackgroundImage}
+                label="Background Image"
+              />
             ) : (
-              <ImageUploader pageSlug={pageSlug} onComplete={handleBackgroundImageComplete} />
+              <>
+                <div class="flex items-center space-x-4">
+                  <label class="flex items-center space-x-2">
+                    <input type="radio" name="bgImageSource" value="url" checked={bgUploadMode === 'url'} onChange={() => setBgUploadMode('url')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
+                    <span class="text-white">From URL</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="radio" name="bgImageSource" value="upload" checked={bgUploadMode === 'upload'} onChange={() => setBgUploadMode('upload')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
+                    <span class="text-white">Upload</span>
+                  </label>
+                </div>
+                {bgUploadMode === 'url' ? (
+                  <div>
+                    <UrlInput placeholder="src/assets/images/your-background.jpg" value={config.backgroundImageUrl} onInput={e => setConfig({ ...config, backgroundImageUrl: e.target.value })} />
+                    <input type="text" placeholder="Enter Alt Text" value={config.backgroundImageAlt} onInput={e => setConfig({ ...config, backgroundImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
+                  </div>
+                ) : (
+                  <ImageUploader pageSlug={pageSlug} onComplete={handleBackgroundImageComplete} />
+                )}
+              </>
             )}
           </div>
         )}
@@ -156,12 +250,14 @@ const HeroConfigurator = ({ config, setConfig, pageSlug }) => {
   );
 };
 
-const TextSectionConfigurator = ({ config, setConfig, pageSlug }) => {
+const TextSectionConfigurator = ({ config, setConfig, pageSlug, isEditing = false }) => {
   const [uploadMode, setUploadMode] = useState('url'); // 'url' or 'upload'
+  
+  // Check if we have an existing image (for edit mode)
+  const hasExistingHeaderImage = isEditing && config.headerImageUrl && config.headerImageUrl.startsWith('src/');
 
   const handleImageComplete = ({ path, alt, title, description, loading }) => {
     console.log('[TextSectionConfigurator] handleImageComplete triggered', { path, alt, title, description, loading });
-    console.log('[TextSectionConfigurator] Current config state before update:', config);
     const newConfig = {
       ...config,
       headerImageUrl: path,
@@ -170,35 +266,77 @@ const TextSectionConfigurator = ({ config, setConfig, pageSlug }) => {
       headerImageDescription: description,
       headerImageLoading: loading
     };
-    console.log('[TextSectionConfigurator] New config state to be set:', newConfig);
     setConfig(newConfig);
+  };
+  
+  // Handler for ImageEditor updates (for existing images)
+  const handleHeaderImageUpdate = ({ path, alt, title, description, loading, originalPath }) => {
+    console.log('[TextSectionConfigurator] handleHeaderImageUpdate', { path, alt, title, description, loading, originalPath });
+    setConfig({
+      ...config,
+      headerImageUrl: path,
+      headerImageAlt: alt,
+      headerImageTitle: title,
+      headerImageDescription: description,
+      headerImageLoading: loading,
+      // Track original path for rename operation
+      _originalHeaderImagePath: originalPath !== path ? originalPath : undefined
+    });
+  };
+  
+  const handleRemoveHeaderImage = () => {
+    setConfig({
+      ...config,
+      includeHeaderImage: false,
+      headerImageUrl: undefined,
+      headerImageAlt: undefined,
+      headerImageTitle: undefined,
+      headerImageDescription: undefined,
+      headerImageLoading: undefined
+    });
   };
 
   return (
     <div class="space-y-4">
-      {/* Force redeploy */}
       <CheckboxInput label="Include Title" checked={config.includeTitle} onChange={e => setConfig({ ...config, includeTitle: e.target.checked })} />
       <div>
         <CheckboxInput label="Add Header Image" checked={config.includeHeaderImage} onChange={e => setConfig({ ...config, includeHeaderImage: e.target.checked })} />
         {config.includeHeaderImage && (
           <div class="mt-2 pl-6 space-y-3">
-            <div class="flex items-center space-x-4">
-              <label class="flex items-center space-x-2">
-                <input type="radio" name="imageSource" value="url" checked={uploadMode === 'url'} onChange={() => setUploadMode('url')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
-                <span class="text-white">From URL</span>
-              </label>
-              <label class="flex items-center space-x-2">
-                <input type="radio" name="imageSource" value="upload" checked={uploadMode === 'upload'} onChange={() => setUploadMode('upload')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
-                <span class="text-white">Upload</span>
-              </label>
-            </div>
-            {uploadMode === 'url' ? (
-              <div>
-                <UrlInput placeholder="src/assets/images/your-header.jpg" value={config.headerImageUrl} onInput={e => setConfig({ ...config, headerImageUrl: e.target.value })} />
-                <input type="text" placeholder="Enter Alt Text" value={config.headerImageAlt} onInput={e => setConfig({ ...config, headerImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
-              </div>
+            {/* Show ImageEditor for existing images, otherwise show upload options */}
+            {hasExistingHeaderImage ? (
+              <ImageEditor
+                imagePath={config.headerImageUrl}
+                imageAlt={config.headerImageAlt || ''}
+                imageTitle={config.headerImageTitle || ''}
+                imageDescription={config.headerImageDescription || ''}
+                imageLoading={config.headerImageLoading || 'lazy'}
+                pageSlug={pageSlug}
+                onUpdate={handleHeaderImageUpdate}
+                onRemove={handleRemoveHeaderImage}
+                label="Header Image"
+              />
             ) : (
-              <ImageUploader pageSlug={pageSlug} onComplete={handleImageComplete} />
+              <>
+                <div class="flex items-center space-x-4">
+                  <label class="flex items-center space-x-2">
+                    <input type="radio" name="imageSource" value="url" checked={uploadMode === 'url'} onChange={() => setUploadMode('url')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
+                    <span class="text-white">From URL</span>
+                  </label>
+                  <label class="flex items-center space-x-2">
+                    <input type="radio" name="imageSource" value="upload" checked={uploadMode === 'upload'} onChange={() => setUploadMode('upload')} class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime" />
+                    <span class="text-white">Upload</span>
+                  </label>
+                </div>
+                {uploadMode === 'url' ? (
+                  <div>
+                    <UrlInput placeholder="src/assets/images/your-header.jpg" value={config.headerImageUrl} onInput={e => setConfig({ ...config, headerImageUrl: e.target.value })} />
+                    <input type="text" placeholder="Enter Alt Text" value={config.headerImageAlt} onInput={e => setConfig({ ...config, headerImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
+                  </div>
+                ) : (
+                  <ImageUploader pageSlug={pageSlug} onComplete={handleImageComplete} />
+                )}
+              </>
             )}
           </div>
         )}
@@ -271,18 +409,44 @@ export default function AddSectionModal({ pageSlug, onAddSection, sectionToEdit,
     const newProps = { ...originalProps };
 
     // Carefully merge only the properties managed by the modal
+    // Feature image properties
     newProps.featureImageUrl = config.includeFeatureImage ? config.featureImageUrl : undefined;
     newProps.featureImageAlt = config.includeFeatureImage ? config.featureImageAlt : undefined;
+    newProps.featureImageTitle = config.includeFeatureImage ? config.featureImageTitle : undefined;
+    newProps.featureImageDescription = config.includeFeatureImage ? config.featureImageDescription : undefined;
+    newProps.featureImageLoading = config.includeFeatureImage ? config.featureImageLoading : undefined;
+    
+    // Background image properties
     newProps.backgroundImageUrl = config.includeBackgroundImage ? config.backgroundImageUrl : undefined;
     newProps.backgroundImageAlt = config.includeBackgroundImage ? config.backgroundImageAlt : undefined;
+    newProps.backgroundImageTitle = config.includeBackgroundImage ? config.backgroundImageTitle : undefined;
+    newProps.backgroundImageDescription = config.includeBackgroundImage ? config.backgroundImageDescription : undefined;
+    newProps.backgroundImageLoading = config.includeBackgroundImage ? config.backgroundImageLoading : undefined;
+    
+    // Header image properties
     newProps.headerImageUrl = config.includeHeaderImage ? config.headerImageUrl : undefined;
     newProps.headerImageAlt = config.includeHeaderImage ? config.headerImageAlt : undefined;
+    newProps.headerImageTitle = config.includeHeaderImage ? config.headerImageTitle : undefined;
+    newProps.headerImageDescription = config.includeHeaderImage ? config.headerImageDescription : undefined;
+    newProps.headerImageLoading = config.includeHeaderImage ? config.headerImageLoading : undefined;
+    
+    // Text color
     newProps.textColor = config.textColor;
 
     if (!config.includeSlogan) newProps.subtitle = undefined;
     if (!config.includeBody) newProps.body = undefined;
     if (!config.includeTitle) newProps.title = undefined;
-
+    
+    // Track original paths for rename operations (these are internal and will be handled by ContentEditorPage)
+    if (config._originalFeatureImagePath) {
+      newProps._originalFeatureImagePath = config._originalFeatureImagePath;
+    }
+    if (config._originalBackgroundImagePath) {
+      newProps._originalBackgroundImagePath = config._originalBackgroundImagePath;
+    }
+    if (config._originalHeaderImagePath) {
+      newProps._originalHeaderImagePath = config._originalHeaderImagePath;
+    }
 
     // Clean up undefined properties to keep the data clean
     Object.keys(newProps).forEach(key => {
@@ -317,8 +481,8 @@ export default function AddSectionModal({ pageSlug, onAddSection, sectionToEdit,
 
   const renderConfigureStep = () => (
     <div>
-      {selectedSection === 'hero' && <HeroConfigurator config={config} setConfig={setConfig} pageSlug={pageSlug} />}
-      {selectedSection === 'textSection' && <TextSectionConfigurator config={config} setConfig={setConfig} pageSlug={pageSlug} />}
+      {selectedSection === 'hero' && <HeroConfigurator config={config} setConfig={setConfig} pageSlug={pageSlug} isEditing={!!sectionToEdit} />}
+      {selectedSection === 'textSection' && <TextSectionConfigurator config={config} setConfig={setConfig} pageSlug={pageSlug} isEditing={!!sectionToEdit} />}
       <div class="mt-6 flex justify-end">
         <button onClick={handleCreateSection} class="bg-yellow-green text-black font-bold px-6 py-2 rounded-lg hover:bg-lime-400 transition-colors">
           {sectionToEdit ? 'Save Changes' : 'Add Section to Page'}
