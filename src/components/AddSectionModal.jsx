@@ -90,7 +90,10 @@ const HeroConfigurator = ({ config, setConfig, pageSlug }) => {
               </label>
             </div>
             {featureUploadMode === 'url' ? (
-              <UrlInput placeholder="https://example.com/feature.jpg" value={config.featureImageUrl} onInput={e => setConfig({ ...config, featureImageUrl: e.target.value })} />
+              <div>
+                <UrlInput placeholder="src/assets/images/your-image.jpg" value={config.featureImageUrl} onInput={e => setConfig({ ...config, featureImageUrl: e.target.value })} />
+                <input type="text" placeholder="Enter Alt Text" value={config.featureImageAlt} onInput={e => setConfig({ ...config, featureImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
+              </div>
             ) : (
               <ImageUploader pageSlug={pageSlug} onComplete={handleFeatureImageComplete} />
             )}
@@ -112,7 +115,10 @@ const HeroConfigurator = ({ config, setConfig, pageSlug }) => {
               </label>
             </div>
             {bgUploadMode === 'url' ? (
-              <UrlInput placeholder="https://example.com/background.jpg" value={config.backgroundImageUrl} onInput={e => setConfig({ ...config, backgroundImageUrl: e.target.value })} />
+              <div>
+                <UrlInput placeholder="src/assets/images/your-background.jpg" value={config.backgroundImageUrl} onInput={e => setConfig({ ...config, backgroundImageUrl: e.target.value })} />
+                <input type="text" placeholder="Enter Alt Text" value={config.backgroundImageAlt} onInput={e => setConfig({ ...config, backgroundImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
+              </div>
             ) : (
               <ImageUploader pageSlug={pageSlug} onComplete={handleBackgroundImageComplete} />
             )}
@@ -188,7 +194,7 @@ const TextSectionConfigurator = ({ config, setConfig, pageSlug }) => {
             </div>
             {uploadMode === 'url' ? (
               <div>
-                <UrlInput placeholder="https://example.com/header.jpg" value={config.headerImageUrl} onInput={e => setConfig({ ...config, headerImageUrl: e.target.value })} />
+                <UrlInput placeholder="src/assets/images/your-header.jpg" value={config.headerImageUrl} onInput={e => setConfig({ ...config, headerImageUrl: e.target.value })} />
                 <input type="text" placeholder="Enter Alt Text" value={config.headerImageAlt} onInput={e => setConfig({ ...config, headerImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
               </div>
             ) : (
@@ -261,9 +267,37 @@ export default function AddSectionModal({ pageSlug, onAddSection, sectionToEdit,
     setConfig({});
   };
 
+  const constructUpdatedProps = (originalProps, config) => {
+    const newProps = { ...originalProps };
+
+    // Carefully merge only the properties managed by the modal
+    newProps.featureImageUrl = config.includeFeatureImage ? config.featureImageUrl : undefined;
+    newProps.featureImageAlt = config.includeFeatureImage ? config.featureImageAlt : undefined;
+    newProps.backgroundImageUrl = config.includeBackgroundImage ? config.backgroundImageUrl : undefined;
+    newProps.backgroundImageAlt = config.includeBackgroundImage ? config.backgroundImageAlt : undefined;
+    newProps.headerImageUrl = config.includeHeaderImage ? config.headerImageUrl : undefined;
+    newProps.headerImageAlt = config.includeHeaderImage ? config.headerImageAlt : undefined;
+    newProps.textColor = config.textColor;
+
+    if (!config.includeSlogan) newProps.subtitle = undefined;
+    if (!config.includeBody) newProps.body = undefined;
+    if (!config.includeTitle) newProps.title = undefined;
+
+
+    // Clean up undefined properties to keep the data clean
+    Object.keys(newProps).forEach(key => {
+      if (newProps[key] === undefined) {
+        delete newProps[key];
+      }
+    });
+
+    return newProps;
+  };
+
   const handleCreateSection = () => {
     if (sectionToEdit && onUpdateSection) {
-      onUpdateSection({ ...sectionToEdit, props: { ...sectionToEdit.props, ...config } });
+      const updatedProps = constructUpdatedProps(sectionToEdit.props, config);
+      onUpdateSection({ ...sectionToEdit, props: updatedProps });
     } else if (onAddSection && selectedSection) {
       onAddSection(selectedSection, config);
     }

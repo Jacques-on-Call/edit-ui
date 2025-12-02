@@ -35,6 +35,7 @@ export default function ContentEditorPage(props) {
   const [previewKey, setPreviewKey] = useState(Date.now());
   const [buildError, setBuildError] = useState(null);
   const [editingSectionIndex, setEditingSectionIndex] = useState(null); // Track which section is being edited
+  const [editingSectionSha, setEditingSectionSha] = useState(null);
 
   // Ref Hooks
   // const editorApiRef = useRef(null); // No longer needed for the header
@@ -241,9 +242,45 @@ export default function ContentEditorPage(props) {
     openAddSectionModal();
   }, [openAddSectionModal]);
 
-  const handleUpdateSection = useCallback((updatedSection) => {
+  const handleUpdateSection = useCallback(async (updatedSection) => {
     console.log('[ContentEditorPage] handleUpdateSection called', { updatedSection });
     if (editingSectionIndex === null) return;
+
+    const originalSection = sections[editingSectionIndex];
+
+    const originalFeatureUrl = originalSection.props.featureImageUrl;
+    const updatedFeatureUrl = updatedSection.props.featureImageUrl;
+    const originalBackgroundUrl = originalSection.props.backgroundImageUrl;
+    const updatedBackgroundUrl = updatedSection.props.backgroundImageUrl;
+    const originalHeaderUrl = originalSection.props.headerImageUrl;
+    const updatedHeaderUrl = updatedSection.props.headerImageUrl;
+
+    const renameImage = async (originalUrl, updatedUrl) => {
+      if (originalUrl && updatedUrl && originalUrl !== updatedUrl) {
+        const newFilename = updatedUrl.split('/').pop();
+        await fetchJson('/api/files/rename', {
+          method: 'POST',
+          body: JSON.stringify({
+            repo: selectedRepoRef.current.full_name,
+            path: originalUrl,
+            newFilename: newFilename,
+            sha: editingSectionSha,
+          }),
+        });
+        return originalUrl.replace(/[^/]*$/, newFilename);
+      }
+      return updatedUrl;
+    };
+
+    try {
+      updatedSection.props.featureImageUrl = await renameImage(originalFeatureUrl, updatedFeatureUrl);
+      updatedSection.props.backgroundImageUrl = await renameImage(originalBackgroundUrl, updatedBackgroundUrl);
+      updatedSection.props.headerImageUrl = await renameImage(originalHeaderUrl, updatedHeaderUrl);
+    } catch (error) {
+      console.error('Failed to rename image', error);
+      // Optionally, show an error to the user
+      return; // Abort the update if rename fails
+    }
 
     const newSections = [...(sections || [])];
     newSections[editingSectionIndex] = updatedSection;
@@ -251,7 +288,7 @@ export default function ContentEditorPage(props) {
     setSections(newSections);
     triggerSave(newSections);
     setEditingSectionIndex(null); // Reset after update
-  }, [sections, editingSectionIndex, triggerSave]);
+  }, [sections, editingSectionIndex, triggerSave, editingSectionSha]);
 
   const handleSync = useCallback(async () => {
     console.log(`[CEP-handleSync] Sync process initiated.`);
@@ -487,6 +524,34 @@ export default function ContentEditorPage(props) {
     // getDefaultSections is stable (empty deps), but we inline calls anyway for safety
     // selectedRepo?.full_name extracts the primitive string value from the object
   }, [pageId, selectedRepo?.full_name, editorMode]);
+
+  useEffect(() => {
+    if (editingSectionIndex === null) {
+      setEditingSectionSha(null);
+      return;
+    }
+
+    const getSha = async () => {
+      const section = sections[editingSectionIndex];
+      const imageUrl = section.props.featureImageUrl || section.props.backgroundImageUrl || section.props.headerImageUrl;
+      if (!imageUrl) {
+        setEditingSectionSha(null);
+        return;
+      }
+
+      try {
+        const repo = selectedRepoRef.current.full_name;
+        const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(imageUrl)}`;
+        const { sha } = await fetchJson(url);
+        setEditingSectionSha(sha);
+      } catch (error) {
+        console.error('Failed to get SHA for image', error);
+        setEditingSectionSha(null);
+      }
+    };
+
+    getSha();
+  }, [editingSectionIndex, sections]);
 
   // --- 5. RENDER LOGIC ---
   const previewUrl = useMemo(() => {
