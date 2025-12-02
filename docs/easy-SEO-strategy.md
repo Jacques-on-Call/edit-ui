@@ -37,18 +37,18 @@ A no-code website builder for non-technical business owners (lawyers, plumbers, 
 
 **Philosophy:** Content first, design second.
 
-**Powered by TinyMCE** - A rich text editor that shows exactly what visitors will see:
+**Powered by Lexical** - A rich text editor that shows exactly what visitors will see:
 
 **Basic formatting:**
 
 - Headings, bold, italic, underline
 - Lists, quotes, code blocks
-- Tables and columns
+- Images, Tables and columns
 
 **Smart features:**
 
 - Auto-converts URLs to clickable links
-- Drag-and-drop images with size/alt text controls
+- Drag-and-drop images with size/seo attributes controls
 - Embed videos, audio, and other media
 - Reusable content blocks (hero sections, features, quotes)
 - Undo/redo with autosave
