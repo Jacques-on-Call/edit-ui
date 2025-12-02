@@ -34,6 +34,7 @@ export default function ContentEditorPage(props) {
   const [buildStage, setBuildStage] = useState(''); // To hold the current build stage text
   const [previewKey, setPreviewKey] = useState(Date.now());
   const [buildError, setBuildError] = useState(null);
+  const [editingSectionIndex, setEditingSectionIndex] = useState(null); // Track which section is being edited
 
   // Ref Hooks
   // const editorApiRef = useRef(null); // No longer needed for the header
@@ -219,6 +220,7 @@ export default function ContentEditorPage(props) {
       if (config.includeBody) newSection.props.body = '<p>New body paragraph.</p>';
       if (config.includeFeatureImage) newSection.props.featureImageUrl = config.featureImageUrl;
       if (config.includeBackgroundImage) newSection.props.backgroundImageUrl = config.backgroundImageUrl;
+      if (config.textColor) newSection.props.textColor = config.textColor;
     } else if (type === 'textSection') {
       if (config.includeTitle) newSection.props.title = 'New Section Title';
       newSection.props.body = '<p>Start writing your content here.</p>';
@@ -232,6 +234,24 @@ export default function ContentEditorPage(props) {
     setSections(newSections);
     triggerSave(newSections);
   }, [sections, triggerSave]);
+
+  const handleEditSection = useCallback((index) => {
+    console.log('[ContentEditorPage] handleEditSection called', { index });
+    setEditingSectionIndex(index);
+    openAddSectionModal();
+  }, [openAddSectionModal]);
+
+  const handleUpdateSection = useCallback((updatedSection) => {
+    console.log('[ContentEditorPage] handleUpdateSection called', { updatedSection });
+    if (editingSectionIndex === null) return;
+
+    const newSections = [...(sections || [])];
+    newSections[editingSectionIndex] = updatedSection;
+
+    setSections(newSections);
+    triggerSave(newSections);
+    setEditingSectionIndex(null); // Reset after update
+  }, [sections, editingSectionIndex, triggerSave]);
 
   const handleSync = useCallback(async () => {
     console.log(`[CEP-handleSync] Sync process initiated.`);
@@ -505,7 +525,7 @@ export default function ContentEditorPage(props) {
       return (
         <div class="w-full">
           {sections ? (
-            <SectionsEditor sections={sections} onChange={handleSectionsChange} />
+            <SectionsEditor sections={sections} onChange={handleSectionsChange} onEdit={handleEditSection} />
           ) : contentBody !== null ? (
             <LexicalEditor
               // This is the legacy editor for 'astro' mode.
@@ -591,7 +611,12 @@ export default function ContentEditorPage(props) {
           onSync={editorMode === 'json' ? handleSync : null}
           onRefreshPreview={handleRefreshPreview}
         />
-        <AddSectionModal pageSlug={pageId} onAddSection={handleAddSection} />
+        <AddSectionModal
+          pageSlug={pageId}
+          onAddSection={handleAddSection}
+          sectionToEdit={editingSectionIndex !== null ? sections[editingSectionIndex] : null}
+          onUpdateSection={handleUpdateSection}
+        />
       </div>
     </EditorProvider>
   );

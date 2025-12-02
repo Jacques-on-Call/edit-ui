@@ -32,13 +32,13 @@ const CheckboxInput = ({ label, checked, onChange }) => (
 );
 
 const UrlInput = ({ placeholder, value, onInput }) => (
-    <input
-      type="text"
-      placeholder={placeholder}
-      value={value}
-      onInput={onInput}
-      class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime"
-    />
+  <input
+    type="text"
+    placeholder={placeholder}
+    value={value}
+    onInput={onInput}
+    class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime"
+  />
 );
 
 const HeroConfigurator = ({ config, setConfig, pageSlug }) => {
@@ -75,7 +75,7 @@ const HeroConfigurator = ({ config, setConfig, pageSlug }) => {
               </label>
             </div>
             {featureUploadMode === 'url' ? (
-              <UrlInput placeholder="https://example.com/feature.jpg" value={config.featureImageUrl} onInput={e => setConfig({...config, featureImageUrl: e.target.value})} />
+              <UrlInput placeholder="https://example.com/feature.jpg" value={config.featureImageUrl} onInput={e => setConfig({ ...config, featureImageUrl: e.target.value })} />
             ) : (
               <ImageUploader pageSlug={pageSlug} onComplete={handleFeatureImageComplete} />
             )}
@@ -97,12 +97,39 @@ const HeroConfigurator = ({ config, setConfig, pageSlug }) => {
               </label>
             </div>
             {bgUploadMode === 'url' ? (
-              <UrlInput placeholder="https://example.com/background.jpg" value={config.backgroundImageUrl} onInput={e => setConfig({...config, backgroundImageUrl: e.target.value})} />
+              <UrlInput placeholder="https://example.com/background.jpg" value={config.backgroundImageUrl} onInput={e => setConfig({ ...config, backgroundImageUrl: e.target.value })} />
             ) : (
               <ImageUploader pageSlug={pageSlug} onComplete={handleBackgroundImageComplete} />
             )}
           </div>
         )}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">Text Color</label>
+        <div class="flex items-center space-x-4 pl-6">
+          <label class="flex items-center space-x-2">
+            <input
+              type="radio"
+              name="textColor"
+              value="white"
+              checked={!config.textColor || config.textColor === 'white'}
+              onChange={() => setConfig({ ...config, textColor: 'white' })}
+              class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime"
+            />
+            <span class="text-white">White</span>
+          </label>
+          <label class="flex items-center space-x-2">
+            <input
+              type="radio"
+              name="textColor"
+              value="black"
+              checked={config.textColor === 'black'}
+              onChange={() => setConfig({ ...config, textColor: 'black' })}
+              class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime"
+            />
+            <span class="text-white">Black</span>
+          </label>
+        </div>
       </div>
     </div>
   );
@@ -139,8 +166,8 @@ const TextSectionConfigurator = ({ config, setConfig, pageSlug }) => {
             </div>
             {uploadMode === 'url' ? (
               <div>
-                <UrlInput placeholder="https://example.com/header.jpg" value={config.headerImageUrl} onInput={e => setConfig({...config, headerImageUrl: e.target.value})} />
-                <input type="text" placeholder="Enter Alt Text" value={config.headerImageAlt} onInput={e => setConfig({...config, headerImageAlt: e.target.value})} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
+                <UrlInput placeholder="https://example.com/header.jpg" value={config.headerImageUrl} onInput={e => setConfig({ ...config, headerImageUrl: e.target.value })} />
+                <input type="text" placeholder="Enter Alt Text" value={config.headerImageAlt} onInput={e => setConfig({ ...config, headerImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
               </div>
             ) : (
               <ImageUploader pageSlug={pageSlug} onComplete={handleImageComplete} />
@@ -153,15 +180,39 @@ const TextSectionConfigurator = ({ config, setConfig, pageSlug }) => {
 };
 
 const DEFAULT_CONFIGS = {
-  hero: { includeSlogan: true, includeBody: true, includeFeatureImage: false, featureImageUrl: '', includeBackgroundImage: false, backgroundImageUrl: '' },
+  hero: { includeSlogan: true, includeBody: true, includeFeatureImage: false, featureImageUrl: '', includeBackgroundImage: false, backgroundImageUrl: '', textColor: 'white' },
   textSection: { includeTitle: true, includeHeaderImage: false, headerImageUrl: '', headerImageAlt: '' },
 };
 
-export default function AddSectionModal({ pageSlug, onAddSection }) {
+export default function AddSectionModal({ pageSlug, onAddSection, sectionToEdit, onUpdateSection }) {
   const { isAddSectionModalOpen, closeAddSectionModal } = useUI();
   const [step, setStep] = useState('select'); // 'select' or 'configure'
   const [selectedSection, setSelectedSection] = useState(null);
   const [config, setConfig] = useState({});
+
+  // Initialize for editing if sectionToEdit is provided
+  useState(() => {
+    if (sectionToEdit) {
+      setSelectedSection(sectionToEdit.type);
+      // Merge existing props with default config to ensure all fields exist
+      const defaultConfig = DEFAULT_CONFIGS[sectionToEdit.type] || {};
+      // Map props back to config format where necessary
+      // For Hero:
+      const initialConfig = { ...defaultConfig, ...sectionToEdit.props };
+
+      // Re-construct "include" flags based on presence of values if not explicitly stored
+      // This is a heuristic since we don't store the "includeX" flags in the section props usually
+      if (sectionToEdit.type === 'hero') {
+        initialConfig.includeSlogan = !!initialConfig.subtitle || initialConfig.includeSlogan;
+        initialConfig.includeBody = !!initialConfig.body || initialConfig.includeBody;
+        initialConfig.includeFeatureImage = !!initialConfig.featureImageUrl || initialConfig.includeFeatureImage;
+        initialConfig.includeBackgroundImage = !!initialConfig.backgroundImageUrl || initialConfig.includeBackgroundImage;
+      }
+
+      setConfig(initialConfig);
+      setStep('configure');
+    }
+  }, [sectionToEdit]);
 
   const handleClose = () => {
     // Reset state on close for next time
@@ -188,7 +239,9 @@ export default function AddSectionModal({ pageSlug, onAddSection }) {
   };
 
   const handleCreateSection = () => {
-    if (onAddSection && selectedSection) {
+    if (sectionToEdit && onUpdateSection) {
+      onUpdateSection({ ...sectionToEdit, props: { ...sectionToEdit.props, ...config } });
+    } else if (onAddSection && selectedSection) {
       onAddSection(selectedSection, config);
     }
     handleClose(); // Close and reset modal after adding
@@ -210,7 +263,9 @@ export default function AddSectionModal({ pageSlug, onAddSection }) {
       {selectedSection === 'hero' && <HeroConfigurator config={config} setConfig={setConfig} pageSlug={pageSlug} />}
       {selectedSection === 'textSection' && <TextSectionConfigurator config={config} setConfig={setConfig} pageSlug={pageSlug} />}
       <div class="mt-6 flex justify-end">
-        <button onClick={handleCreateSection} class="bg-yellow-green text-black font-bold px-6 py-2 rounded-lg hover:bg-lime-400 transition-colors">Add Section to Page</button>
+        <button onClick={handleCreateSection} class="bg-yellow-green text-black font-bold px-6 py-2 rounded-lg hover:bg-lime-400 transition-colors">
+          {sectionToEdit ? 'Save Changes' : 'Add Section to Page'}
+        </button>
       </div>
     </div>
   );
@@ -225,7 +280,7 @@ export default function AddSectionModal({ pageSlug, onAddSection }) {
             </button>
           )}
           <h2 class="text-xl font-bold text-white flex-grow">
-            {step === 'select' ? 'Add a New Section' : `Configure ${selectedSection === 'hero' ? 'Hero' : 'Text'} Section`}
+            {step === 'select' ? 'Add a New Section' : `${sectionToEdit ? 'Edit' : 'Configure'} ${selectedSection === 'hero' ? 'Hero' : 'Text'} Section`}
           </h2>
           <button onClick={handleClose} class="text-gray-400 hover:text-white transition-colors" aria-label="Close modal">
             <X size={24} />

@@ -14,10 +14,10 @@ import { getPreviewImageUrl } from '../../lib/imageHelpers';
 export default function HeroEditor({ props, onChange }) {
   const { selectedRepo } = useAuth();
   const [imageError, setImageError] = useState(false);
-  
+
   // Support both featureImage and featureImageUrl props for compatibility
   const rawFeatureImage = props?.featureImage || props?.featureImageUrl;
-  
+
   const handleFieldChange = (fieldName, fieldValue) => {
     onChange({ ...props, [fieldName]: fieldValue });
   };
@@ -30,16 +30,22 @@ export default function HeroEditor({ props, onChange }) {
   // Background style if background image is present
   const containerStyle = hasBackgroundImage
     ? {
-        boxShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-        backgroundImage: `url(${backgroundImageUrl})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }
+      boxShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+      backgroundImage: `url(${backgroundImageUrl})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    }
     : { boxShadow: '2px 2px 4px rgba(0,0,0,0.5)' };
 
-  // When a background image exists, make the container semi-transparent and add a drop shadow to text for readability.
+  // When a background image exists, make the container semi-transparent.
+  // REMOVED: drop-shadow-lg from textShadowClass as requested.
   const containerClass = hasBackgroundImage ? 'bg-black/50 mx-px' : 'bg-gray-800 mx-px';
-  const textShadowClass = hasBackgroundImage ? 'drop-shadow-lg' : '';
+
+  // Determine text colors based on prop (default to white if not specified)
+  const textColorMode = props?.textColor || 'white';
+  const titleColorClass = textColorMode === 'black' ? 'text-black' : 'text-white';
+  const subtitleColorClass = textColorMode === 'black' ? 'text-gray-800' : 'text-gray-400';
+  const bodyColorClass = textColorMode === 'black' ? 'text-gray-900' : 'text-gray-300';
 
   return (
     <div class="bg-transparent">
@@ -68,21 +74,21 @@ export default function HeroEditor({ props, onChange }) {
             value={props?.title || ''}
             onChange={(newValue) => handleFieldChange('title', newValue)}
             placeholder="Enter your title (H1)"
-            className={`text-5xl font-extrabold text-white tracking-tight ${textShadowClass}`}
+            className={`text-5xl font-extrabold tracking-tight ${titleColorClass}`}
             transparentBg={hasBackgroundImage}
           />
           <LexicalField
             value={props?.subtitle || ''}
             onChange={(newValue) => handleFieldChange('subtitle', newValue)}
             placeholder="Enter your slogan (optional)"
-            className={`text-lg text-gray-400 ${textShadowClass}`}
+            className={`text-lg ${subtitleColorClass}`}
             transparentBg={hasBackgroundImage}
           />
           <LexicalField
             value={props?.body || ''}
             onChange={(newValue) => handleFieldChange('body', newValue)}
             placeholder="Enter your paragraph (optional)"
-            className={`text-lg text-gray-300 ${textShadowClass}`}
+            className={`text-lg ${bodyColorClass}`}
             transparentBg={hasBackgroundImage}
           />
         </div>
