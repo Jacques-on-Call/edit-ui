@@ -45,15 +45,30 @@ const HeroConfigurator = ({ config, setConfig, pageSlug }) => {
   const [featureUploadMode, setFeatureUploadMode] = useState('url');
   const [bgUploadMode, setBgUploadMode] = useState('url');
 
-  const handleFeatureImageComplete = ({ path, alt }) => {
-    console.log('[HeroConfigurator] handleFeatureImageComplete triggered', { path, alt });
+  const handleFeatureImageComplete = ({ path, alt, title, description, loading }) => {
+    console.log('[HeroConfigurator] handleFeatureImageComplete triggered', { path, alt, title, description, loading });
     // Set both featureImage and featureImageUrl for compatibility with HeroEditor
-    setConfig({ ...config, featureImage: path, featureImageUrl: path, featureImageAlt: alt });
+    setConfig({
+      ...config,
+      featureImage: path,
+      featureImageUrl: path,
+      featureImageAlt: alt,
+      featureImageTitle: title,
+      featureImageDescription: description,
+      featureImageLoading: loading
+    });
   };
 
-  const handleBackgroundImageComplete = ({ path, alt }) => {
-    console.log('[HeroConfigurator] handleBackgroundImageComplete triggered', { path, alt });
-    setConfig({ ...config, backgroundImageUrl: path });
+  const handleBackgroundImageComplete = ({ path, alt, title, description, loading }) => {
+    console.log('[HeroConfigurator] handleBackgroundImageComplete triggered', { path, alt, title, description, loading });
+    setConfig({
+      ...config,
+      backgroundImageUrl: path,
+      backgroundImageAlt: alt,
+      backgroundImageTitle: title,
+      backgroundImageDescription: description,
+      backgroundImageLoading: loading
+    });
   };
 
   return (
@@ -138,10 +153,17 @@ const HeroConfigurator = ({ config, setConfig, pageSlug }) => {
 const TextSectionConfigurator = ({ config, setConfig, pageSlug }) => {
   const [uploadMode, setUploadMode] = useState('url'); // 'url' or 'upload'
 
-  const handleImageComplete = ({ path, alt }) => {
-    console.log('[TextSectionConfigurator] handleImageComplete triggered', { path, alt });
+  const handleImageComplete = ({ path, alt, title, description, loading }) => {
+    console.log('[TextSectionConfigurator] handleImageComplete triggered', { path, alt, title, description, loading });
     console.log('[TextSectionConfigurator] Current config state before update:', config);
-    const newConfig = { ...config, headerImageUrl: path, headerImageAlt: alt };
+    const newConfig = {
+      ...config,
+      headerImageUrl: path,
+      headerImageAlt: alt,
+      headerImageTitle: title,
+      headerImageDescription: description,
+      headerImageLoading: loading
+    };
     console.log('[TextSectionConfigurator] New config state to be set:', newConfig);
     setConfig(newConfig);
   };
