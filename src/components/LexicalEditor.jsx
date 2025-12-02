@@ -90,7 +90,7 @@ function InitialContentPlugin({ initialContent, lastHtmlRef }) {
   return null;
 }
 
-const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionChange, onFocus, onBlur, className, placeholder }, ref) => {
+const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionChange, onFocus, onBlur, className, placeholder, transparentBg = false }, ref) => {
   const lastHtmlRef = useRef('');
   const [isEditorEmpty, setIsEditorEmpty] = useState(true);
 
@@ -117,13 +117,16 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
 
   const placeholderText = placeholder || 'Start typing...';
 
+  // When transparentBg is true, use transparent background for use on background images
+  const editorInputClass = transparentBg ? 'editor-input editor-input-transparent' : 'editor-input';
+
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <div class={`relative ${className || ''}`}>
         <RichTextPlugin
           contentEditable={
             <div onFocus={onFocus} onBlur={onBlur} class="px-2">
-              <ContentEditable className="editor-input" />
+              <ContentEditable className={editorInputClass} />
             </div>
           }
           placeholder={

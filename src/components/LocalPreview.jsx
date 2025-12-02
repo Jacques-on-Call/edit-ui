@@ -13,10 +13,12 @@ import { getPreviewImageUrl } from '../lib/imageHelpers';
 // Hero section preview
 const HeroPreview = ({ title, subtitle, body, featureImage, featureImageUrl, featureImageAlt, backgroundImageUrl, repoFullName }) => {
   const [imageError, setImageError] = useState(false);
+  const [bgImageError, setBgImageError] = useState(false);
   const imageUrl = getPreviewImageUrl(featureImage || featureImageUrl, repoFullName);
   const bgUrl = getPreviewImageUrl(backgroundImageUrl, repoFullName);
 
-  const containerStyle = bgUrl
+  // Only apply background image style if URL exists and hasn't errored
+  const containerStyle = (bgUrl && !bgImageError)
     ? {
         backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${bgUrl})`,
         backgroundSize: 'cover',
@@ -24,8 +26,21 @@ const HeroPreview = ({ title, subtitle, body, featureImage, featureImageUrl, fea
       }
     : {};
 
+  // Add text shadow for better readability when background image is present
+  const hasBackgroundImage = bgUrl && !bgImageError;
+  const textShadowStyle = hasBackgroundImage ? { textShadow: '2px 2px 4px rgba(0,0,0,0.8)' } : {};
+
   return (
     <section class="relative py-16 bg-gray-900" style={containerStyle}>
+      {/* Hidden img to detect background image load errors */}
+      {bgUrl && !bgImageError && (
+        <img 
+          src={bgUrl} 
+          alt="" 
+          class="hidden"
+          onError={() => setBgImageError(true)}
+        />
+      )}
       <div class="container mx-auto px-4 max-w-4xl">
         {imageUrl && !imageError && (
           <img 
@@ -36,13 +51,13 @@ const HeroPreview = ({ title, subtitle, body, featureImage, featureImageUrl, fea
           />
         )}
         {title && (
-          <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-4" dangerouslySetInnerHTML={{ __html: title }} />
+          <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-4" style={textShadowStyle} dangerouslySetInnerHTML={{ __html: title }} />
         )}
         {subtitle && (
-          <p class="text-xl text-gray-300 mb-4" dangerouslySetInnerHTML={{ __html: subtitle }} />
+          <p class="text-xl text-gray-300 mb-4" style={textShadowStyle} dangerouslySetInnerHTML={{ __html: subtitle }} />
         )}
         {body && (
-          <div class="text-lg text-gray-400 prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: body }} />
+          <div class="text-lg text-gray-400 prose prose-invert max-w-none" style={textShadowStyle} dangerouslySetInnerHTML={{ __html: body }} />
         )}
       </div>
     </section>

@@ -4,7 +4,8 @@ import LexicalEditor from '../LexicalEditor'; // Assuming LexicalEditor is in th
 import { useEditor } from '../../contexts/EditorContext';
 
 // This is a new, self-contained Lexical field.
-export default function LexicalField({ value, onChange, placeholder, className }) {
+// transparentBg: when true, removes the default gray background for use on background images
+export default function LexicalField({ value, onChange, placeholder, className, transparentBg = false }) {
   const editorApiRef = useRef(null);
   const { setActiveEditor, setSelectionState } = useEditor();
 
@@ -31,6 +32,7 @@ export default function LexicalField({ value, onChange, placeholder, className }
       onFocus={handleFocus}
       onBlur={handleBlur}
       className={className} // Pass className to the editor itself
+      transparentBg={transparentBg} // Pass transparent background flag
     />
   );
 }

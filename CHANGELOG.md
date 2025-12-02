@@ -1,5 +1,28 @@
 # Project Change Log
 
+GitHub Copilot (fix): HeroEditor Background Image + Adaptive Text Color
+Date: 2025-12-02
+Summary:
+Fixed three issues in the HeroEditor: transparent/semi-transparent input backgrounds when a background image is set, dynamic text color/shadow for readability on any background, and improved background image handling in LocalPreview.
+
+Details:
+- **Transparent Input Backgrounds:** Added `transparentBg` prop to `LexicalField` and `LexicalEditor` components. When a background image is present in HeroEditor, input fields now have transparent backgrounds instead of the default gray, allowing the background image to show through.
+- **Adaptive Text Styling:** When a background image is set, text fields receive a `drop-shadow-lg` class for better readability. The LocalPreview component also applies text shadows when background images are present.
+- **LocalPreview Background Image Fix:** Added proper error state tracking for background images in `HeroPreview`. A hidden image element detects load errors, preventing the "grey block" issue when background images fail to load.
+- **CSS Addition:** Added `.editor-input-transparent` class to `index.css` for the transparent background variant.
+
+Impact:
+- HeroEditor input fields are now transparent when a background image is set, creating a more visually integrated editing experience
+- Text remains readable on any background due to adaptive drop shadows
+- LocalPreview correctly handles background image loading errors and applies appropriate text styling
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the layered component structure - the background was applied at the HeroEditor level, but the input background was controlled by the LexicalEditor theme. The solution required passing state through multiple component layers.
+- **What was a surprising discovery or key learning?** The existing HeroEditor already had most of the infrastructure (containerClass switching, textShadowClass) - the missing piece was passing the transparency state down to the actual input elements.
+- **What advice would you give the next agent who works on this code?** When styling needs to change based on parent state (like background images), ensure the styling props are passed all the way down to the actual DOM elements that need them. Component boundaries can hide where styles are actually applied.
+
+---
+
 GitHub Copilot (fix): Create Modal, Preview Iframe Sizing & Image URL Fixes
 Date: 2025-12-02
 Summary:

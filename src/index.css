@@ -128,6 +128,11 @@ button[type="button"] svg {
   cursor: text;
 }
 
+/* Transparent variant for use on background images */
+.editor-input-transparent {
+  background: transparent;
+}
+
 /* Ensure proper focus styling */
 .editor-input:focus {
   outline: none;
