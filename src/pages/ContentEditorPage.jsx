@@ -240,13 +240,13 @@ export default function ContentEditorPage(props) {
       setSyncStatus('error');
       return;
     }
-    
+
     // Prevent multiple sync operations at once
     if (syncStatus === 'syncing' || isPreviewBuilding) {
       console.log('[CEP-handleSync] Sync already in progress, ignoring duplicate request.');
       return;
     }
-    
+
     setSyncStatus('syncing');
     console.log('[CEP-handleSync] Status set to "syncing". Reading draft from localStorage...');
     try {
@@ -286,7 +286,7 @@ export default function ContentEditorPage(props) {
       setIsPreviewBuilding(true);
       // Don't auto-switch to preview mode - let user decide when to view preview
       // setViewMode('preview'); // Removed: Clicking Sync should not force preview mode
-      
+
       console.log('[CEP-handleSync] Triggering site build...');
       triggerBuild();
       console.log('[CEP-handleSync] Build triggered.');
@@ -311,7 +311,7 @@ export default function ContentEditorPage(props) {
       setViewMode('editor');
       return;
     }
-    
+
     // Prevent action if a build is already in progress
     if (isPreviewBuilding) {
       console.log('[CEP-handlePreview] Build already in progress, switching to preview view.');
@@ -322,7 +322,7 @@ export default function ContentEditorPage(props) {
     // Check if content has changed since the last sync
     const draftKey = `easy-seo-draft:${pageId}`;
     const currentDraft = localStorage.getItem(draftKey);
-    
+
     if (currentDraft && lastSyncedContentRef.current === currentDraft) {
       // Content hasn't changed since last sync, just show the preview without triggering a new build
       console.log('[CEP-handlePreview] Content unchanged since last sync, showing preview without new build.');
@@ -573,11 +573,11 @@ export default function ContentEditorPage(props) {
 
   return (
     <EditorProvider> {/* <-- WRAP WITH PROVIDER */}
-      <div class="flex flex-col h-full bg-transparent text-white">
+      <div class="flex flex-col h-full bg-transparent text-white relative overflow-hidden">
         {/* Only show editor header when in editor mode, hide in preview modes */}
         {viewMode === 'editor' && <EditorHeader />}
-        <main class={`flex-grow ${viewMode !== 'editor' ? 'h-full' : 'overflow-y-auto'}`} style={{ paddingBottom: viewMode === 'editor' ? 'calc(64px + 1rem + env(safe-area-inset-bottom))' : '0' }}>
-          <div class={viewMode !== 'editor' ? 'h-full' : ''} style={{ paddingTop: viewMode === 'editor' ? 'var(--header-h)' : '0' }}>
+        <main class="flex-grow overflow-y-auto relative">
+          <div class="h-full">
             {renderContent()}
           </div>
         </main>
