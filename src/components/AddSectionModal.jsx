@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useState, useCallback } from 'preact/hooks';
+import { useState, useCallback, useEffect } from 'preact/hooks';
 import { useUI } from '../contexts/UIContext';
 import { X, ArrowLeft } from 'lucide-preact';
 import ImageUploader from './ImageUploader';
@@ -212,29 +212,30 @@ export default function AddSectionModal({ pageSlug, onAddSection, sectionToEdit,
   const [selectedSection, setSelectedSection] = useState(null);
   const [config, setConfig] = useState({});
 
-  // Initialize for editing if sectionToEdit is provided
-  useState(() => {
-    if (sectionToEdit) {
+  // Effect to populate the modal when it's opened for editing
+  useEffect(() => {
+    if (sectionToEdit && isAddSectionModalOpen) {
       setSelectedSection(sectionToEdit.type);
-      // Merge existing props with default config to ensure all fields exist
+
       const defaultConfig = DEFAULT_CONFIGS[sectionToEdit.type] || {};
-      // Map props back to config format where necessary
-      // For Hero:
       const initialConfig = { ...defaultConfig, ...sectionToEdit.props };
 
-      // Re-construct "include" flags based on presence of values if not explicitly stored
-      // This is a heuristic since we don't store the "includeX" flags in the section props usually
+      // Re-construct "include" flags based on the presence of data.
+      // This ensures the checkboxes in the UI accurately reflect the section's state.
       if (sectionToEdit.type === 'hero') {
-        initialConfig.includeSlogan = !!initialConfig.subtitle || initialConfig.includeSlogan;
-        initialConfig.includeBody = !!initialConfig.body || initialConfig.includeBody;
-        initialConfig.includeFeatureImage = !!initialConfig.featureImageUrl || initialConfig.includeFeatureImage;
-        initialConfig.includeBackgroundImage = !!initialConfig.backgroundImageUrl || initialConfig.includeBackgroundImage;
+        initialConfig.includeSlogan = !!initialConfig.subtitle;
+        initialConfig.includeBody = !!initialConfig.body;
+        initialConfig.includeFeatureImage = !!initialConfig.featureImageUrl;
+        initialConfig.includeBackgroundImage = !!initialConfig.backgroundImageUrl;
+      } else if (sectionToEdit.type === 'textSection') {
+        initialConfig.includeTitle = !!initialConfig.title;
+        initialConfig.includeHeaderImage = !!initialConfig.headerImageUrl;
       }
 
       setConfig(initialConfig);
       setStep('configure');
     }
-  }, [sectionToEdit]);
+  }, [sectionToEdit, isAddSectionModalOpen]);
 
   const handleClose = () => {
     // Reset state on close for next time
