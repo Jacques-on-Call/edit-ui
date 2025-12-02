@@ -25,8 +25,10 @@ export default function HeroEditor({ props, onChange }) {
   const featureImageUrl = getPreviewImageUrl(rawFeatureImage, selectedRepo?.full_name);
   const backgroundImageUrl = getPreviewImageUrl(props?.backgroundImageUrl, selectedRepo?.full_name);
 
+  const hasBackgroundImage = !!backgroundImageUrl;
+
   // Background style if background image is present
-  const containerStyle = backgroundImageUrl
+  const containerStyle = hasBackgroundImage
     ? {
         boxShadow: '2px 2px 4px rgba(0,0,0,0.5)',
         backgroundImage: `url(${backgroundImageUrl})`,
@@ -35,9 +37,13 @@ export default function HeroEditor({ props, onChange }) {
       }
     : { boxShadow: '2px 2px 4px rgba(0,0,0,0.5)' };
 
+  // When a background image exists, make the container semi-transparent and add a drop shadow to text for readability.
+  const containerClass = hasBackgroundImage ? 'bg-black/50 mx-px' : 'bg-gray-800 mx-px';
+  const textShadowClass = hasBackgroundImage ? 'drop-shadow-lg' : '';
+
   return (
     <div class="bg-transparent">
-      <div class="bg-gray-800 mx-px" style={containerStyle}>
+      <div class={containerClass} style={containerStyle}>
         <div class="px-[2px]">
           {featureImageUrl && (
             <div class="relative min-h-[50px] bg-gray-800/50 rounded-lg overflow-hidden mb-4">
@@ -62,19 +68,19 @@ export default function HeroEditor({ props, onChange }) {
             value={props?.title || ''}
             onChange={(newValue) => handleFieldChange('title', newValue)}
             placeholder="Enter your title (H1)"
-            className="text-5xl font-extrabold text-white tracking-tight"
+            className={`text-5xl font-extrabold text-white tracking-tight ${textShadowClass}`}
           />
           <LexicalField
             value={props?.subtitle || ''}
             onChange={(newValue) => handleFieldChange('subtitle', newValue)}
             placeholder="Enter your slogan (optional)"
-            className="text-lg text-gray-400"
+            className={`text-lg text-gray-400 ${textShadowClass}`}
           />
           <LexicalField
             value={props?.body || ''}
             onChange={(newValue) => handleFieldChange('body', newValue)}
             placeholder="Enter your paragraph (optional)"
-            className="text-lg text-gray-300"
+            className={`text-lg text-gray-300 ${textShadowClass}`}
           />
         </div>
       </div>

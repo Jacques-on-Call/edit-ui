@@ -32,21 +32,21 @@ export default function SectionsEditor({ sections = [], onChange }) {
     onChange(next);
   };
 
-  const handleAdd = () => {
-    const next = [...local, { type: 'text_section', props: { title: 'New section', body: 'Write content...' } }];
-    setLocal(next);
-    onChange(next);
-  };
-
   const handleRemove = (i) => {
     const next = local.filter((_, index) => index !== i);
     setLocal(next);
     onChange(next);
   };
 
-  const handleSave = () => {
-    onChange(local);
-    console.log('[SectionsEditor] saved sections:', local);
+  const moveSection = (currentIndex, direction) => {
+    const newSections = [...local];
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+    // Swap the elements
+    [newSections[currentIndex], newSections[targetIndex]] = [newSections[targetIndex], newSections[currentIndex]];
+
+    setLocal(newSections);
+    onChange(newSections);
   };
 
   return (
@@ -57,6 +57,22 @@ export default function SectionsEditor({ sections = [], onChange }) {
           <div key={s.id || i} class="group relative py-1 border-l-4 border-transparent hover:border-gray-700 transition-colors duration-200">
             <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center z-10">
               <span class="text-xs text-gray-500 mr-2 uppercase">{s.type.replace(/_/g, ' ')}</span>
+              <button
+                onClick={() => moveSection(i, 'up')}
+                disabled={i === 0}
+                class="text-gray-500 hover:text-blue-500 disabled:opacity-50 transition-colors p-1"
+                aria-label="Move section up"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 15 7-7 7 7"/></svg>
+              </button>
+              <button
+                onClick={() => moveSection(i, 'down')}
+                disabled={i === local.length - 1}
+                class="text-gray-500 hover:text-blue-500 disabled:opacity-50 transition-colors p-1"
+                aria-label="Move section down"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 9-7 7-7-7"/></svg>
+              </button>
               <button
                 onClick={() => handleRemove(i)}
                 class="text-gray-500 hover:text-red-500 transition-colors p-1"

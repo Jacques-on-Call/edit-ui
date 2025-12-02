@@ -576,7 +576,7 @@ export default function ContentEditorPage(props) {
       <div class="flex flex-col h-full bg-transparent text-white">
         {/* Only show editor header when in editor mode, hide in preview modes */}
         {viewMode === 'editor' && <EditorHeader />}
-        <main class={`flex-grow ${viewMode !== 'editor' ? 'h-full' : 'overflow-y-auto'}`} style={{ paddingBottom: 'calc(64px + 1rem + env(safe-area-inset-bottom))' }}>
+        <main class={`flex-grow ${viewMode !== 'editor' ? 'h-full' : 'overflow-y-auto'}`} style={{ paddingBottom: viewMode === 'editor' ? 'calc(64px + 1rem + env(safe-area-inset-bottom))' : '0' }}>
           <div class={viewMode !== 'editor' ? 'h-full' : ''} style={{ paddingTop: viewMode === 'editor' ? 'var(--header-h)' : '0' }}>
             {renderContent()}
           </div>
