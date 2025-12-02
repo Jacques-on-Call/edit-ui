@@ -6,11 +6,11 @@
 // Please do not alter this structure without a clear understanding of the design goal.
 
 import { h } from 'preact';
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import LexicalField from './LexicalField';
 import { Image } from 'lucide-preact';
 import { useAuth } from '../../contexts/AuthContext';
-import { getPreviewImageUrl } from '../../lib/imageHelpers';
+import { getPreviewImageUrl, getGitHubRawUrl } from '../../lib/imageHelpers';
 
 export default function BodySectionEditor({ props, onChange }) {
   console.log('[BodySectionEditor] RENDER', { props });
@@ -22,18 +22,35 @@ export default function BodySectionEditor({ props, onChange }) {
     selectedRepoFullName: selectedRepo?.full_name 
   }));
   const [imageError, setImageError] = useState(false);
+  const [usingFallback, setUsingFallback] = useState(false);
+  
+  const rawImagePath = props?.featureImage || props?.headerImageUrl;
+  
+  // Reset fallback state when image path changes
+  useEffect(() => {
+    setImageError(false);
+    setUsingFallback(false);
+  }, [rawImagePath]);
   
   const handleFieldChange = (fieldName, fieldValue) => {
     onChange({ ...props, [fieldName]: fieldValue });
   };
 
-  const rawImagePath = props?.featureImage || props?.headerImageUrl;
-  const imageUrl = getPreviewImageUrl(rawImagePath, selectedRepo?.full_name);
+  const primaryImageUrl = getPreviewImageUrl(rawImagePath, selectedRepo?.full_name);
+  const fallbackImageUrl = getGitHubRawUrl(rawImagePath, selectedRepo?.full_name);
+  
+  // Use fallback URL if primary failed
+  const imageUrl = usingFallback ? fallbackImageUrl : primaryImageUrl;
 
-  // Handle image load error - use state to conditionally render
+  // Handle image load error - try fallback first, then show error message
   const handleImageError = () => {
-    setImageError(true);
-    console.warn('[BodySectionEditor] Image failed to load:', rawImagePath);
+    if (!usingFallback && fallbackImageUrl) {
+      console.log('[BodySectionEditor] Primary URL failed, trying fallback:', fallbackImageUrl);
+      setUsingFallback(true);
+    } else {
+      setImageError(true);
+      console.warn('[BodySectionEditor] Image failed to load:', rawImagePath);
+    }
   };
 
   return (
@@ -54,7 +71,7 @@ export default function BodySectionEditor({ props, onChange }) {
               ) : (
                 <div class="flex flex-col items-center justify-center p-4 text-amber-400 text-sm">
                   <p class="font-medium">Image will appear after next deploy</p>
-                  <p class="text-xs text-gray-400 mt-1">The image has been uploaded but may not be available from GitHub yet.</p>
+                  <p class="text-xs text-gray-400 mt-1">The image has been uploaded but may not be available yet.</p>
                   <p class="text-xs text-gray-500 mt-2 break-all">Path: {rawImagePath}</p>
                 </div>
               )}

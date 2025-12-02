@@ -352,23 +352,6 @@ export default function ContentEditorPage(props) {
 
   // --- 4. SIDE EFFECTS (useEffect) ---
   useEffect(() => {
-    const handleMessage = (e) => {
-      // Optional: verify origin e.origin
-      if (!e.data || e.data.type !== 'content-height') return;
-      const iframe = document.getElementById('content-preview-iframe');
-      if (!iframe) return;
-      const height = Math.max(300, Number(e.data.height) || 0);
-      iframe.style.height = height + 'px';
-    };
-
-    window.addEventListener('message', handleMessage);
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, []);
-
-  useEffect(() => {
     console.log('[CEP-useEffect] Main effect hook started.');
     try {
       filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
@@ -593,8 +576,8 @@ export default function ContentEditorPage(props) {
       <div class="flex flex-col h-full bg-transparent text-white">
         {/* Only show editor header when in editor mode, hide in preview modes */}
         {viewMode === 'editor' && <EditorHeader />}
-        <main class="flex-grow overflow-y-auto" style={{ paddingBottom: 'calc(64px + 1rem + env(safe-area-inset-bottom))' }}>
-          <div style={{ paddingTop: viewMode === 'editor' ? 'var(--header-h)' : '0' }}>
+        <main class={`flex-grow ${viewMode !== 'editor' ? 'h-full' : 'overflow-y-auto'}`} style={{ paddingBottom: 'calc(64px + 1rem + env(safe-area-inset-bottom))' }}>
+          <div class={viewMode !== 'editor' ? 'h-full' : ''} style={{ paddingTop: viewMode === 'editor' ? 'var(--header-h)' : '0' }}>
             {renderContent()}
           </div>
         </main>

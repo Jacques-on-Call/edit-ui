@@ -5,6 +5,7 @@ export const UIContext = createContext();
 
 export const UIProvider = ({ children }) => {
   const [isAddSectionModalOpen, setAddSectionModalOpen] = useState(false);
+  const [isCreateOpen, setCreateOpen] = useState(false);
 
   const openAddSectionModal = () => setAddSectionModalOpen(true);
   const closeAddSectionModal = () => setAddSectionModalOpen(false);
@@ -13,6 +14,9 @@ export const UIProvider = ({ children }) => {
     isAddSectionModalOpen,
     openAddSectionModal,
     closeAddSectionModal,
+    // File Explorer Create Modal state
+    isCreateOpen,
+    setCreateOpen,
   };
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;

@@ -1,6 +1,6 @@
 /**
  * Gets the deployed site URL for the user's repository.
- * Uses Cloudflare Pages naming convention.
+ * Uses the hardcoded Cloudflare Pages URL for StrategyContent.
  * 
  * @param {string} repoFullName - The full repo name (e.g., 'owner/repo')
  * @returns {string|null} The deployed site URL or null if not determinable
@@ -8,12 +8,8 @@
 export function getDeployedSiteUrl(repoFullName) {
   if (!repoFullName) return null;
   
-  // Extract repo name from 'owner/repo' format
-  const repoName = repoFullName.split('/')[1];
-  if (!repoName) return null;
-  
-  // Cloudflare Pages convention: {repo-name}.pages.dev
-  return `https://${repoName.toLowerCase()}.pages.dev`;
+  // Hardcoded for the StrategyContent project
+  return 'https://strategycontent.pages.dev';
 }
 
 /**
@@ -29,19 +25,44 @@ export function getGitHubRawUrl(path, repoFullName) {
 }
 
 /**
+ * Constructs a deployed site URL for an image path.
+ * Images in src/assets/ are transformed by Astro and served from /_astro/
+ * 
+ * LIMITATION: Astro may add content hashes to filenames (e.g., image.abc123.png).
+ * This function tries the original filename first. If it fails, the component's
+ * onError handler will fall back to the GitHub raw URL which always works.
+ * 
+ * @param {string} path - The repository path (e.g., 'src/assets/images/home-from-json/image.png')
+ * @param {string} repoFullName - The full repo name
+ * @returns {string|null} The deployed site URL for the image
+ */
+export function getDeployedImageUrl(path, repoFullName) {
+  if (!path || !repoFullName) return null;
+  
+  const baseUrl = getDeployedSiteUrl(repoFullName);
+  if (!baseUrl) return null;
+  
+  // For images in src/assets/, Astro puts them in /_astro/
+  // The filename is preserved but may have a hash added (e.g., image.abc123.png)
+  // We try the original filename - if Astro hashed it, the fallback will be used
+  const filename = path.split('/').pop();
+  if (filename) {
+    // Try the direct /_astro/ path with the original filename
+    return `${baseUrl}/_astro/${filename}`;
+  }
+  
+  return null;
+}
+
+/**
  * Transforms a repository path to a URL for editor preview.
  * 
- * TWO-TIER STRATEGY:
- * 1. Primary: GitHub raw URL (works immediately after upload, even before deploy)
- * 2. Fallback: Stored in component's onError handler to try deployed site
+ * STRATEGY:
+ * 1. Primary: Deployed site URL (/_astro/filename) - works after deploy
+ * 2. Fallback: GitHub raw URL (works immediately after upload) - handled by onError in components
  * 
  * CONTEXT: The editor runs in a browser. It cannot access local filesystem paths.
- * Images stored in the GitHub repo must be accessed via raw.githubusercontent.com
- * 
- * KEY INSIGHT: Images ARE deployed to Cloudflare Pages after Astro build. However,
- * Astro transforms images with hashes (e.g., /_astro/image.HASH.png), making the
- * exact URL unpredictable. GitHub raw URLs work immediately but have rate limits.
- * The fallback mechanism in the component handles both cases.
+ * Images stored in the GitHub repo are deployed to Cloudflare Pages via Astro build.
  * 
  * @param {string} path - The image path (could be a repo path or already a URL)
  * @param {string} repoFullName - The full repo name (e.g., 'owner/repo')
@@ -62,10 +83,19 @@ export function getPreviewImageUrl(path, repoFullName) {
     return path;
   }
   
-  // If it's a repository path (e.g., 'src/assets/images/...' or 'content/...' or 'public/...'), transform to GitHub raw URL
+  // If it's a repository path (e.g., 'src/assets/images/...' or 'content/...' or 'public/...'), 
+  // try the deployed site URL first
   if ((path.startsWith('src/') || path.startsWith('content/') || path.startsWith('public/')) && repoFullName) {
+    // Try deployed site URL first (preferred after deploy)
+    const deployedUrl = getDeployedImageUrl(path, repoFullName);
+    if (deployedUrl) {
+      console.log('[getPreviewImageUrl] Constructed deployed site URL:', deployedUrl);
+      return deployedUrl;
+    }
+    
+    // Fallback to GitHub raw URL
     const rawUrl = getGitHubRawUrl(path, repoFullName);
-    console.log('[getPreviewImageUrl] Constructed GitHub raw URL:', rawUrl);
+    console.log('[getPreviewImageUrl] Fallback to GitHub raw URL:', rawUrl);
     return rawUrl;
   }
   

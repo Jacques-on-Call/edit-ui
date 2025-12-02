@@ -1,5 +1,27 @@
 # Project Change Log
 
+GitHub Copilot (fix): Create Modal, Preview Iframe Sizing & Image URL Fixes
+Date: 2025-12-02
+Summary:
+Fixed three issues: Create modal button not opening in file explorer, preview iframe not filling available vertical space, and image URLs pointing to GitHub instead of the deployed site.
+
+Details:
+- **Create Modal Fix:** Added missing `isCreateOpen` and `setCreateOpen` state to `UIContext.jsx`. The `BottomToolbar.jsx` and `FileExplorerPage.jsx` were trying to use these properties which didn't exist in the context, causing the Create modal to not open.
+- **Preview Iframe Sizing:** Removed the postMessage-based resizing logic from `ContentEditorPage.jsx` and applied `h-full` class to the iframe's parent containers when in preview mode. This allows the preview iframe to fill the available vertical space properly.
+- **Image URL Strategy Update:** Updated `imageHelpers.js` to use the deployed site URL (`https://strategycontent.pages.dev/_astro/filename`) as the primary URL instead of GitHub raw URLs. Added a new `getDeployedImageUrl()` function. Updated `HeroEditor.jsx` and `BodySectionEditor.jsx` to implement a two-tier fallback: try deployed site URL first, then fall back to GitHub raw URL if that fails.
+
+Impact:
+- Create button in file explorer bottom toolbar now correctly opens the Create modal
+- Preview iframe in live preview mode fills the available vertical space, displaying the footer where it belongs
+- Images display correctly from the deployed site without showing "Image will appear after next deploy" error unnecessarily
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the mismatch between what `UIContext` provided and what components expected. The context had `isAddSectionModalOpen` for the content editor's add section modal, but the file explorer needed a separate `isCreateOpen` state for its create file/folder modal.
+- **What was a surprising discovery or key learning?** The postMessage resizing logic was actually interfering with the natural flex layout. Removing it and using proper CSS classes (`h-full`) was cleaner and more reliable.
+- **What advice would you give the next agent who works on this code?** When a modal or UI element doesn't appear, first check that the state variables exist in the context provider. React context mismatches are silent - components won't error if a property is missing, they'll just get `undefined`.
+
+---
+
 GitHub Copilot (fix): Editor Image URLs, Container Sizing & UI Cleanup
 Date: 2025-12-01
 Summary:

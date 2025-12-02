@@ -6,10 +6,10 @@
 // Please do not alter this structure without a clear understanding of the design goal.
 
 import { h } from 'preact';
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import LexicalField from './LexicalField';
 import { useAuth } from '../../contexts/AuthContext';
-import { getPreviewImageUrl } from '../../lib/imageHelpers';
+import { getPreviewImageUrl, getGitHubRawUrl } from '../../lib/imageHelpers';
 
 export default function HeroEditor({ props, onChange }) {
   const authContext = useAuth();
@@ -20,20 +20,37 @@ export default function HeroEditor({ props, onChange }) {
     selectedRepoFullName: selectedRepo?.full_name 
   }));
   const [imageError, setImageError] = useState(false);
+  const [usingFallback, setUsingFallback] = useState(false);
+  
+  // Support both featureImage and featureImageUrl props for compatibility
+  const rawFeatureImage = props?.featureImage || props?.featureImageUrl;
+  
+  // Reset fallback state when image path changes
+  useEffect(() => {
+    setImageError(false);
+    setUsingFallback(false);
+  }, [rawFeatureImage]);
   
   const handleFieldChange = (fieldName, fieldValue) => {
     onChange({ ...props, [fieldName]: fieldValue });
   };
 
-  // Support both featureImage and featureImageUrl props for compatibility
-  const rawFeatureImage = props?.featureImage || props?.featureImageUrl;
-  const featureImageUrl = getPreviewImageUrl(rawFeatureImage, selectedRepo?.full_name);
+  const primaryFeatureImageUrl = getPreviewImageUrl(rawFeatureImage, selectedRepo?.full_name);
+  const fallbackFeatureImageUrl = getGitHubRawUrl(rawFeatureImage, selectedRepo?.full_name);
+  
+  // Use fallback URL if primary failed
+  const featureImageUrl = usingFallback ? fallbackFeatureImageUrl : primaryFeatureImageUrl;
   const backgroundImageUrl = getPreviewImageUrl(props?.backgroundImageUrl, selectedRepo?.full_name);
 
-  // Handle image load error - use state to conditionally render
+  // Handle image load error - try fallback first, then show error message
   const handleImageError = () => {
-    setImageError(true);
-    console.warn('[HeroEditor] Image failed to load:', rawFeatureImage);
+    if (!usingFallback && fallbackFeatureImageUrl) {
+      console.log('[HeroEditor] Primary URL failed, trying fallback:', fallbackFeatureImageUrl);
+      setUsingFallback(true);
+    } else {
+      setImageError(true);
+      console.warn('[HeroEditor] Image failed to load:', rawFeatureImage);
+    }
   };
 
   // Background style if background image is present
@@ -64,7 +81,7 @@ export default function HeroEditor({ props, onChange }) {
               ) : (
                 <div class="flex flex-col items-center justify-center p-4 text-amber-400 text-sm">
                   <p class="font-medium">Image will appear after next deploy</p>
-                  <p class="text-xs text-gray-400 mt-1">The image has been uploaded but may not be available from GitHub yet.</p>
+                  <p class="text-xs text-gray-400 mt-1">The image has been uploaded but may not be available yet.</p>
                   <p class="text-xs text-gray-500 mt-2 break-all">Path: {rawFeatureImage}</p>
                 </div>
               )}
