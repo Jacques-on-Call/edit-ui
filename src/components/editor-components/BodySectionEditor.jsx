@@ -6,52 +6,22 @@
 // Please do not alter this structure without a clear understanding of the design goal.
 
 import { h } from 'preact';
-import { useState, useEffect } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import LexicalField from './LexicalField';
-import { Image } from 'lucide-preact';
 import { useAuth } from '../../contexts/AuthContext';
-import { getPreviewImageUrl, getGitHubRawUrl } from '../../lib/imageHelpers';
+import { getPreviewImageUrl } from '../../lib/imageHelpers';
 
 export default function BodySectionEditor({ props, onChange }) {
-  console.log('[BodySectionEditor] RENDER', { props });
-  const authContext = useAuth();
-  const { selectedRepo } = authContext;
-  console.log('[BodySectionEditor] authContext:', JSON.stringify({ 
-    hasUser: !!authContext.user,
-    hasSelectedRepo: !!selectedRepo,
-    selectedRepoFullName: selectedRepo?.full_name 
-  }));
+  const { selectedRepo } = useAuth();
   const [imageError, setImageError] = useState(false);
-  const [usingFallback, setUsingFallback] = useState(false);
   
   const rawImagePath = props?.featureImage || props?.headerImageUrl;
-  
-  // Reset fallback state when image path changes
-  useEffect(() => {
-    setImageError(false);
-    setUsingFallback(false);
-  }, [rawImagePath]);
   
   const handleFieldChange = (fieldName, fieldValue) => {
     onChange({ ...props, [fieldName]: fieldValue });
   };
 
-  const primaryImageUrl = getPreviewImageUrl(rawImagePath, selectedRepo?.full_name);
-  const fallbackImageUrl = getGitHubRawUrl(rawImagePath, selectedRepo?.full_name);
-  
-  // Use fallback URL if primary failed
-  const imageUrl = usingFallback ? fallbackImageUrl : primaryImageUrl;
-
-  // Handle image load error - try fallback first, then show error message
-  const handleImageError = () => {
-    if (!usingFallback && fallbackImageUrl) {
-      console.log('[BodySectionEditor] Primary URL failed, trying fallback:', fallbackImageUrl);
-      setUsingFallback(true);
-    } else {
-      setImageError(true);
-      console.warn('[BodySectionEditor] Image failed to load:', rawImagePath);
-    }
-  };
+  const imageUrl = getPreviewImageUrl(rawImagePath, selectedRepo?.full_name);
 
   return (
     <div class="bg-transparent">
@@ -65,26 +35,17 @@ export default function BodySectionEditor({ props, onChange }) {
                   alt={props?.headerImageAlt || props?.title || 'Section image'}
                   class="w-full h-64 object-cover rounded-lg"
                   style={{ minHeight: '100px' }}
-                  onLoad={() => console.log('[BodySectionEditor] Image loaded successfully:', imageUrl)}
-                  onError={handleImageError}
+                  onError={() => setImageError(true)}
                 />
               ) : (
                 <div class="flex flex-col items-center justify-center p-4 text-amber-400 text-sm">
-                  <p class="font-medium">Image will appear after next deploy</p>
-                  <p class="text-xs text-gray-400 mt-1">The image has been uploaded but may not be available yet.</p>
+                  <p class="font-medium">Image failed to load</p>
+                  <p class="text-xs text-gray-400 mt-1">The image could not be loaded from the repository.</p>
                   <p class="text-xs text-gray-500 mt-2 break-all">Path: {rawImagePath}</p>
                 </div>
               )}
             </div>
           )}
-          {rawImagePath && !imageUrl && (
-            <div class="flex flex-col items-center justify-center p-4 text-yellow-400 text-sm bg-gray-800/50 rounded-lg mb-4">
-              <p>Could not construct image URL</p>
-              <p class="text-xs text-gray-500 mt-1 break-all">Path: {rawImagePath}</p>
-              <p class="text-xs text-gray-500 mt-1">Check console for auth context details</p>
-            </div>
-          )}
-
           <div class="flex flex-col">
             <LexicalField
               value={props?.title || ''}

@@ -532,7 +532,7 @@ export default function ContentEditorPage(props) {
 
     // Live preview mode - clean iframe without overlay labels (moved to bottom bar)
     return (
-      <div class="w-full h-full bg-white relative">
+      <div class="w-full bg-white relative" style={{ height: 'calc(100dvh - 64px)' }}>
         {isPreviewBuilding && (
           <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
             <div class="text-white text-center p-4">

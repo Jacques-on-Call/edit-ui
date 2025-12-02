@@ -6,52 +6,24 @@
 // Please do not alter this structure without a clear understanding of the design goal.
 
 import { h } from 'preact';
-import { useState, useEffect } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import LexicalField from './LexicalField';
 import { useAuth } from '../../contexts/AuthContext';
-import { getPreviewImageUrl, getGitHubRawUrl } from '../../lib/imageHelpers';
+import { getPreviewImageUrl } from '../../lib/imageHelpers';
 
 export default function HeroEditor({ props, onChange }) {
-  const authContext = useAuth();
-  const { selectedRepo } = authContext;
-  console.log('[HeroEditor] authContext:', JSON.stringify({ 
-    hasUser: !!authContext.user,
-    hasSelectedRepo: !!selectedRepo,
-    selectedRepoFullName: selectedRepo?.full_name 
-  }));
+  const { selectedRepo } = useAuth();
   const [imageError, setImageError] = useState(false);
-  const [usingFallback, setUsingFallback] = useState(false);
   
   // Support both featureImage and featureImageUrl props for compatibility
   const rawFeatureImage = props?.featureImage || props?.featureImageUrl;
-  
-  // Reset fallback state when image path changes
-  useEffect(() => {
-    setImageError(false);
-    setUsingFallback(false);
-  }, [rawFeatureImage]);
   
   const handleFieldChange = (fieldName, fieldValue) => {
     onChange({ ...props, [fieldName]: fieldValue });
   };
 
-  const primaryFeatureImageUrl = getPreviewImageUrl(rawFeatureImage, selectedRepo?.full_name);
-  const fallbackFeatureImageUrl = getGitHubRawUrl(rawFeatureImage, selectedRepo?.full_name);
-  
-  // Use fallback URL if primary failed
-  const featureImageUrl = usingFallback ? fallbackFeatureImageUrl : primaryFeatureImageUrl;
+  const featureImageUrl = getPreviewImageUrl(rawFeatureImage, selectedRepo?.full_name);
   const backgroundImageUrl = getPreviewImageUrl(props?.backgroundImageUrl, selectedRepo?.full_name);
-
-  // Handle image load error - try fallback first, then show error message
-  const handleImageError = () => {
-    if (!usingFallback && fallbackFeatureImageUrl) {
-      console.log('[HeroEditor] Primary URL failed, trying fallback:', fallbackFeatureImageUrl);
-      setUsingFallback(true);
-    } else {
-      setImageError(true);
-      console.warn('[HeroEditor] Image failed to load:', rawFeatureImage);
-    }
-  };
 
   // Background style if background image is present
   const containerStyle = backgroundImageUrl
@@ -75,23 +47,15 @@ export default function HeroEditor({ props, onChange }) {
                   alt={props?.featureImageAlt || props?.title || 'Hero feature image'}
                   class="w-full h-64 object-cover rounded-lg"
                   style={{ minHeight: '100px' }}
-                  onLoad={() => console.log('[HeroEditor] Image loaded successfully:', featureImageUrl)}
-                  onError={handleImageError}
+                  onError={() => setImageError(true)}
                 />
               ) : (
                 <div class="flex flex-col items-center justify-center p-4 text-amber-400 text-sm">
-                  <p class="font-medium">Image will appear after next deploy</p>
-                  <p class="text-xs text-gray-400 mt-1">The image has been uploaded but may not be available yet.</p>
+                  <p class="font-medium">Image failed to load</p>
+                  <p class="text-xs text-gray-400 mt-1">The image could not be loaded from the repository.</p>
                   <p class="text-xs text-gray-500 mt-2 break-all">Path: {rawFeatureImage}</p>
                 </div>
               )}
-            </div>
-          )}
-          {rawFeatureImage && !featureImageUrl && (
-            <div class="flex flex-col items-center justify-center p-4 text-yellow-400 text-sm bg-gray-800/50 rounded-lg mb-4">
-              <p>Could not construct image URL</p>
-              <p class="text-xs text-gray-500 mt-1 break-all">Path: {rawFeatureImage}</p>
-              <p class="text-xs text-gray-500 mt-1">Check console for auth context details</p>
             </div>
           )}
           <LexicalField
