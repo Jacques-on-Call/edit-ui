@@ -60,7 +60,7 @@ export default function BodySectionEditor({ props, onChange }) {
           )}
           <div class="flex flex-col">
             {/* H2 wrapper with z-index and overflow visible to prevent descender clipping */}
-            <div class="relative z-10 pb-2 editor-field-overflow-visible border border-red-500">
+            <div class="relative pb-2 editor-field-overflow-visible border border-red-500">
               <LexicalField
                 value={props?.title || ''}
                 onChange={(newValue) => handleFieldChange('title', newValue)}
