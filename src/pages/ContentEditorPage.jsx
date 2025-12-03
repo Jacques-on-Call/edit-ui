@@ -13,7 +13,6 @@ import SectionsEditor from '../components/SectionsEditor';
 import EditorHeader from '../components/EditorHeader';
 import BottomActionBar from '../components/BottomActionBar';
 import AddSectionModal from '../components/AddSectionModal';
-import LocalPreview from '../components/LocalPreview';
 import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 
 // Constants
@@ -30,7 +29,7 @@ export default function ContentEditorPage(props) {
   const [sections, setSections] = useState(null); // For SectionsEditor
   const [saveStatus, setSaveStatus] = useState('saved');
   const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, success, error
-  const [viewMode, setViewMode] = useState('editor'); // 'editor', 'localPreview', or 'livePreview'
+  const [viewMode, setViewMode] = useState('editor'); // 'editor' or 'livePreview'
   const [isPreviewBuilding, setIsPreviewBuilding] = useState(false);
   const [buildStage, setBuildStage] = useState(''); // To hold the current build stage text
   const [previewKey, setPreviewKey] = useState(Date.now());
@@ -651,14 +650,6 @@ export default function ContentEditorPage(props) {
       );
     }
 
-    if (viewMode === 'localPreview') {
-      return (
-        <div class="w-full h-full relative">
-          <LocalPreview sections={sections} />
-        </div>
-      );
-    }
-
     // Live preview mode - clean iframe without overlay labels (moved to bottom bar)
     return (
       <div class="w-full bg-white relative" style={{ height: 'calc(100dvh - 64px)' }}>
@@ -705,7 +696,7 @@ export default function ContentEditorPage(props) {
       <div class="flex flex-col h-full bg-transparent text-white relative overflow-hidden">
         {/* Only show editor header when in editor mode, hide in preview modes */}
         {viewMode === 'editor' && <EditorHeader />}
-        <main class="flex-grow overflow-y-auto relative">
+        <main class="flex-grow overflow-y-auto relative" style={{ paddingBottom: 'var(--action-bar-height, calc(64px + env(safe-area-inset-bottom, 0px)))' }}>
           <div class="h-full">
             {renderContent()}
           </div>

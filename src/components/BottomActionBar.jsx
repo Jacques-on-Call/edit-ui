@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { route } from 'preact-router';
-import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil, Monitor } from 'lucide-preact';
+import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil } from 'lucide-preact';
 import './BottomActionBar.css';
 import { getPageScoreColor } from '../lib/pageScoring';
 
@@ -36,44 +36,22 @@ export default function BottomActionBar({
 
   // Determine preview button icon based on current view mode
   const renderPreviewIcon = () => {
-    switch (viewMode) {
-      case 'editor':
-        return <Eye size={28} />; // Show eye icon to indicate "preview"
-      case 'localPreview':
-        return <Monitor size={28} />; // Show monitor icon for live preview
-      case 'livePreview':
-      default:
-        return <Pencil size={28} />; // Show pencil to go back to editor
+    if (viewMode === 'editor') {
+      return <Eye size={28} />; // Show eye icon to indicate "preview"
     }
+    return <Pencil size={28} />; // Show pencil to go back to editor
   };
 
   // Get accessible label for preview button
   const getPreviewLabel = () => {
-    switch (viewMode) {
-      case 'editor':
-        return 'Local Preview';
-      case 'localPreview':
-        return 'Live Preview';
-      case 'livePreview':
-      default:
-        return 'Edit';
+    if (viewMode === 'editor') {
+      return 'Preview';
     }
+    return 'Edit';
   };
 
-  // Get preview status indicator class
-  const getPreviewStatusClass = () => {
-    switch (previewState) {
-      case 'building':
-        return 'bg-yellow-500 animate-pulse';
-      case 'ready':
-        return 'bg-green-500';
-      default:
-        return 'bg-gray-500';
-    }
-  };
-
-  // Check if we're in a preview mode (either local or live)
-  const isInPreviewMode = viewMode === 'localPreview' || viewMode === 'livePreview';
+  // Check if we're in preview mode
+  const isInPreviewMode = viewMode === 'livePreview';
 
   return (
     <footer className="bottom-action-bar" role="toolbar" aria-label="Editor actions">
@@ -97,14 +75,10 @@ export default function BottomActionBar({
           aria-label={getPreviewLabel()}
         >
           {renderPreviewIcon()}
-          {/* Preview status indicator dot */}
-          {isInPreviewMode && (
-            <span className={`absolute top-0 right-0 w-2 h-2 rounded-full ${getPreviewStatusClass()}`} />
-          )}
         </button>
       )}
 
-      {/* Refresh button - only visible in preview modes */}
+      {/* Refresh button - only visible in preview mode */}
       {isInPreviewMode && onRefreshPreview && (
         <button
           type="button"
@@ -129,11 +103,13 @@ export default function BottomActionBar({
             e.stopPropagation();
             onSync(e);
           }}
-          className="bar-btn"
+          className="bar-btn relative"
           aria-label="Sync Publish"
           disabled={syncStatus === 'syncing'}
         >
           {renderSyncIcon()}
+          {/* Save status dot positioned relative to sync button */}
+          <span className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border border-black/50 ${getStatusColor()}`}></span>
         </button>
       )}
 
@@ -145,10 +121,6 @@ export default function BottomActionBar({
           </span>
         </div>
       )}
-
-      <div className="save-status-indicator">
-         <span className={`save-status-dot ${getStatusColor()}`}></span>
-      </div>
     </footer>
   );
 }

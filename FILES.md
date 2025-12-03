@@ -10,7 +10,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/pages/LoginPage.jsx`**: The user login page.
 -   **`src/pages/RepoSelectPage.jsx`**: The repository selection page.
 -   **`src/pages/FileExplorerPage.jsx`**: The main file explorer page. Handles the file creation logic (now client-side drafts) and passes data down to the `FileExplorer` component.
--   **`src/pages/ContentEditorPage.jsx`**: The main shell for the content editor. Responsible for loading and saving full draft payloads to `localStorage` and providing the `EditorContext`. Supports three view modes: editor, localPreview, and livePreview.
+-   **`src/pages/ContentEditorPage.jsx`**: The main shell for the content editor. Responsible for loading and saving full draft payloads to `localStorage` and providing the `EditorContext`. Supports two view modes: editor and livePreview.
 
 ### **Contexts**
 -   **`src/contexts/AuthContext.jsx`**: Manages global authentication state.
@@ -40,11 +40,10 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/components/AddSectionModal.jsx`**: Renders a modal for selecting and configuring new content sections before adding them to a page. Supports image upload for both Hero and Text sections. In edit mode, shows ImageEditor for existing images.
 -   **`src/components/ImageUploader.jsx`**: Component for uploading new images to the repository. Shows upload status (idle, uploading, success, error). Includes SEO score, alt text, filename, title, description, and resize options.
 -   **`src/components/ImageEditor.jsx`**: Component for editing existing images in sections. Shows image preview, allows editing filename (SEO-friendly), alt text, title, description, and loading strategy. Includes SEO score and option to replace the image.
--   **`src/components/LocalPreview.jsx`**: Renders content locally for instant feedback before syncing to GitHub. No build required.
 -   **`src/components/SearchBar.jsx`**: A debounced search input component.
 -   **`src/components/EditorHeader.jsx`**: The header component for the content editor. Now context-aware.
 -   **`src/components/BlockTree.jsx`**: The component for displaying the block structure of a page.
--   **`src/components/BottomActionBar.jsx`**: The bottom action bar for the content editor. Supports three view modes with appropriate icons.
+-   **`src/components/BottomActionBar.jsx`**: The bottom action bar for the content editor. Supports editor and preview view modes with appropriate icons.
 -   **`src/components/SectionsEditor.jsx`**: The main component for rendering and managing the different sections of a page.
 -   **`src/components/LexicalEditor.jsx`**: The core rich-text editor component, built on Lexical.
 -   **`src/components/ColorPicker.jsx`**: A reusable color picker component for text and highlight colors. Uses a portal pattern for reliable mobile rendering.
