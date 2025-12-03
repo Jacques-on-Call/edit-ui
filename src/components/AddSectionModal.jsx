@@ -475,7 +475,10 @@ export default function AddSectionModal({ pageSlug, pageData, onAddSection, sect
     newProps.textColor = config.textColor;
 
     if (!config.includeSlogan) newProps.subtitle = undefined;
-    if (!config.includeBody) newProps.body = undefined;
+    // Only remove body if includeBody is EXPLICITLY set to false.
+    // Hero sections have this config option, textSection does not.
+    // Using strict equality prevents accidental removal when config.includeBody is undefined.
+    if (config.includeBody === false) newProps.body = undefined;
     if (!config.includeTitle) newProps.title = undefined;
     
     // Track original paths for rename operations (these are internal and will be handled by ContentEditorPage)

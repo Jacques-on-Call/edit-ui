@@ -1,5 +1,56 @@
 # Project Change Log
 
+GitHub Copilot (fix): Phase 2 Final Fixes - Body Paragraph, Hero Preview, Toolbar Position
+Date: 2025-12-03
+Summary:
+Fixed four critical Phase 2 issues: BodySection paragraph being deleted during edit, Hero text color not applying in preview, Hero body not rendering in preview, and EditorHeader toolbar not sticky.
+
+Details:
+- **Priority 1.1: BodySection Paragraph Being Deleted:**
+  - Root cause: In `constructUpdatedProps()` in `AddSectionModal.jsx`, the condition `if (!config.includeBody)` was truthy for textSection (which doesn't have this config option), causing body to be set to undefined
+  - Fix: Changed to `if (config.includeBody === false)` to only remove body when explicitly set to false (for hero sections)
+  - TextSection body is now preserved during edit operations
+
+- **Priority 1.1: EditorHeader Toolbar Not Sticky:**
+  - The toolbar had `position: relative` which caused it to scroll with content
+  - Changed to `position: sticky; top: 0;` in `EditorHeader.css`
+  - Toolbar now stays fixed at top while content scrolls under it
+
+- **Priority 1.2: Hero Text Color Not Black in Preview:**
+  - Root cause 1: `PageRenderer.astro` was not passing `textColor` prop to `Hero.astro`
+  - Root cause 2: `Hero.astro` was not accepting or using the `textColor` prop
+  - Root cause 3: `Hero.astro` had hardcoded `color: white` in CSS
+  - Fix: Updated `Hero.astro` to accept `textColor` prop and apply `.hero-dark-text` class when `textColor === 'black'`
+  - Added CSS rule `.hero-banner.hero-dark-text { color: #1f2937; }` for dark text mode
+
+- **Priority 1.2: Hero Body Not Rendering in Preview:**
+  - `PageRenderer.astro` was only passing `title` and `subtitle` to Hero, not `body`
+  - Added `body` prop passing in `PageRenderer.astro`
+  - Added `body` rendering with `.hero-body` styling in `Hero.astro`
+
+- **Priority 1.1: Image Not Appearing in Preview (backgroundImage):**
+  - `PageRenderer.astro` was checking `props.featureImage || props.featureImageUrl` but the JSON had `backgroundImageUrl`
+  - Updated to check `props.backgroundImageUrl` first for hero sections
+
+- **Body Section Paragraph Clipping:**
+  - Added `overflow-visible` class to the gray container divs in `BodySectionEditor.jsx`
+  - Prevents text from being visually clipped by container boundaries
+
+Impact:
+- BodySection paragraphs are no longer lost when editing section attributes
+- Hero sections correctly display black text in preview when configured
+- Hero body paragraphs are now rendered in preview
+- Background images are correctly resolved in preview
+- EditorHeader toolbar stays fixed while scrolling content
+- No more visual clipping of paragraph text in the editor
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding why `!config.includeBody` was truthy for textSection - it was because the config option simply didn't exist for that section type, so `undefined` was being treated as falsy.
+- **What was a surprising discovery or key learning?** The disconnect between the editor components (which had full textColor support) and the Astro preview components (which didn't receive or use textColor at all) - they were developed independently without the full prop chain being connected.
+- **What advice would you give the next agent who works on this code?** When adding a new prop to the editor, trace the complete path: Editor component → JSON data → PageRenderer.astro → Astro component. All four need to handle the new prop for it to work in preview.
+
+---
+
 GitHub Copilot (fix): Phase 2 Critical Bug Fixes - Image Paths, Build Caching, Text Colors, H2 Styling
 Date: 2025-12-03
 Summary:
