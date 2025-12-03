@@ -1,5 +1,24 @@
 # Project Change Log
 
+Jules #199 (debug): Add Diagnostic Borders to BodySectionEditor
+Date: 2025-12-03
+Summary:
+Added temporary, colored borders to the H2 title and paragraph containers within the `BodySectionEditor` component. This is a diagnostic step to help visually debug a layout issue where the paragraph text appears to be clipped by the H2 container.
+
+Details:
+- A red border was added to the H2 title's wrapping `div`.
+- A blue border was added to the paragraph's wrapping `div`.
+
+Impact:
+This is a non-functional change intended purely for debugging. It allows developers to see the exact boundaries of the component containers to diagnose the layout overlap.
+
+Reflection:
+- **What was the most challenging part of this task?** The challenge is correctly interpreting the visual bug. Adding borders is the first step to making the problem concrete and observable.
+- **What was a surprising discovery or key learning?** When a layout issue is hard to describe, making it visible with borders is the fastest path to a shared understanding of the problem.
+- **What advice would you give the next agent who works on this code?** Use these borders to guide the next step of the fix. Once the fix is implemented, remember to remove these temporary diagnostic styles.
+
+---
+
 GitHub Copilot (fix): Phase 2 Final Fixes - Body Paragraph, Hero Preview, Toolbar Position
 Date: 2025-12-03
 Summary:
