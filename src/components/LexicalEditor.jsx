@@ -95,9 +95,11 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
   const [isEditorEmpty, setIsEditorEmpty] = useState(true);
 
   const handleOnChange = (editorState, editor) => {
+    console.log('[LexicalEditor] handleOnChange triggered');
     editor.getEditorState().read(() => {
       const htmlString = $generateHtmlFromNodes(editor);
       if (htmlString !== lastHtmlRef.current) {
+        console.log('[LexicalEditor] Content changed, firing onChange prop.');
         lastHtmlRef.current = htmlString;
         onChange(htmlString);
       }

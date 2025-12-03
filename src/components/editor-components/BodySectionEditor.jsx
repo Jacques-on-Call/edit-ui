@@ -12,6 +12,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getPreviewImageUrl, getGitHubRawUrl } from '../../lib/imageHelpers';
 
 export default function BodySectionEditor({ props, onChange }) {
+  console.log('[BodySectionEditor] Component rendering.');
   const { selectedRepo } = useAuth();
   // Track if primary URL failed and we're using fallback
   const [imageUseFallback, setImageUseFallback] = useState(false);
@@ -20,6 +21,7 @@ export default function BodySectionEditor({ props, onChange }) {
   const rawImagePath = props?.featureImage || props?.headerImageUrl;
   
   const handleFieldChange = (fieldName, fieldValue) => {
+    console.log(`[BodySectionEditor] handleFieldChange called for field: ${fieldName}`);
     onChange({ ...props, [fieldName]: fieldValue });
   };
 
