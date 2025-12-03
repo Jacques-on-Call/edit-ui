@@ -1,0 +1,108 @@
+.color-picker {
+  position: relative;
+  display: inline-block;
+}
+
+.color-picker-toggle {
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 6px;
+  margin: 0 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.color-picker-toggle:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.color-picker-toggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.color-picker-menu {
+  background-color: #2d3748;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  contain: layout;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+.color-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.15s ease;
+  background: none;
+  padding: 0;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.color-swatch.active {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+/* Text color swatches */
+.color-swatch .default-text {
+  color: #e6f0ff;
+  font-size: 14px;
+}
+
+/* Highlight color swatches */
+.color-swatch.highlight-none {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.color-swatch .no-highlight {
+  color: #888;
+  font-size: 16px;
+}
+
+/* Specific color backgrounds for highlight swatches */
+.color-swatch.highlight-yellow { background-color: #FEF08A; }
+.color-swatch.highlight-green { background-color: #BBF7D0; }
+.color-swatch.highlight-blue { background-color: #BFDBFE; }
+.color-swatch.highlight-purple { background-color: #E9D5FF; }
+.color-swatch.highlight-pink { background-color: #FBCFE8; }
+.color-swatch.highlight-orange { background-color: #FED7AA; }
+.color-swatch.highlight-red { background-color: #FECACA; }
+
+/* Text color indicator styling */
+.color-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.color-indicator-bar {
+  width: 14px;
+  height: 3px;
+  margin-top: 1px;
+  border-radius: 1px;
+}

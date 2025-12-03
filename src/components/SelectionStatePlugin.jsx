@@ -16,6 +16,9 @@ import {
 import {
   $findMatchingParent
 } from '@lexical/utils';
+import {
+  $getSelectionStyleValueForProperty
+} from '@lexical/selection';
 
 export default function SelectionStatePlugin({ onSelectionChange }) {
   const [editor] = useLexicalComposerContext();
@@ -61,6 +64,10 @@ export default function SelectionStatePlugin({ onSelectionChange }) {
         }
       }
 
+      // Get inline styles for text and highlight color
+      const textColor = $getSelectionStyleValueForProperty(selection, 'color', null);
+      const highlightColor = $getSelectionStyleValueForProperty(selection, 'background-color', null);
+
       onSelectionChange({
         blockType,
         alignment,
@@ -71,6 +78,8 @@ export default function SelectionStatePlugin({ onSelectionChange }) {
         isCode: selection.hasFormat('code'),
         isHighlight: selection.hasFormat('highlight'),
         hasH1InDocument,
+        textColor,
+        highlightColor,
       });
     });
   }, [editor, onSelectionChange]);

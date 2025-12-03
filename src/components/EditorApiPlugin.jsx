@@ -9,7 +9,9 @@ import {
   $isRangeSelection,
   $createParagraphNode,
   $createTextNode,
-  $insertNodes
+  $insertNodes,
+  $getRoot,
+  $createLineBreakNode
 } from 'lexical';
 import {
   $createHeadingNode
@@ -29,7 +31,9 @@ import {
   INSERT_TABLE_COMMAND
 } from '@lexical/table';
 import {
-  $setBlocksType
+  $setBlocksType,
+  $patchStyleText,
+  $getSelectionStyleValueForProperty
 } from '@lexical/selection';
 
 export default function EditorApiPlugin({ apiRef }) {
@@ -110,6 +114,100 @@ export default function EditorApiPlugin({ apiRef }) {
         const selection = $getSelection();
         if ($isRangeSelection(selection)) {
           formatTypes.forEach(format => selection.formatText(format, false));
+          // Also clear inline styles (text color, background color)
+          $patchStyleText(selection, { 
+            color: null,
+            'background-color': null
+          });
+        }
+      });
+    },
+    // Set text color using inline styles
+    setTextColor: (color) => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          $patchStyleText(selection, { color: color || null });
+        }
+      });
+    },
+    // Set highlight/background color using inline styles
+    setHighlightColor: (color) => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          $patchStyleText(selection, { 'background-color': color || null });
+        }
+      });
+    },
+    // Get current text color from selection
+    getTextColor: () => {
+      let color = null;
+      editor.getEditorState().read(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          color = $getSelectionStyleValueForProperty(selection, 'color', null);
+        }
+      });
+      return color;
+    },
+    // Get current highlight color from selection
+    getHighlightColor: () => {
+      let color = null;
+      editor.getEditorState().read(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          color = $getSelectionStyleValueForProperty(selection, 'background-color', null);
+        }
+      });
+      return color;
+    },
+    // Insert a page break (visual separator for print/pagination)
+    insertPageBreak: () => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          // Insert a horizontal rule styled as page break, followed by a new paragraph
+          const pageBreakNode = $createParagraphNode();
+          const textNode = $createTextNode('--- Page Break ---');
+          pageBreakNode.append(textNode);
+          selection.insertNodes([pageBreakNode, $createParagraphNode()]);
+        }
+      });
+    },
+    // Insert inline image placeholder (user will provide URL)
+    insertImage: (src, alt = '', width = 'auto') => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          // For now, insert as a placeholder text with image notation
+          // Full image node implementation would require custom Lexical node
+          const imageText = `[Image: ${alt || src}]`;
+          selection.insertText(imageText);
+        }
+      });
+    },
+    // Insert columns layout placeholder
+    insertColumns: (columnCount = 2) => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          // Insert column layout as structured text placeholder
+          const columnTexts = [];
+          for (let i = 1; i <= columnCount; i++) {
+            columnTexts.push(`[Column ${i}]`);
+          }
+          selection.insertText(columnTexts.join(' | '));
+        }
+      });
+    },
+    // Insert collapsible/accordion section
+    insertCollapsible: (title = 'Click to expand') => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          // Insert collapsible as structured text placeholder
+          selection.insertText(`[▶ ${title}]\n  Content goes here...\n[/Collapsible]`);
         }
       });
     },

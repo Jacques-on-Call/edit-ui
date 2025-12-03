@@ -1,5 +1,55 @@
 # Project Change Log
 
+GitHub Copilot (feat): Enhanced Toolbar with Color Pickers and Content Blocks
+Date: 2025-12-03
+Summary:
+Added missing toolbar functionality to the Lexicon content editor: Text Color and Highlight Color with color picker dropdowns, plus new content block options in the Insert ("+") dropdown including Page Break, Image, Columns Layout, and Collapsible Container.
+
+Details:
+- **Color Picker Component:** Created new `ColorPicker.jsx` component with:
+  - Pre-defined color palettes for text colors (10 options) and highlight colors (8 options)
+  - Portal-based rendering for reliable mobile display (same pattern as Dropdown)
+  - Click-outside detection to close picker
+  - Visual indicator bar showing current color selection
+
+- **Text Color Formatting:**
+  - Added `setTextColor(color)` API to EditorApiPlugin using Lexical's `$patchStyleText`
+  - Text color is applied as inline CSS style for maximum compatibility
+  - Selection state tracking shows current text color under the toolbar button
+  - "Default" option removes custom text color
+
+- **Highlight Color Formatting:**
+  - Enhanced highlight from simple toggle to full color picker
+  - Added `setHighlightColor(color)` API using `$patchStyleText` for background-color
+  - Selection state tracking shows current highlight color under the toolbar button
+  - "None" option removes highlight
+
+- **New Content Blocks in Insert Dropdown:**
+  - **Page Break:** Inserts a visual separator for pagination (styled horizontal rule)
+  - **Image:** Prompts for URL and alt text, inserts placeholder notation
+  - **Columns Layout:** Prompts for column count (2-4), inserts structured layout placeholder
+  - **Collapsible Container:** Prompts for title, inserts expandable section placeholder
+
+- **SelectionStatePlugin Enhancements:**
+  - Now tracks `textColor` and `highlightColor` from selection
+  - Uses `$getSelectionStyleValueForProperty` to read inline styles
+
+- **Clear Formatting Enhancement:**
+  - Now also clears inline text color and background-color styles
+
+Impact:
+- Users can apply custom text colors and highlight colors with a visual picker
+- Content creators have access to additional content block types for richer layouts
+- Toolbar is now feature-complete for Phase 2 requirements
+- All new features are mobile-friendly using the established portal pattern
+
+Reflection:
+- **What was the most challenging part of this task?** Ensuring the color picker integrates seamlessly with the existing toolbar architecture. The key was reusing the portal pattern from the Dropdown component, which was already proven to work on mobile.
+- **What was a surprising discovery or key learning?** Lexical's `$patchStyleText` function is the cleanest way to apply inline styles like colors, as it works directly on the selection without needing custom nodes. This approach maintains HTML compatibility for the generated output.
+- **What advice would you give the next agent who works on this code?** For full content block support (Image, Columns, Collapsible), custom Lexical nodes would be needed. The current implementation uses placeholder text which works for basic editing but should be enhanced with proper custom nodes for production use. The pattern in EditorApiPlugin shows how to add new commands - follow the same structure.
+
+---
+
 GitHub Copilot (fix): Phase 2 UI Fixes - Text Color, Spacing, and SEO Placeholders
 Date: 2025-12-02
 Summary:

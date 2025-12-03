@@ -13,10 +13,15 @@ import {
   Minus,
   Table,
   Calendar,
-  Image
+  Image,
+  Palette,
+  SeparatorHorizontal,
+  Columns,
+  ChevronDown
 } from 'lucide-preact';
 import { useEditor } from '../contexts/EditorContext';
 import Dropdown from './Dropdown';
+import ColorPicker from './ColorPicker';
 import './EditorHeader.css';
 
 const LIST_CYCLE = ['', 'ul', 'ol'];
@@ -69,6 +74,35 @@ export default function EditorHeader() {
       case 'clearFormatting': api.clearFormatting(); break;
       case 'undo': api.undo(); break;
       case 'redo': api.redo(); break;
+      // New actions for Phase 2 toolbar enhancements
+      case 'textColor': api.setTextColor(value); break;
+      case 'highlightColor': api.setHighlightColor(value); break;
+      case 'pageBreak': api.insertPageBreak(); break;
+      case 'image':
+        // Note: prompt() is used as a simple placeholder. For production, 
+        // consider implementing a proper modal dialog for better UX.
+        const imgUrl = prompt('Enter image URL:');
+        if (imgUrl) {
+          const imgAlt = prompt('Enter image alt text (for SEO):') || '';
+          api.insertImage(imgUrl, imgAlt);
+        }
+        break;
+      case 'columns':
+        const colInput = prompt('Number of columns (2-4):', '2');
+        if (colInput) {
+          const colCount = parseInt(colInput, 10);
+          // Validate the input is a number between 2 and 4
+          if (!isNaN(colCount) && colCount >= 2 && colCount <= 4) {
+            api.insertColumns(colCount);
+          } else {
+            alert('Please enter a number between 2 and 4');
+          }
+        }
+        break;
+      case 'collapsible':
+        const title = prompt('Collapsible section title:', 'Click to expand');
+        if (title) api.insertCollapsible(title);
+        break;
     }
   };
 
@@ -97,7 +131,7 @@ export default function EditorHeader() {
 
           <span class="toolbar-divider" />
 
-          {/* GROUP 2: Text Formatting (Bold, Italic, Underline, Strikethrough, Code, Highlight) */}
+          {/* GROUP 2: Text Formatting (Bold, Italic, Underline, Strikethrough, Code) */}
           <div class="toolbar-group">
             <button onMouseDown={preventDefault} onClick={() => handleAction('bold')} data-active={selectionState.isBold} aria-label="Bold" disabled={isDisabled} title="Bold">
               <Bold size={18} />
@@ -114,9 +148,42 @@ export default function EditorHeader() {
             <button onMouseDown={preventDefault} onClick={() => handleAction('code')} data-active={selectionState.isCode} aria-label="Inline Code" disabled={isDisabled} title="Inline Code">
               <Code size={18} />
             </button>
-            <button onMouseDown={preventDefault} onClick={() => handleAction('highlight')} data-active={selectionState.isHighlight} aria-label="Highlight" disabled={isDisabled} title="Highlight">
-              <Highlighter size={18} />
-            </button>
+          </div>
+
+          <span class="toolbar-divider" />
+
+          {/* GROUP 2B: Colors (Text Color, Highlight Color with color pickers) */}
+          <div class="toolbar-group">
+            <ColorPicker
+              type="text"
+              currentColor={selectionState.textColor}
+              onColorChange={(color) => handleAction('textColor', color)}
+              disabled={isDisabled}
+              buttonContent={
+                <span class="color-indicator">
+                  <Palette size={18} />
+                  <span 
+                    class="color-indicator-bar" 
+                    style={{ backgroundColor: selectionState.textColor || '#e6f0ff' }}
+                  />
+                </span>
+              }
+            />
+            <ColorPicker
+              type="highlight"
+              currentColor={selectionState.highlightColor}
+              onColorChange={(color) => handleAction('highlightColor', color)}
+              disabled={isDisabled}
+              buttonContent={
+                <span class="color-indicator">
+                  <Highlighter size={18} />
+                  <span 
+                    class="color-indicator-bar" 
+                    style={{ backgroundColor: selectionState.highlightColor || 'transparent', border: selectionState.highlightColor ? 'none' : '1px solid rgba(255,255,255,0.3)' }}
+                  />
+                </span>
+              }
+            />
           </div>
 
           <span class="toolbar-divider" />
@@ -219,9 +286,25 @@ export default function EditorHeader() {
                 <Minus size={16} />
                 <span class="dropdown-label">Horizontal Rule</span>
               </button>
+              <button onMouseDown={preventDefault} onClick={() => handleAction('pageBreak')} aria-label="Page Break" disabled={isDisabled}>
+                <SeparatorHorizontal size={16} />
+                <span class="dropdown-label">Page Break</span>
+              </button>
               <button onMouseDown={preventDefault} onClick={() => handleAction('table')} aria-label="Table" disabled={isDisabled}>
                 <Table size={16} />
                 <span class="dropdown-label">Table</span>
+              </button>
+              <button onMouseDown={preventDefault} onClick={() => handleAction('image')} aria-label="Image" disabled={isDisabled}>
+                <Image size={16} />
+                <span class="dropdown-label">Image</span>
+              </button>
+              <button onMouseDown={preventDefault} onClick={() => handleAction('columns')} aria-label="Columns Layout" disabled={isDisabled}>
+                <Columns size={16} />
+                <span class="dropdown-label">Columns Layout</span>
+              </button>
+              <button onMouseDown={preventDefault} onClick={() => handleAction('collapsible')} aria-label="Collapsible" disabled={isDisabled}>
+                <ChevronDown size={16} />
+                <span class="dropdown-label">Collapsible</span>
               </button>
               <button onMouseDown={preventDefault} onClick={() => handleAction('date')} aria-label="Date" disabled={isDisabled}>
                 <Calendar size={16} />
