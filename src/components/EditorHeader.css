@@ -7,7 +7,7 @@
   justify-content:space-between;
   padding: 0 12px;
   background: rgba(2,10,30,0.95);
-  position: sticky;
+  position: fixed;
   top: 0;
   z-index:80;
   box-sizing: border-box;
