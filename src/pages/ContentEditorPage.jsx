@@ -712,6 +712,7 @@ export default function ContentEditorPage(props) {
         />
         <AddSectionModal
           pageSlug={pageId}
+          pageData={{ sections: sections || [] }}
           onAddSection={handleAddSection}
           sectionToEdit={editingSectionIndex !== null ? sections[editingSectionIndex] : null}
           onUpdateSection={handleUpdateSection}

@@ -4,6 +4,7 @@ import { useUI } from '../contexts/UIContext';
 import { X, ArrowLeft } from 'lucide-preact';
 import ImageUploader from './ImageUploader';
 import ImageEditor from './ImageEditor';
+import { extractTopicWords } from '../lib/imageScoring';
 
 const SectionThumbnail = ({ title, description, onClick, children }) => (
   <button
@@ -42,7 +43,7 @@ const UrlInput = ({ placeholder, value, onInput }) => (
   />
 );
 
-const HeroConfigurator = ({ config, setConfig, pageSlug, isEditing = false }) => {
+const HeroConfigurator = ({ config, setConfig, pageSlug, isEditing = false, topicWords = [] }) => {
   const [featureUploadMode, setFeatureUploadMode] = useState('url');
   const [bgUploadMode, setBgUploadMode] = useState('url');
   
@@ -150,6 +151,7 @@ const HeroConfigurator = ({ config, setConfig, pageSlug, isEditing = false }) =>
                 imageDescription={config.featureImageDescription || ''}
                 imageLoading={config.featureImageLoading || 'lazy'}
                 pageSlug={pageSlug}
+                topicWords={topicWords}
                 onUpdate={handleFeatureImageUpdate}
                 onRemove={handleRemoveFeatureImage}
                 label="Feature Image"
@@ -192,6 +194,7 @@ const HeroConfigurator = ({ config, setConfig, pageSlug, isEditing = false }) =>
                 imageDescription={config.backgroundImageDescription || ''}
                 imageLoading={config.backgroundImageLoading || 'lazy'}
                 pageSlug={pageSlug}
+                topicWords={topicWords}
                 onUpdate={handleBackgroundImageUpdate}
                 onRemove={handleRemoveBackgroundImage}
                 label="Background Image"
@@ -252,7 +255,7 @@ const HeroConfigurator = ({ config, setConfig, pageSlug, isEditing = false }) =>
   );
 };
 
-const TextSectionConfigurator = ({ config, setConfig, pageSlug, isEditing = false }) => {
+const TextSectionConfigurator = ({ config, setConfig, pageSlug, isEditing = false, topicWords = [] }) => {
   const [uploadMode, setUploadMode] = useState('url'); // 'url' or 'upload'
   
   // Check if we have an existing image (for edit mode)
@@ -316,6 +319,7 @@ const TextSectionConfigurator = ({ config, setConfig, pageSlug, isEditing = fals
                 imageDescription={config.headerImageDescription || ''}
                 imageLoading={config.headerImageLoading || 'lazy'}
                 pageSlug={pageSlug}
+                topicWords={topicWords}
                 onUpdate={handleHeaderImageUpdate}
                 onRemove={handleRemoveHeaderImage}
                 label="Header Image"
@@ -354,11 +358,14 @@ const DEFAULT_CONFIGS = {
   textSection: { includeTitle: true, includeHeaderImage: false, headerImageUrl: '', headerImageAlt: '' },
 };
 
-export default function AddSectionModal({ pageSlug, onAddSection, sectionToEdit, onUpdateSection }) {
+export default function AddSectionModal({ pageSlug, pageData, onAddSection, sectionToEdit, onUpdateSection }) {
   const { isAddSectionModalOpen, closeAddSectionModal } = useUI();
   const [step, setStep] = useState('select'); // 'select' or 'configure'
   const [selectedSection, setSelectedSection] = useState(null);
   const [config, setConfig] = useState({});
+  
+  // Extract topic words from page data for ID Score calculation
+  const topicWords = pageData ? extractTopicWords(pageData) : [];
 
   // Effect to populate the modal when it's opened for editing
   useEffect(() => {
@@ -515,8 +522,8 @@ export default function AddSectionModal({ pageSlug, onAddSection, sectionToEdit,
 
   const renderConfigureStep = () => (
     <div>
-      {selectedSection === 'hero' && <HeroConfigurator config={config} setConfig={setConfig} pageSlug={pageSlug} isEditing={!!sectionToEdit} />}
-      {selectedSection === 'textSection' && <TextSectionConfigurator config={config} setConfig={setConfig} pageSlug={pageSlug} isEditing={!!sectionToEdit} />}
+      {selectedSection === 'hero' && <HeroConfigurator config={config} setConfig={setConfig} pageSlug={pageSlug} isEditing={!!sectionToEdit} topicWords={topicWords} />}
+      {selectedSection === 'textSection' && <TextSectionConfigurator config={config} setConfig={setConfig} pageSlug={pageSlug} isEditing={!!sectionToEdit} topicWords={topicWords} />}
       <div class="mt-6 flex justify-end">
         <button onClick={handleCreateSection} class="bg-yellow-green text-black font-bold px-6 py-2 rounded-lg hover:bg-lime-400 transition-colors">
           {sectionToEdit ? 'Save Changes' : 'Add Section to Page'}

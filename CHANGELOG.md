@@ -1,5 +1,43 @@
 # Project Change Log
 
+GitHub Copilot (feat): ID (Image Description) Score Engine
+Date: 2025-12-03
+Summary:
+Implemented the ID (Image Description) Score logic engine that provides comprehensive SEO scoring for images. This score contributes to the overall Page Score and evaluates topic word usage in filenames and alt text, SEO-friendly filename structure, and front-loading of keywords.
+
+Details:
+- **New Scoring Module (`imageScoring.js`):**
+  - Created comprehensive scoring utility at `easy-seo/src/lib/imageScoring.js`
+  - Implements ID Score calculation based on the Scoring for Growth Strategy documentation
+  - Scoring weights follow the strategy doc: Filename SEO (15pts), Alt Text Quality (20pts), Description (15pts), Topic Words in Filename (10pts), Topic Words in Alt (10pts), Title (10pts), Lazy Loading (10pts), File Size (5pts), Format (5pts)
+  - Exports helper functions: `extractTopicWords()`, `checkTopicWordUsage()`, `checkFrontLoading()`, `calculateImageScore()`, `calculatePageImageScore()`
+  - Topic words are automatically extracted from page H1, H2, and H3 headings
+
+- **Enhanced ImageEditor Component:**
+  - Updated to use the new `imageScoring.js` module instead of inline SEO score calculation
+  - Now accepts `topicWords` prop to enable topic word analysis
+  - Shows expandable "ID Score" breakdown with detailed feedback per category
+  - Live score updates as user edits image metadata
+  - Displays score status (Excellent/Good/Needs Improvement/Poor) with color coding
+
+- **Updated AddSectionModal:**
+  - Added `pageData` prop to receive page data for topic word extraction
+  - Passes extracted `topicWords` to HeroConfigurator and TextSectionConfigurator
+  - ImageEditor instances now receive topic words for accurate ID Score calculation
+
+- **ContentEditorPage Integration:**
+  - Passes `pageData={{ sections }}` to AddSectionModal for topic word extraction
+
+Impact:
+- Users can now see a comprehensive ID Score (0-100) for each image that reflects SEO best practices
+- The score provides actionable feedback on how to improve image SEO
+- Topic words from page headings are automatically analyzed for inclusion in image filenames and alt text
+- This ID Score will contribute to the overall Page Score as defined in the Scoring for Growth Strategy
+
+Reflection:
+- **What was the most challenging part of this task?** Designing a scoring system that aligns with the Scoring for Growth Strategy document while being flexible enough to work with or without topic word context. The key insight was making topic word scoring optional (it gracefully degrades when no topic words are available).
+- **What was a surprising discovery or key learning?** The existing ImageEditor already had a basic SEO score, but it was isolated. By creating a shared module, we enable consistent scoring across ImageEditor, ImageUploader, and future Page Score aggregation.
+- **What advice would you give the next agent who works on this code?** The `imageScoring.js` module is designed to be the single source of truth for image SEO scoring. When implementing Page Score, use `calculatePageImageScore()` to aggregate all image scores. The `extractTopicWords()` function can be extended to include more sources (meta keywords, body content) for better topic word detection.
 GitHub Copilot (fix): Fix Image Path Handling & Modal Scrollability
 Date: 2025-12-03
 Summary:

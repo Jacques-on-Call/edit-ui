@@ -6,6 +6,10 @@
  * - Filename editing (SEO-friendly, without showing full path)
  * - Alt text, title, description editing
  * - Option to replace the image
+ * - ID (Image Description) Score showing SEO optimization status
+ * 
+ * The ID Score contributes to the overall Page Score (PS).
+ * See: easy-seo/docs/Scoring for Growth Strategy
  * 
  * Unlike ImageUploader which is for new uploads, this component is for
  * editing metadata of existing images.
@@ -14,7 +18,8 @@ import { h } from 'preact';
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { useAuth } from '../contexts/AuthContext';
 import { getPreviewImageUrl } from '../lib/imageHelpers';
-import { Edit2, Image, HelpCircle, RefreshCw, CheckCircle, AlertCircle } from 'lucide-preact';
+import { calculateImageScore, getScoreColorClass, getScoreBgClass, getScoreStatus } from '../lib/imageScoring';
+import { Edit2, Image, HelpCircle, RefreshCw, CheckCircle, AlertCircle, Info } from 'lucide-preact';
 import ImageUploader from './ImageUploader';
 
 // Helper to extract just the filename from a path
@@ -64,6 +69,7 @@ export default function ImageEditor({
   imageDescription = '',
   imageLoading = 'lazy',
   pageSlug,
+  topicWords = [], // Topic words from page for ID Score calculation
   onUpdate,
   onRemove,
   label = 'Image'
@@ -71,6 +77,7 @@ export default function ImageEditor({
   const { selectedRepo } = useAuth();
   const [mode, setMode] = useState('view'); // 'view', 'edit', 'replace'
   const [imageError, setImageError] = useState(false);
+  const [showScoreDetails, setShowScoreDetails] = useState(false);
   
   // Editable fields
   const [filename, setFilename] = useState(getFilenameFromPath(imagePath));
@@ -88,6 +95,15 @@ export default function ImageEditor({
   // Get file extension
   const extension = filename.split('.').pop() || '';
   const filenameWithoutExt = filename.replace(`.${extension}`, '');
+  
+  // Calculate ID Score using the scoring module
+  const idScore = calculateImageScore({
+    filename,
+    alt,
+    title,
+    description,
+    loading
+  }, topicWords);
   
   // Reset state when imagePath changes
   useEffect(() => {
@@ -121,12 +137,13 @@ export default function ImageEditor({
       title: title,
       description: description,
       loading: loading,
+      idScore: idScore.total, // Include ID Score in update
       // Pass the original path so we know if rename is needed
       originalPath: imagePath
     });
     
     setMode('view');
-  }, [imagePath, filename, alt, title, description, loading, onUpdate]);
+  }, [imagePath, filename, alt, title, description, loading, idScore.total, onUpdate]);
   
   // Handle image replacement from ImageUploader
   const handleReplaceComplete = useCallback(({ path, alt: newAlt, title: newTitle, description: newDesc, loading: newLoading }) => {
@@ -142,46 +159,30 @@ export default function ImageEditor({
     setMode('view');
   }, [imagePath, alt, title, description, loading, onUpdate]);
   
-  // SEO Score weights for different attributes
-  // Total: 100 points
-  // - Alt text (optimal length 10-125 chars): 40 points (most important for accessibility and SEO)
-  // - Alt text (any length): 20 points (better than nothing)
-  // - Filename (no spaces, SEO-friendly): 20 points (important for search engines)
-  // - Title attribute: 15 points (tooltip, additional context)
-  // - Description: 15 points (for captions, additional SEO value)
-  // - Lazy loading: 10 points (performance optimization)
-  const SEO_WEIGHTS = {
-    ALT_OPTIMAL: 40,    // Alt text with optimal length (10-125 chars)
-    ALT_ANY: 20,        // Alt text exists but not optimal
-    FILENAME: 20,       // SEO-friendly filename (no spaces)
-    TITLE: 15,          // Title attribute present
-    DESCRIPTION: 15,    // Description present
-    LAZY_LOADING: 10    // Performance optimization
+  // Helper to render a score detail row
+  const renderScoreDetail = (label, detail, points) => {
+    const statusColors = {
+      optimal: 'text-green-400',
+      good: 'text-green-400',
+      partial: 'text-yellow-400',
+      poor: 'text-orange-400',
+      missing: 'text-gray-400',
+      na: 'text-gray-500',
+      unknown: 'text-gray-500'
+    };
+    
+    return (
+      <div class="flex items-center justify-between text-xs py-1 border-b border-gray-700 last:border-0">
+        <span class="text-gray-400">{label}</span>
+        <div class="flex items-center gap-2">
+          <span class={statusColors[detail?.status] || 'text-gray-500'}>
+            {detail?.message || 'N/A'}
+          </span>
+          <span class="text-gray-500 w-8 text-right">+{points}</span>
+        </div>
+      </div>
+    );
   };
-  
-  // Calculate SEO score for this image
-  const calculateSeoScore = () => {
-    let score = 0;
-    // Alt text is the most important for accessibility and SEO
-    if (alt && alt.length >= 10 && alt.length <= 125) {
-      score += SEO_WEIGHTS.ALT_OPTIMAL;
-    } else if (alt) {
-      score += SEO_WEIGHTS.ALT_ANY;
-    }
-    // Filename should be SEO-friendly (no spaces, descriptive)
-    if (filename && filename.length > 0 && !filename.includes(' ')) {
-      score += SEO_WEIGHTS.FILENAME;
-    }
-    // Title provides additional context on hover
-    if (title) score += SEO_WEIGHTS.TITLE;
-    // Description useful for captions and additional SEO
-    if (description) score += SEO_WEIGHTS.DESCRIPTION;
-    // Lazy loading improves page performance
-    if (loading === 'lazy') score += SEO_WEIGHTS.LAZY_LOADING;
-    return score;
-  };
-  
-  const seoScore = calculateSeoScore();
   
   // Render view mode - shows the current image with edit button
   if (mode === 'view') {
@@ -238,10 +239,33 @@ export default function ImageEditor({
               </p>
             )}
             <div class="flex items-center justify-between">
-              <span class={`text-xs ${seoScore >= 80 ? 'text-green-400' : seoScore >= 50 ? 'text-yellow-400' : 'text-orange-400'}`}>
-                SEO: {seoScore}/100
-              </span>
+              <button
+                onClick={() => setShowScoreDetails(!showScoreDetails)}
+                class={`text-xs flex items-center gap-1 ${getScoreColorClass(idScore.total)} hover:underline`}
+              >
+                ID Score: {idScore.total}/100
+                <Info size={12} />
+              </button>
+              <span class="text-xs text-gray-500">{getScoreStatus(idScore.total)}</span>
             </div>
+            
+            {/* ID Score Details (collapsible) */}
+            {showScoreDetails && (
+              <div class="mt-2 p-2 bg-gray-900/50 rounded border border-gray-700">
+                <p class="text-xs text-gray-300 mb-2 font-medium">Score Breakdown:</p>
+                {renderScoreDetail('Filename SEO', idScore.details.filename, idScore.filenameScore)}
+                {renderScoreDetail('Alt Text', idScore.details.altText, idScore.altTextScore)}
+                {renderScoreDetail('Title', idScore.details.title, idScore.titleScore)}
+                {renderScoreDetail('Description', idScore.details.description, idScore.descriptionScore)}
+                {renderScoreDetail('Lazy Loading', idScore.details.loading, idScore.lazyLoadingScore)}
+                {topicWords.length > 0 && (
+                  <>
+                    {renderScoreDetail('Topic Words (Filename)', idScore.details.topicWordsFilename, idScore.topicWordsFilenameScore)}
+                    {renderScoreDetail('Topic Words (Alt)', idScore.details.topicWordsAlt, idScore.topicWordsAltScore)}
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -317,20 +341,46 @@ export default function ImageEditor({
           </button>
         </div>
         
-        {/* SEO Score */}
+        {/* ID Score - Live feedback as user edits */}
         <div class="bg-gray-900/50 border border-gray-700 rounded-lg p-2 mb-4">
           <div class="flex items-center justify-between mb-1">
-            <span class="text-xs font-medium text-gray-400">SEO Score</span>
-            <span class={`text-sm font-bold ${seoScore >= 80 ? 'text-green-400' : seoScore >= 50 ? 'text-yellow-400' : 'text-orange-400'}`}>
-              {seoScore}/100
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-medium text-gray-400">ID Score</span>
+              <button
+                onClick={() => setShowScoreDetails(!showScoreDetails)}
+                class="text-xs text-gray-500 hover:text-white"
+              >
+                {showScoreDetails ? '▲ Hide' : '▼ Details'}
+              </button>
+            </div>
+            <span class={`text-sm font-bold ${getScoreColorClass(idScore.total)}`}>
+              {idScore.total}/100
             </span>
           </div>
           <div class="w-full bg-gray-700 rounded-full h-1.5">
             <div
-              class={`h-1.5 rounded-full transition-all ${seoScore >= 80 ? 'bg-green-400' : seoScore >= 50 ? 'bg-yellow-400' : 'bg-orange-400'}`}
-              style={{ width: `${seoScore}%` }}
+              class={`h-1.5 rounded-full transition-all ${getScoreBgClass(idScore.total)}`}
+              style={{ width: `${idScore.total}%` }}
             ></div>
           </div>
+          <p class="text-xs text-gray-500 mt-1">{getScoreStatus(idScore.total)} - This score contributes to your Page Score</p>
+          
+          {/* Detailed breakdown */}
+          {showScoreDetails && (
+            <div class="mt-2 pt-2 border-t border-gray-700">
+              {renderScoreDetail('Filename SEO', idScore.details.filename, idScore.filenameScore)}
+              {renderScoreDetail('Alt Text', idScore.details.altText, idScore.altTextScore)}
+              {renderScoreDetail('Title', idScore.details.title, idScore.titleScore)}
+              {renderScoreDetail('Description', idScore.details.description, idScore.descriptionScore)}
+              {renderScoreDetail('Lazy Loading', idScore.details.loading, idScore.lazyLoadingScore)}
+              {topicWords.length > 0 && (
+                <>
+                  {renderScoreDetail('Topic Words (Filename)', idScore.details.topicWordsFilename, idScore.topicWordsFilenameScore)}
+                  {renderScoreDetail('Topic Words (Alt)', idScore.details.topicWordsAlt, idScore.topicWordsAltScore)}
+                </>
+              )}
+            </div>
+          )}
         </div>
         
         <div class="space-y-3">
