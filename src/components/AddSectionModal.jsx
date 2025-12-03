@@ -47,7 +47,9 @@ const HeroConfigurator = ({ config, setConfig, pageSlug, isEditing = false }) =>
   const [bgUploadMode, setBgUploadMode] = useState('url');
   
   // Check if we have existing images (for edit mode)
-  const hasExistingFeatureImage = isEditing && config.featureImageUrl && config.featureImageUrl.startsWith('src/');
+  // Check both featureImage and featureImageUrl for backwards compatibility
+  const featureImagePath = config.featureImage || config.featureImageUrl;
+  const hasExistingFeatureImage = isEditing && featureImagePath && featureImagePath.startsWith('src/');
   const hasExistingBackgroundImage = isEditing && config.backgroundImageUrl && config.backgroundImageUrl.startsWith('src/');
 
   const handleFeatureImageComplete = ({ path, alt, title, description, loading }) => {
@@ -142,7 +144,7 @@ const HeroConfigurator = ({ config, setConfig, pageSlug, isEditing = false }) =>
             {/* Show ImageEditor for existing images, otherwise show upload options */}
             {hasExistingFeatureImage ? (
               <ImageEditor
-                imagePath={config.featureImageUrl}
+                imagePath={featureImagePath}
                 imageAlt={config.featureImageAlt || ''}
                 imageTitle={config.featureImageTitle || ''}
                 imageDescription={config.featureImageDescription || ''}
@@ -254,7 +256,9 @@ const TextSectionConfigurator = ({ config, setConfig, pageSlug, isEditing = fals
   const [uploadMode, setUploadMode] = useState('url'); // 'url' or 'upload'
   
   // Check if we have an existing image (for edit mode)
-  const hasExistingHeaderImage = isEditing && config.headerImageUrl && config.headerImageUrl.startsWith('src/');
+  // Check both featureImage and headerImageUrl for backwards compatibility with BodySectionEditor
+  const headerImagePath = config.featureImage || config.headerImageUrl;
+  const hasExistingHeaderImage = isEditing && headerImagePath && headerImagePath.startsWith('src/');
 
   const handleImageComplete = ({ path, alt, title, description, loading }) => {
     console.log('[TextSectionConfigurator] handleImageComplete triggered', { path, alt, title, description, loading });
@@ -306,7 +310,7 @@ const TextSectionConfigurator = ({ config, setConfig, pageSlug, isEditing = fals
             {/* Show ImageEditor for existing images, otherwise show upload options */}
             {hasExistingHeaderImage ? (
               <ImageEditor
-                imagePath={config.headerImageUrl}
+                imagePath={headerImagePath}
                 imageAlt={config.headerImageAlt || ''}
                 imageTitle={config.headerImageTitle || ''}
                 imageDescription={config.headerImageDescription || ''}
@@ -366,14 +370,28 @@ export default function AddSectionModal({ pageSlug, onAddSection, sectionToEdit,
 
       // Re-construct "include" flags based on the presence of data.
       // This ensures the checkboxes in the UI accurately reflect the section's state.
+      // Check for both featureImage and featureImageUrl for backwards compatibility,
+      // as some sections may have used one or the other.
       if (sectionToEdit.type === 'hero') {
         initialConfig.includeSlogan = !!initialConfig.subtitle;
         initialConfig.includeBody = !!initialConfig.body;
-        initialConfig.includeFeatureImage = !!initialConfig.featureImageUrl;
+        // Check both featureImage and featureImageUrl for feature image presence
+        const hasFeatureImage = !!(initialConfig.featureImage || initialConfig.featureImageUrl);
+        initialConfig.includeFeatureImage = hasFeatureImage;
+        // Normalize: ensure featureImageUrl is set if featureImage exists
+        if (initialConfig.featureImage && !initialConfig.featureImageUrl) {
+          initialConfig.featureImageUrl = initialConfig.featureImage;
+        }
         initialConfig.includeBackgroundImage = !!initialConfig.backgroundImageUrl;
       } else if (sectionToEdit.type === 'textSection') {
         initialConfig.includeTitle = !!initialConfig.title;
-        initialConfig.includeHeaderImage = !!initialConfig.headerImageUrl;
+        // Check both featureImage and headerImageUrl for header image presence
+        const hasHeaderImage = !!(initialConfig.featureImage || initialConfig.headerImageUrl);
+        initialConfig.includeHeaderImage = hasHeaderImage;
+        // Normalize: ensure headerImageUrl is set if featureImage exists
+        if (initialConfig.featureImage && !initialConfig.headerImageUrl) {
+          initialConfig.headerImageUrl = initialConfig.featureImage;
+        }
       }
 
       setConfig(initialConfig);
@@ -409,22 +427,38 @@ export default function AddSectionModal({ pageSlug, onAddSection, sectionToEdit,
     const newProps = { ...originalProps };
 
     // Carefully merge only the properties managed by the modal
-    // Feature image properties
-    newProps.featureImageUrl = config.includeFeatureImage ? config.featureImageUrl : undefined;
+    
+    // For Hero sections: featureImage and featureImageUrl properties
+    // Set both featureImage and featureImageUrl for compatibility with HeroEditor which uses either
+    const featureImagePath = config.includeFeatureImage ? config.featureImageUrl : undefined;
+    newProps.featureImage = featureImagePath;
+    newProps.featureImageUrl = featureImagePath;
     newProps.featureImageAlt = config.includeFeatureImage ? config.featureImageAlt : undefined;
     newProps.featureImageTitle = config.includeFeatureImage ? config.featureImageTitle : undefined;
     newProps.featureImageDescription = config.includeFeatureImage ? config.featureImageDescription : undefined;
     newProps.featureImageLoading = config.includeFeatureImage ? config.featureImageLoading : undefined;
     
-    // Background image properties
+    // Background image properties (Hero sections only)
     newProps.backgroundImageUrl = config.includeBackgroundImage ? config.backgroundImageUrl : undefined;
     newProps.backgroundImageAlt = config.includeBackgroundImage ? config.backgroundImageAlt : undefined;
     newProps.backgroundImageTitle = config.includeBackgroundImage ? config.backgroundImageTitle : undefined;
     newProps.backgroundImageDescription = config.includeBackgroundImage ? config.backgroundImageDescription : undefined;
     newProps.backgroundImageLoading = config.includeBackgroundImage ? config.backgroundImageLoading : undefined;
     
-    // Header image properties
-    newProps.headerImageUrl = config.includeHeaderImage ? config.headerImageUrl : undefined;
+    // For Text sections: headerImage properties
+    // Set headerImageUrl and also featureImage for backward compatibility with BodySectionEditor
+    // (which uses: props?.featureImage || props?.headerImageUrl)
+    // 
+    // Important: This sets featureImage for text sections. For hero sections, this will set
+    // featureImage to undefined (since includeHeaderImage is false), but that's intentional
+    // because the featureImage for hero sections was already set above from includeFeatureImage.
+    // The cleanup step below will remove undefined properties.
+    const headerImagePath = config.includeHeaderImage ? config.headerImageUrl : undefined;
+    // For text sections with header image, also set featureImage for BodySectionEditor compatibility
+    if (headerImagePath) {
+      newProps.featureImage = headerImagePath;
+    }
+    newProps.headerImageUrl = headerImagePath;
     newProps.headerImageAlt = config.includeHeaderImage ? config.headerImageAlt : undefined;
     newProps.headerImageTitle = config.includeHeaderImage ? config.headerImageTitle : undefined;
     newProps.headerImageDescription = config.includeHeaderImage ? config.headerImageDescription : undefined;
@@ -492,9 +526,9 @@ export default function AddSectionModal({ pageSlug, onAddSection, sectionToEdit,
   );
 
   return (
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm animate-fade-in-fast">
-      <div class="bg-gradient-to-b from-gray-900 to-black border border-gray-700 rounded-lg shadow-xl w-full max-w-md m-4">
-        <header class="flex items-center justify-between p-4 border-b border-gray-800">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm animate-fade-in-fast overflow-y-auto py-4">
+      <div class="bg-gradient-to-b from-gray-900 to-black border border-gray-700 rounded-lg shadow-xl w-full max-w-md mx-4 my-auto max-h-[90vh] flex flex-col">
+        <header class="flex items-center justify-between p-4 border-b border-gray-800 flex-shrink-0">
           {step === 'configure' && (
             <button onClick={handleBack} class="text-gray-400 hover:text-white transition-colors mr-2" aria-label="Go back">
               <ArrowLeft size={24} />
@@ -507,7 +541,7 @@ export default function AddSectionModal({ pageSlug, onAddSection, sectionToEdit,
             <X size={24} />
           </button>
         </header>
-        <div class="p-6">
+        <div class="p-6 overflow-y-auto flex-1">
           {step === 'select' ? renderSelectStep() : renderConfigureStep()}
         </div>
       </div>

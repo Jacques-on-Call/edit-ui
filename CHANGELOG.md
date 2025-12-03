@@ -1,52 +1,34 @@
 # Project Change Log
 
-GitHub Copilot (feat): Enhanced Toolbar with Color Pickers and Content Blocks
+GitHub Copilot (fix): Fix Image Path Handling & Modal Scrollability
 Date: 2025-12-03
 Summary:
-Added missing toolbar functionality to the Lexicon content editor: Text Color and Highlight Color with color picker dropdowns, plus new content block options in the Insert ("+") dropdown including Page Break, Image, Columns Layout, and Collapsible Container.
+Fixed two critical issues: 1) Images vanishing after editing in the modal due to inconsistent property name handling, and 2) AddSectionModal content being cut off on small screens due to lack of scrollability.
 
 Details:
-- **Color Picker Component:** Created new `ColorPicker.jsx` component with:
-  - Pre-defined color palettes for text colors (10 options) and highlight colors (8 options)
-  - Portal-based rendering for reliable mobile display (same pattern as Dropdown)
-  - Click-outside detection to close picker
-  - Visual indicator bar showing current color selection
+- **Image Path Property Fix:**
+  - Fixed issue where `featureImage` and `featureImageUrl` properties were not consistently checked and set
+  - Updated initialization logic to check for both property names when determining if an image exists
+  - Updated `constructUpdatedProps` to set both `featureImage` and `featureImageUrl` for HeroEditor compatibility
+  - For TextSection, now properly sets `featureImage` (used by BodySectionEditor) alongside `headerImageUrl`
+  - Fixed `hasExistingFeatureImage` and `hasExistingHeaderImage` checks to look at both property names
 
-- **Text Color Formatting:**
-  - Added `setTextColor(color)` API to EditorApiPlugin using Lexical's `$patchStyleText`
-  - Text color is applied as inline CSS style for maximum compatibility
-  - Selection state tracking shows current text color under the toolbar button
-  - "Default" option removes custom text color
-
-- **Highlight Color Formatting:**
-  - Enhanced highlight from simple toggle to full color picker
-  - Added `setHighlightColor(color)` API using `$patchStyleText` for background-color
-  - Selection state tracking shows current highlight color under the toolbar button
-  - "None" option removes highlight
-
-- **New Content Blocks in Insert Dropdown:**
-  - **Page Break:** Inserts a visual separator for pagination (styled horizontal rule)
-  - **Image:** Prompts for URL and alt text, inserts placeholder notation
-  - **Columns Layout:** Prompts for column count (2-4), inserts structured layout placeholder
-  - **Collapsible Container:** Prompts for title, inserts expandable section placeholder
-
-- **SelectionStatePlugin Enhancements:**
-  - Now tracks `textColor` and `highlightColor` from selection
-  - Uses `$getSelectionStyleValueForProperty` to read inline styles
-
-- **Clear Formatting Enhancement:**
-  - Now also clears inline text color and background-color styles
+- **Modal Scrollability Fix:**
+  - Added `overflow-y-auto` to the modal backdrop container
+  - Added `max-h-[90vh]` and `flex flex-col` to modal content container
+  - Made header `flex-shrink-0` to prevent compression
+  - Made content area `flex-1 overflow-y-auto` to enable scrolling
+  - Now the loading strategy option and save button are accessible on small phone screens
 
 Impact:
-- Users can apply custom text colors and highlight colors with a visual picker
-- Content creators have access to additional content block types for richer layouts
-- Toolbar is now feature-complete for Phase 2 requirements
-- All new features are mobile-friendly using the established portal pattern
+- Images now persist correctly when editing section attributes in the modal
+- The edit attributes modal is now fully accessible on all screen sizes, including phones
+- Both feature images and header images work correctly regardless of which property name was used originally
 
 Reflection:
-- **What was the most challenging part of this task?** Ensuring the color picker integrates seamlessly with the existing toolbar architecture. The key was reusing the portal pattern from the Dropdown component, which was already proven to work on mobile.
-- **What was a surprising discovery or key learning?** Lexical's `$patchStyleText` function is the cleanest way to apply inline styles like colors, as it works directly on the selection without needing custom nodes. This approach maintains HTML compatibility for the generated output.
-- **What advice would you give the next agent who works on this code?** For full content block support (Image, Columns, Collapsible), custom Lexical nodes would be needed. The current implementation uses placeholder text which works for basic editing but should be enhanced with proper custom nodes for production use. The pattern in EditorApiPlugin shows how to add new commands - follow the same structure.
+- **What was the most challenging part of this task?** Tracing the image property flow through multiple components (ImageEditor → Configurator → AddSectionModal → ContentEditorPage → Section Editors) to identify where properties were being lost.
+- **What was a surprising discovery or key learning?** The codebase had evolved to use both `featureImage` and `featureImageUrl` in different places, and the HeroEditor and BodySectionEditor handled these differently. A thorough compatibility layer was needed.
+- **What advice would you give the next agent who works on this code?** When working with image properties, always check for and set both `featureImage` and `featureImageUrl` (for hero) or `featureImage` and `headerImageUrl` (for text sections) to maintain backwards compatibility.
 
 ---
 
