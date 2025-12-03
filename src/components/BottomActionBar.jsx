@@ -2,12 +2,14 @@ import { h } from 'preact';
 import { route } from 'preact-router';
 import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil, Monitor } from 'lucide-preact';
 import './BottomActionBar.css';
+import { getPageScoreColor } from '../lib/pageScoring';
 
 export default function BottomActionBar({ 
   saveStatus, 
   syncStatus = 'idle', 
   viewMode = 'editor', 
   previewState = 'idle', // 'idle' | 'building' | 'ready'
+  pageScore = null, // Page Score (0-100) or null if not calculated
   onSync, 
   onAdd, 
   onPreview,
@@ -135,8 +137,17 @@ export default function BottomActionBar({
         </button>
       )}
 
-      <div class="save-status-indicator">
-         <span class={`save-status-dot ${getStatusColor()}`}></span>
+      {/* Page Score display */}
+      {pageScore !== null && (
+        <div className="page-score-indicator" title={`Page Score: ${pageScore}/100`}>
+          <span className={`text-sm font-bold ${getPageScoreColor(pageScore)}`}>
+            {pageScore}
+          </span>
+        </div>
+      )}
+
+      <div className="save-status-indicator">
+         <span className={`save-status-dot ${getStatusColor()}`}></span>
       </div>
     </footer>
   );

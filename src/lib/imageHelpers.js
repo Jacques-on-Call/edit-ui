@@ -28,3 +28,27 @@ export function getPreviewImageUrl(path, repoFullName) {
   // Construct the proxy URL, ensuring components are properly encoded.
   return `/api/proxy-image?repo=${encodeURIComponent(repoFullName)}&path=${encodeURIComponent(path)}`;
 }
+
+/**
+ * Constructs a GitHub raw URL for an image.
+ * This is used as a fallback when the proxy endpoint fails.
+ * Note: This will only work for public repositories or if the user has
+ * already authenticated with GitHub in the same browser session.
+ *
+ * @param {string} path - The repository path to the image.
+ * @param {string} repoFullName - The full repo name (e.g., 'owner/repo').
+ * @param {string} branch - The branch name (default: 'main').
+ * @returns {string|null} The GitHub raw URL, or null if essential parameters are missing.
+ */
+export function getGitHubRawUrl(path, repoFullName, branch = 'main') {
+  if (!path || !repoFullName) {
+    return null;
+  }
+
+  // If it's already a full URL, use it directly.
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+
+  return `https://raw.githubusercontent.com/${repoFullName}/${branch}/${path}`;
+}

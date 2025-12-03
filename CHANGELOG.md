@@ -1,5 +1,50 @@
 # Project Change Log
 
+GitHub Copilot (fix): Phase 2 Bug Fixes - Image Fallback, Text Color, H2 Descenders, Page Score
+Date: 2025-12-03
+Summary:
+Addressed four Phase 2 issues: added GitHub raw URL fallback for images, fixed hero text color not applying to content, fixed H2 descender letters being clipped, and implemented Page Score display in the action bar.
+
+Details:
+- **Image Path Fallback (1.1):**
+  - Added `getGitHubRawUrl()` helper function to `imageHelpers.js` for fallback when proxy fails
+  - Updated `HeroEditor.jsx` and `BodySectionEditor.jsx` to try proxy URL first, then fallback to GitHub raw URL if loading fails
+  - Maintains current proxy approach for authenticated access, with graceful degradation for public repos
+
+- **Hero Text Color Fix (1.2):**
+  - Strengthened CSS specificity for `.editor-input-dark` class in `index.css`
+  - Changed from `.editor-input-dark { color: ... }` to `.editor-input-dark, .editor-input-dark * { color: ... !important }`
+  - Ensures nested HTML elements (p, span) within Lexical editor inherit the dark text color
+
+- **H2 Descenders Fix (1.3):**
+  - Added wrapper div with `z-index: 10`, `overflow: visible`, and `pb-2` around H2 title LexicalField in `BodySectionEditor.jsx`
+  - Prevents descender letters (y, g, p, q, j) from being clipped by the following paragraph container
+  - Preserves the intentional tight spacing between H2 and body while ensuring all letters are visible
+
+- **Page Score Display (2.2):**
+  - Created new `pageScoring.js` module at `easy-seo/src/lib/pageScoring.js`
+  - Implements Page Score (0-100) based on: Headers (25pts), Content (25pts), Images (20pts), Links (15pts), Metadata (15pts)
+  - Integrates with existing `imageScoring.js` for image contribution calculation
+  - Added `pageScore` prop to `BottomActionBar.jsx` with color gradient (red 0 → orange → yellow → green 100)
+  - Score displays as a compact number in the action bar with tooltip
+  - Updated `ContentEditorPage.jsx` to calculate and pass page score to action bar
+
+- **Documentation:**
+  - Updated `easy-seo/docs/FILES.md` with new `pageScoring.js` and `imageHelpers.js` entries
+
+Impact:
+- Images now have a fallback mechanism when the proxy endpoint is unavailable
+- Hero section text correctly changes to black when users select "Black" text color
+- H2 titles with descender letters are fully visible without clipping
+- Users can see a live Page Score (0-100) in the action bar that updates as they edit
+
+Reflection:
+- **What was the most challenging part of this task?** The text color issue required understanding how Lexical editor applies styles to its ContentEditable. The CSS cascade was overriding the dark text class on nested elements, requiring `!important` and the wildcard selector.
+- **What was a surprising discovery or key learning?** The image proxy endpoint was actually working correctly - the fallback was added as a safety net for edge cases where authentication may not propagate (e.g., public repos or cookie issues).
+- **What advice would you give the next agent who works on this code?** When styling Lexical editor content, always use high-specificity selectors that target both the container and child elements. The `.editor-input *` pattern is essential because Lexical generates nested HTML elements that need to inherit styles.
+
+---
+
 GitHub Copilot (feat): ID (Image Description) Score Engine
 Date: 2025-12-03
 Summary:

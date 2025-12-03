@@ -9,11 +9,14 @@ import { h } from 'preact';
 import { useState } from 'preact/hooks';
 import LexicalField from './LexicalField';
 import { useAuth } from '../../contexts/AuthContext';
-import { getPreviewImageUrl } from '../../lib/imageHelpers';
+import { getPreviewImageUrl, getGitHubRawUrl } from '../../lib/imageHelpers';
 
 export default function HeroEditor({ props, onChange }) {
   const { selectedRepo } = useAuth();
-  const [imageError, setImageError] = useState(false);
+  // Track if primary URL failed and we're using fallback
+  const [featureImageUseFallback, setFeatureImageUseFallback] = useState(false);
+  const [featureImageError, setFeatureImageError] = useState(false);
+  const [bgImageUseFallback, setBgImageUseFallback] = useState(false);
 
   // Support both featureImage and featureImageUrl props for compatibility
   const rawFeatureImage = props?.featureImage || props?.featureImageUrl;
@@ -22,8 +25,14 @@ export default function HeroEditor({ props, onChange }) {
     onChange({ ...props, [fieldName]: fieldValue });
   };
 
-  const featureImageUrl = getPreviewImageUrl(rawFeatureImage, selectedRepo?.full_name);
-  const backgroundImageUrl = getPreviewImageUrl(props?.backgroundImageUrl, selectedRepo?.full_name);
+  // Primary: proxy URL, Fallback: GitHub raw URL
+  const featureImageProxyUrl = getPreviewImageUrl(rawFeatureImage, selectedRepo?.full_name);
+  const featureImageRawUrl = getGitHubRawUrl(rawFeatureImage, selectedRepo?.full_name);
+  const featureImageUrl = featureImageUseFallback ? featureImageRawUrl : featureImageProxyUrl;
+
+  const backgroundImageProxyUrl = getPreviewImageUrl(props?.backgroundImageUrl, selectedRepo?.full_name);
+  const backgroundImageRawUrl = getGitHubRawUrl(props?.backgroundImageUrl, selectedRepo?.full_name);
+  const backgroundImageUrl = bgImageUseFallback ? backgroundImageRawUrl : backgroundImageProxyUrl;
 
   const hasBackgroundImage = !!backgroundImageUrl;
 
@@ -54,13 +63,20 @@ export default function HeroEditor({ props, onChange }) {
         <div class="px-[2px]">
           {featureImageUrl && (
             <div class="relative min-h-[50px] bg-gray-800/50 rounded-lg overflow-hidden mb-4">
-              {!imageError ? (
+              {!featureImageError ? (
                 <img
                   src={featureImageUrl}
                   alt={props?.featureImageAlt || props?.title || 'Hero feature image'}
                   class="w-full h-64 object-cover rounded-lg"
                   style={{ minHeight: '100px' }}
-                  onError={() => setImageError(true)}
+                  onError={() => {
+                    // Try fallback URL if primary fails, otherwise show error
+                    if (!featureImageUseFallback && featureImageRawUrl) {
+                      setFeatureImageUseFallback(true);
+                    } else {
+                      setFeatureImageError(true);
+                    }
+                  }}
                 />
               ) : (
                 <div class="flex flex-col items-center justify-center p-4 text-amber-400 text-sm">

@@ -134,8 +134,9 @@ button[type="button"] svg {
 }
 
 /* Dark text variant for light backgrounds */
-.editor-input-dark {
-  color: #1f2937; /* Tailwind gray-800 */
+.editor-input-dark,
+.editor-input-dark * {
+  color: #1f2937 !important; /* Tailwind gray-800 */
   caret-color: #1f2937;
 }
 

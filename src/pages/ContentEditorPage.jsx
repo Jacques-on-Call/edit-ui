@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUI } from '../contexts/UIContext';
 import { EditorProvider } from '../contexts/EditorContext'; // <-- IMPORT THE PROVIDER
 import { fetchJson } from '../lib/fetchJson';
+import { calculatePageScore } from '../lib/pageScoring';
 import useAutosave from '../hooks/useAutosave';
 import LexicalEditor from '../components/LexicalEditor';
 import SectionsEditor from '../components/SectionsEditor';
@@ -588,6 +589,15 @@ export default function ContentEditorPage(props) {
   }, [pageId, selectedRepo?.full_name, editorMode]);
 
   // --- 5. RENDER LOGIC ---
+  
+  // Calculate Page Score based on current sections
+  const pageScoreData = useMemo(() => {
+    if (!sections || sections.length === 0) {
+      return { total: 0 };
+    }
+    return calculatePageScore({ sections, meta: {} });
+  }, [sections]);
+
   const previewUrl = useMemo(() => {
     const generatePreviewPath = (path) => {
       // Console logs removed to reduce spam - they were firing on every memo check
@@ -705,6 +715,7 @@ export default function ContentEditorPage(props) {
           syncStatus={syncStatus}
           viewMode={viewMode}
           previewState={isPreviewBuilding ? 'building' : (viewMode !== 'editor' ? 'ready' : 'idle')}
+          pageScore={editorMode === 'json' ? pageScoreData.total : null}
           onAdd={openAddSectionModal}
           onPreview={editorMode === 'json' ? handlePreview : null}
           onSync={editorMode === 'json' ? handleSync : null}

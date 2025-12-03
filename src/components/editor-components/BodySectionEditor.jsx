@@ -9,10 +9,12 @@ import { h } from 'preact';
 import { useState } from 'preact/hooks';
 import LexicalField from './LexicalField';
 import { useAuth } from '../../contexts/AuthContext';
-import { getPreviewImageUrl } from '../../lib/imageHelpers';
+import { getPreviewImageUrl, getGitHubRawUrl } from '../../lib/imageHelpers';
 
 export default function BodySectionEditor({ props, onChange }) {
   const { selectedRepo } = useAuth();
+  // Track if primary URL failed and we're using fallback
+  const [imageUseFallback, setImageUseFallback] = useState(false);
   const [imageError, setImageError] = useState(false);
   
   const rawImagePath = props?.featureImage || props?.headerImageUrl;
@@ -21,7 +23,10 @@ export default function BodySectionEditor({ props, onChange }) {
     onChange({ ...props, [fieldName]: fieldValue });
   };
 
-  const imageUrl = getPreviewImageUrl(rawImagePath, selectedRepo?.full_name);
+  // Primary: proxy URL, Fallback: GitHub raw URL
+  const imageProxyUrl = getPreviewImageUrl(rawImagePath, selectedRepo?.full_name);
+  const imageRawUrl = getGitHubRawUrl(rawImagePath, selectedRepo?.full_name);
+  const imageUrl = imageUseFallback ? imageRawUrl : imageProxyUrl;
 
   return (
     <div class="bg-transparent">
@@ -35,7 +40,14 @@ export default function BodySectionEditor({ props, onChange }) {
                   alt={props?.headerImageAlt || props?.title || 'Section image'}
                   class="w-full h-64 object-cover rounded-lg"
                   style={{ minHeight: '100px' }}
-                  onError={() => setImageError(true)}
+                  onError={() => {
+                    // Try fallback URL if primary fails, otherwise show error
+                    if (!imageUseFallback && imageRawUrl) {
+                      setImageUseFallback(true);
+                    } else {
+                      setImageError(true);
+                    }
+                  }}
                 />
               ) : (
                 <div class="flex flex-col items-center justify-center p-4 text-amber-400 text-sm">
@@ -47,12 +59,15 @@ export default function BodySectionEditor({ props, onChange }) {
             </div>
           )}
           <div class="flex flex-col">
-            <LexicalField
-              value={props?.title || ''}
-              onChange={(newValue) => handleFieldChange('title', newValue)}
-              placeholder="Add a section title..."
-              className="text-4xl font-extrabold text-white tracking-tight"
-            />
+            {/* H2 wrapper with z-index and overflow visible to prevent descender clipping */}
+            <div class="relative z-10 pb-2" style={{ overflow: 'visible' }}>
+              <LexicalField
+                value={props?.title || ''}
+                onChange={(newValue) => handleFieldChange('title', newValue)}
+                placeholder="Add a section title..."
+                className="text-4xl font-extrabold text-white tracking-tight"
+              />
+            </div>
             <LexicalField
               value={props?.body || ''}
               onChange={(newValue) => handleFieldChange('body', newValue)}

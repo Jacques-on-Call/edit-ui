@@ -51,6 +51,18 @@
   border: 1px solid rgba(0, 0, 0, 0.5);
 }
 
+/* Page Score indicator */
+.page-score-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  padding: 0.25rem 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0.5rem;
+  cursor: default;
+}
+
 .bg-yellow-green {
   background-color: #ADFF2F;
 }
