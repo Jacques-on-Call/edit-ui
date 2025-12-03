@@ -90,7 +90,7 @@ function InitialContentPlugin({ initialContent, lastHtmlRef }) {
   return null;
 }
 
-const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionChange, onFocus, onBlur, className, placeholder, transparentBg = false }, ref) => {
+const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionChange, onFocus, onBlur, className, placeholder, transparentBg = false, darkText = false }, ref) => {
   const lastHtmlRef = useRef('');
   const [isEditorEmpty, setIsEditorEmpty] = useState(true);
 
@@ -117,8 +117,11 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
 
   const placeholderText = placeholder || 'Start typing...';
 
-  // When transparentBg is true, use transparent background for use on background images
-  const editorInputClass = transparentBg ? 'editor-input editor-input-transparent' : 'editor-input';
+  // Build the editor input class dynamically using array
+  const editorInputClasses = ['editor-input'];
+  if (transparentBg) editorInputClasses.push('editor-input-transparent');
+  if (darkText) editorInputClasses.push('editor-input-dark');
+  const editorInputClass = editorInputClasses.join(' ');
 
   return (
     <LexicalComposer initialConfig={initialConfig}>

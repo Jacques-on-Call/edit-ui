@@ -166,8 +166,8 @@ const HeroConfigurator = ({ config, setConfig, pageSlug, isEditing = false }) =>
                 </div>
                 {featureUploadMode === 'url' ? (
                   <div>
-                    <UrlInput placeholder="src/assets/images/your-image.jpg" value={config.featureImageUrl} onInput={e => setConfig({ ...config, featureImageUrl: e.target.value })} />
-                    <input type="text" placeholder="Enter Alt Text" value={config.featureImageAlt} onInput={e => setConfig({ ...config, featureImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
+                    <UrlInput placeholder="topic-keyword-image-description.jpg (e.g., estate-planning-attorney-austin.jpg)" value={config.featureImageUrl} onInput={e => setConfig({ ...config, featureImageUrl: e.target.value })} />
+                    <input type="text" placeholder="Describe image with topic words (e.g., Estate planning attorney meeting with client in Austin office)" value={config.featureImageAlt} onInput={e => setConfig({ ...config, featureImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
                   </div>
                 ) : (
                   <ImageUploader pageSlug={pageSlug} onComplete={handleFeatureImageComplete} />
@@ -208,8 +208,8 @@ const HeroConfigurator = ({ config, setConfig, pageSlug, isEditing = false }) =>
                 </div>
                 {bgUploadMode === 'url' ? (
                   <div>
-                    <UrlInput placeholder="src/assets/images/your-background.jpg" value={config.backgroundImageUrl} onInput={e => setConfig({ ...config, backgroundImageUrl: e.target.value })} />
-                    <input type="text" placeholder="Enter Alt Text" value={config.backgroundImageAlt} onInput={e => setConfig({ ...config, backgroundImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
+                    <UrlInput placeholder="topic-keyword-background.jpg (e.g., modern-law-office-interior.jpg)" value={config.backgroundImageUrl} onInput={e => setConfig({ ...config, backgroundImageUrl: e.target.value })} />
+                    <input type="text" placeholder="Describe image with topic words (e.g., Modern law office interior with legal books)" value={config.backgroundImageAlt} onInput={e => setConfig({ ...config, backgroundImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
                   </div>
                 ) : (
                   <ImageUploader pageSlug={pageSlug} onComplete={handleBackgroundImageComplete} />
@@ -330,8 +330,8 @@ const TextSectionConfigurator = ({ config, setConfig, pageSlug, isEditing = fals
                 </div>
                 {uploadMode === 'url' ? (
                   <div>
-                    <UrlInput placeholder="src/assets/images/your-header.jpg" value={config.headerImageUrl} onInput={e => setConfig({ ...config, headerImageUrl: e.target.value })} />
-                    <input type="text" placeholder="Enter Alt Text" value={config.headerImageAlt} onInput={e => setConfig({ ...config, headerImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
+                    <UrlInput placeholder="topic-keyword-section-image.jpg (e.g., legal-consultation-process.jpg)" value={config.headerImageUrl} onInput={e => setConfig({ ...config, headerImageUrl: e.target.value })} />
+                    <input type="text" placeholder="Describe image with topic words (e.g., Legal consultation process with experienced attorney)" value={config.headerImageAlt} onInput={e => setConfig({ ...config, headerImageAlt: e.target.value })} class="mt-2 w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-lime" />
                   </div>
                 ) : (
                   <ImageUploader pageSlug={pageSlug} onComplete={handleImageComplete} />

@@ -5,7 +5,8 @@ import { useEditor } from '../../contexts/EditorContext';
 
 // This is a new, self-contained Lexical field.
 // transparentBg: when true, removes the default gray background for use on background images
-export default function LexicalField({ value, onChange, placeholder, className, transparentBg = false }) {
+// darkText: when true, uses dark text color for light backgrounds
+export default function LexicalField({ value, onChange, placeholder, className, transparentBg = false, darkText = false }) {
   const editorApiRef = useRef(null);
   const { setActiveEditor, setSelectionState } = useEditor();
 
@@ -33,6 +34,7 @@ export default function LexicalField({ value, onChange, placeholder, className, 
       onBlur={handleBlur}
       className={className} // Pass className to the editor itself
       transparentBg={transparentBg} // Pass transparent background flag
+      darkText={darkText} // Pass dark text flag
     />
   );
 }

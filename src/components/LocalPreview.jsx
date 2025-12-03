@@ -17,6 +17,12 @@ const HeroPreview = ({ title, subtitle, body, featureImage, featureImageUrl, fea
   const imageUrl = getPreviewImageUrl(featureImage || featureImageUrl, repoFullName);
   const bgUrl = getPreviewImageUrl(backgroundImageUrl, repoFullName);
 
+  // Reset error states when image URLs change (e.g., when new image is uploaded)
+  useEffect(() => {
+    setImageError(false);
+    setBgImageError(false);
+  }, [imageUrl, bgUrl]);
+
   // Only apply background image style if URL exists and hasn't errored
   const containerStyle = (bgUrl && !bgImageError)
     ? {
@@ -68,6 +74,11 @@ const HeroPreview = ({ title, subtitle, body, featureImage, featureImageUrl, fea
 const TextPreview = ({ title, body, headerImageUrl, featureImage, headerImageAlt, repoFullName }) => {
   const [imageError, setImageError] = useState(false);
   const imageUrl = getPreviewImageUrl(headerImageUrl || featureImage, repoFullName);
+
+  // Reset error state when image URL changes
+  useEffect(() => {
+    setImageError(false);
+  }, [imageUrl]);
 
   return (
     <section class="py-12 bg-gray-800">

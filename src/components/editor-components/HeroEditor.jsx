@@ -43,9 +43,10 @@ export default function HeroEditor({ props, onChange }) {
 
   // Determine text colors based on prop (default to white if not specified)
   const textColorMode = props?.textColor || 'white';
-  const titleColorClass = textColorMode === 'black' ? 'text-black' : 'text-white';
-  const subtitleColorClass = textColorMode === 'black' ? 'text-gray-800' : 'text-gray-400';
-  const bodyColorClass = textColorMode === 'black' ? 'text-gray-900' : 'text-gray-300';
+  const isDarkText = textColorMode === 'black';
+  const titleColorClass = isDarkText ? 'text-black' : 'text-white';
+  const subtitleColorClass = isDarkText ? 'text-gray-800' : 'text-gray-400';
+  const bodyColorClass = isDarkText ? 'text-gray-900' : 'text-gray-300';
 
   return (
     <div class="bg-transparent">
@@ -76,6 +77,7 @@ export default function HeroEditor({ props, onChange }) {
             placeholder="Enter your title (H1)"
             className={`text-5xl font-extrabold tracking-tight ${titleColorClass}`}
             transparentBg={hasBackgroundImage}
+            darkText={isDarkText}
           />
           <LexicalField
             value={props?.subtitle || ''}
@@ -83,6 +85,7 @@ export default function HeroEditor({ props, onChange }) {
             placeholder="Enter your slogan (optional)"
             className={`text-lg ${subtitleColorClass}`}
             transparentBg={hasBackgroundImage}
+            darkText={isDarkText}
           />
           <LexicalField
             value={props?.body || ''}
@@ -90,6 +93,7 @@ export default function HeroEditor({ props, onChange }) {
             placeholder="Enter your paragraph (optional)"
             className={`text-lg ${bodyColorClass}`}
             transparentBg={hasBackgroundImage}
+            darkText={isDarkText}
           />
         </div>
       </div>

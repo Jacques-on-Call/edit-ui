@@ -57,7 +57,7 @@ export default function BodySectionEditor({ props, onChange }) {
               value={props?.body || ''}
               onChange={(newValue) => handleFieldChange('body', newValue)}
               placeholder="Start writing your content for this section..."
-              className="text-lg text-gray-300 -mt-8"
+              className="text-lg text-gray-300 -mt-4"
             />
           </div>
         </div>

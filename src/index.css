@@ -120,12 +120,23 @@ button[type="button"] svg {
   padding: 4px 0;
   outline: none;
   caret-color: #a0deff; /* Light blue cursor color */
-  color: #e6f0ff;
+  color: inherit; /* Inherit color from parent to allow dynamic text colors */
   line-height: 1.5;
   word-wrap: break-word;
   white-space: pre-wrap;
   position: relative;
   cursor: text;
+}
+
+/* Default text color when not specified via parent */
+.editor-input:not(.editor-input-dark) {
+  color: #e6f0ff;
+}
+
+/* Dark text variant for light backgrounds */
+.editor-input-dark {
+  color: #1f2937; /* Tailwind gray-800 */
+  caret-color: #1f2937;
 }
 
 /* Transparent variant for use on background images */
@@ -146,6 +157,12 @@ button[type="button"] svg {
   color: #6b7280;
   pointer-events: none;
   user-select: none;
+}
+
+/* Dark placeholder variant for dark text mode */
+.editor-input-dark ~ .editor-placeholder,
+.editor-placeholder-dark {
+  color: #9ca3af; /* Lighter gray for better contrast on light backgrounds */
 }
 
 /* Selection highlighting */

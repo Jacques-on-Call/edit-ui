@@ -1,5 +1,44 @@
 # Project Change Log
 
+GitHub Copilot (fix): Phase 2 UI Fixes - Text Color, Spacing, and SEO Placeholders
+Date: 2025-12-02
+Summary:
+Addressed multiple UI issues in the content editor: fixed hero text color not changing with black/white switch, fixed H2 letters (y, g) being hidden behind paragraph field, and enhanced image placeholders with SEO-friendly guidance.
+
+Details:
+- **Text Color Switch Fix:** 
+  - Added new `darkText` prop to LexicalEditor and LexicalField components
+  - Created `.editor-input-dark` CSS class for dark text on light backgrounds
+  - Updated HeroEditor to pass `darkText={true}` when textColor is set to 'black'
+  - Text now properly changes between black and white based on the setting
+
+- **H2 Letters Hidden Fix:**
+  - Reduced the aggressive negative margin in BodySectionEditor from `-mt-8` to `-mt-4`
+  - This preserves the document-like feel while ensuring descender letters (y, g, p, q, j) are fully visible
+
+- **SEO-Friendly Image Placeholders:**
+  - Updated AddSectionModal placeholders to guide users on SEO best practices
+  - File name placeholder now shows: "topic-keyword-image-description.jpg (e.g., estate-planning-attorney-austin.jpg)"
+  - Alt text placeholder now shows: "Describe image with topic words (e.g., Estate planning attorney meeting with client in Austin office)"
+  - Applied to Hero feature image, Hero background image, and Text Section header image
+
+- **Editor API Enhancements:**
+  - Added `insertDate` function to insert current date as formatted text
+  - Added `clearFormatting` function to strip all text formatting from selection
+
+Impact:
+- Hero sections now correctly display black or white text based on user selection
+- Section titles with descender letters are fully visible
+- Users receive clear guidance on creating SEO-optimized image file names and descriptions
+- Toolbar Date and Clear Formatting functions now work correctly
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the CSS cascade for text colors in Lexical. The `color` property was set in multiple places (theme config, CSS, and Tailwind classes), and the fix required changing CSS to use `inherit` and creating a specific dark variant class.
+- **What was a surprising discovery or key learning?** The negative margin approach for tighter spacing works well for document-like UX, but needs careful consideration of line-height and font metrics to avoid clipping descender letters.
+- **What advice would you give the next agent who works on this code?** When modifying text colors in Lexical, remember that the ContentEditable component's class takes precedence. Use the dedicated CSS classes (`.editor-input`, `.editor-input-dark`) rather than Tailwind classes for color control.
+
+---
+
 GitHub Copilot (feat): Enhanced Image Editing in AddSectionModal
 Date: 2025-12-02
 Summary:

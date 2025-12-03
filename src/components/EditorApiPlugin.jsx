@@ -7,7 +7,9 @@ import {
   FORMAT_ELEMENT_COMMAND,
   $getSelection,
   $isRangeSelection,
-  $createParagraphNode
+  $createParagraphNode,
+  $createTextNode,
+  $insertNodes
 } from 'lexical';
 import {
   $createHeadingNode
@@ -86,6 +88,30 @@ export default function EditorApiPlugin({ apiRef }) {
     },
     insertTable: (rows = 3, cols = 3) => {
       editor.dispatchCommand(INSERT_TABLE_COMMAND, { rows: String(rows), columns: String(cols) });
+    },
+    insertDate: () => {
+      // Insert current date as formatted text
+      const dateStr = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          selection.insertText(dateStr);
+        }
+      });
+    },
+    clearFormatting: () => {
+      // Clear all text formatting from selection
+      const formatTypes = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'highlight'];
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          formatTypes.forEach(format => selection.formatText(format, false));
+        }
+      });
     },
     undo: () => {
       editor.dispatchCommand(UNDO_COMMAND, undefined);
