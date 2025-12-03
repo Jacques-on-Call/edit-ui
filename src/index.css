@@ -161,9 +161,10 @@ button[type="button"] svg {
 }
 
 /* Dark placeholder variant for dark text mode */
+/* Using !important is necessary because Lexical's ContentEditable can have inline styles that override CSS classes */
 .editor-input-dark ~ .editor-placeholder,
 .editor-placeholder-dark {
-  color: #9ca3af; /* Lighter gray for better contrast on light backgrounds */
+  color: #4b5563 !important; /* Dark gray for dark text mode - visible on light backgrounds */
 }
 
 /* Selection highlighting */
@@ -235,4 +236,9 @@ button[type="button"] svg {
 
 .editor-table-row:hover .editor-table-cell {
   background: rgba(255, 255, 255, 0.05);
+}
+
+/* Field wrapper to prevent text clipping from negative margins */
+.editor-field-overflow-visible {
+  overflow: visible;
 }

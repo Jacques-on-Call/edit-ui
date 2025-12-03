@@ -1,5 +1,50 @@
 # Project Change Log
 
+GitHub Copilot (fix): Phase 2 Critical Bug Fixes - Image Paths, Build Caching, Text Colors, H2 Styling
+Date: 2025-12-03
+Summary:
+Fixed five critical Phase 2 issues: image path not updating after rename, unnecessary build triggers, hero text color not applying to placeholders, H2 not styled in preview, and paragraph clipping in editor.
+
+Details:
+- **Priority 1: Image Path Fix After Rename:**
+  - Updated `handleUpdateSection()` in `ContentEditorPage.jsx` to set BOTH `featureImage` and `featureImageUrl`/`headerImageUrl` after successful rename
+  - This ensures consistency since `HeroEditor` uses `props?.featureImage || props?.featureImageUrl` and `BodySectionEditor` uses `props?.featureImage || props?.headerImageUrl`
+  - Fixed the actual JSON data in `content/pages/home-from-json.json` to reference the correct filename `brain-ai-upwards-growth.png` instead of the old filename
+
+- **Priority 2: Unnecessary Build Trigger Prevention:**
+  - Added `lastBuildTimeRef` to track when builds complete
+  - Added `BUILD_CACHE_DURATION` constant (5 minutes) to define cache window
+  - Updated `handlePreview()` to skip builds if content unchanged AND within cache window
+  - Builds now only trigger when content has actually changed or cache window has expired
+
+- **Priority 3: Hero Text Color Fix for Placeholders:**
+  - Fixed `LexicalEditor.jsx` to apply `editor-placeholder-dark` class when `darkText` prop is true
+  - Updated CSS in `index.css` to make `.editor-placeholder-dark` use a darker gray (`#4b5563`) that's visible on light backgrounds
+  - Placeholder text now correctly changes color when "Black" text is selected
+
+- **Priority 4: H2 Styling in Preview:**
+  - Added `.prose h2` styles to `src/styles/global.css`
+  - H2 now renders with proper heading styles: `font-size: 1.5rem`, `font-weight: 700`, accent-lime color
+  - Consistent with existing `.prose h3` styling pattern
+
+- **Priority 5: Paragraph Clipping Fix:**
+  - Added `overflow: visible` wrapper div around body LexicalField in `BodySectionEditor.jsx`
+  - Prevents text clipping caused by the `-mt-8` negative margin
+
+Impact:
+- Images now correctly load using the current filename from GitHub after rename operations
+- Preview builds are more efficient, not triggering unnecessarily when content is unchanged
+- Hero section text correctly turns black when users select "Black" text color
+- H2 elements in preview render with proper heading styles (larger than paragraphs)
+- No text clipping in editor for either H2 descenders or paragraph content
+
+Reflection:
+- **What was the most challenging part of this task?** Tracing the image rename flow through multiple components (ImageEditor → Configurator → AddSectionModal → ContentEditorPage → Section Editors) to identify that both `featureImage` and the URL-specific prop needed to be updated after rename.
+- **What was a surprising discovery or key learning?** The dual property pattern (`featureImage` + `featureImageUrl` or `featureImage` + `headerImageUrl`) is used for backward compatibility, but requires careful handling during updates to ensure both stay in sync.
+- **What advice would you give the next agent who works on this code?** When modifying image properties, always update BOTH property names to maintain consistency. The codebase uses `||` fallback patterns that check multiple property names, so leaving one stale causes subtle bugs.
+
+---
+
 GitHub Copilot (fix): Phase 2 Cleanup - Action Bar, H2 Spacing, Remove LocalPreview
 Date: 2025-12-03
 Summary:

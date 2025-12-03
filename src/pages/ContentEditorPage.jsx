@@ -44,6 +44,10 @@ export default function ContentEditorPage(props) {
   const selectedRepoRef = useRef(selectedRepo);
   // Track the last synced content to avoid unnecessary builds
   const lastSyncedContentRef = useRef(null);
+  // Track the last build time to prevent unnecessary rebuilds within a cache window
+  const lastBuildTimeRef = useRef(null);
+  // Build cache duration: skip rebuild if content unchanged and within this time window
+  const BUILD_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   // Keep selectedRepoRef in sync with selectedRepo state
   useEffect(() => {
@@ -139,6 +143,8 @@ export default function ContentEditorPage(props) {
           setIsPreviewBuilding(false);
           setBuildError(null);
           setBuildStage('Success!');
+          // Record successful build time for cache window
+          lastBuildTimeRef.current = Date.now();
           // Force iframe reload by updating the previewKey.
           // The useMemo hook for previewUrl will handle the cache-busting.
           setPreviewKey(Date.now());
@@ -297,6 +303,9 @@ export default function ContentEditorPage(props) {
           updatedSection.props._originalFeatureImagePath,
           updatedSection.props.featureImageUrl
         );
+        // Update both featureImage and featureImageUrl to ensure consistency
+        // HeroEditor uses both: props?.featureImage || props?.featureImageUrl
+        updatedSection.props.featureImage = newPath;
         updatedSection.props.featureImageUrl = newPath;
         delete updatedSection.props._originalFeatureImagePath;
       }
@@ -317,6 +326,9 @@ export default function ContentEditorPage(props) {
           updatedSection.props._originalHeaderImagePath,
           updatedSection.props.headerImageUrl
         );
+        // Update both featureImage and headerImageUrl to ensure consistency
+        // BodySectionEditor uses: props?.featureImage || props?.headerImageUrl
+        updatedSection.props.featureImage = newPath;
         updatedSection.props.headerImageUrl = newPath;
         delete updatedSection.props._originalHeaderImagePath;
       }
@@ -441,11 +453,23 @@ export default function ContentEditorPage(props) {
     // Check if content has changed since the last sync
     const draftKey = `easy-seo-draft:${pageId}`;
     const currentDraft = localStorage.getItem(draftKey);
+    const contentUnchanged = currentDraft && lastSyncedContentRef.current === currentDraft;
+    
+    // Check if we're within the build cache window
+    const timeSinceLastBuild = Date.now() - (lastBuildTimeRef.current || 0);
+    const withinCacheWindow = timeSinceLastBuild < BUILD_CACHE_DURATION;
 
-    if (currentDraft && lastSyncedContentRef.current === currentDraft) {
-      // Content hasn't changed since last sync, just show the preview without triggering a new build
-      console.log('[CEP-handlePreview] Content unchanged since last sync, showing preview without new build.');
-      // Refresh the preview key to ensure iframe reloads with fresh content
+    // If content hasn't changed AND we're within the cache window, skip the build
+    if (contentUnchanged && withinCacheWindow) {
+      console.log('[CEP-handlePreview] Content unchanged and within cache window, showing cached preview.');
+      // Just switch to preview mode without rebuilding or refreshing iframe
+      setViewMode('livePreview');
+      return;
+    }
+    
+    // If content unchanged but outside cache window, just refresh the iframe
+    if (contentUnchanged) {
+      console.log('[CEP-handlePreview] Content unchanged since last sync, refreshing preview without new build.');
       setPreviewKey(Date.now());
       setViewMode('livePreview');
       return;

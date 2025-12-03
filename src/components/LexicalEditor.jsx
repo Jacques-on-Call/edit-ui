@@ -122,6 +122,9 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
   if (transparentBg) editorInputClasses.push('editor-input-transparent');
   if (darkText) editorInputClasses.push('editor-input-dark');
   const editorInputClass = editorInputClasses.join(' ');
+  
+  // Build placeholder class - needs dark variant when darkText is enabled
+  const placeholderClass = darkText ? 'editor-placeholder editor-placeholder-dark px-2' : 'editor-placeholder px-2';
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
@@ -133,7 +136,7 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
             </div>
           }
           placeholder={
-            isEditorEmpty && <div className="editor-placeholder px-2">{placeholderText}</div>
+            isEditorEmpty && <div className={placeholderClass}>{placeholderText}</div>
           }
           ErrorBoundary={LexicalErrorBoundary}
         />
