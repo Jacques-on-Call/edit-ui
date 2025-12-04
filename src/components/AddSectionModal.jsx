@@ -474,16 +474,13 @@ export default function AddSectionModal({ pageSlug, pageData, onAddSection, sect
     // Text color
     newProps.textColor = config.textColor;
 
-    if (!config.includeSlogan) newProps.subtitle = undefined;
-    // Only remove body if includeBody is EXPLICITLY set to false.
-    // Hero sections have this config option, textSection does not.
-    // Using strict equality prevents accidental removal when config.includeBody is undefined.
+    // Only remove fields if their corresponding "include" flags are EXPLICITLY set to false.
+    // Using strict equality prevents accidental removal when the flag is undefined
+    // (e.g., textSection doesn't have includeSlogan, hero doesn't have includeTitle).
+    // This ensures existing data is preserved when editing unrelated properties like colors.
+    if (config.includeSlogan === false) newProps.subtitle = undefined;
     if (config.includeBody === false) newProps.body = undefined;
-    // For textSection, we want to preserve the includeTitle flag which controls visibility.
-    // The title content itself is preserved, and visibility is handled by the editor component.
-    if (selectedSection === 'textSection') {
-      newProps.includeTitle = config.includeTitle;
-    }
+    if (config.includeTitle === false) newProps.title = undefined;
     
     // Track original paths for rename operations (these are internal and will be handled by ContentEditorPage)
     if (config._originalFeatureImagePath) {

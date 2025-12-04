@@ -1,5 +1,37 @@
 # Project Change Log
 
+GitHub Copilot (fix): Phase 2.5 Stabilisation - Data Loss Fix & Sync-Before-Preview Workflow
+Date: 2025-12-04
+Summary:
+Fixed two critical Phase 2 issues: (1) Data loss when saving modal changes, where existing section content (like H1 titles) was being erased when editing unrelated properties like colors, and (2) Preview button race condition where the build could be triggered using outdated content.
+
+Details:
+- **Issue #1: Data Loss on Modal Save:**
+  - Root cause: In `constructUpdatedProps()` in `AddSectionModal.jsx`, the conditions `!config.includeSlogan` and `!config.includeTitle` were truthy for section types that don't have those config options (e.g., Hero sections don't have `includeTitle`, TextSections don't have `includeSlogan`). When `undefined`, `!undefined` evaluates to `true`, causing content to be erased.
+  - Fix: Changed all "include" flag checks to use strict equality (`=== false`) instead of loose falsy checks (`!`). This ensures fields are only removed when the user explicitly unchecks the option, not when the option doesn't exist for that section type.
+  - Affected checks: `includeSlogan`, `includeBody`, `includeTitle`
+
+- **Issue #2: Sync Before Preview Workflow:**
+  - Root cause: The `handlePreview` function was showing the preview even when sync failed, and `handleSync` didn't return a success/failure indicator for the caller to use.
+  - Fix: 
+    1. Modified `handleSync` to return `true` on success and `false` on failure
+    2. Modified `handlePreview` to check the sync result before switching to preview mode
+    3. If sync fails, the preview is cancelled and the user stays in editor mode to address the issue
+    4. The sync error status is displayed via the existing UI error indicator
+
+Impact:
+- Section content (titles, body text, slogans) is now preserved when editing unrelated properties like text color or images
+- The Preview button now reliably syncs content to GitHub before triggering a build
+- If sync fails, the build is cancelled and an error is displayed, preventing race conditions with stale content
+- Users have clear feedback about sync failures and can retry after fixing issues
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the subtle difference between `!undefined` (truthy) and `=== false` (falsy). JavaScript's loose equality can cause unexpected behavior when config options are not set for certain section types.
+- **What was a surprising discovery or key learning?** The existing codebase had the correct pattern for `includeBody` (using strict equality), but the same pattern wasn't applied consistently to `includeSlogan` and `includeTitle`. Consistency in code patterns prevents similar bugs.
+- **What advice would you give the next agent who works on this code?** When adding new "include" flags for section configuration, always use strict equality (`=== false`) to check if a field should be removed. Also, when calling async functions that can fail, ensure they return a result that the caller can check, rather than handling all errors internally.
+
+---
+
 Jules #199 (debug): Add Diagnostic Borders to BodySectionEditor
 Date: 2025-12-03
 Summary:

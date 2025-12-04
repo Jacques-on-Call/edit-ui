@@ -95,7 +95,6 @@ export default function ContentEditorPage(props) {
 
   const autosaveCallback = useCallback((dataToSave) => {
     setSaveStatus('saving');
-    setBuildStage('Saving draft...');
     try {
       const key = `easy-seo-draft:${pageId}`;
       const draft = JSON.parse(localStorage.getItem(key) || '{}');
@@ -116,12 +115,7 @@ export default function ContentEditorPage(props) {
     }
   }, [pageId, sections]);
 
-  const { triggerSave, saveImmediately } = useAutosave(autosaveCallback, 1500);
-  const latestSectionsRef = useRef(sections);
-
-  useEffect(() => {
-    latestSectionsRef.current = sections;
-  }, [sections]);
+  const { triggerSave } = useAutosave(autosaveCallback, 1500);
 
   const pollBuildStatus = useCallback(async (startTime = Date.now()) => {
     const POLLING_INTERVAL = 5000; // 5 seconds (increased from 3s for more reliable polling)
@@ -197,7 +191,6 @@ export default function ContentEditorPage(props) {
         body: JSON.stringify(buildPayload),
       });
       console.log('[Build] Build trigger API call successful. Starting to poll for status.');
-      setBuildStage('Building preview...');
       // Start the polling loop
       pollBuildStatus();
     } catch (error) {
@@ -235,8 +228,6 @@ export default function ContentEditorPage(props) {
       if (config.includeBackgroundImage) newSection.props.backgroundImageUrl = config.backgroundImageUrl;
       if (config.textColor) newSection.props.textColor = config.textColor;
     } else if (type === 'textSection') {
-      // Persist the includeTitle flag for consistency with the edit flow.
-      newSection.props.includeTitle = config.includeTitle;
       if (config.includeTitle) newSection.props.title = 'New Section Title';
       newSection.props.body = '<p>Start writing your content here.</p>';
       if (config.includeHeaderImage) {
@@ -374,20 +365,20 @@ export default function ContentEditorPage(props) {
   }, [sections, editingSectionIndex, triggerSave]);
 
   const handleSync = useCallback(async () => {
+    console.log(`[CEP-handleSync] Sync process initiated.`);
     if (!selectedRepo) {
       console.error('[CEP-handleSync] Aborting: repository not selected.');
       setSyncStatus('error');
-      return;
+      return false; // Indicate sync failure
     }
 
     // Prevent multiple sync operations at once
     if (syncStatus === 'syncing' || isPreviewBuilding) {
       console.log('[CEP-handleSync] Sync already in progress, ignoring duplicate request.');
-      return;
+      return false; // Indicate sync was not attempted
     }
 
     setSyncStatus('syncing');
-    setBuildStage('Syncing to GitHub...');
     console.log('[CEP-handleSync] Status set to "syncing". Reading draft from localStorage...');
     try {
       const draftKey = `easy-seo-draft:${pageId}`;
@@ -433,6 +424,7 @@ export default function ContentEditorPage(props) {
 
       setSyncStatus('success');
       setTimeout(() => setSyncStatus('idle'), STATUS_DISPLAY_DURATION);
+      return true; // Indicate sync success
     } catch (error) {
       console.error('[CEP-handleSync] Sync process failed.', {
         message: error.message,
@@ -442,6 +434,7 @@ export default function ContentEditorPage(props) {
       });
       setSyncStatus('error');
       setTimeout(() => setSyncStatus('idle'), STATUS_DISPLAY_DURATION);
+      return false; // Indicate sync failure
     }
   }, [selectedRepo, pageId, editorMode, triggerBuild, syncStatus, isPreviewBuilding]);
 
@@ -452,49 +445,56 @@ export default function ContentEditorPage(props) {
       return;
     }
 
-    // Force an immediate save to capture the latest content before any sync/preview action
-    if (latestSectionsRef.current) {
-      saveImmediately(latestSectionsRef.current);
-    }
-
-    // If a build is already happening, just switch to the preview pane to monitor it.
+    // Prevent action if a build is already in progress
     if (isPreviewBuilding) {
-      console.log('[CEP] Build in progress. Switching to preview mode to monitor.');
+      console.log('[CEP-handlePreview] Build already in progress, switching to preview view.');
       setViewMode('livePreview');
       return;
     }
 
-    // After saving, check if the content has actually changed since the last successful sync.
-    const currentDraft = localStorage.getItem(`easy-seo-draft:${pageId}`);
+    // Check if content has changed since the last sync
+    const draftKey = `easy-seo-draft:${pageId}`;
+    const currentDraft = localStorage.getItem(draftKey);
     const contentUnchanged = currentDraft && lastSyncedContentRef.current === currentDraft;
-    const isWithinCacheWindow = (Date.now() - (lastBuildTimeRef.current || 0)) < BUILD_CACHE_DURATION;
+    
+    // Check if we're within the build cache window
+    const timeSinceLastBuild = Date.now() - (lastBuildTimeRef.current || 0);
+    const withinCacheWindow = timeSinceLastBuild < BUILD_CACHE_DURATION;
 
-    // If content is unchanged and we're within the cache window, no need to build.
-    if (contentUnchanged && isWithinCacheWindow) {
-      console.log('[CEP] Content unchanged and within cache window. Showing existing preview.');
+    // If content hasn't changed AND we're within the cache window, skip the build
+    if (contentUnchanged && withinCacheWindow) {
+      console.log('[CEP-handlePreview] Content unchanged and within cache window, showing cached preview.');
+      // Just switch to preview mode without rebuilding or refreshing iframe
       setViewMode('livePreview');
       return;
     }
     
-    // If content is unchanged but cache is expired, just refresh the iframe without a build.
+    // If content unchanged but outside cache window, just refresh the iframe
     if (contentUnchanged) {
-        console.log('[CEP] Content unchanged, cache expired. Refreshing preview iframe.');
-        setPreviewKey(Date.now());
-        setViewMode('livePreview');
-        return;
+      console.log('[CEP-handlePreview] Content unchanged since last sync, refreshing preview without new build.');
+      setPreviewKey(Date.now());
+      setViewMode('livePreview');
+      return;
     }
 
-    // If content HAS changed, we must sync and build.
-    console.log('[CEP] Content has changed. Initiating sync and build process.');
-    try {
-      await handleSync(); // This will save, sync, and trigger the build.
-      setViewMode('livePreview'); // Switch to preview to see the build progress.
-    } catch (error) {
-      console.error('[CEP] Error during preview-triggered sync:', error);
-      // Even if sync fails, switch to preview so the user can see the last good build.
+    // Content has changed or hasn't been synced yet - trigger sync first, then build
+    // Per Phase 2.5 requirements: Sync MUST succeed before triggering preview build
+    console.log('[CEP-handlePreview] Content has changed. Initiating sync before preview...');
+    const syncSucceeded = await handleSync();
+    
+    if (syncSucceeded) {
+      // Sync succeeded - the build has been triggered by handleSync
+      // Switch to preview mode to show the building overlay
+      console.log('[CEP-handlePreview] Sync succeeded, switching to preview mode.');
       setViewMode('livePreview');
+    } else {
+      // Sync failed - do NOT switch to preview mode, do NOT trigger build
+      // The error state is already set by handleSync, and user will see the error indicator
+      console.error('[CEP-handlePreview] Sync failed. Preview cancelled. User must fix the error and try again.');
+      // Build is cancelled - syncStatus will show 'error' in the UI
+      // User stays in editor mode to address the issue
     }
-  }, [viewMode, pageId, isPreviewBuilding, handleSync, saveImmediately]);
+  }, [viewMode, handleSync, pageId, isPreviewBuilding]);
 
   const handleRefreshPreview = useCallback(() => {
     console.log('[Preview] Manual refresh triggered.');
@@ -504,12 +504,15 @@ export default function ContentEditorPage(props) {
 
   // --- 4. SIDE EFFECTS (useEffect) ---
   useEffect(() => {
+    console.log('[CEP-useEffect] Main effect hook started.');
     try {
       filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
+      console.log('[CEP-useEffect] Resolved file path:', filePathRef.current);
 
       const loadJsonModeContent = async () => {
         const draftKey = `easy-seo-draft:${pageId}`;
         const savedDraft = localStorage.getItem(draftKey);
+        console.log(`[CEP-useEffect] Checking for draft in localStorage. Key: ${draftKey}`);
 
         if (savedDraft) {
           console.log('[CEP-useEffect] Local draft found. Parsing and loading.');
