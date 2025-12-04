@@ -228,6 +228,8 @@ export default function ContentEditorPage(props) {
       if (config.includeBackgroundImage) newSection.props.backgroundImageUrl = config.backgroundImageUrl;
       if (config.textColor) newSection.props.textColor = config.textColor;
     } else if (type === 'textSection') {
+      // Persist the includeTitle flag for consistency with the edit flow.
+      newSection.props.includeTitle = config.includeTitle;
       if (config.includeTitle) newSection.props.title = 'New Section Title';
       newSection.props.body = '<p>Start writing your content here.</p>';
       if (config.includeHeaderImage) {

@@ -61,22 +61,26 @@ export default function BodySectionEditor({ props, onChange }) {
             </div>
           )}
           <div class="flex flex-col">
-            {/* H2 wrapper with z-index and overflow visible to prevent descender clipping */}
-            <div class="relative pb-2 editor-field-overflow-visible border border-red-500">
-              <LexicalField
-                value={props?.title || ''}
-                onChange={(newValue) => handleFieldChange('title', newValue)}
-                placeholder="Add a section title..."
-                className="text-4xl font-extrabold text-white tracking-tight"
-              />
-            </div>
+            {/* Conditionally render the title only if `includeTitle` is not explicitly false.
+                 This ensures backward compatibility for sections that don't have this prop,
+                 which will render the title by default. */}
+            {props.includeTitle !== false && (
+              <div class="relative pb-2 editor-field-overflow-visible">
+                <LexicalField
+                  value={props?.title || ''}
+                  onChange={(newValue) => handleFieldChange('title', newValue)}
+                  placeholder="Add a section title..."
+                  className="text-4xl font-extrabold text-white tracking-tight"
+                />
+              </div>
+            )}
             {/* Body paragraph with overflow visible to prevent text clipping from negative margin */}
-            <div class="editor-field-overflow-visible border border-blue-500">
+            <div class="editor-field-overflow-visible">
               <LexicalField
                 value={props?.body || ''}
                 onChange={(newValue) => handleFieldChange('body', newValue)}
                 placeholder="Start writing your content for this section..."
-                className="text-lg text-gray-300 -mt-8"
+                className={`text-lg text-gray-300 ${props.includeTitle !== false ? '-mt-8' : ''}`}
               />
             </div>
           </div>
