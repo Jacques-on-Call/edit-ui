@@ -479,13 +479,10 @@ export default function AddSectionModal({ pageSlug, pageData, onAddSection, sect
     // Hero sections have this config option, textSection does not.
     // Using strict equality prevents accidental removal when config.includeBody is undefined.
     if (config.includeBody === false) newProps.body = undefined;
-    // For textSection, we want to preserve the title content even when it's hidden.
-    // The `includeTitle` flag will control its visibility in the editor.
+    // For textSection, we want to preserve the includeTitle flag which controls visibility.
+    // The title content itself is preserved, and visibility is handled by the editor component.
     if (selectedSection === 'textSection') {
       newProps.includeTitle = config.includeTitle;
-    } else {
-      // For any other section type, maintain the old behavior.
-      if (!config.includeTitle) newProps.title = undefined;
     }
     
     // Track original paths for rename operations (these are internal and will be handled by ContentEditorPage)

@@ -452,55 +452,49 @@ export default function ContentEditorPage(props) {
       return;
     }
 
-    // Force an immediate save to capture the latest content
+    // Force an immediate save to capture the latest content before any sync/preview action
     if (latestSectionsRef.current) {
-      setBuildStage('Saving draft...');
       saveImmediately(latestSectionsRef.current);
     }
 
-    // Prevent action if a build is already in progress
+    // If a build is already happening, just switch to the preview pane to monitor it.
     if (isPreviewBuilding) {
-      console.log('[CEP-handlePreview] Build already in progress, switching to preview view.');
+      console.log('[CEP] Build in progress. Switching to preview mode to monitor.');
       setViewMode('livePreview');
       return;
     }
 
-    // Check if content has changed since the last sync
-    const draftKey = `easy-seo-draft:${pageId}`;
-    const currentDraft = localStorage.getItem(draftKey);
+    // After saving, check if the content has actually changed since the last successful sync.
+    const currentDraft = localStorage.getItem(`easy-seo-draft:${pageId}`);
     const contentUnchanged = currentDraft && lastSyncedContentRef.current === currentDraft;
-    
-    // Check if we're within the build cache window
-    const timeSinceLastBuild = Date.now() - (lastBuildTimeRef.current || 0);
-    const withinCacheWindow = timeSinceLastBuild < BUILD_CACHE_DURATION;
+    const isWithinCacheWindow = (Date.now() - (lastBuildTimeRef.current || 0)) < BUILD_CACHE_DURATION;
 
-    // If content hasn't changed AND we're within the cache window, skip the build
-    if (contentUnchanged && withinCacheWindow) {
-      console.log('[CEP-handlePreview] Content unchanged and within cache window, showing cached preview.');
-      // Just switch to preview mode without rebuilding or refreshing iframe
+    // If content is unchanged and we're within the cache window, no need to build.
+    if (contentUnchanged && isWithinCacheWindow) {
+      console.log('[CEP] Content unchanged and within cache window. Showing existing preview.');
       setViewMode('livePreview');
       return;
     }
     
-    // If content unchanged but outside cache window, just refresh the iframe
+    // If content is unchanged but cache is expired, just refresh the iframe without a build.
     if (contentUnchanged) {
-      console.log('[CEP-handlePreview] Content unchanged since last sync, refreshing preview without new build.');
-      setPreviewKey(Date.now());
-      setViewMode('livePreview');
-      return;
+        console.log('[CEP] Content unchanged, cache expired. Refreshing preview iframe.');
+        setPreviewKey(Date.now());
+        setViewMode('livePreview');
+        return;
     }
 
-    // Content has changed or hasn't been synced yet - trigger sync and build
+    // If content HAS changed, we must sync and build.
+    console.log('[CEP] Content has changed. Initiating sync and build process.');
     try {
-      await handleSync();
-      setViewMode('livePreview');
+      await handleSync(); // This will save, sync, and trigger the build.
+      setViewMode('livePreview'); // Switch to preview to see the build progress.
     } catch (error) {
-      console.error('[CEP-handlePreview] Error during preview sync:', error);
-      // Still show preview even if sync failed - user can see the last deployed version
-      setPreviewKey(Date.now());
+      console.error('[CEP] Error during preview-triggered sync:', error);
+      // Even if sync fails, switch to preview so the user can see the last good build.
       setViewMode('livePreview');
     }
-  }, [viewMode, handleSync, pageId, isPreviewBuilding]);
+  }, [viewMode, pageId, isPreviewBuilding, handleSync, saveImmediately]);
 
   const handleRefreshPreview = useCallback(() => {
     console.log('[Preview] Manual refresh triggered.');
