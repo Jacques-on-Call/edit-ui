@@ -26,5 +26,12 @@ export default function useAutosave(callback, delay = 1000) {
     }, delay);
   };
 
-  return { triggerSave };
+  const saveImmediately = (data) => {
+    if (timeoutId.current) {
+      clearTimeout(timeoutId.current);
+    }
+    latestCallback.current(data);
+  };
+
+  return { triggerSave, saveImmediately };
 }

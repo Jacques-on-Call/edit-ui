@@ -95,6 +95,7 @@ export default function ContentEditorPage(props) {
 
   const autosaveCallback = useCallback((dataToSave) => {
     setSaveStatus('saving');
+    setBuildStage('Saving draft...');
     try {
       const key = `easy-seo-draft:${pageId}`;
       const draft = JSON.parse(localStorage.getItem(key) || '{}');
@@ -115,7 +116,12 @@ export default function ContentEditorPage(props) {
     }
   }, [pageId, sections]);
 
-  const { triggerSave } = useAutosave(autosaveCallback, 1500);
+  const { triggerSave, saveImmediately } = useAutosave(autosaveCallback, 1500);
+  const latestSectionsRef = useRef(sections);
+
+  useEffect(() => {
+    latestSectionsRef.current = sections;
+  }, [sections]);
 
   const pollBuildStatus = useCallback(async (startTime = Date.now()) => {
     const POLLING_INTERVAL = 5000; // 5 seconds (increased from 3s for more reliable polling)
@@ -191,6 +197,7 @@ export default function ContentEditorPage(props) {
         body: JSON.stringify(buildPayload),
       });
       console.log('[Build] Build trigger API call successful. Starting to poll for status.');
+      setBuildStage('Building preview...');
       // Start the polling loop
       pollBuildStatus();
     } catch (error) {
@@ -367,7 +374,6 @@ export default function ContentEditorPage(props) {
   }, [sections, editingSectionIndex, triggerSave]);
 
   const handleSync = useCallback(async () => {
-    console.log(`[CEP-handleSync] Sync process initiated.`);
     if (!selectedRepo) {
       console.error('[CEP-handleSync] Aborting: repository not selected.');
       setSyncStatus('error');
@@ -381,6 +387,7 @@ export default function ContentEditorPage(props) {
     }
 
     setSyncStatus('syncing');
+    setBuildStage('Syncing to GitHub...');
     console.log('[CEP-handleSync] Status set to "syncing". Reading draft from localStorage...');
     try {
       const draftKey = `easy-seo-draft:${pageId}`;
@@ -445,6 +452,12 @@ export default function ContentEditorPage(props) {
       return;
     }
 
+    // Force an immediate save to capture the latest content
+    if (latestSectionsRef.current) {
+      setBuildStage('Saving draft...');
+      saveImmediately(latestSectionsRef.current);
+    }
+
     // Prevent action if a build is already in progress
     if (isPreviewBuilding) {
       console.log('[CEP-handlePreview] Build already in progress, switching to preview view.');
@@ -497,15 +510,12 @@ export default function ContentEditorPage(props) {
 
   // --- 4. SIDE EFFECTS (useEffect) ---
   useEffect(() => {
-    console.log('[CEP-useEffect] Main effect hook started.');
     try {
       filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
-      console.log('[CEP-useEffect] Resolved file path:', filePathRef.current);
 
       const loadJsonModeContent = async () => {
         const draftKey = `easy-seo-draft:${pageId}`;
         const savedDraft = localStorage.getItem(draftKey);
-        console.log(`[CEP-useEffect] Checking for draft in localStorage. Key: ${draftKey}`);
 
         if (savedDraft) {
           console.log('[CEP-useEffect] Local draft found. Parsing and loading.');
