@@ -224,33 +224,6 @@ const HeroConfigurator = ({ config, setConfig, pageSlug, isEditing = false, topi
           </div>
         )}
       </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-300 mb-2">Text Color</label>
-        <div class="flex items-center space-x-4 pl-6">
-          <label class="flex items-center space-x-2">
-            <input
-              type="radio"
-              name="textColor"
-              value="white"
-              checked={!config.textColor || config.textColor === 'white'}
-              onChange={() => setConfig({ ...config, textColor: 'white' })}
-              class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime"
-            />
-            <span class="text-white">White</span>
-          </label>
-          <label class="flex items-center space-x-2">
-            <input
-              type="radio"
-              name="textColor"
-              value="black"
-              checked={config.textColor === 'black'}
-              onChange={() => setConfig({ ...config, textColor: 'black' })}
-              class="form-radio bg-gray-800 border-gray-600 text-accent-lime focus:ring-accent-lime"
-            />
-            <span class="text-white">Black</span>
-          </label>
-        </div>
-      </div>
     </div>
   );
 };
@@ -354,7 +327,7 @@ const TextSectionConfigurator = ({ config, setConfig, pageSlug, isEditing = fals
 };
 
 const DEFAULT_CONFIGS = {
-  hero: { includeSlogan: true, includeBody: true, includeFeatureImage: false, featureImageUrl: '', includeBackgroundImage: false, backgroundImageUrl: '', textColor: 'white' },
+  hero: { includeSlogan: true, includeBody: true, includeFeatureImage: false, featureImageUrl: '', includeBackgroundImage: false, backgroundImageUrl: '' },
   textSection: { includeTitle: true, includeHeaderImage: false, headerImageUrl: '', headerImageAlt: '' },
 };
 
@@ -470,9 +443,6 @@ export default function AddSectionModal({ pageSlug, pageData, onAddSection, sect
     newProps.headerImageTitle = config.includeHeaderImage ? config.headerImageTitle : undefined;
     newProps.headerImageDescription = config.includeHeaderImage ? config.headerImageDescription : undefined;
     newProps.headerImageLoading = config.includeHeaderImage ? config.headerImageLoading : undefined;
-    
-    // Text color
-    newProps.textColor = config.textColor;
 
     // Only remove fields if their corresponding "include" flags are EXPLICITLY set to false.
     // Using strict equality prevents accidental removal when the flag is undefined

@@ -34,6 +34,7 @@
   contain: layout;
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
+  min-width: 180px;
 }
 
 .color-picker-grid {
@@ -92,6 +93,8 @@
 .color-swatch.highlight-pink { background-color: #FBCFE8; }
 .color-swatch.highlight-orange { background-color: #FED7AA; }
 .color-swatch.highlight-red { background-color: #FECACA; }
+.color-swatch.highlight-teal { background-color: #99F6E4; }
+.color-swatch.highlight-cyan { background-color: #A5F3FC; }
 
 /* Text color indicator styling */
 .color-indicator {
@@ -105,4 +108,114 @@
   height: 3px;
   margin-top: 1px;
   border-radius: 1px;
+}
+
+/* Custom Color Input Section */
+.color-picker-custom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hex-input-form {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+.hex-prefix {
+  color: #888;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.hex-input {
+  background: transparent;
+  border: none;
+  color: #e6f0ff;
+  font-size: 12px;
+  font-family: monospace;
+  width: 60px;
+  padding: 2px 4px;
+  text-transform: uppercase;
+  outline: none;
+}
+
+.hex-input::placeholder {
+  color: #666;
+}
+
+.hex-input-error {
+  color: #EF4444;
+}
+
+.hex-apply-btn {
+  background: rgba(59, 130, 246, 0.3);
+  border: none;
+  color: #3B82F6;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.15s ease;
+}
+
+.hex-apply-btn:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.5);
+}
+
+.hex-apply-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.eyedropper-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #e6f0ff;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.eyedropper-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Current color preview */
+.current-color-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.current-color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.current-color-value {
+  color: #888;
+  font-size: 11px;
+  font-family: monospace;
 }

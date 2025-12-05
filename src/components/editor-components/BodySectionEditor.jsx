@@ -62,7 +62,7 @@ export default function BodySectionEditor({ props, onChange }) {
           )}
           <div class="flex flex-col">
             {/* H2 wrapper with z-index and overflow visible to prevent descender clipping */}
-            <div class="relative pb-2 editor-field-overflow-visible border border-red-500">
+            <div class="relative pb-2 editor-field-overflow-visible">
               <LexicalField
                 value={props?.title || ''}
                 onChange={(newValue) => handleFieldChange('title', newValue)}
@@ -71,7 +71,7 @@ export default function BodySectionEditor({ props, onChange }) {
               />
             </div>
             {/* Body paragraph with overflow visible to prevent text clipping from negative margin */}
-            <div class="editor-field-overflow-visible border border-blue-500">
+            <div class="editor-field-overflow-visible">
               <LexicalField
                 value={props?.body || ''}
                 onChange={(newValue) => handleFieldChange('body', newValue)}

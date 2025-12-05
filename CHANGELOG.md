@@ -1,5 +1,80 @@
 # Project Change Log
 
+GitHub Copilot (feat): Enhanced Color Picker with Hex Input, Eyedropper, and Removed Modal Base Color System
+Date: 2025-12-04
+Summary:
+Removed the limited black/white text color switch from the section modal in favor of the enhanced inline Lexical toolbar color picker. Users now use inline text formatting for all color styling, with an expanded color palette, hex input, and eyedropper support.
+
+Details:
+- **Removed Section-Level Base Color System:**
+  - Removed the black/white text color radio buttons from `AddSectionModal.jsx` (HeroConfigurator)
+  - Removed `textColor` from the default hero config
+  - Removed `textColor` property handling from `constructUpdatedProps()`
+  - Updated `HeroEditor.jsx` to use consistent default white/gray text colors
+  - Removed `darkText` prop passing to LexicalField (no longer needed)
+
+- **Enhanced ColorPicker Component:**
+  - Expanded text color palette from 10 to 15 colors (added Teal, Indigo, Lime, Cyan, Rose)
+  - Expanded highlight color palette from 8 to 10 colors (added Teal, Cyan)
+  - Added **hex color input** with validation for custom colors (#RRGGBB format)
+  - Added **EyeDropper API** support for picking colors from anywhere on screen (Chrome/Edge)
+  - Added current color preview showing the active color value
+  - Updated CSS for the new UI elements
+
+- **User Flow Change:**
+  - Previously: Set base color in modal (black/white), then use inline formatting for specific text
+  - Now: Use inline Lexical toolbar color picker to style any text with full color spectrum
+  - Users can select text and apply colors directly from the toolbar
+  - If text doesn't look good over a background, select it and change the color inline
+
+Impact:
+- Simpler user experience - one unified color system via the toolbar
+- More color options - 15 preset text colors + unlimited custom colors via hex input
+- EyeDropper support for picking brand colors or matching existing designs
+- Removes conceptual complexity of "base color" vs "inline color"
+
+Reflection:
+- **What was the most challenging part of this task?** Ensuring the EyeDropper API integration handles browser support gracefully (only available in Chromium browsers) and cancellation without errors.
+- **What was a surprising discovery or key learning?** The EyeDropper API is a powerful but relatively new browser feature. By feature-detecting it, we provide an enhanced experience for supported browsers while gracefully hiding the feature for others.
+- **What advice would you give the next agent who works on this code?** The inline color system is now the only color system. If users report visibility issues on backgrounds, the solution is to educate them to select text and use the toolbar color picker, not to add back a base color system.
+
+---
+
+GitHub Copilot (review): Phase 2 Color Tool Verification & Cleanup
+Date: 2025-12-04
+Summary:
+Verified the Phase 2 Lexical color tool implementation and performed cleanup tasks. The color tool system is complete and working correctly.
+
+Details:
+- **Color Tool Implementation Verification:**
+  - **ColorPicker.jsx:** Robust UI component with portal-based rendering for proper mobile/keyboard handling
+  - **EditorHeader.jsx:** Integrates both text color and highlight color pickers in the toolbar with visual indicators showing current color
+  - **EditorApiPlugin.jsx:** Provides `setTextColor()` and `setHighlightColor()` methods using Lexical's `$patchStyleText()`
+  - **SelectionStatePlugin.jsx:** Tracks `textColor` and `highlightColor` from current selection for toolbar state
+  - 10 text colors available: Default, Black, White, Red, Orange, Yellow, Green, Blue, Purple, Pink
+  - 8 highlight colors available: None, Yellow, Green, Blue, Purple, Pink, Orange, Red
+
+- **Two Color Systems Clarification:**
+  - **Modal's text color (black/white):** Section-level base color for visibility on different backgrounds. This affects the default text appearance for the entire section.
+  - **Toolbar's color picker:** Inline text formatting for selected text. This applies color to specific words/phrases.
+  - Both systems work together: Set base color in modal for readability, then use toolbar to highlight specific text.
+
+- **Cleanup Tasks Completed:**
+  - Removed diagnostic red and blue borders from `BodySectionEditor.jsx` that were added for debugging layout issues (from Jules #199)
+  - Build verified successful after changes
+
+Impact:
+- Phase 2 color tool implementation is complete and verified
+- Debug artifacts removed from codebase
+- Documentation clarifies the dual color system design
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the relationship between the modal's text color switch (section-level) and the toolbar's color picker (inline formatting). They serve different purposes and are complementary.
+- **What was a surprising discovery or key learning?** The color tool implementation is actually more sophisticated than initially apparent - it includes portal rendering for proper mobile keyboard handling, visual color indicators on toolbar buttons, and proper Lexical integration using `$patchStyleText()`.
+- **What advice would you give the next agent who works on this code?** The modal's black/white text color switch is intentionally limited because it's about readability mode (dark text for light backgrounds, light text for dark backgrounds). If more base colors are needed, consider that this would require updating HeroEditor's color class logic and potentially the LexicalField's `darkText` handling.
+
+---
+
 GitHub Copilot (fix): Phase 2.5 Stabilisation - Data Loss Fix & Sync-Before-Preview Workflow
 Date: 2025-12-04
 Summary:

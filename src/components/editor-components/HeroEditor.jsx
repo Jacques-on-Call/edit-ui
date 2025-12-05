@@ -4,6 +4,9 @@
 // 2. Middle `div` (bg-gray-800 mx-px): Creates the grey container that is "1px shy" of the screen edge.
 // 3. Innermost `div` (px-[2px]): Wraps the text fields and provides the 2px internal padding.
 // Please do not alter this structure without a clear understanding of the design goal.
+//
+// Text color is now handled via inline Lexical formatting (toolbar color picker) rather than
+// a section-level base color. Users can select text and apply colors directly.
 
 import { h } from 'preact';
 import { useState } from 'preact/hooks';
@@ -47,15 +50,7 @@ export default function HeroEditor({ props, onChange }) {
     : { boxShadow: '2px 2px 4px rgba(0,0,0,0.5)' };
 
   // When a background image exists, make the container semi-transparent.
-  // REMOVED: drop-shadow-lg from textShadowClass as requested.
   const containerClass = hasBackgroundImage ? 'bg-black/50 mx-px' : 'bg-gray-800 mx-px';
-
-  // Determine text colors based on prop (default to white if not specified)
-  const textColorMode = props?.textColor || 'white';
-  const isDarkText = textColorMode === 'black';
-  const titleColorClass = isDarkText ? 'text-black' : 'text-white';
-  const subtitleColorClass = isDarkText ? 'text-gray-800' : 'text-gray-400';
-  const bodyColorClass = isDarkText ? 'text-gray-900' : 'text-gray-300';
 
   return (
     <div class="bg-transparent">
@@ -91,25 +86,22 @@ export default function HeroEditor({ props, onChange }) {
             value={props?.title || ''}
             onChange={(newValue) => handleFieldChange('title', newValue)}
             placeholder="Enter your title (H1)"
-            className={`text-5xl font-extrabold tracking-tight ${titleColorClass}`}
+            className="text-5xl font-extrabold tracking-tight text-white"
             transparentBg={hasBackgroundImage}
-            darkText={isDarkText}
           />
           <LexicalField
             value={props?.subtitle || ''}
             onChange={(newValue) => handleFieldChange('subtitle', newValue)}
             placeholder="Enter your slogan (optional)"
-            className={`text-lg ${subtitleColorClass}`}
+            className="text-lg text-gray-400"
             transparentBg={hasBackgroundImage}
-            darkText={isDarkText}
           />
           <LexicalField
             value={props?.body || ''}
             onChange={(newValue) => handleFieldChange('body', newValue)}
             placeholder="Enter your paragraph (optional)"
-            className={`text-lg ${bodyColorClass}`}
+            className="text-lg text-gray-300"
             transparentBg={hasBackgroundImage}
-            darkText={isDarkText}
           />
         </div>
       </div>
