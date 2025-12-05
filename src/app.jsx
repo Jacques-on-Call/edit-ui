@@ -27,8 +27,8 @@ const AppContent = () => {
   let mainContentClasses = ""; // Reset for conditional logic
 
   if (isEditorLayout) {
-    mainLayoutClasses += " h-screen flex flex-col overflow-hidden";
-    mainContentClasses = "flex-grow overflow-y-auto"; // Make main content scrollable
+    mainLayoutClasses += " flex flex-col overflow-hidden";
+    mainContentClasses = "flex-grow overflow-y-auto";
     mainContentClasses += " pt-[var(--header-h)] pb-[var(--action-bar-height)]";
   } else if (isExplorerLayout) {
     mainLayoutClasses += " h-screen flex flex-col overflow-hidden";
@@ -48,7 +48,13 @@ const AppContent = () => {
       </div>
 
       {/* Main content wrapper - NO transform or filter properties */}
-      <div className={mainLayoutClasses} style={{ fontFamily: theme.typography.fontFamily }}>
+      <div
+        className={mainLayoutClasses}
+        style={{
+          fontFamily: theme.typography.fontFamily,
+          height: isEditorLayout ? '100dvh' : undefined
+        }}
+      >
         {!isEditorLayout && (
           <header className={isExplorerLayout ? 'relative z-10 flex-shrink-0 p-6 md:p-10 flex justify-between items-center h-24' : 'flex justify-between items-center pb-8 h-16'}>
             {isExplorerLayout ? <SearchBar onSearch={setSearchQuery} /> : headerContent}
