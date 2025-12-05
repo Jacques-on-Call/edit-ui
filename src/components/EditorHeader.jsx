@@ -1,4 +1,5 @@
 import { h } from 'preact';
+import { createPortal } from 'preact/compat';
 import { 
   Bold, Italic, Underline, Strikethrough, Code, 
   Heading1, Heading2, Heading3, Heading4, Heading5, Heading6,
@@ -37,7 +38,7 @@ const BLOCK_TYPE_OPTIONS = [
   { value: 'h6', label: 'Heading 6', icon: Heading6 },
 ];
 
-export default function EditorHeader() {
+function EditorHeaderComponent() {
   const { activeEditor, selectionState } = useEditor();
 
   const handleAction = (action, value) => {
@@ -325,4 +326,13 @@ export default function EditorHeader() {
       </div>
     </header>
   );
+}
+
+export default function EditorHeader() {
+  const headerContent = <EditorHeaderComponent />;
+
+  if (typeof document !== 'undefined') {
+    return createPortal(headerContent, document.body);
+  }
+  return null;
 }

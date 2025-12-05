@@ -634,6 +634,38 @@ export default function ContentEditorPage(props) {
     // selectedRepo?.full_name extracts the primitive string value from the object
   }, [pageId, selectedRepo?.full_name, editorMode]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const bindViewportHandler = () => {
+      const onChange = () => {
+        const vv = window.visualViewport;
+        const keyboardOpen = vv ? (window.innerHeight - vv.height) > 80 : false;
+        const header = document.querySelector('.editor-header');
+        if (header) {
+          header.style.top = `env(safe-area-inset-top, 0px)`;
+        }
+      };
+      onChange();
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', onChange);
+        window.visualViewport.addEventListener('scroll', onChange);
+        return () => {
+          window.visualViewport.removeEventListener('resize', onChange);
+          window.visualViewport.removeEventListener('scroll', onChange);
+        };
+      } else {
+        window.addEventListener('resize', onChange);
+        return () => window.removeEventListener('resize', onChange);
+      }
+    }
+
+    const unbind = bindViewportHandler();
+    return () => {
+      if (unbind) unbind();
+    };
+  }, []);
+
   // --- 5. RENDER LOGIC ---
   
   // Calculate Page Score based on current sections
