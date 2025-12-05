@@ -6,13 +6,21 @@
   align-items:center;
   justify-content:space-between;
   padding: 0 12px;
-  background: rgba(2,10,30,0.95);
+  background: rgba(2,10,30,0.98);
   position: fixed;
   top: 0;
-  z-index:80;
+  left: 0;
+  right: 0;
+  z-index: 100;
   box-sizing: border-box;
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   width: 100%;
+  /* Prevent virtual keyboard from pushing the header off-screen */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  /* Ensure toolbar is always visible on top */
+  will-change: transform;
 }
 
 .editor-header .left { display:flex; align-items:center; gap:12px; }
@@ -29,6 +37,11 @@
 .btn-plain { background: none; border: none; color:#cfe1ff; }
 
 .editor-toolbar{color:#FFFFFF!important;z-index:9999!important}.editor-header{overflow:visible!important}
+
+/* Ensure dropdowns/menus can escape the header overflow */
+.toolbar-group {
+  position: relative;
+}
 
 /* Toolbar layout */
 .toolbar {
@@ -126,5 +139,22 @@
   .toolbar button {
     margin: 0 1px;
     padding: 5px;
+  }
+}
+
+/* Mobile keyboard-aware styles */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari specific fixes */
+  .editor-header {
+    /* Use env() for safe area insets on notched devices */
+    padding-top: env(safe-area-inset-top, 0);
+  }
+}
+
+/* Ensure dropdowns appear above mobile keyboard */
+@media (max-height: 500px) {
+  /* When viewport is short (keyboard open), ensure dropdowns are accessible */
+  .editor-header {
+    z-index: 200;
   }
 }

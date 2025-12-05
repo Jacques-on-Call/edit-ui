@@ -46,7 +46,12 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/components/BottomActionBar.jsx`**: The bottom action bar for the content editor. Supports editor and preview view modes with appropriate icons.
 -   **`src/components/SectionsEditor.jsx`**: The main component for rendering and managing the different sections of a page.
 -   **`src/components/LexicalEditor.jsx`**: The core rich-text editor component, built on Lexical.
--   **`src/components/ColorPicker.jsx`**: A reusable color picker component for text and highlight colors. Uses a portal pattern for reliable mobile rendering.
+-   **`src/components/ColorPicker.jsx`**: A cross-platform color picker component for text and highlight colors. Features:
+    - Preset color swatches with touch-optimized selection
+    - Hex input for custom colors
+    - Native HTML5 color input fallback (works on iOS Safari and all browsers)
+    - EyeDropper API support (Chrome/Edge only)
+    - Portal-based rendering for reliable mobile/keyboard handling
 -   **`src/components/Dropdown.jsx`**: A reusable dropdown component for toolbar menus. Uses a portal pattern for reliable mobile rendering.
 
 #### **Editor Components (`src/components/editor-components`)**

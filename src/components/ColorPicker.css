@@ -219,3 +219,70 @@
   font-size: 11px;
   font-family: monospace;
 }
+
+/* Native color picker wrapper - for iOS/Safari and all browsers */
+.native-color-picker-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.native-color-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
+  margin: -1px;
+  /* Keep visible but hidden - some browsers need the element visible to work */
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Button to trigger the native color picker */
+.color-picker-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #e6f0ff;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  /* Improve touch target on mobile */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.color-picker-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.color-picker-btn:active {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(0.95);
+}
+
+/* Improve touch targets on mobile for all color picker buttons */
+@media (hover: none) and (pointer: coarse) {
+  .color-swatch {
+    min-width: 36px;
+    min-height: 36px;
+  }
+  
+  .eyedropper-btn,
+  .color-picker-btn,
+  .hex-apply-btn {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  
+  .color-picker-grid {
+    gap: 6px;
+  }
+}

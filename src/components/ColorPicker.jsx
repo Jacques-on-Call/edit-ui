@@ -1,8 +1,31 @@
 import { h } from 'preact';
 import { useState, useRef, useCallback, useEffect } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
-import { Pipette } from 'lucide-preact';
+import { Pipette, Palette } from 'lucide-preact';
 import './ColorPicker.css';
+
+/**
+ * Cross-Platform Color Picker Component
+ * 
+ * This component provides robust color picking across all devices and browsers:
+ * 
+ * 1. **Color Swatches** - Quick tap/click selection from predefined colors
+ * 2. **Hex Input** - Manual hex color entry (#RRGGBB format)
+ * 3. **Native Color Input** - HTML5 <input type="color"> fallback for all browsers
+ *    - Works on iOS Safari, Android, and all desktop browsers
+ *    - Provides the system's native color picker UI
+ * 4. **EyeDropper API** - Screen color picking (Chrome/Edge only)
+ *    - Uses the browser's native EyeDropper when available
+ * 
+ * Why this approach?
+ * - The EyeDropper API is not supported on iOS Safari or Firefox
+ * - The native color input provides a consistent fallback experience
+ * - Canva and similar apps use a similar multi-approach strategy
+ * 
+ * References:
+ * - EyeDropper API: https://developer.mozilla.org/en-US/docs/Web/API/EyeDropper
+ * - HTML5 Color Input: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/color
+ */
 
 // Predefined color palette for text and highlight
 const TEXT_COLORS = [
@@ -41,7 +64,7 @@ const PORTAL_CONTAINER_ID = 'dropdown-portal';
 const MENU_MARGIN_PX = 8;
 const CLICK_OUTSIDE_DELAY_MS = 150;
 
-// Check if EyeDropper API is supported
+// Check if EyeDropper API is supported (Chrome/Edge only, not iOS Safari)
 const isEyeDropperSupported = () => typeof window !== 'undefined' && 'EyeDropper' in window;
 
 export default function ColorPicker({ type = 'text', currentColor, onColorChange, buttonContent, disabled = false }) {
@@ -52,9 +75,12 @@ export default function ColorPicker({ type = 'text', currentColor, onColorChange
   const buttonRef = useRef(null);
   const menuRef = useRef(null);
   const hexInputRef = useRef(null);
+  const nativeColorInputRef = useRef(null);
   const isOpenRef = useRef(false);
   const openedAtRef = useRef(0);
   const touchHandledRef = useRef(false);
+  // Ref to track if we're in the middle of a native color picker session
+  const nativePickerActiveRef = useRef(false);
 
   const colors = type === 'highlight' ? HIGHLIGHT_COLORS : TEXT_COLORS;
 
@@ -70,8 +96,20 @@ export default function ColorPicker({ type = 'text', currentColor, onColorChange
   const updateMenuPosition = useCallback(() => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
+      // Calculate available space below and above
+      const viewportHeight = window.visualViewport?.height || window.innerHeight;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const menuHeight = 280; // Approximate menu height
+      
+      // Position below if there's room, otherwise above
+      let top = rect.bottom + MENU_MARGIN_PX;
+      if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+        top = rect.top - menuHeight - MENU_MARGIN_PX;
+      }
+      
       setMenuPosition({
-        top: rect.bottom + MENU_MARGIN_PX,
+        top: Math.max(MENU_MARGIN_PX, top),
         left: rect.left + rect.width / 2,
       });
     }
@@ -105,10 +143,13 @@ export default function ColorPicker({ type = 'text', currentColor, onColorChange
   }, [doToggle]);
 
   const closeDropdown = useCallback(() => {
+    // Don't close if native color picker is active
+    if (nativePickerActiveRef.current) return;
     isOpenRef.current = false;
     setIsOpen(false);
   }, []);
 
+  // Handle swatch selection - works for both touch and click
   const handleColorSelect = useCallback((color) => {
     onColorChange(color.value);
     closeDropdown();
@@ -137,22 +178,43 @@ export default function ColorPicker({ type = 'text', currentColor, onColorChange
     }
   };
 
-  // Handle EyeDropper API
-  const handleEyeDropper = async () => {
+  // Handle native HTML5 color input - works on ALL browsers including iOS Safari
+  const handleNativeColorInput = useCallback((e) => {
+    const color = e.target.value;
+    if (color) {
+      onColorChange(color.toUpperCase());
+      closeDropdown();
+    }
+  }, [onColorChange, closeDropdown]);
+
+  // Open native color picker
+  const openNativeColorPicker = useCallback(() => {
+    if (nativeColorInputRef.current) {
+      nativePickerActiveRef.current = true;
+      nativeColorInputRef.current.click();
+      // Reset the flag after a delay to allow the picker to close
+      setTimeout(() => {
+        nativePickerActiveRef.current = false;
+      }, 100);
+    }
+  }, []);
+
+  // Handle EyeDropper API (Chrome/Edge only)
+  const handleEyeDropper = useCallback(async () => {
     if (!isEyeDropperSupported()) return;
     
     try {
       const eyeDropper = new window.EyeDropper();
       const result = await eyeDropper.open();
       if (result?.sRGBHex) {
-        onColorChange(result.sRGBHex);
+        onColorChange(result.sRGBHex.toUpperCase());
         closeDropdown();
       }
     } catch (err) {
       // User cancelled or error occurred - silently ignore
       console.log('[ColorPicker] EyeDropper cancelled or error:', err.message);
     }
-  };
+  }, [onColorChange, closeDropdown]);
 
   // Handle click outside
   useEffect(() => {
@@ -269,7 +331,7 @@ export default function ColorPicker({ type = 'text', currentColor, onColorChange
             ))}
           </div>
 
-          {/* Hex Input and EyeDropper Section */}
+          {/* Hex Input and Color Picker Tools Section */}
           <div class="color-picker-custom">
             <form onSubmit={handleHexSubmit} class="hex-input-form">
               <span class="hex-prefix">#</span>
@@ -282,6 +344,7 @@ export default function ColorPicker({ type = 'text', currentColor, onColorChange
                 maxLength={6}
                 class={`hex-input ${hexError ? 'hex-input-error' : ''}`}
                 onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
               />
               <button 
                 type="submit" 
@@ -293,12 +356,33 @@ export default function ColorPicker({ type = 'text', currentColor, onColorChange
               </button>
             </form>
             
+            {/* Native color input - works on all browsers including iOS Safari */}
+            <div class="native-color-picker-wrapper">
+              <input
+                ref={nativeColorInputRef}
+                type="color"
+                value={currentColor || '#3B82F6'}
+                onChange={handleNativeColorInput}
+                class="native-color-input"
+                title="Open system color picker"
+              />
+              <button 
+                class="color-picker-btn"
+                onClick={openNativeColorPicker}
+                onMouseDown={(e) => e.preventDefault()}
+                title="Pick any color (works on all devices)"
+              >
+                <Palette size={16} />
+              </button>
+            </div>
+            
+            {/* EyeDropper - only shown on supported browsers (Chrome/Edge) */}
             {isEyeDropperSupported() && (
               <button 
                 class="eyedropper-btn"
                 onClick={handleEyeDropper}
                 onMouseDown={(e) => e.preventDefault()}
-                title="Pick color from screen"
+                title="Pick color from screen (Chrome/Edge only)"
               >
                 <Pipette size={16} />
               </button>
