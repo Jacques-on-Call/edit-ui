@@ -24,16 +24,18 @@ const AppContent = () => {
   // Define base layout classes
   const layoutContainerClasses = "max-w-5xl mx-auto shadow-2xl text-text";
   let mainLayoutClasses = `relative ${layoutContainerClasses}`;
-  let mainContentClasses = "relative z-10 p-6 md:p-10";
+  let mainContentClasses = ""; // Reset for conditional logic
 
   if (isEditorLayout) {
-    mainLayoutClasses += " h-full flex flex-col";
-    mainContentClasses = "h-full";
+    mainLayoutClasses += " h-screen flex flex-col overflow-hidden";
+    mainContentClasses = "flex-grow overflow-y-auto"; // Make main content scrollable
+    mainContentClasses += " pt-[var(--header-h)] pb-[var(--action-bar-height)]";
   } else if (isExplorerLayout) {
     mainLayoutClasses += " h-screen flex flex-col overflow-hidden";
     mainContentClasses = "relative z-10 flex-grow overflow-y-auto";
   } else {
     mainLayoutClasses += " min-h-screen";
+    mainContentClasses = "relative z-10 p-6 md:p-10";
   }
 
   return (

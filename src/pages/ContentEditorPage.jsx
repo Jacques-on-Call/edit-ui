@@ -779,13 +779,10 @@ export default function ContentEditorPage(props) {
 
   return (
     <EditorProvider> {/* <-- WRAP WITH PROVIDER */}
-      <div class="flex flex-col h-full bg-transparent text-white relative overflow-y-auto">
+      <div class="flex flex-col h-full bg-transparent text-white relative">
         {/* Only show editor header when in editor mode, hide in preview modes */}
         {viewMode === 'editor' && <EditorHeader />}
-        <main class="flex-grow relative" style={{
-          paddingTop: 'var(--header-h)',
-          paddingBottom: 'var(--action-bar-height, calc(64px + env(safe-area-inset-bottom, 0px)))'
-        }}>
+        <main class="flex-grow relative">
           <div class="h-full">
             {renderContent()}
           </div>
