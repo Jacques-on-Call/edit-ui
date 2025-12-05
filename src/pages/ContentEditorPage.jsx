@@ -637,8 +637,15 @@ export default function ContentEditorPage(props) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    const onViewport = () => {
+      console.log('[viewport] vv', window.visualViewport && {height: window.visualViewport.height, offsetTop: window.visualViewport.offsetTop});
+      const header = document.querySelector('.editor-header');
+      console.log('[viewport] header rect', header && header.getBoundingClientRect(), 'styleTop', header && header.style.top, 'transform', header && header.style.transform);
+    };
+
     const bindViewportHandler = () => {
       const onChange = () => {
+        onViewport();
         const vv = window.visualViewport;
         const keyboardOpen = vv ? (window.innerHeight - vv.height) > 80 : false;
         const header = document.querySelector('.editor-header');
@@ -652,7 +659,7 @@ export default function ContentEditorPage(props) {
         window.visualViewport.addEventListener('scroll', onChange);
         return () => {
           window.visualViewport.removeEventListener('resize', onChange);
-          window.visualViewport.removeEventListener('scroll', onChange);
+          window.visualViewport.removeEventListener('scroll',onChange);
         };
       } else {
         window.addEventListener('resize', onChange);
