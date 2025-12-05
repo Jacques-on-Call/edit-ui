@@ -4,6 +4,163 @@ This document serves as a debug diary for the `easy-seo` project. It records com
 
 ---
 
+## **Bug: Data Loss When Syncing Due to Debounced Autosave Race Condition**
+
+**Date:** 2025-12-05
+**Agent:** GitHub Copilot
+
+### **Symptoms:**
+
+Users reported that changes made in the editor were lost after:
+1. Making changes to content (e.g., applying colors, editing text)
+2. Clicking the Sync button
+3. Clicking the Preview button
+4. Returning to the editor - changes are gone!
+
+The changes appeared to work initially but would disappear after sync/preview operations.
+
+### **Root Cause:**
+
+The `handleSync` function was reading content from `localStorage`, but the autosave mechanism uses a **debounced 1500ms delay**:
+
+```javascript
+// PROBLEMATIC CODE:
+const handleSync = useCallback(async () => {
+  // ...
+  const draftKey = `easy-seo-draft:${pageId}`;
+  const savedDraft = localStorage.getItem(draftKey);
+  // ↑ This reads STALE data if autosave hasn't fired yet!
+  // ...
+  sections: draftData.sections, // Using stale sections from localStorage
+}, [/* ... */]);
+```
+
+**The race condition:**
+1. User makes changes → `sections` state updates immediately
+2. `handleSectionsChange` calls `triggerSave(newSections)` → starts 1500ms debounce timer
+3. User clicks Sync **before** 1500ms elapses
+4. `handleSync` reads from `localStorage` → gets **old** data (debounce hasn't saved yet)
+5. Old data is synced to GitHub
+6. Page refreshes → loads the old data from GitHub
+7. User's changes are lost
+
+### **Solution:**
+
+Use the current component state directly instead of relying on localStorage:
+
+```javascript
+// FIXED CODE:
+const handleSync = useCallback(async () => {
+  // ...
+  // Use current sections state directly instead of reading from localStorage
+  if (editorMode !== 'json' || !sections || sections.length === 0) {
+    throw new Error('Sync is currently only supported for JSON-mode pages with sections.');
+  }
+
+  // Force save current state to localStorage for consistency
+  const updatedDraft = {
+    ...draftMeta,
+    slug: pageId,
+    sections: sections, // Current state, not stale localStorage
+    savedAt: new Date().toISOString()
+  };
+  localStorage.setItem(draftKey, JSON.stringify(updatedDraft));
+
+  const savePayload = {
+    repo: selectedRepo.full_name,
+    pageData: {
+      slug: pageId,
+      meta: draftMeta.meta || { title: pageId },
+      sections: sections, // ← Using current state!
+    },
+  };
+  // ...
+}, [/* ..., sections */]); // Add sections to dependencies
+```
+
+### **Key Insights:**
+
+1. **Never rely solely on cached/debounced storage for critical operations** - Always use the current state when synchronizing data.
+
+2. **Debouncing is for UI responsiveness, not data integrity** - The debounced autosave is good for reducing save frequency, but sync operations must bypass it.
+
+3. **Keep localStorage as a backup, not the source of truth** - The component state is the source of truth; localStorage is for persistence between sessions.
+
+4. **Add state to useCallback dependencies** - When a callback needs to use state, include it in the dependency array.
+
+---
+
+## **Bug: Mobile Toolbar Detaching When Text is Selected**
+
+**Date:** 2025-12-05
+**Agent:** GitHub Copilot
+
+### **Symptoms:**
+
+On mobile devices (especially iOS Safari), when the user selects text in the editor:
+- The fixed toolbar (EditorHeader) would "detach" from its position at the top
+- Users had to scroll up to find the toolbar
+- The toolbar appeared to be "attached to" a component in the content
+
+### **Root Cause:**
+
+iOS Safari has quirky behavior with `position: fixed` elements when:
+1. Text is selected (selection handles appear)
+2. The virtual keyboard opens
+3. The viewport scrolls programmatically
+
+The browser may recompute the position of fixed elements, causing them to "detach" momentarily.
+
+### **Solution:**
+
+Add multiple CSS reinforcements to ensure fixed positioning is robust:
+
+```css
+.editor-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* GPU acceleration prevents recalculation */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  /* Contain layout prevents parent scroll from affecting this element */
+  contain: layout style;
+  /* Prevent iOS scroll-related positioning issues */
+  -webkit-overflow-scrolling: auto;
+}
+
+/* Force fixed position on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .editor-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: translateZ(0) !important;
+    -webkit-transform: translateZ(0) !important;
+  }
+}
+
+/* iOS Safari specific */
+@supports (-webkit-touch-callout: none) {
+  .editor-header {
+    position: fixed !important;
+    top: 0 !important;
+  }
+}
+```
+
+### **Key Insights:**
+
+1. **Browser dev tools don't simulate mobile quirks** - Test on real iOS devices for positioning issues.
+
+2. **Multiple CSS approaches may be needed** - A single `position: fixed` isn't enough; use `contain`, `transform`, and `!important` as backup.
+
+3. **Touch device detection matters** - Use `@media (hover: none) and (pointer: coarse)` to target touch devices specifically.
+
+---
+
 ## **Bug: Infinite Re-render Loop from Callback Dependencies in useEffect**
 
 **Date:** 2025-11-26

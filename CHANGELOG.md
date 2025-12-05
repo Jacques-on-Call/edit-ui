@@ -1,5 +1,38 @@
 # Project Change Log
 
+GitHub Copilot (fix): Fix Data Loss in Sync/Preview Flow and Mobile Toolbar Stability
+Date: 2025-12-05
+Summary:
+Fixed critical data loss issue where changes made in the editor were lost when clicking Sync or Preview. Also improved the editor toolbar's fixed positioning on mobile devices to prevent it from detaching when text is selected.
+
+Details:
+- **Critical Data Loss Fix:**
+  - Root cause: The `handleSync` function was reading from localStorage, but autosave uses a debounced 1500ms delay. If the user clicked Sync before the debounce completed, localStorage contained stale data.
+  - Fix: Modified `handleSync` to use the current `sections` state directly instead of relying on localStorage. This ensures the latest content is always synced.
+  - Added immediate localStorage save before sync to keep localStorage in sync with the current state.
+  - Updated the dependency array of `handleSync` to include `sections` for proper React hook behavior.
+
+- **Mobile Toolbar Stability Improvements:**
+  - Added `contain: layout style` to prevent iOS from repositioning the header when text is selected
+  - Added `-webkit-overflow-scrolling: auto` to prevent scroll-related positioning issues
+  - Enhanced mobile-specific CSS with `!important` rules to force fixed positioning on touch devices
+  - Added dedicated CSS rules for touch devices via `@media (hover: none) and (pointer: coarse)`
+  - Cleaned up minified CSS on line 39 for better maintainability
+  - Ensured header stays at `position: fixed; top: 0` even during text selection
+
+Impact:
+- Changes made in the editor are now reliably saved when clicking Sync or Preview
+- The editor toolbar remains fixed at the top of the screen on mobile devices
+- Text selection no longer causes the toolbar to detach or scroll away
+- Improved overall reliability of the editor on iOS Safari and other mobile browsers
+
+Reflection:
+- **What was the most challenging part of this task?** Tracing the data flow from the editor state through autosave to localStorage to sync. The debounced autosave was the hidden culprit - it created a race condition where sync could run before autosave completed.
+- **What was a surprising discovery or key learning?** Fixed positioning on mobile browsers is fragile. iOS Safari in particular can reposition fixed elements when text is selected or the keyboard appears. Multiple CSS properties (`contain`, `-webkit-overflow-scrolling`, `!important` rules) are needed to force reliable behavior.
+- **What advice would you give the next agent who works on this code?** When syncing data, never rely solely on cached/debounced storage. Always use the current state directly. For fixed positioning on mobile, test on real iOS devices - browser dev tools don't accurately simulate the quirks of mobile Safari.
+
+---
+
 GitHub Copilot (fix): Cross-Platform Color Picker and Mobile UX Improvements
 Date: 2025-12-05
 Summary:

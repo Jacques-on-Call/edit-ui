@@ -379,26 +379,40 @@ export default function ContentEditorPage(props) {
     }
 
     setSyncStatus('syncing');
-    console.log('[CEP-handleSync] Status set to "syncing". Reading draft from localStorage...');
+    
+    // CRITICAL FIX: Use the current sections state directly instead of reading from localStorage.
+    // The autosave is debounced with a 1500ms delay, so localStorage may contain stale data
+    // if the user clicks Sync immediately after making changes.
+    // By using the current state, we ensure we're always syncing the latest data.
+    console.log('[CEP-handleSync] Status set to "syncing". Using current sections state...');
     try {
-      const draftKey = `easy-seo-draft:${pageId}`;
-      const savedDraft = localStorage.getItem(draftKey);
-      if (!savedDraft) {
-        console.error('[CEP-handleSync] No local draft found to sync.');
-        throw new Error('No local draft found to sync.');
-      }
-
-      const draftData = JSON.parse(savedDraft);
-      if (editorMode !== 'json' || !draftData.sections) {
+      // Check that we have sections to sync (allow empty array for clearing content)
+      if (editorMode !== 'json' || !sections) {
         throw new Error('Sync is currently only supported for JSON-mode pages with sections.');
       }
+
+      // Get existing draft metadata from localStorage (for slug, meta, path)
+      const draftKey = `easy-seo-draft:${pageId}`;
+      const savedDraft = localStorage.getItem(draftKey);
+      const draftMeta = savedDraft ? JSON.parse(savedDraft) : {};
+
+      // Force save the current sections to localStorage before syncing
+      // This ensures localStorage is up-to-date for future operations
+      const updatedDraft = {
+        ...draftMeta,
+        slug: pageId,
+        sections: sections,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem(draftKey, JSON.stringify(updatedDraft));
+      console.log('[CEP-handleSync] Saved current sections to localStorage before sync.');
 
       const savePayload = {
         repo: selectedRepo.full_name,
         pageData: {
-          slug: draftData.slug,
-          meta: draftData.meta || { title: draftData.slug },
-          sections: draftData.sections,
+          slug: pageId,
+          meta: draftMeta.meta || { title: pageId },
+          sections: sections, // Use current state, not localStorage
         },
       };
 
@@ -411,8 +425,8 @@ export default function ContentEditorPage(props) {
       await fetchJson('/api/page-json/update', { method: 'POST', body: JSON.stringify(savePayload) });
       console.log('[CEP-handleSync] API call successful. Content saved.');
 
-      // Store the synced content to compare later
-      lastSyncedContentRef.current = savedDraft;
+      // Store the synced content to compare later (use the updated draft we saved)
+      lastSyncedContentRef.current = JSON.stringify(updatedDraft);
 
       setIsPreviewBuilding(true);
       // Don't auto-switch to preview mode - let user decide when to view preview
@@ -436,7 +450,7 @@ export default function ContentEditorPage(props) {
       setTimeout(() => setSyncStatus('idle'), STATUS_DISPLAY_DURATION);
       return false; // Indicate sync failure
     }
-  }, [selectedRepo, pageId, editorMode, triggerBuild, syncStatus, isPreviewBuilding]);
+  }, [selectedRepo, pageId, editorMode, triggerBuild, syncStatus, isPreviewBuilding, sections]);
 
   const handlePreview = useCallback(async () => {
     // If we're in a preview mode, switch back to the editor

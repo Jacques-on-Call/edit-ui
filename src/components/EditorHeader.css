@@ -21,6 +21,8 @@
   -webkit-transform: translateZ(0);
   /* Ensure toolbar is always visible on top */
   will-change: transform;
+  /* Ensure header doesn't move when parent scrolls - helps with mobile text selection */
+  contain: layout style;
 }
 
 .editor-header .left { display:flex; align-items:center; gap:12px; }
@@ -36,7 +38,16 @@
 .btn-primary { background: #1673ff; color:white; border-radius:8px; padding:8px 12px; border:none; }
 .btn-plain { background: none; border: none; color:#cfe1ff; }
 
-.editor-toolbar{color:#FFFFFF!important;z-index:9999!important}.editor-header{overflow:visible!important}
+/* Ensure editor toolbar has proper visibility */
+.editor-toolbar {
+  color: #FFFFFF !important;
+  z-index: 9999 !important;
+}
+
+/* Allow dropdowns to escape the header's bounds */
+.editor-header {
+  overflow: visible !important;
+}
 
 /* Ensure dropdowns/menus can escape the header overflow */
 .toolbar-group {
@@ -140,6 +151,13 @@
     margin: 0 1px;
     padding: 5px;
   }
+  
+  /* Ensure header stays fixed when text is selected on mobile */
+  .editor-header {
+    /* Force fixed positioning on mobile */
+    position: fixed !important;
+    top: 0 !important;
+  }
 }
 
 /* Mobile keyboard-aware styles */
@@ -148,6 +166,9 @@
   .editor-header {
     /* Use env() for safe area insets on notched devices */
     padding-top: env(safe-area-inset-top, 0);
+    /* Ensure toolbar doesn't get repositioned by iOS text selection */
+    position: fixed !important;
+    top: 0 !important;
   }
 }
 
@@ -156,5 +177,15 @@
   /* When viewport is short (keyboard open), ensure dropdowns are accessible */
   .editor-header {
     z-index: 200;
+  }
+}
+
+/* Fix for mobile text selection causing toolbar displacement */
+/* Only override with !important to ensure fixed positioning is maintained on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .editor-header {
+    /* Force fixed position - needed because iOS Safari can reposition fixed elements during text selection */
+    position: fixed !important;
+    top: 0 !important;
   }
 }
