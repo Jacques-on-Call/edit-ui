@@ -2,7 +2,6 @@
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { HeaderProvider, useHeader } from './contexts/HeaderContext';
 import { theme } from './themes/theme';
-// Trivial change to force frontend redeployment
 import { Router, useRouter } from 'preact-router';
 import { LoginPage } from './pages/LoginPage';
 import { RepoSelectPage } from './pages/RepoSelectPage';
@@ -11,7 +10,7 @@ import ContentEditorPage from './pages/ContentEditorPage';
 import { CallbackPage } from './pages/CallbackPage';
 import AuthDebugMonitor from './components/AuthDebugMonitor';
 import { BottomToolbar } from './components/BottomToolbar';
-import SearchBar from './components/SearchBar'; // Import SearchBar
+import SearchBar from './components/SearchBar';
 import { FloatingLogButton } from './components/DebugLogButton.jsx';
 
 const AppContent = () => {
@@ -19,37 +18,35 @@ const AppContent = () => {
   const { headerContent, searchQuery, setSearchQuery } = useHeader();
   const [router] = useRouter();
 
-  console.log(`[App.jsx] render - searchQuery: "${searchQuery}"`);
-  console.trace('[App.jsx] render trace');
-
-  const isLoginPage = !isAuthenticated && router.url === '/';
-  const isExplorerLayout = router.url.startsWith('/explorer');
   const isEditorLayout = router.url.startsWith('/editor');
+  const isExplorerLayout = router.url.startsWith('/explorer');
 
-  // Editor needs a full-bleed layout, explorer is flex-col, others are padded
-  const mainLayoutClasses = isEditorLayout
-    ? 'h-full text-text max-w-5xl mx-auto shadow-2xl relative flex flex-col'
-    : isExplorerLayout
-      ? 'relative h-screen flex flex-col text-text overflow-hidden max-w-5xl mx-auto shadow-2xl'
-      : 'relative min-h-screen text-text max-w-5xl mx-auto shadow-2xl';
+  // Define base layout classes
+  const layoutContainerClasses = "max-w-5xl mx-auto shadow-2xl text-text";
+  let mainLayoutClasses = `relative ${layoutContainerClasses}`;
+  let mainContentClasses = "relative z-10 p-6 md:p-10";
 
-  const mainContentClasses = isEditorLayout
-    ? 'h-full'
-    : isExplorerLayout
-      ? 'relative z-10 flex-grow overflow-y-auto'
-      : `relative z-10 ${isLoginPage ? '' : 'p-6 md:p-10'}`;
+  if (isEditorLayout) {
+    mainLayoutClasses += " h-full flex flex-col";
+    mainContentClasses = "h-full";
+  } else if (isExplorerLayout) {
+    mainLayoutClasses += " h-screen flex flex-col overflow-hidden";
+    mainContentClasses = "relative z-10 flex-grow overflow-y-auto";
+  } else {
+    mainLayoutClasses += " min-h-screen";
+  }
 
   return (
     <>
-      {/* Background is now a sibling to the main layout container */}
+      {/* Animated background is now a standalone sibling, completely separate from the content wrapper */}
       <div className="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-midnight-blue via-gradient-start to-black animate-pulse-bg">
         <div className="orb orb-white orb-1"></div>
         <div className="orb orb-white orb-2"></div>
         <div className="orb orb-white orb-3"></div>
       </div>
 
+      {/* Main content wrapper - NO transform or filter properties */}
       <div className={mainLayoutClasses} style={{ fontFamily: theme.typography.fontFamily }}>
-        {/* Hide global header on editor page; it has its own */}
         {!isEditorLayout && (
           <header className={isExplorerLayout ? 'relative z-10 flex-shrink-0 p-6 md:p-10 flex justify-between items-center h-24' : 'flex justify-between items-center pb-8 h-16'}>
             {isExplorerLayout ? <SearchBar onSearch={setSearchQuery} /> : headerContent}
@@ -73,11 +70,11 @@ const AppContent = () => {
         </main>
 
         {isExplorerLayout && <BottomToolbar />}
-
-        {/* Only show debug log button in development mode */}
-        {import.meta.env.DEV && <FloatingLogButton />}
-        {import.meta.env.DEV && <AuthDebugMonitor />}
       </div>
+
+      {/* Debug tools are also rendered at the root, outside the main layout wrapper */}
+      {import.meta.env.DEV && <FloatingLogButton />}
+      {import.meta.env.DEV && <AuthDebugMonitor />}
     </>
   );
 };
