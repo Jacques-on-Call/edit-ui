@@ -20,13 +20,13 @@ const AppContent = () => {
   const [router] = useRouter();
 
   const isEditorLayout = router.url.startsWith('/editor');
-  const isExplorerLayout = router. url.startsWith('/explorer');
+  const isExplorerLayout = router.url.startsWith('/explorer');
 
   useEffect(() => {
     if (isEditorLayout || isExplorerLayout) {
-      document.body.classList.add('noscroll');
+      document.body.classList. add('noscroll');
     } else {
-      document.body.classList.remove('noscroll');
+      document. body.classList.remove('noscroll');
     }
     // Cleanup function to remove the class when the component unmounts
     return () => {
@@ -64,7 +64,7 @@ const AppContent = () => {
       <div
         className={mainLayoutClasses}
         style={{
-          fontFamily: theme.typography.fontFamily,
+          fontFamily: theme. typography.fontFamily,
           height: isEditorLayout ? '100dvh' : undefined
         }}
       >
