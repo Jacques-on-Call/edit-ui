@@ -11,7 +11,7 @@ import { CallbackPage } from './pages/CallbackPage';
 import AuthDebugMonitor from './components/AuthDebugMonitor';
 import { BottomToolbar } from './components/BottomToolbar';
 import SearchBar from './components/SearchBar';
-import { FloatingLogButton } from './components/DebugLogButton.jsx';
+import { FloatingLogButton } from './components/DebugLogButton. jsx';
 import { useEffect } from 'preact/hooks';
 
 const AppContent = () => {
@@ -20,7 +20,7 @@ const AppContent = () => {
   const [router] = useRouter();
 
   const isEditorLayout = router.url.startsWith('/editor');
-  const isExplorerLayout = router.url.startsWith('/explorer');
+  const isExplorerLayout = router. url.startsWith('/explorer');
 
   useEffect(() => {
     if (isEditorLayout || isExplorerLayout) {
@@ -30,7 +30,7 @@ const AppContent = () => {
     }
     // Cleanup function to remove the class when the component unmounts
     return () => {
-      document.body.classList.remove('noscroll');
+      document.body. classList.remove('noscroll');
     };
   }, [isEditorLayout, isExplorerLayout]);
 
@@ -68,14 +68,14 @@ const AppContent = () => {
           height: isEditorLayout ? '100dvh' : undefined
         }}
       >
-        {!isEditorLayout && (
+        {! isEditorLayout && (
           <header className={isExplorerLayout ? 'relative z-10 flex-shrink-0 p-6 md:p-10 flex justify-between items-center h-24' : 'flex justify-between items-center pb-8 h-16'}>
-            {isExplorerLayout ? <SearchBar onSearch={setSearchQuery} /> : headerContent}
+            {isExplorerLayout ?  <SearchBar onSearch={setSearchQuery} /> : headerContent}
           </header>
         )}
 
         <main className={mainContentClasses}>
-          {isLoading ? (
+          {isLoading ?  (
             <div className="flex justify-center items-center h-full">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-lime"></div>
             </div>
@@ -94,7 +94,7 @@ const AppContent = () => {
       </div>
 
       {/* Debug tools are also rendered at the root, outside the main layout wrapper */}
-      {import.meta.env.DEV && <FloatingLogButton />}
+      {import. meta.env.DEV && <FloatingLogButton />}
       {import.meta.env.DEV && <AuthDebugMonitor />}
     </>
   );
