@@ -1,4 +1,4 @@
-. editor-header {
+.editor-header {
   height: var(--header-h);
   min-height: var(--header-h);
   max-height: var(--header-h);
@@ -10,8 +10,8 @@
   background: rgba(2, 10, 30, 0.98);
 
   /* Key WordPress-style fixed positioning */
-  position: fixed;
-  top: 0;
+  position: fixed !important;
+  top: 0 !important;
   left: 0;
   right: 0;
   z-index: 9999;
@@ -21,28 +21,28 @@
   -webkit-backdrop-filter: blur(8px);
   width: 100%;
 
-  /* GPU acceleration for smooth positioning */
+  /* GPU acceleration for smooth positioning - prevents repositioning on mobile */
   transform: translate3d(0, 0, 0);
   -webkit-transform: translate3d(0, 0, 0);
 
-  /* Prevent repaints during scroll/keyboard */
+  /* Prevent repaints during scroll/keyboard - critical for mobile stability */
   will-change: transform;
   contain: layout style paint;
 
   /* Critical: prevent iOS from repositioning during keyboard events */
-  -webkit-overflow-scrolling: touch;
+  -webkit-overflow-scrolling: auto;
   
   /* Allow dropdowns to escape the header's bounds */
-  overflow: visible ! important;
+  overflow: visible !important;
 }
 
 /* Header layout sections */
-.editor-header . left { display: flex; align-items: center; gap: 12px; }
-.editor-header .page-title { font-size: 1. 25rem; margin: 0; color: #e6f0ff; }
+.editor-header .left { display: flex; align-items: center; gap: 12px; }
+.editor-header .page-title { font-size: 1.25rem; margin: 0; color: #e6f0ff; }
 
-.editor-header . center { display: flex; align-items: center; justify-content: center; flex: 1; }
-.tabs . tab { background: rgba(255,255,255,0.03); border-radius: 6px; padding: 6px 10px; margin: 0 6px; color: #cfe1ff; }
-. tabs .tab. active { background: rgba(255,255,255,0.09); }
+.editor-header .center { display: flex; align-items: center; justify-content: center; flex: 1; }
+.tabs .tab { background: rgba(255,255,255,0.03); border-radius: 6px; padding: 6px 10px; margin: 0 6px; color: #cfe1ff; }
+.tabs .tab.active { background: rgba(255,255,255,0.09); }
 
 .right { display: flex; align-items: center; gap: 10px; }
 
@@ -53,7 +53,7 @@
 
 /* Ensure editor toolbar has proper visibility */
 .editor-toolbar {
-  color: #FFFFFF ! important;
+  color: #FFFFFF !important;
   z-index: 9999 !important;
 }
 
@@ -95,7 +95,7 @@
   justify-content: center;
 }
 .toolbar button:hover:not(:disabled) {
-  background-color: rgba(255, 255, 255, 0. 1);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 .toolbar button[data-active="true"] {
   background-color: rgba(255, 255, 255, 0.15);
@@ -136,7 +136,7 @@
   gap: 2px;
 }
 
-. color-indicator-bar {
+.color-indicator-bar {
   width: 14px;
   height: 3px;
   border-radius: 1px;
@@ -151,13 +151,13 @@
   scrollbar-width: none; /* for Firefox */
 }
 
-. toolbar-scroll-container::-webkit-scrollbar {
+.toolbar-scroll-container::-webkit-scrollbar {
   display: none; /* for Chrome, Safari, and Opera */
 }
 
 /* Mobile-specific fixes */
 @media (max-width: 640px) {
-  .editor-header . page-title { display: none; }
+  .editor-header .page-title { display: none; }
   .editor-header .page-title-mobile {
     font-size: 1rem;
     font-weight: 600;
@@ -182,9 +182,12 @@
 /* Touch devices - prevent keyboard displacement */
 @media (hover: none) and (pointer: coarse) {
   .editor-header {
-    position: fixed ! important;
-    top: 0 ! important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
     transform: translate3d(0, 0, 0) !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
   }
 }
 

@@ -4,6 +4,111 @@ This document serves as a debug diary for the `easy-seo` project. It records com
 
 ---
 
+## **Bug: Toolbar Buttons Cut Off or Missing Due to Fixed Header Overlap**
+
+**Date:** 2025-12-06
+**Agent:** GitHub Copilot
+
+### **Symptoms:**
+
+The Lexical editor toolbar buttons (Undo, Redo, Bold, Italic, Underline, etc.) were partially or completely cut off at the top of the screen:
+- Only the bottom edge of toolbar buttons was visible
+- When clicking to edit and the keyboard opened, the header would disappear completely
+- Users could not access formatting tools
+
+### **Root Cause:**
+
+The `EditorHeader` component uses `position: fixed` with `top: 0`, creating a header that floats above the page content. However, the `<main>` element in `ContentEditorPage.jsx` had **no `padding-top`** to account for the fixed header's height.
+
+This is a classic CSS fixed header problem:
+1. Fixed header is removed from the document flow
+2. Content starts at the top of the viewport (y=0)
+3. Fixed header overlays the content, hiding the top portion
+4. Result: Content renders behind/under the header
+
+### **Solution:**
+
+Add `padding-top` to the main content element equal to the header height plus any safe area insets:
+
+```jsx
+// easy-seo/src/pages/ContentEditorPage.jsx
+<main 
+  class="flex-grow relative" 
+  style={{ paddingTop: 'calc(var(--header-h) + env(safe-area-inset-top, 0))' }}
+>
+  <div class="h-full">
+    {renderContent()}
+  </div>
+</main>
+```
+
+**Key components of the solution:**
+- `var(--header-h)`: CSS variable set to 56px (the header's height)
+- `env(safe-area-inset-top, 0)`: iOS safe area inset for notched devices
+- `calc()`: Adds both values together for total padding needed
+
+### **Additional CSS Enhancements:**
+
+To ensure the header stays fixed even when mobile keyboard opens (WordPress-style behavior), enhance the CSS:
+
+```css
+/* easy-seo/src/components/EditorHeader.css */
+.editor-header {
+  /* Enforce fixed positioning */
+  position: fixed !important;
+  top: 0 !important;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  
+  /* GPU acceleration prevents repositioning */
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  
+  /* Isolate from layout recalculations */
+  contain: layout style paint;
+  will-change: transform;
+  
+  /* Prevent iOS scroll-related repositioning */
+  -webkit-overflow-scrolling: auto;
+}
+
+/* Touch devices - prevent keyboard displacement */
+@media (hover: none) and (pointer: coarse) {
+  .editor-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
+  }
+}
+
+/* iOS Safari specific */
+@supports (-webkit-touch-callout: none) {
+  .editor-header {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+}
+```
+
+### **Key Insights:**
+
+1. **Fixed headers always need companion padding** - When using `position: fixed` on a header, the scrollable content must have `padding-top` equal to the header height.
+
+2. **The pattern from CHANGELOG.md is correct** - "for fixed headers, the padding-top must be applied to the scrollable content within the main scrollable container"
+
+3. **Use CSS variables for maintainability** - Define `--header-h` once and reuse it in both the header height and content padding-top.
+
+4. **Account for mobile safe areas** - Always include `env(safe-area-inset-top, 0)` for iOS devices with notches.
+
+5. **Check both src/ and srcs/ directories** - This project has two directory structures. The active code is in `src/pages/ContentEditorPage.jsx`, not `srcs/pages/ContentEditorPage.jsx`.
+
+6. **WordPress-style fixed headers require CSS defense** - Multiple CSS properties (`!important`, `transform`, `contain`, `-webkit-overflow-scrolling`) are needed to prevent mobile browsers from repositioning the header when the keyboard opens.
+
+---
+
 ## **Bug: Data Loss When Syncing Due to Debounced Autosave Race Condition**
 
 **Date:** 2025-12-05

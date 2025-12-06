@@ -1,5 +1,43 @@
 # Project Change Log
 
+GitHub Copilot (fix): Fix Missing Toolbar Buttons with Proper Main Padding
+Date: 2025-12-06
+Summary:
+Fixed critical issue where Lexical toolbar buttons were cut off or completely missing due to the fixed EditorHeader overlapping content. The main element now has proper padding-top to account for the header height, making all toolbar buttons fully visible.
+
+Details:
+- **Root Cause:** The EditorHeader component uses `position: fixed` with `top: 0`, but the main content element had no `padding-top` to account for the header's height. This caused content to render behind/under the header, making toolbar buttons cut off or hidden.
+  
+- **ContentEditorPage.jsx Fix:**
+  - Added `paddingTop: 'calc(var(--header-h) + env(safe-area-inset-top, 0))'` to the main element
+  - Uses the CSS variable `--header-h` (56px) plus iOS safe area insets for proper spacing
+  - Ensures content scrolls below the fixed header, not behind it
+  
+- **EditorHeader.css Enhancements:**
+  - Fixed all CSS syntax errors (removed extra spaces in selectors like `. editor-header`)
+  - Strengthened fixed positioning with `!important` declarations on `position` and `top`
+  - Changed `-webkit-overflow-scrolling` from `touch` to `auto` to prevent iOS repositioning issues
+  - Enhanced touch device media query with explicit `left: 0 !important` and `right: 0 !important`
+  - Added `-webkit-transform` fallback for better cross-browser compatibility
+  - These changes implement WordPress-style permanently fixed header behavior
+
+- **Build Fix:**
+  - Fixed import typo in app.jsx: `'./components/DebugLogButton. jsx'` → `'./components/DebugLogButton.jsx'`
+
+Impact:
+- All toolbar buttons (Undo, Redo, Bold, Italic, Underline, Strikethrough, Code, Text Color, Highlight, Block Format, Alignment, Lists, Link, Clear Formatting) are now fully visible
+- The header remains permanently fixed at the top, even when mobile keyboard opens
+- Content properly scrolls underneath the header without overlap
+- iOS safe areas are properly accounted for on notched devices
+- Build process completes successfully without errors
+
+Reflection:
+- **What was the most challenging part of this task?** Identifying that there were two ContentEditorPage files (one in `src/pages/` used by the app, and another in `srcs/pages/` which appears to be legacy). The fix needed to be applied to the correct file being used by the application.
+- **What was a surprising discovery or key learning?** The CSS syntax warnings in the build output about extra spaces (like `. editor-header` instead of `.editor-header`) were causing minification issues. Fixing these improved build output quality.
+- **What advice would you give the next agent who works on this code?** When working with fixed headers, always ensure the scrollable content has `padding-top` equal to the header height. The pattern `calc(var(--header-h) + env(safe-area-inset-top, 0))` is essential for mobile devices with notches. Also, check both `src/` and `srcs/` directories to identify which files are actually being used by the application.
+
+---
+
 GitHub Copilot (fix): Fix Data Loss in Sync/Preview Flow and Mobile Toolbar Stability
 Date: 2025-12-05
 Summary:

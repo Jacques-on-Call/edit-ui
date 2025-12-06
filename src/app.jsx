@@ -11,7 +11,7 @@ import { CallbackPage } from './pages/CallbackPage';
 import AuthDebugMonitor from './components/AuthDebugMonitor';
 import { BottomToolbar } from './components/BottomToolbar';
 import SearchBar from './components/SearchBar';
-import { FloatingLogButton } from './components/DebugLogButton. jsx';
+import { FloatingLogButton } from './components/DebugLogButton.jsx';
 import { useEffect } from 'preact/hooks';
 
 const AppContent = () => {

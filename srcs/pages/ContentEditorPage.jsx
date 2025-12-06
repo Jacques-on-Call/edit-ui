@@ -86,7 +86,10 @@ export default function ContentEditorPage(props) {
 
       <main
         class="flex-grow overflow-y-auto"
-        style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' }}
+        style={{ 
+          paddingTop: 'calc(var(--header-h) + env(safe-area-inset-top, 0))',
+          paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))' 
+        }}
       >
         {content !== null ? (
           <LexicalEditor
