@@ -329,10 +329,5 @@ function EditorHeaderComponent() {
 }
 
 export default function EditorHeader() {
-  const headerContent = <EditorHeaderComponent />;
-
-  if (typeof document !== 'undefined') {
-    return createPortal(headerContent, document.body);
-  }
-  return null;
+  return <EditorHeaderComponent />;
 }
