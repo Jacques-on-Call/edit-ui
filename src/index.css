@@ -18,6 +18,18 @@
   }
 }
 
+/* Prevent body scroll on app-like layouts */
+body.noscroll {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+@layer base {
+  html, body {
+    height: 100%;
+  }
+}
+
 /* Prevent body scroll when keyboard is open */
 html, body {
   overflow: hidden;

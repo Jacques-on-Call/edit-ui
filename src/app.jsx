@@ -12,6 +12,7 @@ import AuthDebugMonitor from './components/AuthDebugMonitor';
 import { BottomToolbar } from './components/BottomToolbar';
 import SearchBar from './components/SearchBar';
 import { FloatingLogButton } from './components/DebugLogButton.jsx';
+import { useEffect } from 'preact/hooks';
 
 const AppContent = () => {
   const { isLoading, isAuthenticated } = useAuth();
@@ -20,6 +21,18 @@ const AppContent = () => {
 
   const isEditorLayout = router.url.startsWith('/editor');
   const isExplorerLayout = router.url.startsWith('/explorer');
+
+  useEffect(() => {
+    if (isEditorLayout || isExplorerLayout) {
+      document.body.classList.add('noscroll');
+    } else {
+      document.body.classList.remove('noscroll');
+    }
+    // Cleanup function to remove the class when the component unmounts
+    return () => {
+      document.body.classList.remove('noscroll');
+    };
+  }, [isEditorLayout, isExplorerLayout]);
 
   // Define base layout classes
   const layoutContainerClasses = "max-w-5xl mx-auto shadow-2xl text-text";
