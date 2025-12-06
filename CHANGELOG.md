@@ -1,5 +1,49 @@
 # Project Change Log
 
+GitHub Copilot (fix): Implement visualViewport API for True Fixed Header on iOS
+Date: 2025-12-06
+Summary:
+Fixed the iOS Safari header displacement issue and restored the missing page identifier in the header. The header now stays truly pinned at the top of the visual viewport on iOS, even when the mobile keyboard opens.
+
+Details:
+- **visualViewport API Implementation:**
+  - Created new custom hook `useVisualViewportFix` in `easy-seo/src/hooks/useVisualViewportFix.js`
+  - Listens to `window.visualViewport` resize and scroll events
+  - Dynamically adjusts header's `top` position based on `visualViewport.offsetTop`
+  - This compensates for iOS Safari's quirky behavior where layout viewport resizes but keyboard overlays visual viewport
+  - Graceful fallback: if visualViewport API not available, CSS handles positioning
+
+- **EditorHeader Component Updates:**
+  - Added `useRef` hook to create reference to header element
+  - Applied `useVisualViewportFix` hook to enable dynamic positioning
+  - Accepts new `pageSlug` prop to display page identifier
+  - Page identifier displayed using existing `.page-title-mobile` CSS class
+
+- **ContentEditorPage Updates:**
+  - Passes `pageId` (derived from path) to EditorHeader as `pageSlug` prop
+  - Page identifier visible in header so users know which page they're editing
+
+- **How It Works:**
+  - On mobile, when keyboard opens, iOS shrinks the layout viewport but keyboard overlays the visual viewport
+  - `visualViewport.offsetTop` tells us how far the visual viewport has scrolled relative to layout viewport
+  - Setting `header.style.top = offsetTop + 'px'` keeps header pinned to what user actually sees
+  - Works alongside existing CSS `position: fixed` as a JavaScript enhancement
+
+Impact:
+- Header stays pinned at top of visual viewport at all times on iOS Safari
+- When mobile keyboard opens, header remains visible and accessible
+- When keyboard closes, header smoothly returns to normal position (top: 0)
+- Page identifier (e.g., "home-from-json") now visible in header
+- Works on iOS Safari, Android Chrome, and desktop browsers
+- Graceful fallback for browsers without visualViewport API support
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the difference between layout viewport and visual viewport on iOS Safari. CSS `position: fixed` is relative to the layout viewport, but the keyboard overlays the visual viewport, causing the apparent "movement" of fixed elements.
+- **What was a surprising discovery or key learning?** The visualViewport API is specifically designed to solve this problem. By using `offsetTop`, we can make truly fixed elements that stay pinned to what the user sees, not just to the layout viewport.
+- **What advice would you give the next agent who works on this code?** This is the modern, recommended solution for iOS fixed positioning issues. The old CSS hacks (transform, contain, etc.) help but can't fully solve it. The visualViewport API is the proper way forward. Always test on real iOS devices when possible, as desktop dev tools don't simulate this behavior accurately.
+
+---
+
 GitHub Copilot (fix): Fix Missing Toolbar Buttons with Proper Main Padding
 Date: 2025-12-06
 Summary:

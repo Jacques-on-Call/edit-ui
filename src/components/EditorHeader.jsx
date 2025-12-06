@@ -1,4 +1,5 @@
 import { h } from 'preact';
+import { useRef } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { 
   Bold, Italic, Underline, Strikethrough, Code, 
@@ -21,6 +22,7 @@ import {
   ChevronDown
 } from 'lucide-preact';
 import { useEditor } from '../contexts/EditorContext';
+import { useVisualViewportFix } from '../hooks/useVisualViewportFix';
 import Dropdown from './Dropdown';
 import ColorPicker from './ColorPicker';
 import './EditorHeader.css';
@@ -38,8 +40,14 @@ const BLOCK_TYPE_OPTIONS = [
   { value: 'h6', label: 'Heading 6', icon: Heading6 },
 ];
 
-function EditorHeaderComponent() {
+function EditorHeaderComponent({ pageSlug }) {
   const { activeEditor, selectionState } = useEditor();
+  
+  // Create ref for the header element to enable visualViewport fix
+  const headerRef = useRef(null);
+  
+  // Apply visualViewport fix for iOS Safari keyboard handling
+  useVisualViewportFix(headerRef);
 
   const handleAction = (action, value) => {
     console.log(`[EditorHeader] Action triggered: ${action}`, { value });
@@ -117,7 +125,11 @@ function EditorHeaderComponent() {
   const CurrentBlockIcon = currentBlockOption.icon;
 
   return (
-    <header class="editor-header">
+    <header class="editor-header" ref={headerRef}>
+      {/* Page identifier - shown on mobile */}
+      {pageSlug && (
+        <span class="page-title-mobile">{pageSlug}</span>
+      )}
       <div class="toolbar-scroll-container">
         <div class="toolbar">
           {/* GROUP 1: History (Undo/Redo first as requested) */}
@@ -328,6 +340,6 @@ function EditorHeaderComponent() {
   );
 }
 
-export default function EditorHeader() {
-  return <EditorHeaderComponent />;
+export default function EditorHeader({ pageSlug }) {
+  return <EditorHeaderComponent pageSlug={pageSlug} />;
 }

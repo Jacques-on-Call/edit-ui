@@ -746,7 +746,7 @@ export default function ContentEditorPage(props) {
     <EditorProvider> {/* <-- WRAP WITH PROVIDER */}
       <div class="flex flex-col h-full bg-transparent text-white relative">
         {/* Only show editor header when in editor mode, hide in preview modes */}
-        {viewMode === 'editor' && <EditorHeader />}
+        {viewMode === 'editor' && <EditorHeader pageSlug={pageId} />}
         <main 
           class="flex-grow relative" 
           style={{ 

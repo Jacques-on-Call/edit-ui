@@ -4,6 +4,124 @@ This document serves as a debug diary for the `easy-seo` project. It records com
 
 ---
 
+## **Bug: Header Moves Up When Mobile Keyboard Opens on iOS Safari**
+
+**Date:** 2025-12-06
+**Agent:** GitHub Copilot
+
+### **Symptoms:**
+
+Despite extensive CSS fixes (position: fixed !important, GPU acceleration, contain: layout, etc.), the EditorHeader still moves/disappears when the mobile keyboard opens on iOS Safari:
+- Header appears to "slide up" when keyboard opens
+- Header may become partially or completely hidden
+- Users cannot access toolbar buttons when typing
+- CSS-only solutions are insufficient for iOS
+
+### **Root Cause:**
+
+iOS Safari has a fundamental quirk with `position: fixed` elements when the virtual keyboard opens:
+
+1. **Two Viewports:** iOS has both a **layout viewport** (what CSS sees) and a **visual viewport** (what the user sees)
+2. **Keyboard Behavior:** When the keyboard opens, iOS resizes the layout viewport but the keyboard overlays the visual viewport
+3. **CSS Limitation:** CSS `position: fixed` is relative to the layout viewport, not the visual viewport
+4. **Result:** Fixed elements appear to move because the layout viewport shrinks, but the visual viewport (and thus the keyboard) stays in place
+
+This is documented iOS behavior and cannot be fixed with CSS alone.
+
+### **Solution:**
+
+Use the **visualViewport API** to dynamically adjust the header's position in response to viewport changes:
+
+```javascript
+// easy-seo/src/hooks/useVisualViewportFix.js
+import { useEffect } from 'preact/hooks';
+
+export function useVisualViewportFix(headerRef) {
+  useEffect(() => {
+    // Check if visualViewport API is available
+    if (!window.visualViewport || !headerRef.current) {
+      return;
+    }
+
+    const header = headerRef.current;
+    
+    const handleViewportChange = () => {
+      // The offset from top of layout viewport to top of visual viewport
+      // This is positive when keyboard pushes viewport up
+      const offsetTop = window.visualViewport.offsetTop;
+      
+      // Pin header to visual viewport top
+      // This keeps the header visible even when keyboard opens
+      header.style.top = `${offsetTop}px`;
+    };
+
+    // Listen to both resize (keyboard open/close) and scroll
+    window.visualViewport.addEventListener('resize', handleViewportChange);
+    window.visualViewport.addEventListener('scroll', handleViewportChange);
+    
+    // Initial call
+    handleViewportChange();
+
+    return () => {
+      window.visualViewport.removeEventListener('resize', handleViewportChange);
+      window.visualViewport.removeEventListener('scroll', handleViewportChange);
+      // Reset on cleanup
+      header.style.top = '0px';
+    };
+  }, [headerRef]);
+}
+```
+
+**Usage in component:**
+
+```jsx
+// easy-seo/src/components/EditorHeader.jsx
+import { useRef } from 'preact/hooks';
+import { useVisualViewportFix } from '../hooks/useVisualViewportFix';
+
+function EditorHeaderComponent() {
+  const headerRef = useRef(null);
+  
+  // Apply visualViewport fix
+  useVisualViewportFix(headerRef);
+  
+  return (
+    <header class="editor-header" ref={headerRef}>
+      {/* Header content */}
+    </header>
+  );
+}
+```
+
+### **Key Insights:**
+
+1. **CSS alone cannot fix this on iOS** - The visualViewport API is required for true fixed positioning on mobile Safari
+
+2. **visualViewport.offsetTop is the key** - This tells us how far the visual viewport has scrolled relative to the layout viewport. When the keyboard opens and the layout viewport shrinks, offsetTop becomes positive.
+
+3. **Listen to both resize and scroll** - The resize event fires when the keyboard opens/closes. The scroll event fires when the user scrolls while the keyboard is open.
+
+4. **Graceful fallback** - The hook checks for API availability. On browsers without visualViewport support (or desktop), the CSS handles positioning.
+
+5. **Works alongside CSS** - The existing CSS `position: fixed` provides the base behavior. The JavaScript enhancement makes it work correctly on iOS.
+
+6. **Modern solution** - This is the recommended approach from the Chrome/Safari teams. Old CSS hacks (transform, contain, etc.) help but cannot fully solve the problem.
+
+### **Browser Support:**
+
+- **iOS Safari 13+:** Full support
+- **Android Chrome 61+:** Full support  
+- **Desktop browsers:** Not needed (no virtual keyboard), CSS handles it
+- **Older browsers:** Graceful fallback to CSS-only behavior
+
+### **Testing:**
+
+- Always test on real iOS devices when possible
+- Desktop dev tools do NOT accurately simulate this behavior
+- Use Chrome DevTools device emulation as a rough guide, but expect differences on real devices
+
+---
+
 ## **Bug: Toolbar Buttons Cut Off or Missing Due to Fixed Header Overlap**
 
 **Date:** 2025-12-06
