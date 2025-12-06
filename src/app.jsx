@@ -24,13 +24,13 @@ const AppContent = () => {
 
   useEffect(() => {
     if (isEditorLayout || isExplorerLayout) {
-      document.body.classList. add('noscroll');
+      document.body.classList.add('noscroll');
     } else {
-      document. body.classList.remove('noscroll');
+      document.body.classList.remove('noscroll');
     }
     // Cleanup function to remove the class when the component unmounts
     return () => {
-      document.body. classList.remove('noscroll');
+      document.body.classList.remove('noscroll');
     };
   }, [isEditorLayout, isExplorerLayout]);
 
@@ -64,7 +64,7 @@ const AppContent = () => {
       <div
         className={mainLayoutClasses}
         style={{
-          fontFamily: theme. typography.fontFamily,
+          fontFamily: theme.typography.fontFamily,
           height: isEditorLayout ? '100dvh' : undefined
         }}
       >
@@ -94,7 +94,7 @@ const AppContent = () => {
       </div>
 
       {/* Debug tools are also rendered at the root, outside the main layout wrapper */}
-      {import. meta.env.DEV && <FloatingLogButton />}
+      {import.meta.env.DEV && <FloatingLogButton />}
       {import.meta.env.DEV && <AuthDebugMonitor />}
     </>
   );

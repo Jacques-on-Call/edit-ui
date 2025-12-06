@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300.. 700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -20,7 +20,7 @@
 
 /* Prevent body scroll on app-like layouts (editor, explorer) */
 /* This class is toggled by app.jsx based on the current route */
-body. noscroll {
+body.noscroll {
   overflow: hidden;
   overscroll-behavior: none;
 }
@@ -33,7 +33,7 @@ body. noscroll {
 
 /* NOTE: The unconditional "overflow: hidden" on html,body was REMOVED. 
    It was breaking scroll on non-editor pages like Login. 
-   The . noscroll class above handles this for editor/explorer layouts only. */
+   The .noscroll class above handles this for editor/explorer layouts only. */
 
 @layer base {
   body {
@@ -50,7 +50,7 @@ body. noscroll {
   animation: float 20s infinite ease-in-out;
 }
 
-. orb-white {
+.orb-white {
   background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
 }
 
@@ -96,13 +96,13 @@ body. noscroll {
     100% { background-position: 0% 50%; }
 }
 
-. animate-pulse-bg {
+.animate-pulse-bg {
     background-size: 200% 200%;
     animation: pulse-bg 15s ease infinite;
 }
 
 /* Ensure all icons in the login form are the same size */
-. login-form input[type="text"],
+.login-form input[type="text"],
 .login-form input[type="password"],
 .login-form button {
   font-size: 16px; /* Prevents iOS zoom on focus */
@@ -111,7 +111,7 @@ body. noscroll {
 
 /* Fix icon sizing consistency */
 .login-form svg,
-.login-form . icon {
+.login-form .icon {
   width: 20px ! important;
   height: 20px ! important;
   min-width: 20px;
@@ -213,7 +213,7 @@ button[type="button"] svg {
 .editor-input ol { list-style-type: decimal; margin-left: 1.5em; padding: 0. 25em 0; }
 .editor-input li { margin: 0.25em 0; }
 .editor-input a { color: #60a5fa; text-decoration: underline; }
-. editor-input code { 
+.editor-input code { 
   background-color: rgba(55, 65, 81, 0. 5);
   color: #f472b6;
   padding: 0. 125rem 0.375rem;
@@ -263,7 +263,7 @@ button[type="button"] svg {
   font-weight: 600;
 }
 
-.editor-table-row:hover . editor-table-cell {
+.editor-table-row:hover .editor-table-cell {
   background: rgba(255, 255, 255, 0. 05);
 }
 

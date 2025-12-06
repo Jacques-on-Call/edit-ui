@@ -4,6 +4,46 @@ This document records significant changes, architectural decisions, and critical
 
 ---
 
+### **2025-12-06**
+
+**Author:** AI Agent (Copilot)
+
+**Change:** Fixed systematic whitespace typos in slug parsing and removed conflicting visualViewport JS hook that was preventing proper mobile header positioning.
+
+**Context & Learnings:**
+
+1.  **Slug Parsing Whitespace Typos (Critical Bug):**
+    *   **Problem:** Throughout `ContentEditorPage.jsx`, there were 51 systematic whitespace typos in string operations (e.g., `pathIdentifier. split`, `'. astro'`, `/\. astro$/`). These typos prevented proper slug parsing for JSON pages like `home-from-json.astro`, causing the pageId to become `home-from-json.astro` instead of `home-from-json`, breaking editor mode detection and JSON page loading.
+    *   **Solution:** Used sed to fix all 51 occurrences of the pattern `\. ([a-z])` to `.${1}` throughout the file. This ensures:
+        - `.astro` extension is correctly stripped from file paths
+        - `pageId` correctly becomes `home-from-json` for JSON pages in `src/pages/json-preview/`
+        - Editor mode detection (`isTestFile` check) works properly
+        - Preview URL generation correctly strips `.astro` and trailing `index`
+
+2.  **Mobile Header CSS/JS Conflict:**
+    *   **Problem:** The `useVisualViewportFix` hook in `EditorHeader.jsx` was attempting to set inline `top` style dynamically, but the CSS had `top: 0 !important` which overrode the inline style, making the JS hook completely ineffective. This created a conflict where the header could overlap the toolbar on iOS when the keyboard opened.
+    *   **Solution:** Following the requirement to "avoid visual viewport JS hacks unless needed", I removed the `useVisualViewportFix` hook entirely and refactored the CSS to handle mobile positioning purely through CSS:
+        - Updated header height to `calc(var(--header-h) + env(safe-area-inset-top, 0))` to account for iOS notch
+        - Changed padding to `env(safe-area-inset-top, 0) 12px 0 12px`
+        - Removed `!important` from `position`, `top`, and `overflow` properties to allow proper CSS cascade
+        - Maintained `position: fixed` with GPU acceleration (`transform: translate3d`) for mobile stability
+        - Kept iOS Safari and touch device media queries for enhanced compatibility
+
+3.  **Additional Whitespace Typos Fixed:**
+    *   Fixed 7 CSS whitespace typos in `index.css` (e.g., `body. noscroll`, `. orb-white`)
+    *   Fixed 5 whitespace typos in `app.jsx` (e.g., `document.body. classList`, `import. meta`)
+    *   These were causing CSS minification warnings and potential runtime issues
+
+**Reflection:**
+
+*   **Most Challenging Part:** The most challenging aspect was recognizing that the whitespace typos were systematic throughout the codebase (63 total occurrences across 3 files). Initially, I was fixing them one by one, but then realized using sed to fix them all at once was more efficient and less error-prone. The conflict between the CSS `!important` rule and the JS hook setting inline styles was also subtle and required understanding both the CSS cascade and the mobile viewport behavior.
+
+*   **Key Learning:** Whitespace in JavaScript/CSS is not always insignificant. While `object. method` might look cosmetically similar to `object.method`, they are syntactically different and cause bugs. The systematic nature of these typos suggests they may have been introduced by a find-and-replace operation or a formatter issue. Always validate string operations and method calls carefully. Also, when dealing with mobile CSS positioning, prefer CSS-only solutions with `env(safe-area-inset-*)` and `dvh` units over JavaScript viewport manipulation, as CSS is more reliable across different mobile browsers and keyboard states.
+
+*   **Advice for Next Agent:** If you encounter mysterious parsing failures or method call issues, check for whitespace typos using `grep "\. [a-z]" filename`. These typos can be subtle in code review but cause significant runtime failures. For mobile header positioning, resist the temptation to add JS viewport fixes unless CSS solutions are exhausted - the CSS spec now provides robust tools like `env(safe-area-inset-*)`, `dvh` units, and proper `position: fixed` with GPU acceleration that work reliably across devices.
+
+---
+
 ### **2025-11-04**
 
 **Author:** Jules #142

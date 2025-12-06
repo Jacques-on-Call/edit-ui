@@ -4,6 +4,22 @@ This document is a living log of common failure modes, known bugs, and the patte
 
 ---
 
+### 1. **Whitespace Typos in Method Calls and String Operations**
+
+-   **Symptom:** Mysterious parsing failures, incorrect string comparisons, or pages not loading properly. For example, JSON pages like `home-from-json.astro` fail to load in the editor, or file paths are not processed correctly.
+-   **Root Cause:** Systematic whitespace typos in code where there is a space before the dot in method calls or property access (e.g., `object. method()` instead of `object.method()`, or `'. astro'` instead of `'.astro'`). While these may look cosmetically similar in code, they are syntactically incorrect and cause runtime failures.
+-   **Verification:** 
+    1.  Search for the pattern using: `grep "\. [a-z]" filename.jsx` or `grep -n "\. [a-z-]" filename.css`
+    2.  Check string literals and regex patterns for spaces before dots: `grep "'\. " filename`
+    3.  Look for method calls with spaces: `grep "[a-zA-Z0-9_]\. [a-z]" filename`
+-   **Fix:** 
+    1.  For individual files: `sed -E 's/\. ([a-z])/.\1/g' filename > filename.tmp && mv filename.tmp filename`
+    2.  For CSS files: `sed -E 's/\. ([a-z-])/.\1/g' filename.css > filename.css.tmp && mv filename.css.tmp filename.css`
+    3.  Manual fixes may be needed for specific cases like regex patterns: `/\. astro$/` → `/\.astro$/`
+-   **Prevention:** Always validate code carefully when using find-and-replace operations. These systematic typos suggest they were introduced by an automated tool or formatter issue.
+
+---
+
 ### 5. **Authentication Loop after Login**
 
 -   **Symptom:** After a successful login and repository selection, the user is immediately redirected back to the login page, which then sends them back to the repository selection page, creating an infinite loop.

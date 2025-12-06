@@ -22,7 +22,6 @@ import {
   ChevronDown
 } from 'lucide-preact';
 import { useEditor } from '../contexts/EditorContext';
-import { useVisualViewportFix } from '../hooks/useVisualViewportFix';
 import Dropdown from './Dropdown';
 import ColorPicker from './ColorPicker';
 import './EditorHeader.css';
@@ -42,12 +41,6 @@ const BLOCK_TYPE_OPTIONS = [
 
 function EditorHeaderComponent({ pageSlug }) {
   const { activeEditor, selectionState } = useEditor();
-  
-  // Create ref for the header element to enable visualViewport fix
-  const headerRef = useRef(null);
-  
-  // Apply visualViewport fix for iOS Safari keyboard handling
-  useVisualViewportFix(headerRef);
 
   const handleAction = (action, value) => {
     console.log(`[EditorHeader] Action triggered: ${action}`, { value });
@@ -125,7 +118,7 @@ function EditorHeaderComponent({ pageSlug }) {
   const CurrentBlockIcon = currentBlockOption.icon;
 
   return (
-    <header class="editor-header" ref={headerRef}>
+    <header class="editor-header">
       {/* Page identifier - shown on mobile */}
       {pageSlug && (
         <span class="page-title-mobile">{pageSlug}</span>
