@@ -20,7 +20,7 @@ const STATUS_DISPLAY_DURATION = 2500; // Time in ms to display sync status befor
 
 export default function ContentEditorPage(props) {
   console.log('[CEP] Component Init', { props });
-  // --- 1. HOOKS ---
+  // --- 1.  HOOKS ---
   const { selectedRepo } = useAuth();
   const { openAddSectionModal } = useUI();
 
@@ -58,12 +58,12 @@ export default function ContentEditorPage(props) {
   // console.log('[ContentEditorPage] RENDER - syncStatus:', syncStatus, 'isPreviewBuilding:', isPreviewBuilding);
 
   // --- 2. DERIVED STATE & CONSTANTS ---
-  const pathIdentifier = props.filePath ? decodeURIComponent(props.filePath) : (props.pageId || 'home');
-  const pageId = pathIdentifier.endsWith('/index.astro')
+  const pathIdentifier = props.filePath ?  decodeURIComponent(props.filePath) : (props.pageId || 'home');
+  const pageId = pathIdentifier.endsWith('/index. astro')
     ? (pathIdentifier.split('/').slice(-2, -1)[0] || 'home')
-    : pathIdentifier.split('/').pop().replace(/\.astro$/, '') || 'home';
+    : pathIdentifier. split('/').pop(). replace(/\. astro$/, '') || 'home';
 
-  const isTestFile = pathIdentifier.startsWith('src/pages/json-preview/') && pathIdentifier.endsWith('.astro');
+  const isTestFile = pathIdentifier. startsWith('src/pages/json-preview/') && pathIdentifier.endsWith('.astro');
   const editorMode = isTestFile ? 'json' : 'astro';
 
   // Debug mode logging - only log once per unique combination to reduce spam
@@ -97,7 +97,7 @@ export default function ContentEditorPage(props) {
     setSaveStatus('saving');
     try {
       const key = `easy-seo-draft:${pageId}`;
-      const draft = JSON.parse(localStorage.getItem(key) || '{}');
+      const draft = JSON.parse(localStorage. getItem(key) || '{}');
       const payload = { ...draft, slug: pageId, savedAt: new Date().toISOString() };
 
       if (sections) {
@@ -110,7 +110,7 @@ export default function ContentEditorPage(props) {
       console.log(`[ContentEditor] Draft successfully saved to key: ${key}`);
       setSaveStatus('saved');
     } catch (error) {
-      console.error('[ContentEditor] Failed to autosave draft:', error);
+      console. error('[ContentEditor] Failed to autosave draft:', error);
       setSaveStatus('unsaved');
     }
   }, [pageId, sections]);
@@ -122,20 +122,20 @@ export default function ContentEditorPage(props) {
     const TIMEOUT = 120000; // 2 minutes
 
     if (Date.now() - startTime > TIMEOUT) {
-      console.error('[Build] Polling timed out after 2 minutes.');
+      console. error('[Build] Polling timed out after 2 minutes.');
       setIsPreviewBuilding(false);
-      setBuildError('The live preview build took too long. Please try refreshing the preview manually.');
+      setBuildError('The live preview build took too long.  Please try refreshing the preview manually.');
       return;
     }
 
     try {
       const data = await fetchJson('/api/check-build-status');
       console.log(`[Build Poll] Status: ${data.status}, Stage: ${data.stage}`);
-      setBuildStage(data.stage || 'Initializing...'); // Update the build stage state
+      setBuildStage(data.stage || 'Initializing... '); // Update the build stage state
 
-      if (data.status === 'success') {
-        console.log('[Build] Build successful! Waiting 2s before refreshing preview.');
-        setBuildStage('Finalizing...');
+      if (data. status === 'success') {
+        console.log('[Build] Build successful!  Waiting 2s before refreshing preview.');
+        setBuildStage('Finalizing.. .');
 
         // Wait 2 seconds before refreshing to allow deployment to propagate
         setTimeout(() => {
@@ -145,7 +145,7 @@ export default function ContentEditorPage(props) {
           setBuildStage('Success!');
           // Record successful build time for cache window
           lastBuildTimeRef.current = Date.now();
-          // Force iframe reload by updating the previewKey.
+          // Force iframe reload by updating the previewKey. 
           // The useMemo hook for previewUrl will handle the cache-busting.
           setPreviewKey(Date.now());
         }, 2000);
@@ -153,7 +153,7 @@ export default function ContentEditorPage(props) {
         console.error('[Build] Build failed or was canceled.');
         setIsPreviewBuilding(false);
         setBuildStage('');
-        setBuildError(`The live preview build failed with status: ${data.status}.`);
+        setBuildError(`The live preview build failed with status: ${data. status}. `);
       } else {
         // If status is 'active' or another ongoing state, poll again
         setTimeout(() => pollBuildStatus(startTime), POLLING_INTERVAL);
@@ -172,7 +172,7 @@ export default function ContentEditorPage(props) {
   }, []);
 
   const triggerBuild = useCallback(async () => {
-    console.log(`[Build] triggerBuild called at ${new Date().toISOString()}`);
+    console. log(`[Build] triggerBuild called at ${new Date().toISOString()}`);
     const repo = selectedRepoRef.current;
     if (!repo) {
       console.warn('[Build] Cannot trigger build: repository not selected.');
@@ -181,7 +181,7 @@ export default function ContentEditorPage(props) {
 
     console.log('[Build] Triggering background build...');
     setIsPreviewBuilding(true);
-    setBuildStage('Queued...'); // Set initial stage
+    setBuildStage('Queued... '); // Set initial stage
     setBuildError(null); // Clear previous errors
 
     try {
@@ -190,7 +190,7 @@ export default function ContentEditorPage(props) {
         method: 'POST',
         body: JSON.stringify(buildPayload),
       });
-      console.log('[Build] Build trigger API call successful. Starting to poll for status.');
+      console.log('[Build] Build trigger API call successful.  Starting to poll for status.');
       // Start the polling loop
       pollBuildStatus();
     } catch (error) {
@@ -221,22 +221,22 @@ export default function ContentEditorPage(props) {
     };
 
     if (type === 'hero') {
-      newSection.props.title = 'New Hero Title';
-      if (config.includeSlogan) newSection.props.subtitle = 'New Slogan';
-      if (config.includeBody) newSection.props.body = '<p>New body paragraph.</p>';
-      if (config.includeFeatureImage) newSection.props.featureImageUrl = config.featureImageUrl;
+      newSection.props. title = 'New Hero Title';
+      if (config. includeSlogan) newSection.props.subtitle = 'New Slogan';
+      if (config.includeBody) newSection.props.body = '<p>New body paragraph. </p>';
+      if (config.includeFeatureImage) newSection. props.featureImageUrl = config.featureImageUrl;
       if (config.includeBackgroundImage) newSection.props.backgroundImageUrl = config.backgroundImageUrl;
-      if (config.textColor) newSection.props.textColor = config.textColor;
+      if (config.textColor) newSection. props.textColor = config.textColor;
     } else if (type === 'textSection') {
-      if (config.includeTitle) newSection.props.title = 'New Section Title';
+      if (config.includeTitle) newSection. props.title = 'New Section Title';
       newSection.props.body = '<p>Start writing your content here.</p>';
       if (config.includeHeaderImage) {
-        newSection.props.headerImageUrl = config.headerImageUrl;
-        newSection.props.headerImageAlt = config.headerImageAlt;
+        newSection. props.headerImageUrl = config.headerImageUrl;
+        newSection.props.headerImageAlt = config. headerImageAlt;
       }
     }
 
-    const newSections = [...(sections || []), newSection];
+    const newSections = [... (sections || []), newSection];
     setSections(newSections);
     triggerSave(newSections);
   }, [sections, triggerSave]);
@@ -255,19 +255,19 @@ export default function ContentEditorPage(props) {
     const getImageSha = async (imagePath) => {
       if (!imagePath) return null;
       try {
-        const repo = selectedRepoRef.current.full_name;
-        const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(imagePath)}`;
+        const repo = selectedRepoRef.current. full_name;
+        const url = `/api/get-file-content? repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(imagePath)}`;
         const { sha } = await fetchJson(url);
         return sha;
       } catch (error) {
-        console.error('Failed to get SHA for image:', imagePath, error);
+        console. error('Failed to get SHA for image:', imagePath, error);
         return null;
       }
     };
 
     // Helper function to rename an image
     const renameImage = async (originalPath, newPath) => {
-      if (!originalPath || !newPath || originalPath === newPath) {
+      if (!originalPath || ! newPath || originalPath === newPath) {
         return newPath;
       }
       
@@ -275,12 +275,12 @@ export default function ContentEditorPage(props) {
       
       // Get the SHA for the original file
       const sha = await getImageSha(originalPath);
-      if (!sha) {
+      if (! sha) {
         console.error('Could not get SHA for image rename:', originalPath);
         throw new Error(`Could not get SHA for image: ${originalPath}`);
       }
       
-      const newFilename = newPath.split('/').pop();
+      const newFilename = newPath.split('/'). pop();
       
       await fetchJson('/api/files/rename', {
         method: 'POST',
@@ -298,38 +298,38 @@ export default function ContentEditorPage(props) {
 
     try {
       // Handle feature image rename if original path is tracked
-      if (updatedSection.props._originalFeatureImagePath && updatedSection.props.featureImageUrl) {
+      if (updatedSection.props._originalFeatureImagePath && updatedSection.props. featureImageUrl) {
         const newPath = await renameImage(
-          updatedSection.props._originalFeatureImagePath,
+          updatedSection. props._originalFeatureImagePath,
           updatedSection.props.featureImageUrl
         );
         // Update both featureImage and featureImageUrl to ensure consistency
-        // HeroEditor uses both: props?.featureImage || props?.featureImageUrl
+        // HeroEditor uses both: props?. featureImage || props?.featureImageUrl
         updatedSection.props.featureImage = newPath;
         updatedSection.props.featureImageUrl = newPath;
         delete updatedSection.props._originalFeatureImagePath;
       }
       
       // Handle background image rename if original path is tracked
-      if (updatedSection.props._originalBackgroundImagePath && updatedSection.props.backgroundImageUrl) {
+      if (updatedSection.props._originalBackgroundImagePath && updatedSection.props. backgroundImageUrl) {
         const newPath = await renameImage(
           updatedSection.props._originalBackgroundImagePath,
           updatedSection.props.backgroundImageUrl
         );
-        updatedSection.props.backgroundImageUrl = newPath;
+        updatedSection.props. backgroundImageUrl = newPath;
         delete updatedSection.props._originalBackgroundImagePath;
       }
       
       // Handle header image rename if original path is tracked
-      if (updatedSection.props._originalHeaderImagePath && updatedSection.props.headerImageUrl) {
+      if (updatedSection. props._originalHeaderImagePath && updatedSection.props.headerImageUrl) {
         const newPath = await renameImage(
-          updatedSection.props._originalHeaderImagePath,
-          updatedSection.props.headerImageUrl
+          updatedSection. props._originalHeaderImagePath,
+          updatedSection.props. headerImageUrl
         );
         // Update both featureImage and headerImageUrl to ensure consistency
         // BodySectionEditor uses: props?.featureImage || props?.headerImageUrl
-        updatedSection.props.featureImage = newPath;
-        updatedSection.props.headerImageUrl = newPath;
+        updatedSection.props. featureImage = newPath;
+        updatedSection.props. headerImageUrl = newPath;
         delete updatedSection.props._originalHeaderImagePath;
       }
     } catch (error) {
@@ -344,10 +344,10 @@ export default function ContentEditorPage(props) {
       if (updatedSection.props._originalHeaderImagePath) {
         failedImages.push(`header image: ${updatedSection.props._originalHeaderImagePath}`);
       }
-      console.error(`Failed to rename image(s): ${failedImages.join(', ')}`, {
+      console.error(`Failed to rename image(s): ${failedImages. join(', ')}`, {
         error: error.message,
-        sectionType: updatedSection.type,
-        sectionId: updatedSection.id
+        sectionType: updatedSection. type,
+        sectionId: updatedSection. id
       });
       // Continue with the update even if rename fails - user can try again
       // Remove the _original tracking properties to prevent confusion
@@ -365,26 +365,26 @@ export default function ContentEditorPage(props) {
   }, [sections, editingSectionIndex, triggerSave]);
 
   const handleSync = useCallback(async () => {
-    console.log(`[CEP-handleSync] Sync process initiated.`);
-    if (!selectedRepo) {
-      console.error('[CEP-handleSync] Aborting: repository not selected.');
+    console.log(`[CEP-handleSync] Sync process initiated. `);
+    if (! selectedRepo) {
+      console. error('[CEP-handleSync] Aborting: repository not selected.');
       setSyncStatus('error');
       return false; // Indicate sync failure
     }
 
     // Prevent multiple sync operations at once
     if (syncStatus === 'syncing' || isPreviewBuilding) {
-      console.log('[CEP-handleSync] Sync already in progress, ignoring duplicate request.');
+      console. log('[CEP-handleSync] Sync already in progress, ignoring duplicate request.');
       return false; // Indicate sync was not attempted
     }
 
     setSyncStatus('syncing');
     
-    // CRITICAL FIX: Use the current sections state directly instead of reading from localStorage.
+    // CRITICAL FIX: Use the current sections state directly instead of reading from localStorage. 
     // The autosave is debounced with a 1500ms delay, so localStorage may contain stale data
     // if the user clicks Sync immediately after making changes.
     // By using the current state, we ensure we're always syncing the latest data.
-    console.log('[CEP-handleSync] Status set to "syncing". Using current sections state...');
+    console.log('[CEP-handleSync] Status set to "syncing".  Using current sections state.. .');
     try {
       // Check that we have sections to sync (allow empty array for clearing content)
       if (editorMode !== 'json' || !sections) {
@@ -393,7 +393,7 @@ export default function ContentEditorPage(props) {
 
       // Get existing draft metadata from localStorage (for slug, meta, path)
       const draftKey = `easy-seo-draft:${pageId}`;
-      const savedDraft = localStorage.getItem(draftKey);
+      const savedDraft = localStorage. getItem(draftKey);
       const draftMeta = savedDraft ? JSON.parse(savedDraft) : {};
 
       // Force save the current sections to localStorage before syncing
@@ -411,18 +411,18 @@ export default function ContentEditorPage(props) {
         repo: selectedRepo.full_name,
         pageData: {
           slug: pageId,
-          meta: draftMeta.meta || { title: pageId },
+          meta: draftMeta. meta || { title: pageId },
           sections: sections, // Use current state, not localStorage
         },
       };
 
       // Log sanitized payload info (exclude actual content for security)
-      console.log('[CEP-handleSync] Payload prepared. Calling API endpoint.', {
+      console. log('[CEP-handleSync] Payload prepared.  Calling API endpoint. ', {
         repo: savePayload.repo,
-        slug: savePayload.pageData.slug,
-        sectionCount: savePayload.pageData.sections?.length || 0,
+        slug: savePayload. pageData.slug,
+        sectionCount: savePayload.pageData.sections?. length || 0,
       });
-      await fetchJson('/api/page-json/update', { method: 'POST', body: JSON.stringify(savePayload) });
+      await fetchJson('/api/page-json/update', { method: 'POST', body: JSON. stringify(savePayload) });
       console.log('[CEP-handleSync] API call successful. Content saved.');
 
       // Store the synced content to compare later (use the updated draft we saved)
@@ -440,7 +440,7 @@ export default function ContentEditorPage(props) {
       setTimeout(() => setSyncStatus('idle'), STATUS_DISPLAY_DURATION);
       return true; // Indicate sync success
     } catch (error) {
-      console.error('[CEP-handleSync] Sync process failed.', {
+      console.error('[CEP-handleSync] Sync process failed. ', {
         message: error.message,
         status: error.status,
         data: error.data,
@@ -461,14 +461,14 @@ export default function ContentEditorPage(props) {
 
     // Prevent action if a build is already in progress
     if (isPreviewBuilding) {
-      console.log('[CEP-handlePreview] Build already in progress, switching to preview view.');
+      console. log('[CEP-handlePreview] Build already in progress, switching to preview view.');
       setViewMode('livePreview');
       return;
     }
 
     // Check if content has changed since the last sync
     const draftKey = `easy-seo-draft:${pageId}`;
-    const currentDraft = localStorage.getItem(draftKey);
+    const currentDraft = localStorage. getItem(draftKey);
     const contentUnchanged = currentDraft && lastSyncedContentRef.current === currentDraft;
     
     // Check if we're within the build cache window
@@ -485,15 +485,15 @@ export default function ContentEditorPage(props) {
     
     // If content unchanged but outside cache window, just refresh the iframe
     if (contentUnchanged) {
-      console.log('[CEP-handlePreview] Content unchanged since last sync, refreshing preview without new build.');
-      setPreviewKey(Date.now());
+      console. log('[CEP-handlePreview] Content unchanged since last sync, refreshing preview without new build.');
+      setPreviewKey(Date. now());
       setViewMode('livePreview');
       return;
     }
 
     // Content has changed or hasn't been synced yet - trigger sync first, then build
-    // Per Phase 2.5 requirements: Sync MUST succeed before triggering preview build
-    console.log('[CEP-handlePreview] Content has changed. Initiating sync before preview...');
+    // Per Phase 2. 5 requirements: Sync MUST succeed before triggering preview build
+    console.log('[CEP-handlePreview] Content has changed.  Initiating sync before preview.. .');
     const syncSucceeded = await handleSync();
     
     if (syncSucceeded) {
@@ -504,7 +504,7 @@ export default function ContentEditorPage(props) {
     } else {
       // Sync failed - do NOT switch to preview mode, do NOT trigger build
       // The error state is already set by handleSync, and user will see the error indicator
-      console.error('[CEP-handlePreview] Sync failed. Preview cancelled. User must fix the error and try again.');
+      console.error('[CEP-handlePreview] Sync failed. Preview cancelled.  User must fix the error and try again.');
       // Build is cancelled - syncStatus will show 'error' in the UI
       // User stays in editor mode to address the issue
     }
@@ -520,32 +520,32 @@ export default function ContentEditorPage(props) {
   useEffect(() => {
     console.log('[CEP-useEffect] Main effect hook started.');
     try {
-      filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
+      filePathRef.current = pathIdentifier. startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
       console.log('[CEP-useEffect] Resolved file path:', filePathRef.current);
 
       const loadJsonModeContent = async () => {
         const draftKey = `easy-seo-draft:${pageId}`;
-        const savedDraft = localStorage.getItem(draftKey);
-        console.log(`[CEP-useEffect] Checking for draft in localStorage. Key: ${draftKey}`);
+        const savedDraft = localStorage. getItem(draftKey);
+        console.log(`[CEP-useEffect] Checking for draft in localStorage.  Key: ${draftKey}`);
 
         if (savedDraft) {
-          console.log('[CEP-useEffect] Local draft found. Parsing and loading.');
+          console.log('[CEP-useEffect] Local draft found.  Parsing and loading.');
           try {
             const draft = JSON.parse(savedDraft);
             setSections(draft.sections || getDefaultSections());
             console.log('[CEP-useEffect] Successfully loaded sections from draft.');
           } catch (e) {
-            console.error('[CEP-useEffect] Failed to parse draft. Loading default sections.', { error: e });
+            console.error('[CEP-useEffect] Failed to parse draft.  Loading default sections.', { error: e });
             setSections(getDefaultSections());
           }
           return;
         }
 
-        console.log('[CEP-useEffect] No local draft. Attempting to fetch from repository...');
-        const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
+        console.log('[CEP-useEffect] No local draft.  Attempting to fetch from repository.. .');
+        const repo = selectedRepo?. full_name || 'Jacques-on-Call/StrategyContent';
         try {
-          const url = `/api/page-json?repo=${encodeURIComponent(repo)}&slug=${encodeURIComponent(pageId)}`;
-          console.log('[CEP-useEffect] Fetching from URL:', url);
+          const url = `/api/page-json? repo=${encodeURIComponent(repo)}&slug=${encodeURIComponent(pageId)}`;
+          console. log('[CEP-useEffect] Fetching from URL:', url);
           const pageJson = await fetchJson(url);
           console.log('[CEP-useEffect] Successfully fetched JSON data.');
           const fetchedSections = pageJson.sections || getDefaultSections();
@@ -556,16 +556,16 @@ export default function ContentEditorPage(props) {
             slug: pageId,
             meta: pageJson.meta || { title: pageId },
             sections: fetchedSections,
-            path: filePathRef.current,
+            path: filePathRef. current,
             savedAt: new Date().toISOString()
           };
-          localStorage.setItem(draftKey, JSON.stringify(draftPayload));
+          localStorage.setItem(draftKey, JSON. stringify(draftPayload));
           console.log('[CEP-useEffect] Saved fetched content as initial draft.');
         } catch (error) {
           if (error.message.includes('404')) {
-            console.log('[CEP-useEffect] No remote file found (404). Initializing with default sections.');
+            console. log('[CEP-useEffect] No remote file found (404). Initializing with default sections.');
           } else {
-            console.error('[CEP-useEffect] Failed to fetch remote JSON. Falling back to default sections.', { error });
+            console.error('[CEP-useEffect] Failed to fetch remote JSON.  Falling back to default sections.', { error });
           }
           const defaultSections = getDefaultSections();
           setSections(defaultSections);
@@ -602,7 +602,7 @@ export default function ContentEditorPage(props) {
         const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
         const path = filePathRef.current;
         try {
-          const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`;
+          const url = `/api/get-file-content? repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(path)}`;
           const json = await fetchJson(url);
           // Decode base64 content with proper UTF-8 handling
           const binaryString = atob(json.content || '');
@@ -615,8 +615,8 @@ export default function ContentEditorPage(props) {
             setContentBody(body);
           }
         } catch (error) {
-          console.error('[ContentEditor-Astro] Failed to fetch or parse file content:', error);
-          setContentBody('// Error loading content. Please try again.');
+          console. error('[ContentEditor-Astro] Failed to fetch or parse file content:', error);
+          setContentBody('// Error loading content.  Please try again.');
         }
       };
 
@@ -627,51 +627,16 @@ export default function ContentEditorPage(props) {
       }
 
     } catch (e) {
-      console.error('[CEP-useEffect] CRITICAL: The main useEffect hook crashed.', { error: e });
+      console.error('[CEP-useEffect] CRITICAL: The main useEffect hook crashed. ', { error: e });
     }
     // Dependencies: Only use primitive values to prevent re-runs when callbacks are recreated
     // getDefaultSections is stable (empty deps), but we inline calls anyway for safety
-    // selectedRepo?.full_name extracts the primitive string value from the object
-  }, [pageId, selectedRepo?.full_name, editorMode]);
+    // selectedRepo?. full_name extracts the primitive string value from the object
+  }, [pageId, selectedRepo?. full_name, editorMode]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const onViewport = () => {
-      console.log('[viewport] vv', window.visualViewport && {height: window.visualViewport.height, offsetTop: window.visualViewport.offsetTop});
-      const header = document.querySelector('.editor-header');
-      console.log('[viewport] header rect', header && header.getBoundingClientRect(), 'styleTop', header && header.style.top, 'transform', header && header.style.transform);
-    };
-
-    const bindViewportHandler = () => {
-      const onChange = () => {
-        onViewport();
-        const vv = window.visualViewport;
-        const keyboardOpen = vv ? (window.innerHeight - vv.height) > 80 : false;
-        const header = document.querySelector('.editor-header');
-        if (header) {
-          header.style.top = `env(safe-area-inset-top, 0px)`;
-        }
-      };
-      onChange();
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', onChange);
-        window.visualViewport.addEventListener('scroll', onChange);
-        return () => {
-          window.visualViewport.removeEventListener('resize', onChange);
-          window.visualViewport.removeEventListener('scroll',onChange);
-        };
-      } else {
-        window.addEventListener('resize', onChange);
-        return () => window.removeEventListener('resize', onChange);
-      }
-    }
-
-    const unbind = bindViewportHandler();
-    return () => {
-      if (unbind) unbind();
-    };
-  }, []);
+  // NOTE: The Visual Viewport useEffect was REMOVED. 
+  // It was manipulating the header's top style which conflicted with CSS-based fixed positioning.
+  // The CSS in EditorHeader.css now handles all positioning, including keyboard scenarios. 
 
   // --- 5. RENDER LOGIC ---
   
@@ -693,11 +658,11 @@ export default function ContentEditorPage(props) {
       }
 
       if (result.endsWith('.astro')) {
-        result = result.slice(0, -'.astro'.length);
+        result = result.slice(0, -'. astro'.length);
       }
 
       if (result.endsWith('index')) {
-        result = result.slice(0, -'index'.length);
+        result = result.slice(0, -'index'. length);
       }
 
       if (result.length > 0 && !result.endsWith('/')) {
@@ -709,7 +674,7 @@ export default function ContentEditorPage(props) {
 
     const previewPath = generatePreviewPath(pathIdentifier);
     // Add the previewKey as a cache-busting query parameter
-    const finalUrl = `https://strategycontent.pages.dev/${previewPath}?_t=${previewKey}`;
+    const finalUrl = `https://strategycontent.pages.dev/${previewPath}? _t=${previewKey}`;
     return finalUrl;
   }, [pathIdentifier, previewKey]);
 
@@ -718,11 +683,11 @@ export default function ContentEditorPage(props) {
     if (viewMode === 'editor') {
       return (
         <div class="w-full">
-          {sections ? (
+          {sections ?  (
             <SectionsEditor sections={sections} onChange={handleSectionsChange} onEdit={handleEditSection} />
           ) : contentBody !== null ? (
             <LexicalEditor
-              // This is the legacy editor for 'astro' mode.
+              // This is the legacy editor for 'astro' mode. 
               // It's not connected to the context for now.
               ref={useRef(null)} // Pass a dummy ref
               slug={pageId}
@@ -744,9 +709,9 @@ export default function ContentEditorPage(props) {
             <div class="text-white text-center p-4">
               <RefreshCw size={48} className="animate-spin mb-4 mx-auto" />
               <p class="text-lg font-semibold">
-                {buildStage.charAt(0).toUpperCase() + buildStage.slice(1)}
+                {buildStage. charAt(0).toUpperCase() + buildStage. slice(1)}
               </p>
-              <p class="text-sm">Your changes are being deployed. This may take a minute.</p>
+              <p class="text-sm">Your changes are being deployed.  This may take a minute.</p>
             </div>
           </div>
         )}
@@ -791,7 +756,7 @@ export default function ContentEditorPage(props) {
           saveStatus={saveStatus}
           syncStatus={syncStatus}
           viewMode={viewMode}
-          previewState={isPreviewBuilding ? 'building' : (viewMode !== 'editor' ? 'ready' : 'idle')}
+          previewState={isPreviewBuilding ?  'building' : (viewMode !== 'editor' ?  'ready' : 'idle')}
           pageScore={editorMode === 'json' ? pageScoreData.total : null}
           onAdd={openAddSectionModal}
           onPreview={editorMode === 'json' ? handlePreview : null}
