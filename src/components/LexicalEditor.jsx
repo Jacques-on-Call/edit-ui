@@ -95,11 +95,9 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
   const [isEditorEmpty, setIsEditorEmpty] = useState(true);
 
   const handleOnChange = (editorState, editor) => {
-    console.log('[LexicalEditor] handleOnChange triggered');
     editor.getEditorState().read(() => {
       const htmlString = $generateHtmlFromNodes(editor);
       if (htmlString !== lastHtmlRef.current) {
-        console.log('[LexicalEditor] Content changed, firing onChange prop.');
         lastHtmlRef.current = htmlString;
         onChange(htmlString);
       }
@@ -123,18 +121,20 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
   const editorInputClasses = ['editor-input'];
   if (transparentBg) editorInputClasses.push('editor-input-transparent');
   if (darkText) editorInputClasses.push('editor-input-dark');
-  const editorInputClass = editorInputClasses.join(' ');
+
+  // Combine with the passed className
+  const finalEditorInputClass = `${editorInputClasses.join(' ')} ${className || ''}`.trim();
   
   // Build placeholder class - needs dark variant when darkText is enabled
   const placeholderClass = darkText ? 'editor-placeholder editor-placeholder-dark px-2' : 'editor-placeholder px-2';
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <div class={`relative ${className || ''}`}>
+      <div class="relative">
         <RichTextPlugin
           contentEditable={
             <div onFocus={onFocus} onBlur={onBlur} class="px-2">
-              <ContentEditable className={editorInputClass} />
+              <ContentEditable className={finalEditorInputClass} />
             </div>
           }
           placeholder={

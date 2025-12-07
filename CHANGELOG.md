@@ -1,5 +1,34 @@
 # Project Change Log
 
+Jules #201 (fix): Stabilize Editor Styling, Layout, and Autosave
+Date: 2025-12-07
+Summary:
+Fixed three major issues in the content editor: inconsistent text styling, incorrect layout spacing, and unreliable autosave. The editor is now more visually correct, robust, and reliable.
+
+Details:
+- **Styling Fix:**
+  - **Root Cause:** Text styling classes (for font size, color, etc.) were being applied to a container element instead of the `ContentEditable` text field itself.
+  - **Solution:** Modified `LexicalEditor.jsx` to merge the incoming `className` prop with its own internal classes and apply the result directly to the `ContentEditable` component. This ensures styles are correctly applied to the text and makes the toolbar's formatting tools work as expected.
+
+- **Layout Spacing Fix:**
+  - **Root Cause:** The main content area had incorrect padding, causing a large gap at the top and allowing the bottom action bar to overlap the last section.
+  - **Solution:** Adjusted the inline styles in `ContentEditorPage.jsx`. The `paddingTop` is now correctly set to the height of the header, and a `paddingBottom` equal to the height of the action bar has been added, ensuring content is perfectly framed.
+
+- **Autosave Reliability Fix:**
+  - **Root Cause:** The `autosaveCallback` had an unstable dependency on the `sections` state, creating the potential for race conditions where stale data could be saved.
+  - **Solution:** Refactored the `useCallback` for the autosave function in `ContentEditorPage.jsx`. It now depends on the stable `editorMode` instead of the `sections` state, making the callback reference stable and eliminating the race condition.
+
+Impact:
+- Text formatting from the toolbar now applies correctly.
+- The editor layout is visually correct, with no excessive gaps or overlapping elements.
+- The autosave mechanism is more robust, preventing data loss.
+- The overall editing experience is more stable and predictable.
+
+Reflection:
+- **What was the most challenging part of this task?** The autosave bug was the most subtle. The UI indicated that a save was happening, which misdirected the investigation at first. It was only by analyzing the React hook dependency array that the potential for a race condition became clear.
+- **What was a surprising discovery or key learning?** The importance of stable callbacks in `useCallback`. Including volatile state in a dependency array of a callback that is used in a debounced function is a recipe for hard-to-debug race conditions. The data needed by the callback should be passed as an argument, not closed over from a stale state.
+- **What advice would you give the next agent who works on this code?** When debugging UI issues, trace the props and classes all the way to the final DOM element. For autosave or other debounced actions, pay close attention to the dependency arrays of your `useCallback` hooks.
+
 Jules #200 (fix): Resolve Critical Editor Dysfunctions
 Date: 2025-12-07
 Summary:

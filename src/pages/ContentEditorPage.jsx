@@ -100,20 +100,20 @@ export default function ContentEditorPage(props) {
       const draft = JSON.parse(localStorage.getItem(key) || '{}');
       const payload = { ...draft, slug: pageId, savedAt: new Date().toISOString() };
 
-      if (sections) {
+      // Use editorMode to determine payload structure, not the 'sections' state
+      if (editorMode === 'json') {
         payload.sections = dataToSave;
       } else {
         payload.content = dataToSave;
       }
 
       localStorage.setItem(key, JSON.stringify(payload));
-      console.log(`[ContentEditor] Draft successfully saved to key: ${key}`);
       setSaveStatus('saved');
     } catch (error) {
       console.error('[ContentEditor] Failed to autosave draft:', error);
       setSaveStatus('unsaved');
     }
-  }, [pageId, sections]);
+  }, [pageId, editorMode]);
 
   const { triggerSave } = useAutosave(autosaveCallback, 1500);
 
@@ -760,11 +760,10 @@ export default function ContentEditorPage(props) {
         {/* Only show editor header when in editor mode, hide in preview modes */}
         {viewMode === 'editor' && <EditorHeader pageSlug={pageId} />}
         <main 
-          class="flex-grow relative" 
+          class="flex-grow relative overflow-y-auto"
           style={{ 
-            paddingTop: viewMode === 'editor' 
-              ? 'calc(var(--header-h) + env(safe-area-inset-top, 0))' 
-              : 'env(safe-area-inset-top, 0)' 
+            paddingTop: viewMode === 'editor' ? 'var(--header-h)' : '0',
+            paddingBottom: 'var(--bottom-bar-height)'
           }}
         >
           {renderContent()}
