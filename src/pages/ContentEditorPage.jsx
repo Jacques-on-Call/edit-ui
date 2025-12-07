@@ -526,38 +526,36 @@ export default function ContentEditorPage(props) {
       const loadJsonModeContent = async () => {
         const draftKey = `easy-seo-draft:${pageId}`;
         const savedDraft = localStorage.getItem(draftKey);
-        console.log(`[CEP-useEffect] Checking for draft in localStorage.  Key: ${draftKey}`);
+        console.log(`[CEP-useEffect] Checking for draft in localStorage. Key: ${draftKey}`);
 
-        let draftIsValid = false;
         if (savedDraft) {
           console.log('[CEP-useEffect] Local draft found. Attempting to parse and validate.');
           try {
             const draft = JSON.parse(savedDraft);
-            // A draft is valid if it has a `sections` array with at least one section.
+            // A draft is valid ONLY if it has a `sections` array with at least one section.
             if (Array.isArray(draft.sections) && draft.sections.length > 0) {
               console.log('[CEP-useEffect] Draft is valid. Loading sections from local draft.');
               setSections(draft.sections);
-              draftIsValid = true;
+              // If the draft is valid, we stop here. We don't fetch from the repo.
+              return; 
             } else {
-              console.warn('[CEP-useEffect] Local draft found but is empty or invalid. It will be ignored.');
-              // Optional: remove the invalid draft to prevent this from happening again
+              console.warn('[CEP-useEffect] Local draft found but is empty or invalid. It will be ignored and removed.');
               localStorage.removeItem(draftKey);
             }
           } catch (e) {
             console.error('[CEP-useEffect] Failed to parse local draft. Removing corrupted item.', { error: e });
-            // Remove the corrupted draft from localStorage
             localStorage.removeItem(draftKey);
           }
         }
 
-        if (draftIsValid) {
-          return;
-        }
-
-        console.log('[CEP-useEffect] No valid local draft found. Attempting to fetch from repository...');
+        // --- Fallback Logic ---
+        // This code now runs if:
+        // 1. No local draft was found.
+        // 2. A local draft was found but was empty, invalid, or corrupted.
+        console.log('[CEP-useEffect] No valid local draft. Fetching from repository...');
         const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
         try {
-          const url = `/api/page-json? repo=${encodeURIComponent(repo)}&slug=${encodeURIComponent(pageId)}`;
+          const url = `/api/page-json?repo=${encodeURIComponent(repo)}&slug=${encodeURIComponent(pageId)}`;
           console.log('[CEP-useEffect] Fetching from URL:', url);
           const pageJson = await fetchJson(url);
           console.log('[CEP-useEffect] Successfully fetched JSON data.');
@@ -574,11 +572,12 @@ export default function ContentEditorPage(props) {
           };
           localStorage.setItem(draftKey, JSON.stringify(draftPayload));
           console.log('[CEP-useEffect] Saved fetched content as initial draft.');
+
         } catch (error) {
           if (error.message.includes('404')) {
             console.log('[CEP-useEffect] No remote file found (404). Initializing with default sections.');
           } else {
-            console.error('[CEP-useEffect] Failed to fetch remote JSON.  Falling back to default sections.', { error });
+            console.error('[CEP-useEffect] Failed to fetch remote JSON. Falling back to default sections.', { error });
           }
           const defaultSections = getDefaultSections();
           setSections(defaultSections);
@@ -695,12 +694,12 @@ export default function ContentEditorPage(props) {
   const renderContent = () => {
     if (viewMode === 'editor') {
       return (
-        <div class="w-full">
-          {sections ?  (
+        <>
+          {sections ? (
             <SectionsEditor sections={sections} onChange={handleSectionsChange} onEdit={handleEditSection} />
           ) : contentBody !== null ? (
             <LexicalEditor
-              // This is the legacy editor for 'astro' mode. 
+              // This is the legacy editor for 'astro' mode.
               // It's not connected to the context for now.
               ref={useRef(null)} // Pass a dummy ref
               slug={pageId}
@@ -710,7 +709,7 @@ export default function ContentEditorPage(props) {
           ) : (
             <div>Loading Editor...</div>
           )}
-        </div>
+        </>
       );
     }
 
