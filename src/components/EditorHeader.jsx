@@ -39,7 +39,7 @@ const BLOCK_TYPE_OPTIONS = [
   { value: 'h6', label: 'Heading 6', icon: Heading6 },
 ];
 
-function EditorHeaderComponent({ pageSlug }) {
+function EditorHeader({ pageSlug }) {
   const { activeEditor, selectionState } = useEditor();
 
   const handleAction = (action, value) => {
@@ -119,10 +119,6 @@ function EditorHeaderComponent({ pageSlug }) {
 
   return (
     <header class="editor-header">
-      {/* Page identifier - shown on mobile */}
-      {pageSlug && (
-        <span class="page-title-mobile">{pageSlug}</span>
-      )}
       <div class="toolbar-scroll-container">
         <div class="toolbar">
           {/* GROUP 1: History (Undo/Redo first as requested) */}
