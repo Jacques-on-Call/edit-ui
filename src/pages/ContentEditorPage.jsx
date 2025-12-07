@@ -528,20 +528,33 @@ export default function ContentEditorPage(props) {
         const savedDraft = localStorage.getItem(draftKey);
         console.log(`[CEP-useEffect] Checking for draft in localStorage.  Key: ${draftKey}`);
 
+        let draftIsValid = false;
         if (savedDraft) {
-          console.log('[CEP-useEffect] Local draft found.  Parsing and loading.');
+          console.log('[CEP-useEffect] Local draft found. Attempting to parse and validate.');
           try {
             const draft = JSON.parse(savedDraft);
-            setSections(draft.sections || getDefaultSections());
-            console.log('[CEP-useEffect] Successfully loaded sections from draft.');
+            // A draft is valid if it has a `sections` array with at least one section.
+            if (Array.isArray(draft.sections) && draft.sections.length > 0) {
+              console.log('[CEP-useEffect] Draft is valid. Loading sections from local draft.');
+              setSections(draft.sections);
+              draftIsValid = true;
+            } else {
+              console.warn('[CEP-useEffect] Local draft found but is empty or invalid. It will be ignored.');
+              // Optional: remove the invalid draft to prevent this from happening again
+              localStorage.removeItem(draftKey);
+            }
           } catch (e) {
-            console.error('[CEP-useEffect] Failed to parse draft.  Loading default sections.', { error: e });
-            setSections(getDefaultSections());
+            console.error('[CEP-useEffect] Failed to parse local draft. Removing corrupted item.', { error: e });
+            // Remove the corrupted draft from localStorage
+            localStorage.removeItem(draftKey);
           }
+        }
+
+        if (draftIsValid) {
           return;
         }
 
-        console.log('[CEP-useEffect] No local draft.  Attempting to fetch from repository.. .');
+        console.log('[CEP-useEffect] No valid local draft found. Attempting to fetch from repository...');
         const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
         try {
           const url = `/api/page-json? repo=${encodeURIComponent(repo)}&slug=${encodeURIComponent(pageId)}`;
@@ -755,9 +768,7 @@ export default function ContentEditorPage(props) {
               : 'env(safe-area-inset-top, 0)' 
           }}
         >
-          <div class="h-full">
-            {renderContent()}
-          </div>
+          {renderContent()}
         </main>
         <BottomActionBar
           saveStatus={saveStatus}
