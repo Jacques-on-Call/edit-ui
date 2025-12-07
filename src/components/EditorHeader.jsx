@@ -39,7 +39,7 @@ const BLOCK_TYPE_OPTIONS = [
   { value: 'h6', label: 'Heading 6', icon: Heading6 },
 ];
 
-function EditorHeader({ pageSlug }) {
+function EditorHeaderComponent({ pageSlug }) {
   const { activeEditor, selectionState } = useEditor();
 
   const handleAction = (action, value) => {
@@ -119,6 +119,7 @@ function EditorHeader({ pageSlug }) {
 
   return (
     <header class="editor-header">
+      {/* The div displaying the page slug has been removed from here to fix the obscured toolbar */}
       <div class="toolbar-scroll-container">
         <div class="toolbar">
           {/* GROUP 1: History (Undo/Redo first as requested) */}
@@ -329,6 +330,4 @@ function EditorHeader({ pageSlug }) {
   );
 }
 
-export default function EditorHeader({ pageSlug }) {
-  return <EditorHeaderComponent pageSlug={pageSlug} />;
-}
+export default EditorHeaderComponent;
