@@ -713,8 +713,6 @@ export default function FloatingToolbar({
   const currentBlockType = selectionState?.blockType || 'paragraph';
   const currentAlignment = selectionState?.alignment || 'left';
 
-  if (!position.visible) return null;
-
   return createPortal(
     <div
       ref={toolbarRef}
@@ -722,6 +720,8 @@ export default function FloatingToolbar({
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
+        visibility: position.visible ? 'visible' : 'hidden',
+        opacity: position.visible ? 1 : 0,
       }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleToolbarTouchStart}
