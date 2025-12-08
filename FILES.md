@@ -14,13 +14,14 @@ This document lists all significant files in the `easy-seo` project, along with 
 
 ### **Contexts**
 -   **`src/contexts/AuthContext.jsx`**: Manages global authentication state.
--   **`src/contexts/EditorContext.jsx`**: Manages the currently active editor instance, allowing the global toolbar to communicate with the focused editor field.
+-   **`src/contexts/EditorContext.jsx`**: Manages the currently active editor instance, selection state, and handleAction function. Provides central routing for all toolbar actions (formatting, insert) to the active Lexical editor API. Critical for dual toolbar system.
 -   **`src/contexts/UIContext.jsx`**: Manages the state of global UI elements, such as modals.
 
 ### **Styling**
 
 -   **`src/pages/ContentEditorPage.css`**: Contains the responsive styles for the content editor page, including the mobile-first grid layout and drawer animations.
--   **`src/components/EditorHeader.css`**: Styles specific to the `EditorHeader` component, including the toolbar button styles.
+-   **`src/components/EditorHeader.css`**: DEPRECATED - Previously contained toolbar styles. Merged into editor.css.
+-   **`src/styles/editor.css`**: Comprehensive editor styling including FloatingToolbar, VerticalToolbox, HamburgerTrigger, and animations. Includes proper z-index layering and responsive styles.
 -   **`src/components/BottomActionBar.css`**: Styles specific to the `BottomActionBar` component.
 
 ### **Utilities**
@@ -41,7 +42,10 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/components/ImageUploader.jsx`**: Component for uploading new images to the repository. Shows upload status (idle, uploading, success, error). Includes SEO score, alt text, filename, title, description, and resize options.
 -   **`src/components/ImageEditor.jsx`**: Component for editing existing images in sections. Shows image preview, allows editing filename (SEO-friendly), alt text, title, description, and loading strategy. Includes SEO score and option to replace the image.
 -   **`src/components/SearchBar.jsx`**: A debounced search input component.
--   **`src/components/EditorHeader.jsx`**: The header component for the content editor. Now context-aware.
+-   **`src/components/EditorHeader.jsx`**: DEPRECATED - Previously contained the fixed header toolbar. Replaced by FloatingToolbar and VerticalToolbox in December 2025.
+-   **`src/components/FloatingToolbar.jsx`**: Context-aware formatting toolbar that appears above text selection. Provides instant access to bold, italic, underline, code, link, and list formatting. Renders via portal to document.body. Auto-positions and follows scroll/resize.
+-   **`src/components/VerticalToolbox.jsx`**: Slide-out left sidebar for insert actions (headings, lists, images, tables). Accessed via HamburgerTrigger. Includes backdrop overlay, keyboard navigation (Escape to close), and click-outside-to-close.
+-   **`src/components/HamburgerTrigger.jsx`**: Floating hamburger button in top-left corner that opens/closes the VerticalToolbox. Fixed positioning with hover and active states.
 -   **`src/components/BlockTree.jsx`**: The component for displaying the block structure of a page.
 -   **`src/components/BottomActionBar.jsx`**: The bottom action bar for the content editor. Supports editor and preview view modes with appropriate icons.
 -   **`src/components/SectionsEditor.jsx`**: The main component for rendering and managing the different sections of a page.

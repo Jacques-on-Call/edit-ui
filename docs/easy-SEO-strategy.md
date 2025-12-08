@@ -53,6 +53,27 @@ A no-code website builder for non-technical business owners (lawyers, plumbers, 
 - Reusable content blocks (hero sections, features, quotes)
 - Undo/redo with autosave
 
+**Dual Toolbar System:**
+
+The editor features a modern, context-aware toolbar system inspired by Notion and Medium:
+
+- **Floating Context Toolbar:**
+  - Appears automatically above selected text
+  - Provides instant access to formatting: Bold, Italic, Underline, Code, Link
+  - Includes quick list creation (bullet and numbered)
+  - Buttons highlight to show active formatting state
+  - Follows the selection as you scroll
+  - Disappears when no text is selected
+
+- **Vertical Insert Toolbar:**
+  - Accessed via hamburger icon in top-left corner
+  - Slides out as a left sidebar with insert actions
+  - Insert headings (H2, H3), lists, images, and tables
+  - Works at cursor position, no selection needed
+  - Auto-closes after inserting an element
+  - Keyboard accessible (Escape to close)
+  - Click outside or backdrop to dismiss
+
 **Mobile-optimized:**
 
 - Touch-friendly toolbar

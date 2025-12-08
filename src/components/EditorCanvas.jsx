@@ -1,6 +1,7 @@
 import { h } from 'preact';
 import { useContext } from 'preact/hooks';
 import FloatingToolbar from './FloatingToolbar';
+import VerticalToolbox from './VerticalToolbox';
 import BottomActionBar from './BottomActionBar';
 import AddSectionModal from './AddSectionModal';
 import { EditorContext } from '../contexts/EditorContext';
@@ -32,6 +33,7 @@ export default function EditorCanvas(props) {
   return (
     <div class="flex flex-col h-full bg-transparent text-white relative">
       <FloatingToolbar handleAction={handleAction} selectionState={selectionState} />
+      <VerticalToolbox handleAction={handleAction} />
       <main
         class="flex-grow relative overflow-y-auto"
         style={{
