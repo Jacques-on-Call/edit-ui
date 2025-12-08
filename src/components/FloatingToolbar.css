@@ -15,6 +15,11 @@
   position: absolute;
   transform: translateX(-50%);
   
+  /* --- DEBUG --- */
+  background-color: red !important;
+  border: 5px solid yellow !important;
+  /* --- END DEBUG --- */
+
   /* Liquid glass background */
   background: linear-gradient(
     180deg, 
