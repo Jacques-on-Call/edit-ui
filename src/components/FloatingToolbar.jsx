@@ -225,310 +225,74 @@ export default function FloatingToolbar({
     };
   }, [findEditorRoot, DIAGNOSTIC_MODE]);
 
+  const arrowRef = useRef(null);
   // Main selection position update function (Issue #3 fix: use useCallback for stable reference)
   const updatePosition = useCallback(() => {
-      // Always log selection event firing in diagnostic mode
-      if (DIAGNOSTIC_MODE) {
-        console.log('[FloatingToolbar] DIAGNOSTIC: Selection event fired');
-      }
-      
-      // Defensive check: ensure window.getSelection exists (SSR safety)
-      if (typeof window === 'undefined' || !window.getSelection) {
-        if (debugMode || DIAGNOSTIC_MODE) {
-          console.log('[FloatingToolbar] window.getSelection not available');
-        }
-        return;
-      }
+      if (typeof window === 'undefined' || !window.getSelection) return;
 
       const selection = window.getSelection();
-      
-      // iOS-specific handling (Issue #2 fix)
-      // Detect if we're on iOS
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      
-      // Check if we're still within the touch window (touch just ended)
       const now = Date.now();
-      const timeSinceTouchEnd = now - touchEndTimeRef.current;
-      const isRecentTouch = timeSinceTouchEnd < 500; // Within 500ms of touch end
-      
-      // Log selection details in diagnostic mode
-      if (DIAGNOSTIC_MODE) {
-        console.log('[FloatingToolbar] DIAGNOSTIC: Selection object', {
-          selection: !!selection,
-          isCollapsed: selection?.isCollapsed,
-          rangeCount: selection?.rangeCount,
-          selectionText: selection?.toString()?.substring(0, 50),
-          isIOS,
-          isTouchActive: isTouchActiveRef.current,
-          isRecentTouch,
-          timeSinceTouchEnd
-        });
-      }
-      
-      // Get selection text to check if non-empty
+
+      // All the original safety checks to prevent loops
       const selectionText = selection?.toString() || '';
       const hasTextSelection = selectionText.trim().length > 0;
-      
-      // iOS-specific: If selection appears collapsed but we just had a touch,
-      // wait a bit longer for iOS to finalize the selection (Issue #2 fix)
-      // Add recursion guard to prevent infinite loop if selection never finalizes
-      const MAX_IOS_RETRIES = 3;
-      if (isIOS && selection?.isCollapsed && isRecentTouch && !caretMode && iosRetryCountRef.current < MAX_IOS_RETRIES) {
-        iosRetryCountRef.current += 1;
-        if (DIAGNOSTIC_MODE) {
-          console.log('[FloatingToolbar] iOS: Selection collapsed but touch recent, will re-check', {
-            timeSinceTouchEnd,
-            willReCheckIn: '100ms',
-            retryCount: iosRetryCountRef.current,
-            maxRetries: MAX_IOS_RETRIES
-          });
-        }
-        // Schedule a re-check after iOS has had time to finalize
-        setTimeout(() => {
-          if (DIAGNOSTIC_MODE) {
-            console.log('[FloatingToolbar] iOS: Re-checking selection after delay');
-          }
-          updatePosition();
-        }, 100);
+      if (!selection || selection.rangeCount === 0 || (!hasTextSelection && !caretMode) || (selection.isCollapsed && !caretMode)) {
+        setPosition(prev => prev.visible ? { ...prev, visible: false } : prev);
         return;
       }
       
-      // Reset retry count on successful check or when we give up
-      if (iosRetryCountRef.current > 0 && (!isRecentTouch || !selection?.isCollapsed)) {
-        if (DIAGNOSTIC_MODE && iosRetryCountRef.current >= MAX_IOS_RETRIES) {
-          console.log('[FloatingToolbar] iOS: Max retries reached, giving up on collapsed selection');
-        }
-        iosRetryCountRef.current = 0;
-      }
-      
-      // Create unique key for this selection to dedupe updates
       const selectionKey = selection?.rangeCount > 0 
         ? `${selection.anchorNode?.nodeName}-${selection.anchorOffset}-${selection.focusNode?.nodeName}-${selection.focusOffset}-${selectionText.length}`
         : null;
+
+      if (selectionKey && selectionKey === lastSelectionKeyRef.current) return;
       
-      // Dedupe: Skip update if selection hasn't changed
-      if (selectionKey && selectionKey === lastSelectionKeyRef.current) {
-        if (debugMode) {
-          console.debug('[FloatingToolbar] Skipping - selection unchanged (dedupe)', { selectionKey });
-        }
-        return;
-      }
-      
-      // Cooldown: Prevent rapid updates within cooldownMs window
-      // Reuse 'now' variable already declared above for iOS touch handling
       const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
-      if (lastUpdateTimeRef.current > 0 && timeSinceLastUpdate < cooldownMs) {
-        if (debugMode) {
-          console.debug('[FloatingToolbar] Skipping - within cooldown period', { 
-            timeSinceLastUpdate, 
-            cooldownMs,
-            selectionKey 
-          });
-        }
-        return;
-      }
-      
+      if (lastUpdateTimeRef.current > 0 && timeSinceLastUpdate < cooldownMs) return;
+
       lastSelectionKeyRef.current = selectionKey;
       lastUpdateTimeRef.current = now;
-      
-      // Create summary object for debugging
-      const selectionSummary = {
-        isCollapsed: selection?.isCollapsed,
-        rangeCount: selection?.rangeCount || 0,
-        anchorNode: selection?.anchorNode?.nodeName,
-        focusNode: selection?.focusNode?.nodeName,
-        selectionText: selectionText.substring(0, 50) + (selectionText.length > 50 ? '...' : ''), // First 50 chars for debugging only
-        textLength: selectionText.length,
-        trimmedLength: selectionText.trim().length,
-        hasTextSelection,
-        caretMode
-      };
 
-      // Hide toolbar if no selection or selection is collapsed (just a cursor)
-      // Exception: if caretMode=true, allow showing on collapsed selection
-      if (!selection || selection.rangeCount === 0) {
-        if (debugMode || DIAGNOSTIC_MODE) {
-          console.log('[FloatingToolbar] Hiding - no selection or rangeCount=0', selectionSummary);
-        }
-        setPosition(prev => ({ ...prev, visible: false }));
-        return;
-      }
-      
-      // Critical mobile fix: Only show toolbar when there's actual text selected
-      // This prevents caret loops caused by keyboard/visualViewport events on mobile
-      if (selection.isCollapsed && !caretMode) {
-        if (debugMode || DIAGNOSTIC_MODE) {
-          console.log('[FloatingToolbar] Hiding - collapsed selection and caretMode=false (prevents mobile keyboard loops)', selectionSummary);
-        }
-        setPosition(prev => ({ ...prev, visible: false }));
-        return;
-      }
-      
-      // Only show toolbar when selection has non-empty text (after trim)
-      // This prevents showing toolbar on collapsed selection or whitespace-only selection
-      if (!hasTextSelection && !caretMode) {
-        if (debugMode || DIAGNOSTIC_MODE) {
-          console.log('[FloatingToolbar] Hiding - no text in selection (prevents caret loops)', selectionSummary);
-        }
-        setPosition(prev => ({ ...prev, visible: false }));
-        return;
-      }
-
-      // Edge case: Check if selection is inside a contenteditable element or editor root
       const anchorNode = selection.anchorNode;
-      if (!anchorNode) {
-        if (debugMode || DIAGNOSTIC_MODE) {
-          console.log('[FloatingToolbar] Hiding - no anchor node');
-        }
-        setPosition(prev => ({ ...prev, visible: false }));
-        return;
-      }
-
-      // Check if selection is within the editor root (Issue #1 fix - use findEditorRoot with fallback)
       const editorRoot = findEditorRoot();
-      
-      // Log editor root check in diagnostic mode
-      if (DIAGNOSTIC_MODE) {
-        console.log('[FloatingToolbar] DIAGNOSTIC: Editor root check', {
-          selector: editorRootSelector,
-          found: !!editorRoot,
-          elementInfo: editorRoot ? {
-            tagName: editorRoot.tagName,
-            className: editorRoot.className,
-            id: editorRoot.id,
-            contentEditable: editorRoot.contentEditable
-          } : null
-        });
-      }
-      
-      let anchorInEditorRoot = false;
-      
-      if (editorRoot) {
-        let node = anchorNode.nodeType === Node.TEXT_NODE ? anchorNode.parentElement : anchorNode;
-        while (node && node !== document.body) {
-          if (node === editorRoot) {
-            anchorInEditorRoot = true;
-            break;
-          }
-          // Also check for contenteditable as additional fallback
-          if (node.contentEditable === 'true' || node.isContentEditable) {
-            anchorInEditorRoot = true;
-            break;
-          }
-          node = node.parentElement;
-        }
+      if (!anchorNode || !editorRoot || !editorRoot.contains(anchorNode)) {
+          setPosition(prev => prev.visible ? { ...prev, visible: false } : prev);
+          return;
       }
 
-      if (!anchorInEditorRoot) {
-        if (debugMode || DIAGNOSTIC_MODE) {
-          console.log('[FloatingToolbar] Hiding - selection not in editor root', {
-            editorRootSelector,
-            anchorInEditorRoot,
-            checkedElement: anchorNode.nodeType === Node.TEXT_NODE ? anchorNode.parentElement?.className : anchorNode.className
-          });
-        }
-        setPosition(prev => ({ ...prev, visible: false }));
-        return;
-      }
-
-      // Get bounding rect of the selection range
       const range = selection.getRangeAt(0);
-      const rects = range.getClientRects();
-      const rect = range.getBoundingClientRect();
+      const selectionRect = range.getBoundingClientRect();
+      const toolbarElement = toolbarRef.current;
+      const arrowElement = arrowRef.current;
 
-      // Hide toolbar if selection has no dimensions (can happen with certain nodes)
-      if (rect.width === 0 && rect.height === 0) {
-        if (debugMode || DIAGNOSTIC_MODE) {
-          console.log('[FloatingToolbar] Hiding - selection has no dimensions', {
-            rectWidth: rect.width,
-            rectHeight: rect.height
-          });
-        }
-        setPosition(prev => ({ ...prev, visible: false }));
+      if (!toolbarElement || !arrowElement || (selectionRect.width === 0 && selectionRect.height === 0)) {
+        setPosition(prev => prev.visible ? { ...prev, visible: false } : prev);
         return;
       }
-
-      const toolbarElement = toolbarRef.current;
-      if (!toolbarElement) return;
-
-      // Account for visualViewport offsets (important for mobile/pinch-zoom)
-      const viewport = window.visualViewport || { 
-        offsetLeft: 0, 
-        offsetTop: 0, 
-        pageLeft: window.scrollX,
-        pageTop: window.scrollY
-      };
       
-      const viewportOffsetX = viewport.offsetLeft || 0;
-      const viewportOffsetY = viewport.offsetTop || 0;
+      // New smart positioning logic
+      const toolbarRect = toolbarElement.getBoundingClientRect();
+      const ARROW_HEIGHT = 10;
+      const GAP = 8;
+      const VIEWPORT_PADDING = 8;
 
-      // Position toolbar above selection, centered horizontally
-      // Use absolute positioning with scroll offsets and viewport offsets
-      let top = rect.top + window.scrollY - toolbarElement.offsetHeight - offset.y + viewportOffsetY;
-      const left = rect.left + window.scrollX + (rect.width / 2) + viewportOffsetX + offset.x;
+      const idealTop = selectionRect.top + window.scrollY - toolbarRect.height - ARROW_HEIGHT - GAP;
+      const idealLeft = selectionRect.left + window.scrollX + (selectionRect.width / 2) - (toolbarRect.width / 2);
 
-      // iOS-specific bounds checking: Prevent toolbar from going off-screen above viewport
-      // When selection is near top of screen, the toolbar would render above visible area (negative top)
-      const minTopPosition = (viewport.offsetTop || 0) + MIN_TOOLBAR_GAP_FROM_VIEWPORT_TOP;
-      const wasAdjusted = top < minTopPosition;
-      if (wasAdjusted) {
-        top = minTopPosition;
-      }
+      const minLeft = VIEWPORT_PADDING;
+      const maxLeft = window.innerWidth - toolbarRect.width - VIEWPORT_PADDING;
+      const clampedLeft = Math.max(minLeft, Math.min(idealLeft, maxLeft));
 
-      if (debugMode || DIAGNOSTIC_MODE) {
-        console.log('[FloatingToolbar] Positioning toolbar', {
-          selectionSummary,
-          anchorInEditorRoot,
-          clientRects: {
-            count: rects.length,
-            first: rects[0] ? {
-              top: rects[0].top,
-              left: rects[0].left,
-              width: rects[0].width,
-              height: rects[0].height
-            } : null
-          },
-          boundingRect: {
-            top: rect.top,
-            left: rect.left,
-            width: rect.width,
-            height: rect.height
-          },
-          viewportOffsets: {
-            offsetLeft: viewportOffsetX,
-            offsetTop: viewportOffsetY,
-            pageLeft: viewport.pageLeft || window.scrollX,
-            pageTop: viewport.pageTop || window.scrollY
-          },
-          scrollPosition: {
-            scrollX: window.scrollX,
-            scrollY: window.scrollY
-          },
-          computedPosition: {
-            top,
-            left,
-            toolbarHeight: toolbarElement.offsetHeight,
-            toolbarWidth: toolbarElement.offsetWidth
-          },
-          boundsChecking: {
-            minTopPosition,
-            wasAdjusted,
-            adjustmentReason: wasAdjusted ? 'Toolbar would be off-screen (negative top)' : 'No adjustment needed'
-          },
-          // iOS-specific debug info
-          userAgent: navigator.userAgent,
-          isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
-          visualViewport: {
-            height: viewport.height,
-            width: viewport.width,
-            offsetTop: viewport.offsetTop,
-            offsetLeft: viewport.offsetLeft,
-            scale: viewport.scale
-          }
-        });
-      }
+      const selectionCenterX = selectionRect.left + (selectionRect.width / 2);
+      const arrowLeft = selectionCenterX - clampedLeft;
 
-      setPosition({ top, left, visible: true });
+      const minArrowLeft = 15;
+      const maxArrowLeft = toolbarRect.width - 15;
+      const clampedArrowLeft = Math.max(minArrowLeft, Math.min(arrowLeft, maxArrowLeft));
+
+      arrowElement.style.left = `${clampedArrowLeft}px`;
+
+      setPosition({ top: idealTop, left: clampedLeft, visible: true });
   }, [debugMode, DIAGNOSTIC_MODE, offset, caretMode, cooldownMs, findEditorRoot]);
 
   // Debounced wrapper for updatePosition (Issue #3 fix: use useCallback for stable reference)
@@ -713,254 +477,202 @@ export default function FloatingToolbar({
   const currentBlockType = selectionState?.blockType || 'paragraph';
   const currentAlignment = selectionState?.alignment || 'left';
 
+  const handleHeadingCycle = () => {
+    const current = selectionState?.blockType || 'paragraph';
+    const sequence = ['paragraph', 'h2', 'h3', 'h4', 'h5', 'h6'];
+    const currentIndex = sequence.indexOf(current);
+    const nextType = sequence[(currentIndex + 1) % sequence.length];
+    safeHandleAction('heading', nextType === 'paragraph' ? null : nextType);
+  };
+
+  const handleListCycle = () => {
+    const current = selectionState?.blockType;
+    if (current === 'ul') {
+      safeHandleAction('list', 'ol'); // From UL to OL
+    } else if (current === 'ol') {
+      safeHandleAction('list', null); // From OL to no list
+    } else {
+      safeHandleAction('list', 'ul'); // From anything else to UL
+    }
+  };
+
   return createPortal(
     <div
       ref={toolbarRef}
-      className="floating-toolbar"
+      className="floating-toolbar-container"
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
         visibility: position.visible ? 'visible' : 'hidden',
         opacity: position.visible ? 1 : 0,
       }}
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleToolbarTouchStart}
     >
-        {/* Text formatting group */}
-        <div class="toolbar-group">
-            <button 
-              onClick={() => safeHandleAction('bold')} 
-              className={selectionState?.isBold ? 'active' : ''} 
-              title="Bold (Ctrl+B)"
-              aria-label="Bold"
-            >
-                <Bold size={18} />
-            </button>
-            <button 
-              onClick={() => safeHandleAction('italic')} 
-              className={selectionState?.isItalic ? 'active' : ''} 
-              title="Italic (Ctrl+I)"
-              aria-label="Italic"
-            >
-                <Italic size={18} />
-            </button>
-            <button 
-              onClick={() => safeHandleAction('underline')} 
-              className={selectionState?.isUnderline ? 'active' : ''} 
-              title="Underline (Ctrl+U)"
-              aria-label="Underline"
-            >
-                <Underline size={18} />
-            </button>
-            <button 
-              onClick={() => safeHandleAction('strikethrough')} 
-              className={selectionState?.isStrikethrough ? 'active' : ''} 
-              title="Strikethrough"
-              aria-label="Strikethrough"
-            >
-                <Strikethrough size={18} />
-            </button>
-            <button 
-              onClick={() => safeHandleAction('code')} 
-              className={selectionState?.isCode ? 'active' : ''} 
-              title="Inline Code"
-              aria-label="Inline Code"
-            >
-                <Code size={18} />
-            </button>
-        </div>
+      <div
+        className="floating-toolbar"
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleToolbarTouchStart}
+      >
+        {/* Reordered buttons for priority */}
+        <button
+          onClick={() => safeHandleAction('bold')}
+          className={selectionState?.isBold ? 'active' : ''}
+          title="Bold"
+          aria-label="Bold"
+        >
+            <Bold size={18} />
+        </button>
+        <button
+          onClick={() => safeHandleAction('italic')}
+          className={selectionState?.isItalic ? 'active' : ''}
+          title="Italic"
+          aria-label="Italic"
+        >
+            <Italic size={18} />
+        </button>
+        <button
+          onClick={handleListCycle}
+          className={selectionState?.blockType === 'ul' || selectionState?.blockType === 'ol' ? 'active' : ''}
+          title="Cycle List (UL/OL/Off)"
+          aria-label="Cycle List"
+        >
+            <List size={18} />
+        </button>
+        <button
+          onClick={handleHeadingCycle}
+          className={selectionState?.blockType?.startsWith('h') ? 'active' : ''}
+          title="Cycle Heading (H2-H6)"
+          aria-label="Cycle Heading"
+        >
+            <Type size={18} />
+        </button>
 
         <div class="toolbar-divider"></div>
 
-        {/* Block format dropdown */}
-        <div class="toolbar-group toolbar-dropdown-container" ref={blockDropdownRef}>
-            <button 
-              onClick={() => setShowBlockDropdown(!showBlockDropdown)}
-              className="toolbar-dropdown-trigger"
-              title="Block format"
-              aria-label="Block format"
-              aria-expanded={showBlockDropdown}
-            >
-                <Type size={18} />
-                <ChevronDown size={14} />
-            </button>
-            {showBlockDropdown && (
-              <div class="toolbar-dropdown">
-                {blockFormats.map(format => (
+        <button
+          onClick={() => safeHandleAction('link')}
+          className={selectionState?.isLink ? 'active' : ''}
+          title="Insert Link"
+          aria-label="Insert Link"
+        >
+            <Link size={18} />
+        </button>
+
+        <div class="toolbar-divider"></div>
+
+        <button
+          onClick={() => safeHandleAction('underline')}
+          className={selectionState?.isUnderline ? 'active' : ''}
+          title="Underline"
+          aria-label="Underline"
+        >
+            <Underline size={18} />
+        </button>
+        <button
+          onClick={() => safeHandleAction('strikethrough')}
+          className={selectionState?.isStrikethrough ? 'active' : ''}
+          title="Strikethrough"
+          aria-label="Strikethrough"
+        >
+            <Strikethrough size={18} />
+        </button>
+        <button
+          onClick={() => safeHandleAction('code')}
+          className={selectionState?.isCode ? 'active' : ''}
+          title="Inline Code"
+          aria-label="Inline Code"
+        >
+            <Code size={18} />
+        </button>
+
+        {/* Text color picker */}
+        <div class="toolbar-dropdown-container" ref={colorPickerRef}>
+          <button
+            onClick={() => setShowColorPicker(!showColorPicker)}
+            className="toolbar-dropdown-trigger"
+            title="Text color"
+            aria-label="Text color"
+            aria-expanded={showColorPicker}
+          >
+              <Palette size={18} />
+          </button>
+          {showColorPicker && (
+            <div class="toolbar-dropdown color-picker-dropdown">
+              <div class="color-grid">
+                {colors.map(color => (
                   <button
-                    key={format.value}
-                    class={`toolbar-dropdown-item ${currentBlockType === format.value ? 'active' : ''}`}
+                    key={color}
+                    class="color-swatch"
+                    style={{ backgroundColor: color }}
                     onClick={() => {
-                      safeHandleAction('heading', format.value === 'paragraph' ? null : format.value);
-                      setShowBlockDropdown(false);
-                    }}
-                  >
-                    <span class="dropdown-item-label">{format.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-        </div>
-
-        {/* Alignment dropdown */}
-        <div class="toolbar-group toolbar-dropdown-container" ref={alignDropdownRef}>
-            <button 
-              onClick={() => setShowAlignDropdown(!showAlignDropdown)}
-              className="toolbar-dropdown-trigger"
-              title="Text alignment"
-              aria-label="Text alignment"
-              aria-expanded={showAlignDropdown}
-            >
-                <AlignLeft size={18} />
-                <ChevronDown size={14} />
-            </button>
-            {showAlignDropdown && (
-              <div class="toolbar-dropdown">
-                {alignments.map(align => {
-                  const Icon = align.icon;
-                  return (
-                    <button
-                      key={align.value}
-                      class={`toolbar-dropdown-item ${currentAlignment === align.value ? 'active' : ''}`}
-                      onClick={() => {
-                        safeHandleAction('align', align.value);
-                        setShowAlignDropdown(false);
-                      }}
-                    >
-                      <Icon size={18} />
-                      <span class="dropdown-item-label">{align.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-        </div>
-
-        <div class="toolbar-divider"></div>
-
-        {/* Lists group */}
-        <div class="toolbar-group">
-            <button 
-              onClick={() => safeHandleAction('list', 'ul')} 
-              className={selectionState?.blockType === 'ul' ? 'active' : ''} 
-              title="Bulleted List"
-              aria-label="Bulleted List"
-            >
-                <List size={18} />
-            </button>
-            <button 
-              onClick={() => safeHandleAction('list', 'ol')} 
-              className={selectionState?.blockType === 'ol' ? 'active' : ''} 
-              title="Numbered List"
-              aria-label="Numbered List"
-            >
-                <ListOrdered size={18} />
-            </button>
-        </div>
-
-        <div class="toolbar-divider"></div>
-
-        {/* Link and formatting controls */}
-        <div class="toolbar-group">
-            <button 
-              onClick={() => safeHandleAction('link')} 
-              className={selectionState?.isLink ? 'active' : ''} 
-              title="Insert Link"
-              aria-label="Insert Link"
-            >
-                <Link size={18} />
-            </button>
-
-            {/* Text color picker */}
-            <div class="toolbar-dropdown-container" ref={colorPickerRef}>
-              <button 
-                onClick={() => setShowColorPicker(!showColorPicker)}
-                className="toolbar-dropdown-trigger"
-                title="Text color"
-                aria-label="Text color"
-                aria-expanded={showColorPicker}
-              >
-                  <Palette size={18} />
-              </button>
-              {showColorPicker && (
-                <div class="toolbar-dropdown color-picker-dropdown">
-                  <div class="color-grid">
-                    {colors.map(color => (
-                      <button
-                        key={color}
-                        class="color-swatch"
-                        style={{ backgroundColor: color }}
-                        onClick={() => {
-                          safeHandleAction('textColor', color);
-                          setShowColorPicker(false);
-                        }}
-                        title={color}
-                        aria-label={`Text color ${color}`}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    class="toolbar-dropdown-item"
-                    onClick={() => {
-                      safeHandleAction('textColor', null);
+                      safeHandleAction('textColor', color);
                       setShowColorPicker(false);
                     }}
-                  >
-                    Remove color
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Highlight color picker */}
-            <div class="toolbar-dropdown-container" ref={highlightPickerRef}>
-              <button 
-                onClick={() => setShowHighlightPicker(!showHighlightPicker)}
-                className="toolbar-dropdown-trigger"
-                title="Highlight color"
-                aria-label="Highlight color"
-                aria-expanded={showHighlightPicker}
+                    title={color}
+                    aria-label={`Text color ${color}`}
+                  />
+                ))}
+              </div>
+              <button
+                class="toolbar-dropdown-item"
+                onClick={() => {
+                  safeHandleAction('textColor', null);
+                  setShowColorPicker(false);
+                }}
               >
-                  <Highlighter size={18} />
+                Remove color
               </button>
-              {showHighlightPicker && (
-                <div class="toolbar-dropdown color-picker-dropdown">
-                  <div class="color-grid">
-                    {colors.map(color => (
-                      <button
-                        key={color}
-                        class="color-swatch"
-                        style={{ backgroundColor: color }}
-                        onClick={() => {
-                          safeHandleAction('highlightColor', color);
-                          setShowHighlightPicker(false);
-                        }}
-                        title={color}
-                        aria-label={`Highlight color ${color}`}
-                      />
-                    ))}
-                  </div>
+            </div>
+          )}
+        </div>
+
+        {/* Highlight color picker */}
+        <div class="toolbar-dropdown-container" ref={highlightPickerRef}>
+          <button
+            onClick={() => setShowHighlightPicker(!showHighlightPicker)}
+            className="toolbar-dropdown-trigger"
+            title="Highlight color"
+            aria-label="Highlight color"
+            aria-expanded={showHighlightPicker}
+          >
+              <Highlighter size={18} />
+          </button>
+          {showHighlightPicker && (
+            <div class="toolbar-dropdown color-picker-dropdown">
+              <div class="color-grid">
+                {colors.map(color => (
                   <button
-                    class="toolbar-dropdown-item"
+                    key={color}
+                    class="color-swatch"
+                    style={{ backgroundColor: color }}
                     onClick={() => {
-                      safeHandleAction('highlightColor', null);
+                      safeHandleAction('highlightColor', color);
                       setShowHighlightPicker(false);
                     }}
-                  >
-                    Remove highlight
-                  </button>
-                </div>
-              )}
+                    title={color}
+                    aria-label={`Highlight color ${color}`}
+                  />
+                ))}
+              </div>
+              <button
+                class="toolbar-dropdown-item"
+                onClick={() => {
+                  safeHandleAction('highlightColor', null);
+                  setShowHighlightPicker(false);
+                }}
+              >
+                Remove highlight
+              </button>
             </div>
-
-            <button 
-              onClick={() => safeHandleAction('clearFormatting')} 
-              title="Clear formatting"
-              aria-label="Clear formatting"
-            >
-                <Eraser size={18} />
-            </button>
+          )}
         </div>
+
+        <button
+          onClick={() => safeHandleAction('clearFormatting')}
+          title="Clear formatting"
+          aria-label="Clear formatting"
+        >
+            <Eraser size={18} />
+        </button>
 
         {/* Debug instrumentation dot - only visible when debug mode is enabled */}
         {debugMode && (
@@ -971,7 +683,17 @@ export default function FloatingToolbar({
           />
         )}
 
-        <div className="toolbar-arrow"></div>
+        {/* Debug instrumentation dot - only visible when debug mode is enabled */}
+        {debugMode && (
+          <div
+            className="floating-toolbar-debug-dot"
+            title="Debug mode active"
+            aria-hidden="true"
+          />
+        )}
+      </div>
+      {/* The arrow is now separate and positioned by the container */}
+      <div ref={arrowRef} className="toolbar-arrow"></div>
     </div>,
     document.body
   );

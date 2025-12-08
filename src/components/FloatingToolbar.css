@@ -29,8 +29,14 @@
   border-radius: 12px;
   padding: 6px;
   display: flex;
-  flex-direction: column;
+  /* Changed to row for horizontal layout */
+  flex-direction: row;
   align-items: center;
+  /* Enable horizontal scrolling */
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* Hide scrollbar for a cleaner look */
+  scrollbar-width: none; /* Firefox */
   
   /* Liquid glass shadows */
   box-shadow: 
@@ -44,6 +50,12 @@
   /* GPU acceleration */
   transform-style: preserve-3d;
   will-change: transform, opacity;
+  /* Set a max-width to control the visible area on mobile */
+  max-width: 210px; /* Approx 4.5 buttons visible */
+
+  /* Fade-out effect on the right to indicate scrollability */
+  -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  mask-image: linear-gradient(to right, black 85%, transparent 100%);
 }
 
 /* Subtle inner glow for liquid glass effect */
@@ -70,6 +82,10 @@
 }
 
 /* Icon-only buttons: compact square buttons */
+.floating-toolbar::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
 .floating-toolbar button {
   background: transparent;
   border: none;
@@ -109,15 +125,33 @@
   background-color: rgba(255, 255, 255, 0.08);
 }
 
+/* New container to hold both toolbar and arrow for positioning */
+.floating-toolbar-container {
+  position: absolute;
+  /* This container will be positioned, the inner toolbar is just for content */
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Use filter for drop shadow to avoid affecting layout */
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.25));
+}
+
 /* Arrow pointer with liquid glass styling */
 .toolbar-arrow {
   width: 0;
   height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 8px solid rgba(255, 255, 255, 0.15);
-  margin-top: 2px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  /* Changed to border-bottom to point down */
+  border-bottom: 10px solid var(--toolbar-border);
+  /* Position it relative to the container, overlapping the main toolbar slightly from below */
+  position: relative;
+  bottom: -1px; /* Overlap to blend with toolbar border */
+  z-index: 1; /* Ensure it's below the toolbar content if needed, but above shadow */
+  transform: translateX(-50%); /* Center the arrow */
+  left: 50%;
+  transition: left 0.15s ease-out; /* Allow smooth position changes */
 }
 
 @keyframes fadeIn {
