@@ -4,16 +4,15 @@ import { route } from 'preact-router';
 import matter from 'gray-matter';
 import { useAuth } from '../contexts/AuthContext';
 import { useUI } from '../contexts/UIContext';
-import { EditorProvider } from '../contexts/EditorContext'; // <-- IMPORT THE PROVIDER
+import { EditorProvider } from '../contexts/EditorContext';
 import { fetchJson } from '../lib/fetchJson';
+import '../styles/editor.css';
 import { calculatePageScore } from '../lib/pageScoring';
 import useAutosave from '../hooks/useAutosave';
 import LexicalEditor from '../components/LexicalEditor';
 import SectionsEditor from '../components/SectionsEditor';
-import EditorHeader from '../components/EditorHeader';
-import BottomActionBar from '../components/BottomActionBar';
-import AddSectionModal from '../components/AddSectionModal';
-import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
+import EditorCanvas from '../components/EditorCanvas';
+import { RefreshCw } from 'lucide-preact';
 
 // Constants
 const STATUS_DISPLAY_DURATION = 2500; // Time in ms to display sync status before resetting
@@ -755,38 +754,25 @@ export default function ContentEditorPage(props) {
   };
 
   return (
-    <EditorProvider> {/* <-- WRAP WITH PROVIDER */}
-      <div class="flex flex-col h-full bg-transparent text-white relative">
-        {/* Only show editor header when in editor mode, hide in preview modes */}
-        {viewMode === 'editor' && <EditorHeader pageSlug={pageId} />}
-        <main 
-          class="flex-grow relative overflow-y-auto"
-          style={{ 
-            paddingTop: viewMode === 'editor' ? 'var(--header-h)' : '0',
-            paddingBottom: 'var(--bottom-bar-height)'
-          }}
-        >
-          {renderContent()}
-        </main>
-        <BottomActionBar
-          saveStatus={saveStatus}
-          syncStatus={syncStatus}
-          viewMode={viewMode}
-          previewState={isPreviewBuilding ?  'building' : (viewMode !== 'editor' ?  'ready' : 'idle')}
-          pageScore={editorMode === 'json' ? pageScoreData.total : null}
-          onAdd={openAddSectionModal}
-          onPreview={editorMode === 'json' ? handlePreview : null}
-          onSync={editorMode === 'json' ? handleSync : null}
-          onRefreshPreview={handleRefreshPreview}
-        />
-        <AddSectionModal
-          pageSlug={pageId}
-          pageData={{ sections: sections || [] }}
-          onAddSection={handleAddSection}
-          sectionToEdit={editingSectionIndex !== null ? sections[editingSectionIndex] : null}
-          onUpdateSection={handleUpdateSection}
-        />
-      </div>
+    <EditorProvider>
+      <EditorCanvas
+        viewMode={viewMode}
+        pageId={pageId}
+        renderContent={renderContent}
+        saveStatus={saveStatus}
+        syncStatus={syncStatus}
+        isPreviewBuilding={isPreviewBuilding}
+        pageScoreData={pageScoreData}
+        editorMode={editorMode}
+        openAddSectionModal={openAddSectionModal}
+        handlePreview={handlePreview}
+        handleSync={handleSync}
+        handleRefreshPreview={handleRefreshPreview}
+        sections={sections}
+        handleAddSection={handleAddSection}
+        editingSectionIndex={editingSectionIndex}
+        handleUpdateSection={handleUpdateSection}
+      />
     </EditorProvider>
   );
 }

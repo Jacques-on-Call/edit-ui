@@ -4,7 +4,6 @@ import { route } from 'preact-router';
 import { fetchPageJson } from '../lib/mockApi';
 import useAutosave from '../hooks/useAutosave';
 import LexicalEditor from '../components/LexicalEditor';
-import EditorHeader from '../components/EditorHeader';
 import { Home, Plus, UploadCloud } from 'lucide-preact';
 
 export default function ContentEditorPage(props) {
