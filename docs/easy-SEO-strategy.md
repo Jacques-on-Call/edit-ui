@@ -69,19 +69,30 @@ The editor features a comprehensive, modern toolbar system with full rich-text e
   - Buttons highlight to show active formatting state
   - Follows the selection as you scroll with smart positioning
   - Mobile-optimized with visualViewport positioning for accurate placement during zoom
+  - **Mobile keyboard loop prevention:** Only shows when text is actually selected (non-empty)
+  - **Selection deduplication:** Prevents duplicate updates when selection hasn't changed
+  - **Rate limiting:** Uses requestAnimationFrame to throttle position updates
   - Disappears when no text is selected or selection is outside editor
-  - Debug mode available for troubleshooting selection placement issues
+  - **Debug mode:** Detailed console logging for troubleshooting (enabled in development)
+    - Logs selection summary, rect details, viewport offsets, computed position
+    - Shows explicit hide reasons (collapsed, no text, outside editor, etc.)
+  - **Caret mode:** Optional prop to show toolbar on collapsed selection (default: false)
 
 - **Vertical Insert Toolbar:**
   - Accessed via hamburger icon in top-left corner
   - Slides out as a left sidebar with categorized insert actions
-  - **Headings:** Insert H2, H3, H4, H5, H6 at cursor position
+  - **Collapsible category groups (accordion pattern):** Reduces height on mobile devices
+    - History group (Undo/Redo) at top, expanded by default
+    - Other groups collapsed by default to save space
+    - Click group header to expand/collapse
+    - Smooth expand/collapse animations
+  - **History:** Undo and Redo (only available in vertical toolbar, NOT in floating toolbar)
+  - **Headings:** Insert H2, H3, H4, H5, H6 at cursor position (duplicated from floating toolbar)
   - **Lists:** Create bullet or numbered lists
   - **Structure:** Add Horizontal Rule, Page Break, or Table
   - **Media:** Insert images with URL prompt
   - **Layout:** Insert Columns Layout or Collapsible sections
   - **Utility:** Insert current date in formatted text
-  - **History:** Undo and Redo (only available in vertical toolbar)
   - Actions organized by category for easy discovery
   - Works at cursor position, no text selection needed
   - Auto-closes after inserting an element

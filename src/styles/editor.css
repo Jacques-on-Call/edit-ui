@@ -296,9 +296,26 @@
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-/* Vertical toolbox category styles */
+/* Vertical toolbox category styles - collapsible accordion */
 .toolbox-category {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
+}
+
+.toolbox-category-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+}
+
+.toolbox-category-header:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .toolbox-category-label {
@@ -306,6 +323,31 @@
   font-weight: 600;
   text-transform: uppercase;
   color: #9ca3af;
-  padding: 8px 16px 4px;
   letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.category-chevron {
+  color: #9ca3af;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.category-chevron.expanded {
+  transform: rotate(180deg);
+}
+
+.toolbox-category-items {
+  animation: expandGroup 0.2s ease-out;
+}
+
+@keyframes expandGroup {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
 }

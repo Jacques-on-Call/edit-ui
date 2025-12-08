@@ -6,6 +6,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   Type, Palette, Highlighter, Eraser, ChevronDown
 } from 'lucide-preact';
+import '../styles/FloatingToolbar.css';
 
 /**
  * FloatingToolbar - Context-aware formatting toolbar that appears above text selection
@@ -41,7 +42,8 @@ export default function FloatingToolbar({
   selectionState, 
   editorRootSelector = '.editor-root',
   offset = { x: 0, y: 10 },
-  debugMode = false 
+  debugMode = false,
+  caretMode = false // Opt-in to show toolbar on caret (collapsed selection), default false to avoid mobile keyboard loops
 }) {
   const [position, setPosition] = useState({ top: 0, left: 0, visible: false });
   const [showBlockDropdown, setShowBlockDropdown] = useState(false);
@@ -53,6 +55,8 @@ export default function FloatingToolbar({
   const alignDropdownRef = useRef(null);
   const colorPickerRef = useRef(null);
   const highlightPickerRef = useRef(null);
+  const lastSelectionKeyRef = useRef(null); // Track last selection to dedupe updates
+  const updateFrameRef = useRef(null); // Track pending RAF to avoid duplicate frames
 
   useEffect(() => {
     const updatePosition = () => {
@@ -66,18 +70,62 @@ export default function FloatingToolbar({
 
       const selection = window.getSelection();
       
+      // Get selection text to check if non-empty
+      const selectionText = selection?.toString() || '';
+      const hasTextSelection = selectionText.trim().length > 0;
+      
+      // Create unique key for this selection to dedupe updates
+      const selectionKey = selection?.rangeCount > 0 
+        ? `${selection.anchorNode?.nodeName}-${selection.anchorOffset}-${selection.focusNode?.nodeName}-${selection.focusOffset}-${selectionText.length}`
+        : null;
+      
+      // Dedupe: Skip update if selection hasn't changed
+      if (selectionKey && selectionKey === lastSelectionKeyRef.current) {
+        if (debugMode) {
+          console.debug('[FloatingToolbar] Skipping - selection unchanged (dedupe)', { selectionKey });
+        }
+        return;
+      }
+      lastSelectionKeyRef.current = selectionKey;
+      
       // Create summary object for debugging
       const selectionSummary = {
         isCollapsed: selection?.isCollapsed,
         rangeCount: selection?.rangeCount || 0,
         anchorNode: selection?.anchorNode?.nodeName,
         focusNode: selection?.focusNode?.nodeName,
+        selectionText: selectionText.substring(0, 50) + (selectionText.length > 50 ? '...' : ''),
+        textLength: selectionText.length,
+        trimmedLength: selectionText.trim().length,
+        hasTextSelection,
+        caretMode
       };
 
       // Hide toolbar if no selection or selection is collapsed (just a cursor)
-      if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+      // Exception: if caretMode=true, allow showing on collapsed selection
+      if (!selection || selection.rangeCount === 0) {
         if (debugMode) {
-          console.debug('[FloatingToolbar] Hiding - no valid selection', selectionSummary);
+          console.debug('[FloatingToolbar] Hiding - no selection or rangeCount=0', selectionSummary);
+        }
+        setPosition(prev => ({ ...prev, visible: false }));
+        return;
+      }
+      
+      // Critical mobile fix: Only show toolbar when there's actual text selected
+      // This prevents caret loops caused by keyboard/visualViewport events on mobile
+      if (selection.isCollapsed && !caretMode) {
+        if (debugMode) {
+          console.debug('[FloatingToolbar] Hiding - collapsed selection and caretMode=false (prevents mobile keyboard loops)', selectionSummary);
+        }
+        setPosition(prev => ({ ...prev, visible: false }));
+        return;
+      }
+      
+      // Only show toolbar when selection has non-empty text (after trim)
+      // This prevents showing toolbar on collapsed selection or whitespace-only selection
+      if (!hasTextSelection && !caretMode) {
+        if (debugMode) {
+          console.debug('[FloatingToolbar] Hiding - no text in selection (prevents caret loops)', selectionSummary);
         }
         setPosition(prev => ({ ...prev, visible: false }));
         return;
@@ -198,7 +246,12 @@ export default function FloatingToolbar({
     };
 
     const debouncedUpdatePosition = () => {
-        requestAnimationFrame(updatePosition);
+      // Cancel any pending frame to avoid duplicate updates (rate limiting)
+      if (updateFrameRef.current) {
+        cancelAnimationFrame(updateFrameRef.current);
+      }
+      // Schedule update for next frame
+      updateFrameRef.current = requestAnimationFrame(updatePosition);
     }
 
     document.addEventListener('selectionchange', debouncedUpdatePosition);
@@ -206,11 +259,15 @@ export default function FloatingToolbar({
     window.addEventListener('resize', debouncedUpdatePosition);
 
     return () => {
+      // Cancel any pending frame on cleanup
+      if (updateFrameRef.current) {
+        cancelAnimationFrame(updateFrameRef.current);
+      }
       document.removeEventListener('selectionchange', debouncedUpdatePosition);
       window.removeEventListener('scroll', debouncedUpdatePosition, { capture: true });
       window.removeEventListener('resize', debouncedUpdatePosition);
     };
-  }, [editorRootSelector, offset, debugMode]);
+  }, [editorRootSelector, offset, debugMode, caretMode]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {

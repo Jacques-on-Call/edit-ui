@@ -17,6 +17,7 @@ import HamburgerTrigger from './HamburgerTrigger';
  * - Media & Structure: Image, Table, Horizontal Rule, Page Break
  * - Layout: Columns Layout, Collapsible Container
  * - Utility: Date insertion, Undo, Redo
+ * - Collapsible category groups (accordion) to reduce height on mobile
  * 
  * Includes hamburger trigger button in top-left corner
  * Auto-closes after action selection
@@ -25,6 +26,17 @@ import HamburgerTrigger from './HamburgerTrigger';
 export default function VerticalToolbox({ handleAction }) {
   const [isOpen, setIsOpen] = useState(false);
   const toolboxRef = useRef(null);
+  // Track which category groups are expanded (accordion pattern)
+  // Default: History expanded (at top), others collapsed on mobile
+  const [expandedGroups, setExpandedGroups] = useState({
+    'History': true, // Start with History expanded since it's most important
+    'Headings': false,
+    'Lists': false,
+    'Structure': false,
+    'Media': false,
+    'Layout': false,
+    'Utility': false
+  });
 
   // Close on escape key
   useEffect(() => {
@@ -213,7 +225,15 @@ export default function VerticalToolbox({ handleAction }) {
     return acc;
   }, {});
 
-  const categoryOrder = ['Headings', 'Lists', 'Structure', 'Media', 'Layout', 'Utility', 'History'];
+  // History should be first per requirements
+  const categoryOrder = ['History', 'Headings', 'Lists', 'Structure', 'Media', 'Layout', 'Utility'];
+  
+  const toggleGroup = (groupName) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupName]: !prev[groupName]
+    }));
+  };
 
   return (
     <>
@@ -241,24 +261,41 @@ export default function VerticalToolbox({ handleAction }) {
             const categoryItems = groupedActions[categoryName];
             if (!categoryItems || categoryItems.length === 0) return null;
             
+            const isExpanded = expandedGroups[categoryName];
+            
             return (
               <div key={categoryName} className="toolbox-category">
-                <div className="toolbox-category-label">{categoryName}</div>
-                {categoryItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={item.action}
-                      className="toolbox-item"
-                      aria-label={item.ariaLabel}
-                      role="menuitem"
-                    >
-                      <Icon size={20} />
-                      <span>{item.label}</span>
-                    </button>
-                  );
-                })}
+                <button 
+                  className="toolbox-category-header"
+                  onClick={() => toggleGroup(categoryName)}
+                  aria-expanded={isExpanded}
+                  aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${categoryName} section`}
+                >
+                  <span className="toolbox-category-label">{categoryName}</span>
+                  <ChevronDown 
+                    size={16} 
+                    className={`category-chevron ${isExpanded ? 'expanded' : ''}`}
+                  />
+                </button>
+                {isExpanded && (
+                  <div className="toolbox-category-items">
+                    {categoryItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={item.action}
+                          className="toolbox-item"
+                          aria-label={item.ariaLabel}
+                          role="menuitem"
+                        >
+                          <Icon size={20} />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}

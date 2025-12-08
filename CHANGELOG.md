@@ -1,5 +1,96 @@
 # Project Change Log
 
+GitHub Copilot (feat): Mobile-First Toolbar Instrumentation and Collapsible Vertical Toolbox
+Date: 2025-12-08
+Summary:
+Enhanced FloatingToolbar with mobile keyboard loop prevention, selection deduplication, and detailed debug logging. Made VerticalToolbox category groups collapsible (accordion pattern) to reduce height on mobile. Created dedicated FloatingToolbar.css stylesheet. This update addresses critical mobile selection placement issues and improves UX on small screens.
+
+Details:
+- **FloatingToolbar Mobile Keyboard Loop Prevention:**
+  - Added `caretMode` prop (default: false) to opt-in to showing toolbar on collapsed selection
+  - **Critical fix:** Only show toolbar when `selection.toString().trim().length > 0`
+  - This prevents infinite keyboard/visualViewport event loops on mobile devices
+  - When `caretMode=false` (default), toolbar hides on collapsed selection or empty text
+  - When `caretMode=true`, allows showing toolbar on cursor position (opt-in for future use)
+
+- **Selection Deduplication:**
+  - Added `lastSelectionKeyRef` to track previous selection state
+  - Creates unique key from anchorNode, offsets, focusNode, and text length
+  - Skips position updates when selection hasn't actually changed
+  - Reduces unnecessary DOM queries and RAF calls on mobile
+
+- **Rate Limiting with RAF:**
+  - Added `updateFrameRef` to track pending requestAnimationFrame
+  - Cancels previous RAF before scheduling new one
+  - Prevents duplicate position updates in same frame
+  - Cleans up pending RAF on component unmount
+
+- **Enhanced Debug Mode:**
+  - Added explicit hide reason logging for each early return case:
+    - "no selection or rangeCount=0"
+    - "collapsed selection and caretMode=false (prevents mobile keyboard loops)"
+    - "no text in selection (prevents caret loops)"
+    - "selection not in editor root"
+    - "selection has no dimensions"
+  - Logs selection summary including:
+    - `selectionText` (first 50 chars), `textLength`, `trimmedLength`
+    - `hasTextSelection` boolean
+    - `caretMode` setting
+  - Logs selection deduplication events
+  - All debug logs use `console.debug` for easy filtering
+
+- **VerticalToolbox Collapsible Groups (Accordion):**
+  - Added `expandedGroups` state object tracking which categories are open
+  - Default: History expanded, others collapsed (reduces initial height on mobile)
+  - Reordered categories: History first (was last), per user requirements
+  - Added `toggleGroup` function to expand/collapse category groups
+  - Wrapped category label in clickable button with chevron icon
+  - Chevron rotates 180° when expanded (visual feedback)
+  - Smooth expand/collapse animations with `expandGroup` keyframes
+  - Category items only render when group is expanded (DOM optimization)
+  - Aria attributes: `aria-expanded` on header button for accessibility
+
+- **FloatingToolbar.css Created:**
+  - Extracted all FloatingToolbar-specific styles from editor.css
+  - Imported in FloatingToolbar.jsx component
+  - Includes: toolbar, buttons, dropdowns, color pickers, animations
+  - High z-index (10000 for toolbar, 10001 for dropdowns)
+  - FadeIn animation for smooth appearance
+
+- **editor.css Updates:**
+  - Replaced old `.toolbox-category` and `.toolbox-category-label` styles
+  - Added `.toolbox-category-header` button styles with hover state
+  - Added `.category-chevron` with rotation transition
+  - Added `.toolbox-category-items` wrapper with expand animation
+  - Added `@keyframes expandGroup` for smooth accordion behavior
+
+- **Dependency Array Updates:**
+  - Added `caretMode` to FloatingToolbar useEffect dependencies
+  - Ensures hooks update when caretMode prop changes
+
+Impact:
+- **Mobile UX:** FloatingToolbar no longer triggers infinite loops on mobile keyboard events
+- **Performance:** Selection deduplication and RAF throttling reduce CPU usage during text selection
+- **Small screens:** Collapsible VerticalToolbox groups save vertical space on mobile devices
+- **Debugging:** Enhanced debug mode provides clear insights into toolbar visibility logic
+- **Maintainability:** Separated FloatingToolbar styles into dedicated CSS file
+- **Accessibility:** Accordion pattern with proper ARIA attributes for screen readers
+- **User control:** History group (Undo/Redo) at top and expanded by default per requirements
+
+Technical Notes:
+- The `selection.toString().trim().length > 0` check is **critical** for mobile
+- Without it, the toolbar can trigger on every keyboard/viewport event, creating loops
+- `caretMode=false` is the safe default; only enable for specific use cases
+- Debug mode (`debugMode=true`) is enabled in EditorCanvas for QA/mobile debugging
+- All changes are non-breaking; existing integrations continue to work
+
+Reflection:
+- **What was the most challenging part of this task?** Understanding the subtle interaction between mobile keyboard events, visualViewport changes, and selection state. The key insight was that collapsed selections (caret position) on mobile can trigger continuous selectionchange events when the keyboard appears/disappears, creating an infinite loop if the toolbar tries to position itself.
+- **What was a surprising discovery or key learning?** The need for THREE layers of protection against mobile loops: (1) check `isCollapsed`, (2) check `trim().length > 0`, and (3) deduplicate selection keys. Any one of these alone is insufficient; all three work together to create robust mobile behavior.
+- **What advice would you give the next agent who works on this code?** When testing toolbar positioning on mobile, always test with the on-screen keyboard visible and try rapid selection changes. The debugMode logs are essential for understanding why the toolbar shows or hides in any given scenario. The `caretMode` prop exists for future enhancement but should remain `false` by default to maintain mobile stability.
+
+---
+
 GitHub Copilot (feat): Enhanced Dual Toolbar System with Full Lexical Editor Parity
 Date: 2025-12-08
 Summary:
