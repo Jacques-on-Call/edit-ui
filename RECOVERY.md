@@ -53,26 +53,48 @@ lastUpdateTimeRef.current = now;
 - Added `touchend` event listener for better mobile text selection support
 - Added `onTouchStart` handler to prevent touch events from clearing selection
 - Changed `debugMode` from prop to runtime flag: `window.__EASY_SEO_TOOLBAR_DEBUG__`
+- Added visual debug indicator: small pulsing red dot appears in toolbar top-right when debug mode is active
+- Updated default cooldownMs from 150ms to 200ms for better mobile stability (2025-12-08)
+- Updated button size from 32px to 40px for improved touch targets (2025-12-08)
 
-### **How to Debug:**
+### **How to Enable Runtime Instrumentation:**
 
-1. Open browser console
+1. Open browser console (F12 or Cmd+Option+I)
 2. Enable debug mode: `window.__EASY_SEO_TOOLBAR_DEBUG__ = true`
-3. Select text and watch console logs
-4. Logs show: selection state, dedupe status, cooldown status, position calculations, hide reasons
-5. Look for patterns: if logs repeat rapidly, increase cooldownMs; if toolbar feels sluggish, decrease cooldownMs
+3. Select text in the editor
+4. **Visual confirmation:** A small red pulsing dot appears in the top-right corner of the FloatingToolbar
+5. **Console logs:** Watch detailed logs showing:
+   - Selection state (collapsed, text content, range info)
+   - Dedupe status (whether selection key changed)
+   - Cooldown status (whether update was throttled)
+   - Position calculations (viewport offsets, computed top/left)
+   - Hide reasons (explicit explanation when toolbar doesn't appear)
+6. Look for patterns: if logs repeat rapidly, increase cooldownMs; if toolbar feels sluggish, decrease cooldownMs
+
+**To disable debug mode:**
+```javascript
+window.__EASY_SEO_TOOLBAR_DEBUG__ = false
+// or simply reload the page
+```
 
 **Recommended cooldownMs values:**
-- Desktop: 100-150ms
-- Mobile: 150-200ms
-- High-frequency update scenarios: 200-300ms
+- Desktop: 150-200ms (default: 200ms)
+- Mobile: 200-250ms
+- High-frequency update scenarios (e.g., mobile with aggressive selection events): 250-300ms
+- Low-latency scenarios (desktop with good hardware): 150ms
+
+**Tuning cooldownMs:**
+- Pass as prop to FloatingToolbar: `<FloatingToolbar cooldownMs={250} ... />`
+- Or modify in EditorCanvas.jsx for global change
 
 ### **Key Insights:**
 
 1. **Dedupe alone isn't enough on mobile:** Visual viewport changes can create slight selection variations that bypass key-based deduplication.
 2. **Cooldown is essential:** Time-based throttling provides a safety net that works regardless of selection object changes.
-3. **150ms sweet spot:** Long enough to prevent loops, short enough to feel responsive.
-4. **Runtime debug flags are invaluable:** Being able to toggle verbose logging in production without redeployment makes debugging customer issues possible.
+3. **200ms sweet spot (updated 2025-12-08):** Long enough to prevent loops on most devices, short enough to feel responsive. Originally 150ms, increased after testing on mobile devices with noisy selection events.
+4. **Visual debug indicators >> hidden flags:** The pulsing red dot makes it immediately obvious that debug mode is active, eliminating the "did I enable it?" confusion.
+5. **Runtime debug flags are invaluable:** Being able to toggle verbose logging in production without redeployment makes debugging customer issues possible.
+6. **Touch targets matter:** 40x40px buttons (updated from 32px) meet WCAG 2.1 AA guidelines and significantly improve mobile usability.
 
 ---
 

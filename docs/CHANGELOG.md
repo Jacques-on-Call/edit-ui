@@ -81,6 +81,49 @@ This document records significant changes, architectural decisions, and critical
 
 ---
 
+### **2025-12-08 (Final UI Refinements)**
+
+**Author:** AI Agent (Copilot)
+
+**Change:** Final polish on FloatingToolbar and SlideoutToolbar: updated button sizes to 40x40px, increased default cooldown to 200ms, added visual debug instrumentation dot.
+
+**Context & Learnings:**
+
+1.  **Button Size Optimization:**
+    *   **Problem:** FloatingToolbar buttons were 32x32px which felt cramped on mobile and didn't match the design spec requiring 40x40px for optimal touch targets.
+    *   **Solution:** Updated `--toolbar-button-size` CSS variable from 32px to 40px in FloatingToolbar.css. This provides better accessibility (meeting WCAG 2.1 AA touch target size guidelines) and improved visual balance in the liquid glass container.
+
+2.  **Cooldown Tuning:**
+    *   **Problem:** Default cooldown of 150ms was slightly too aggressive on some mobile devices with noisy selection events, occasionally causing the toolbar to feel unresponsive.
+    *   **Solution:** Increased default cooldownMs from 150ms to 200ms in FloatingToolbar.jsx and EditorCanvas.jsx. This value is still fast enough for responsive UX while providing better protection against selection event spam on mobile. Value remains configurable via prop for specific use cases.
+
+3.  **Visual Debug Instrumentation:**
+    *   **Problem:** Needed a clear visual indicator when debug mode is active without cluttering the UI in production.
+    *   **Solution:** 
+        - Added conditional debug dot in FloatingToolbar.jsx that only renders when `window.__EASY_SEO_TOOLBAR_DEBUG__` is truthy
+        - Created `.floating-toolbar-debug-dot` style in FloatingToolbar.css: small pulsing red dot positioned in top-right corner
+        - Dot uses gradient fill, glow shadow, and subtle pulse animation for visibility
+        - Zero performance/UI impact when debug mode is off (element not rendered)
+        - Makes it immediately obvious to developers when they've enabled debug logging
+
+4.  **Runtime Instrumentation Best Practices:**
+    *   Debug flags should be:
+        - Runtime-toggled (no code changes needed)
+        - Visible when active (debug dot)
+        - Zero-cost when disabled (conditional rendering, no overhead)
+        - Documented in recovery guide (so devs know how to enable)
+    *   The pattern: `window.__EASY_SEO_TOOLBAR_DEBUG__ = true` is discoverable and can be typed directly in browser console
+
+**Reflection:**
+
+*   **Most Challenging Part:** Finding the right balance for the cooldown value—200ms is the sweet spot between preventing loops and maintaining responsiveness, but this may need tuning based on real-world mobile device testing. The debug dot positioning also required care to ensure it doesn't interfere with dropdown menus or other toolbar elements.
+
+*   **Key Learning:** Touch target sizes matter more than you think. The jump from 32px to 40px buttons makes a significant difference in usability on mobile, especially for users with larger fingers or motor impairments. Visual debug indicators (like the pulsing dot) are much better than hidden console flags—developers can see at a glance that debug mode is active without checking DevTools.
+
+*   **Advice for Next Agent:** The 200ms cooldown works well for most devices, but if users report toolbar lag on specific mobile models, try adjusting it via the cooldownMs prop (down to 150ms for faster devices, up to 250ms for very noisy selection events). The debug dot should always remain small and unobtrusive—if it feels distracting, reduce its size or pulse frequency, but never remove it entirely as it's valuable for production debugging. When adding new debug features, follow the same pattern: runtime flag + visual indicator + conditional rendering.
+
+---
+
 ### **2025-12-06**
 
 **Author:** AI Agent (Copilot)

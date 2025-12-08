@@ -41,7 +41,7 @@ import './FloatingToolbar.css';
  * - selectionState: object - Current selection state from SelectionStatePlugin
  * - editorRootSelector: string - CSS selector for editor root (default '.editor-root')
  * - offset: { x: number, y: number } - Additional offset for positioning (optional)
- * - cooldownMs: number - Cooldown period between selection updates (default 150ms)
+ * - cooldownMs: number - Cooldown period between selection updates (default 200ms)
  * - caretMode: boolean - Show toolbar on collapsed selection (default false)
  */
 export default function FloatingToolbar({ 
@@ -49,7 +49,7 @@ export default function FloatingToolbar({
   selectionState, 
   editorRootSelector = '.editor-root',
   offset = { x: 0, y: 10 },
-  cooldownMs = 150, // Configurable cooldown to prevent selection loop spam
+  cooldownMs = 200, // Configurable cooldown to prevent selection loop spam
   caretMode = false // Opt-in to show toolbar on caret (collapsed selection), default false to avoid mobile keyboard loops
 }) {
   const [position, setPosition] = useState({ top: 0, left: 0, visible: false });
@@ -648,7 +648,16 @@ export default function FloatingToolbar({
             </button>
         </div>
 
-        <div class="toolbar-arrow"></div>
+        {/* Debug instrumentation dot - only visible when debug mode is enabled */}
+        {debugMode && (
+          <div 
+            className="floating-toolbar-debug-dot" 
+            title="Debug mode active"
+            aria-hidden="true"
+          />
+        )}
+
+        <div className="toolbar-arrow"></div>
     </div>,
     document.body
   );

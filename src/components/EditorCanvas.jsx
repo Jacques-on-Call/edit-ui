@@ -36,7 +36,7 @@ export default function EditorCanvas(props) {
         handleAction={handleAction} 
         selectionState={selectionState}
         editorRootSelector=".editor-input"
-        cooldownMs={150}
+        cooldownMs={200}
       />
       <SlideoutToolbar handleAction={handleAction} />
       <main
