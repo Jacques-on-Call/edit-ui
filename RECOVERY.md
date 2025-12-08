@@ -4,6 +4,78 @@ This document serves as a debug diary for the `easy-seo` project. It records com
 
 ---
 
+## **Bug: FloatingToolbar Selection Loop and Never Appearing**
+
+**Date:** 2025-12-08
+**Agent:** GitHub Copilot
+
+### **Symptoms:**
+
+FloatingToolbar exhibits unstable behavior:
+- Console shows repeated "Skipping - selection unchanged (dedupe)" log messages
+- Toolbar sometimes never appears when text is selected
+- Toolbar sometimes flickers or updates continuously
+- Performance degradation from excessive position recalculations
+- Worse on mobile devices when keyboard opens/closes
+
+### **Root Cause:**
+
+The toolbar had selection deduplication (comparing selection keys) but no time-based cooldown. Mobile devices fire rapid selectionchange events when the visual viewport changes (keyboard opening/closing), even when the text selection itself hasn't changed. The dedupe logic catches identical selections, but slight variations in selection object properties (e.g., visualViewport offsets) could bypass it and trigger continuous updates.
+
+### **Solution:**
+
+Implemented a two-layer anti-loop protection system:
+
+1. **Selection Deduplication (existing):** Compare selection keys to skip identical selections
+2. **Cooldown Period (new):** Time-based throttling to prevent updates within a configurable window
+
+```javascript
+// FloatingToolbar.jsx
+const cooldownMs = 150; // Configurable cooldown
+const lastUpdateTimeRef = useRef(0);
+
+// In updatePosition():
+const now = Date.now();
+const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
+if (timeSinceLastUpdate < cooldownMs && lastUpdateTimeRef.current > 0) {
+  if (debugMode) {
+    console.debug('[FloatingToolbar] Skipping - within cooldown period', { 
+      timeSinceLastUpdate, 
+      cooldownMs 
+    });
+  }
+  return;
+}
+lastUpdateTimeRef.current = now;
+```
+
+**Additional Fixes:**
+- Added `touchend` event listener for better mobile text selection support
+- Added `onTouchStart` handler to prevent touch events from clearing selection
+- Changed `debugMode` from prop to runtime flag: `window.__EASY_SEO_TOOLBAR_DEBUG__`
+
+### **How to Debug:**
+
+1. Open browser console
+2. Enable debug mode: `window.__EASY_SEO_TOOLBAR_DEBUG__ = true`
+3. Select text and watch console logs
+4. Logs show: selection state, dedupe status, cooldown status, position calculations, hide reasons
+5. Look for patterns: if logs repeat rapidly, increase cooldownMs; if toolbar feels sluggish, decrease cooldownMs
+
+**Recommended cooldownMs values:**
+- Desktop: 100-150ms
+- Mobile: 150-200ms
+- High-frequency update scenarios: 200-300ms
+
+### **Key Insights:**
+
+1. **Dedupe alone isn't enough on mobile:** Visual viewport changes can create slight selection variations that bypass key-based deduplication.
+2. **Cooldown is essential:** Time-based throttling provides a safety net that works regardless of selection object changes.
+3. **150ms sweet spot:** Long enough to prevent loops, short enough to feel responsive.
+4. **Runtime debug flags are invaluable:** Being able to toggle verbose logging in production without redeployment makes debugging customer issues possible.
+
+---
+
 ## **Bug: Header Moves Up When Mobile Keyboard Opens on iOS Safari**
 
 **Date:** 2025-12-06

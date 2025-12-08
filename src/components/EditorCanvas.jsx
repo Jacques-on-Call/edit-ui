@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { useContext } from 'preact/hooks';
 import FloatingToolbar from './FloatingToolbar';
-import VerticalToolbox from './VerticalToolbox';
+import SlideoutToolbar from './SlideoutToolbar';
 import BottomActionBar from './BottomActionBar';
 import AddSectionModal from './AddSectionModal';
 import { EditorContext } from '../contexts/EditorContext';
@@ -36,9 +36,9 @@ export default function EditorCanvas(props) {
         handleAction={handleAction} 
         selectionState={selectionState}
         editorRootSelector=".editor-input"
-        debugMode={true}
+        cooldownMs={150}
       />
-      <VerticalToolbox handleAction={handleAction} />
+      <SlideoutToolbar handleAction={handleAction} />
       <main
         class="flex-grow relative overflow-y-auto"
         style={{

@@ -6,12 +6,14 @@ import {
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   Type, Palette, Highlighter, Eraser, ChevronDown
 } from 'lucide-preact';
-import '../styles/FloatingToolbar.css';
+import './FloatingToolbar.css';
 
 /**
- * FloatingToolbar - Context-aware formatting toolbar that appears above text selection
+ * FloatingToolbar - Icon-only context-aware formatting toolbar with liquid glass theme
  * 
  * Features:
+ * - Icon-only buttons (no visible text labels) for compact display
+ * - Liquid glass visual theme with backdrop blur and subtle gradients
  * - Inline formatting: Bold, Italic, Underline, Strikethrough, Inline Code
  * - Block format dropdown: Normal text, H1-H6
  * - Alignment dropdown: Left/Center/Right/Justify
@@ -19,30 +21,35 @@ import '../styles/FloatingToolbar.css';
  * - Link, Clear Formatting
  * - Formatting extras: Text Color, Highlight Color
  * 
- * Handles edge cases:
- * - Collapsed selections (cursor with no selection)
- * - Selections spanning multiple nodes
- * - Selections inside contenteditable areas
- * - Repositioning on scroll/resize with visualViewport offsets
- * - Preventing selection clearing on toolbar clicks
- * - Checking if selection is within editorRootSelector
+ * Anti-Loop Features:
+ * - Fixed upward buffer positioning (avoids render-measure circular dependency)
+ * - Selection deduplication with configurable cooldown to prevent rapid re-processing
+ * - requestAnimationFrame debouncing for position updates
+ * - Only shows on non-empty text selection (prevents mobile keyboard loops)
  * 
- * Debug mode:
- * - When debugMode=true, logs detailed selection and positioning info to console
+ * Mobile Support:
+ * - touchend event listener for mobile text selection
+ * - Prevents mousedown/touch events on toolbar from clearing selection
+ * - visualViewport offsets for correct positioning on mobile/zoomed views
+ * 
+ * Debug Instrumentation:
+ * - Runtime logging toggled by window.__EASY_SEO_TOOLBAR_DEBUG__
+ * - Detailed selection state, positioning, and hide reason logs
  * 
  * Props:
  * - handleAction: (action: string, payload?: any) => void - Handler for toolbar actions
  * - selectionState: object - Current selection state from SelectionStatePlugin
  * - editorRootSelector: string - CSS selector for editor root (default '.editor-root')
  * - offset: { x: number, y: number } - Additional offset for positioning (optional)
- * - debugMode: boolean - Enable detailed console logging (default false)
+ * - cooldownMs: number - Cooldown period between selection updates (default 150ms)
+ * - caretMode: boolean - Show toolbar on collapsed selection (default false)
  */
 export default function FloatingToolbar({ 
   handleAction, 
   selectionState, 
   editorRootSelector = '.editor-root',
   offset = { x: 0, y: 10 },
-  debugMode = false,
+  cooldownMs = 150, // Configurable cooldown to prevent selection loop spam
   caretMode = false // Opt-in to show toolbar on caret (collapsed selection), default false to avoid mobile keyboard loops
 }) {
   const [position, setPosition] = useState({ top: 0, left: 0, visible: false });
@@ -57,6 +64,10 @@ export default function FloatingToolbar({
   const highlightPickerRef = useRef(null);
   const lastSelectionKeyRef = useRef(null); // Track last selection to dedupe updates
   const updateFrameRef = useRef(null); // Track pending RAF to avoid duplicate frames
+  const lastUpdateTimeRef = useRef(0); // Track last update time for cooldown
+  
+  // Use runtime debug flag from window object
+  const debugMode = typeof window !== 'undefined' && window.__EASY_SEO_TOOLBAR_DEBUG__;
 
   useEffect(() => {
     const updatePosition = () => {
@@ -86,7 +97,23 @@ export default function FloatingToolbar({
         }
         return;
       }
+      
+      // Cooldown: Prevent rapid updates within cooldownMs window
+      const now = Date.now();
+      const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
+      if (lastUpdateTimeRef.current > 0 && timeSinceLastUpdate < cooldownMs) {
+        if (debugMode) {
+          console.debug('[FloatingToolbar] Skipping - within cooldown period', { 
+            timeSinceLastUpdate, 
+            cooldownMs,
+            selectionKey 
+          });
+        }
+        return;
+      }
+      
       lastSelectionKeyRef.current = selectionKey;
+      lastUpdateTimeRef.current = now;
       
       // Create summary object for debugging
       const selectionSummary = {
@@ -257,6 +284,8 @@ export default function FloatingToolbar({
     document.addEventListener('selectionchange', debouncedUpdatePosition);
     window.addEventListener('scroll', debouncedUpdatePosition, { capture: true });
     window.addEventListener('resize', debouncedUpdatePosition);
+    // Mobile: touchend triggers selection updates for touch-based text selection
+    document.addEventListener('touchend', debouncedUpdatePosition);
 
     return () => {
       // Cancel any pending frame on cleanup
@@ -266,8 +295,9 @@ export default function FloatingToolbar({
       document.removeEventListener('selectionchange', debouncedUpdatePosition);
       window.removeEventListener('scroll', debouncedUpdatePosition, { capture: true });
       window.removeEventListener('resize', debouncedUpdatePosition);
+      document.removeEventListener('touchend', debouncedUpdatePosition);
     };
-  }, [editorRootSelector, offset, debugMode, caretMode]);
+  }, [editorRootSelector, offset, cooldownMs, caretMode]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -292,10 +322,15 @@ export default function FloatingToolbar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showBlockDropdown, showAlignDropdown, showColorPicker, showHighlightPicker]);
 
-  // Prevent mousedown from clearing selection before click handler executes
+  // Prevent mousedown/touchstart from clearing selection before click handler executes
   // preventDefault: Stops browser's default text selection behavior
   // stopPropagation: Prevents event bubbling to parent elements that might handle clicks differently
   const handleMouseDown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  
+  const handleTouchStart = (e) => {
     e.preventDefault();
     e.stopPropagation();
   };
@@ -375,6 +410,7 @@ export default function FloatingToolbar({
         left: `${position.left}px`,
       }}
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
     >
         {/* Text formatting group */}
         <div class="toolbar-group">
