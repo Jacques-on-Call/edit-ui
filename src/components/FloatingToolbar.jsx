@@ -80,7 +80,7 @@ export default function FloatingToolbar({
   // Temporary diagnostic mode - always log key events regardless of debug flag
   // IMPORTANT: Set to false after debugging is complete to avoid excessive production logging
   // This is a temporary debugging instrumentation to diagnose iOS Safari issues
-  const DIAGNOSTIC_MODE = true;
+  const DIAGNOSTIC_MODE = false;
 
   // Helper function to find editor root with fallback detection (Issue #1 fix)
   // Uses selector first, then falls back to contenteditable attribute
@@ -312,9 +312,11 @@ export default function FloatingToolbar({
   // Issue #2 fix: Increased delay to 400ms for iOS selection to finalize
   const IOS_SELECTION_DELAY_MS = 400; // iOS Safari requires longer delay for selection to finalize after touch events
   
+  const touchStartTimeRef = useRef(0);
   // iOS touch handlers (Issue #3 fix: use useCallback for stable references)
   const handleTouchStart = useCallback(() => {
       isTouchActiveRef.current = true;
+      touchStartTimeRef.current = Date.now();
       if (DIAGNOSTIC_MODE) {
         console.log('[FloatingToolbar] DIAGNOSTIC: Touch start - marking touch active');
       }
@@ -325,21 +327,24 @@ export default function FloatingToolbar({
       touchEndTimeRef.current = touchEndTime;
       isTouchActiveRef.current = false;
       
-      if (DIAGNOSTIC_MODE) {
-        console.log('[FloatingToolbar] DIAGNOSTIC: Touch end event fired', {
-          touchEndTime,
-          delayBeforeCheck: IOS_SELECTION_DELAY_MS
-        });
-      }
-      
-      // iOS needs a longer delay for selection to be finalized
-      // This gives iOS time to complete the selection gesture and update the Selection API
-      setTimeout(() => {
+      const touchDuration = touchEndTime - touchStartTimeRef.current;
+
+      // Only run the delayed check if the touch was longer than a simple tap
+      if (touchDuration > 150) { // If touch is longer than 150ms, it's likely a selection
         if (DIAGNOSTIC_MODE) {
-          console.log('[FloatingToolbar] DIAGNOSTIC: Touch end - checking selection after delay');
+          console.log('[FloatingToolbar] DIAGNOSTIC: Long touch detected, scheduling selection check.', { touchDuration });
         }
-        updatePosition();
-      }, IOS_SELECTION_DELAY_MS);
+        setTimeout(() => {
+          if (DIAGNOSTIC_MODE) {
+            console.log('[FloatingToolbar] DIAGNOSTIC: Touch end - checking selection after delay');
+          }
+          updatePosition();
+        }, IOS_SELECTION_DELAY_MS);
+      } else {
+        if (DIAGNOSTIC_MODE) {
+          console.log('[FloatingToolbar] DIAGNOSTIC: Short tap detected, skipping selection check.', { touchDuration });
+        }
+      }
   }, [DIAGNOSTIC_MODE, IOS_SELECTION_DELAY_MS, updatePosition]);
     
   // iOS-specific: mouseup event as fallback (Issue #3 fix: use useCallback for stable reference)

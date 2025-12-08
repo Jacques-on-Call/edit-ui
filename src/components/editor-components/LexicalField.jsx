@@ -1,33 +1,46 @@
 import { h } from 'preact';
-import { useRef } from 'preact/hooks';
-import LexicalEditor from '../LexicalEditor'; // Assuming LexicalEditor is in the parent directory
+import { useRef, useEffect } from 'preact/hooks';
+import LexicalEditor from '../LexicalEditor';
 import { useEditor } from '../../contexts/EditorContext';
 
-// This is a new, self-contained Lexical field.
-// transparentBg: when true, removes the default gray background for use on background images
-// darkText: when true, uses dark text color for light backgrounds
 export default function LexicalField({ value, onChange, placeholder, className, transparentBg = false, darkText = false }) {
   const editorApiRef = useRef(null);
+  const isProgrammaticUpdateRef = useRef(false);
   const { setActiveEditor, setSelectionState } = useEditor();
 
+  // Effect to handle programmatic updates from parent
+  useEffect(() => {
+    if (editorApiRef.current && value !== editorApiRef.current.getHTML()) {
+      isProgrammaticUpdateRef.current = true;
+      editorApiRef.current.setHTML(value);
+    }
+  }, [value]);
+
+  const handleLexicalChange = (newHtml) => {
+    if (isProgrammaticUpdateRef.current) {
+      isProgrammaticUpdateRef.current = false;
+      return; // Suppress onChange event for programmatic updates
+    }
+    if (onChange) {
+      onChange(newHtml);
+    }
+  };
+
   const handleFocus = () => {
-    // When this field is focused, we tell the context about its API ref.
     if (editorApiRef.current) {
       setActiveEditor(editorApiRef.current);
     }
   };
 
   const handleBlur = () => {
-    // When this field is blurred, we clear the active editor.
     setActiveEditor(null);
   };
 
-  // No need for a wrapper div anymore. The events will be passed directly.
   return (
     <LexicalEditor
       ref={editorApiRef}
       initialContent={value}
-      onChange={onChange}
+      onChange={handleLexicalChange}
       onSelectionChange={setSelectionState}
       placeholder={placeholder}
       onFocus={handleFocus}
