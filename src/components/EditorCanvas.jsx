@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useContext } from 'preact/hooks';
+import { useContext, useEffect } from 'preact/hooks';
 import FloatingToolbar from './FloatingToolbar';
 import SlideoutToolbar from './SlideoutToolbar';
 import BottomActionBar from './BottomActionBar';
@@ -10,6 +10,14 @@ import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 
 export default function EditorCanvas(props) {
   const { selectionState, handleAction } = useContext(EditorContext);
+  
+  // Log EditorCanvas render to verify FloatingToolbar is being rendered
+  useEffect(() => {
+    console.log('[EditorCanvas] Component mounted, FloatingToolbar should be rendered');
+    return () => {
+      console.log('[EditorCanvas] Component unmounting');
+    };
+  }, []);
 
   const {
     viewMode,

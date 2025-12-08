@@ -1,5 +1,110 @@
 # Project Change Log
 
+GitHub Copilot (fix): iOS Safari FloatingToolbar - Comprehensive Diagnostic Instrumentation for Missing Toolbar
+Date: 2025-12-08
+Summary:
+Added comprehensive diagnostic logging to FloatingToolbar and EditorCanvas to diagnose why the toolbar is not appearing on iPhone with no console messages. Implemented always-on diagnostic mode, component mount/unmount tracking, event listener instrumentation, iOS-specific touch handling with delay, editor root verification, and portal target verification. This instrumentation will definitively identify where the flow is breaking on iOS Safari.
+
+Details:
+- **FloatingToolbar.jsx - Diagnostic Mode:**
+  - Added `DIAGNOSTIC_MODE` constant (set to `true`) for always-on logging regardless of debug flag
+  - Temporary mode to be disabled after debugging is complete
+  - All diagnostic logs use console.log (not console.debug) for maximum visibility
+
+- **FloatingToolbar.jsx - Component Mount Instrumentation:**
+  - Added mount logging in dedicated useEffect that fires immediately on component mount
+  - Logs regardless of debug mode to confirm component renders
+  - Logs: `editorRootSelector`, `debugMode` flag, `hasEditorRoot` check, `userAgent`, `isIOS` detection
+  - Added unmount logging to track component lifecycle
+  
+- **FloatingToolbar.jsx - Portal Target Verification:**
+  - Added dedicated useEffect to verify portal target exists
+  - Logs: `documentBody` exists, `portalContainer` tagName
+  - Ensures createPortal has valid target to render to
+
+- **FloatingToolbar.jsx - Event Listener Instrumentation:**
+  - Added "Setting up selection listeners" log when attaching listeners
+  - Added "Attaching event listeners" log before addEventListener calls
+  - Added "Removing event listeners" log in cleanup function
+  - Confirms listeners are being registered and cleaned up
+
+- **FloatingToolbar.jsx - Selection Event Firing Logs:**
+  - Added "Selection event fired" log at start of updatePosition()
+  - Added "debouncedUpdatePosition called" log in debounce function
+  - Logs selection object details: isCollapsed, rangeCount, selectionText
+  - Confirms when selection events are actually firing
+
+- **FloatingToolbar.jsx - iOS-Specific Touch Handling:**
+  - Added `handleTouchEndForSelection` function with 100ms delay
+  - iOS needs small delay for selection to be finalized after touch
+  - Logs "Touch end event fired" when touchend triggers
+  - Logs "Touch end - checking selection after delay" after setTimeout
+  - Added `handleMouseUp` function as iOS fallback
+  - Logs "Mouse up event fired" when mouseup triggers
+  - Both handlers attached as event listeners alongside selectionchange
+
+- **FloatingToolbar.jsx - Editor Root Verification:**
+  - Added diagnostic logging in editor root check section
+  - Logs: `selector`, `found` boolean, `elementInfo` (tagName, className, id)
+  - Verifies `.editor-input` selector matches an element in DOM
+  - Logs before traversing DOM tree to find editor root
+
+- **FloatingToolbar.jsx - Enhanced Hide Reason Logging:**
+  - Changed all hide condition logs from console.debug to console.log in diagnostic mode
+  - Logs fire when: no selection, collapsed selection, no text, no anchor node, not in editor root, no dimensions
+  - Each log includes detailed context about why toolbar is hiding
+  - Uses `debugMode || DIAGNOSTIC_MODE` to ensure logs always fire
+
+- **EditorCanvas.jsx - Component Mount Verification:**
+  - Added useEffect with mount/unmount logging
+  - Logs "Component mounted, FloatingToolbar should be rendered"
+  - Confirms EditorCanvas is rendering and FloatingToolbar element exists in JSX
+  - Added `useEffect` import from 'preact/hooks'
+
+**Testing on iPhone:**
+After these changes, console will show one of these flows:
+
+**Successful Flow:**
+```
+[EditorCanvas] Component mounted, FloatingToolbar should be rendered
+[FloatingToolbar] Component mounted { editorRootSelector: ".editor-input", hasEditorRoot: true, isIOS: true, ... }
+[FloatingToolbar] Portal target check { documentBody: true, portalContainer: "BODY" }
+[FloatingToolbar] Setting up selection listeners
+[FloatingToolbar] Attaching event listeners
+[FloatingToolbar] DIAGNOSTIC: Touch end event fired
+[FloatingToolbar] DIAGNOSTIC: Touch end - checking selection after delay
+[FloatingToolbar] DIAGNOSTIC: Selection event fired
+[FloatingToolbar] DIAGNOSTIC: Selection object { ... }
+[FloatingToolbar] DIAGNOSTIC: Editor root check { selector: ".editor-input", found: true, ... }
+[FloatingToolbar] Positioning toolbar { ... }
+```
+
+**If Editor Root Not Found:**
+```
+[FloatingToolbar] Component mounted { editorRootSelector: ".editor-input", hasEditorRoot: false, ... }
+[FloatingToolbar] DIAGNOSTIC: Editor root check { selector: ".editor-input", found: false, elementInfo: null }
+[FloatingToolbar] Hiding - selection not in editor root
+```
+
+**If Component Not Mounting:**
+```
+[EditorCanvas] Component mounted, FloatingToolbar should be rendered
+(No FloatingToolbar logs - indicates component not rendering or being filtered)
+```
+
+**If Selection Events Not Firing:**
+```
+[FloatingToolbar] Component mounted { ... }
+[FloatingToolbar] Setting up selection listeners
+[FloatingToolbar] Attaching event listeners
+(No selection event logs when selecting text - indicates events not triggering)
+```
+
+**Reflection:**
+The challenging part was ensuring diagnostic logs fire in all scenarios, including early returns and error conditions. The key insight was creating a separate DIAGNOSTIC_MODE flag independent of the user-controlled debug flag, since the original debug flag wasn't enabled and no logs were appearing at all. The instrumentation is comprehensive enough to pinpoint the exact failure point in the toolbar lifecycle, from component mount through event listener registration to selection event handling. Future advice: When debugging "silent failures" with no console output, add mount-time logging first to verify the component is even rendering - don't assume the component exists just because it's in the JSX.
+
+---
+
 GitHub Copilot (fix): iOS Safari Mobile UX - FloatingToolbar Visibility and Hamburger Button Positioning
 Date: 2025-12-08
 Summary:

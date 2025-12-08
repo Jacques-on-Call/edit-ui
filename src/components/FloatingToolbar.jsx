@@ -71,18 +71,65 @@ export default function FloatingToolbar({
   
   // Use runtime debug flag from window object
   const debugMode = typeof window !== 'undefined' && window.__EASY_SEO_TOOLBAR_DEBUG__;
+  
+  // Temporary diagnostic mode - always log key events regardless of debug flag
+  // IMPORTANT: Set to false after debugging is complete to avoid excessive production logging
+  // This is a temporary debugging instrumentation to diagnose iOS Safari issues
+  const DIAGNOSTIC_MODE = true;
+
+  // Component mount instrumentation - always log regardless of debug mode
+  useEffect(() => {
+    console.log('[FloatingToolbar] Component mounted', {
+      editorRootSelector,
+      debugMode: window.__EASY_SEO_TOOLBAR_DEBUG__,
+      hasEditorRoot: !!document.querySelector(editorRootSelector),
+      userAgent: navigator.userAgent, // Logged for debugging purposes only
+      isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent)
+    });
+    
+    return () => {
+      console.log('[FloatingToolbar] Component unmounting');
+    };
+  }, []);
+  
+  // Verify portal target exists
+  useEffect(() => {
+    if (DIAGNOSTIC_MODE) {
+      console.log('[FloatingToolbar] Portal target check', {
+        documentBody: !!document.body,
+        portalContainer: document.body?.tagName
+      });
+    }
+  }, []);
 
   useEffect(() => {
+    console.log('[FloatingToolbar] Setting up selection listeners');
+    
     const updatePosition = () => {
+      // Always log selection event firing in diagnostic mode
+      if (DIAGNOSTIC_MODE) {
+        console.log('[FloatingToolbar] DIAGNOSTIC: Selection event fired');
+      }
+      
       // Defensive check: ensure window.getSelection exists (SSR safety)
       if (typeof window === 'undefined' || !window.getSelection) {
-        if (debugMode) {
-          console.debug('[FloatingToolbar] window.getSelection not available');
+        if (debugMode || DIAGNOSTIC_MODE) {
+          console.log('[FloatingToolbar] window.getSelection not available');
         }
         return;
       }
 
       const selection = window.getSelection();
+      
+      // Log selection details in diagnostic mode
+      if (DIAGNOSTIC_MODE) {
+        console.log('[FloatingToolbar] DIAGNOSTIC: Selection object', {
+          selection: !!selection,
+          isCollapsed: selection?.isCollapsed,
+          rangeCount: selection?.rangeCount,
+          selectionText: selection?.toString()?.substring(0, 50)
+        });
+      }
       
       // Get selection text to check if non-empty
       const selectionText = selection?.toString() || '';
@@ -124,7 +171,7 @@ export default function FloatingToolbar({
         rangeCount: selection?.rangeCount || 0,
         anchorNode: selection?.anchorNode?.nodeName,
         focusNode: selection?.focusNode?.nodeName,
-        selectionText: selectionText.substring(0, 50) + (selectionText.length > 50 ? '...' : ''),
+        selectionText: selectionText.substring(0, 50) + (selectionText.length > 50 ? '...' : ''), // First 50 chars for debugging only
         textLength: selectionText.length,
         trimmedLength: selectionText.trim().length,
         hasTextSelection,
@@ -134,8 +181,8 @@ export default function FloatingToolbar({
       // Hide toolbar if no selection or selection is collapsed (just a cursor)
       // Exception: if caretMode=true, allow showing on collapsed selection
       if (!selection || selection.rangeCount === 0) {
-        if (debugMode) {
-          console.debug('[FloatingToolbar] Hiding - no selection or rangeCount=0', selectionSummary);
+        if (debugMode || DIAGNOSTIC_MODE) {
+          console.log('[FloatingToolbar] Hiding - no selection or rangeCount=0', selectionSummary);
         }
         setPosition(prev => ({ ...prev, visible: false }));
         return;
@@ -144,8 +191,8 @@ export default function FloatingToolbar({
       // Critical mobile fix: Only show toolbar when there's actual text selected
       // This prevents caret loops caused by keyboard/visualViewport events on mobile
       if (selection.isCollapsed && !caretMode) {
-        if (debugMode) {
-          console.debug('[FloatingToolbar] Hiding - collapsed selection and caretMode=false (prevents mobile keyboard loops)', selectionSummary);
+        if (debugMode || DIAGNOSTIC_MODE) {
+          console.log('[FloatingToolbar] Hiding - collapsed selection and caretMode=false (prevents mobile keyboard loops)', selectionSummary);
         }
         setPosition(prev => ({ ...prev, visible: false }));
         return;
@@ -154,8 +201,8 @@ export default function FloatingToolbar({
       // Only show toolbar when selection has non-empty text (after trim)
       // This prevents showing toolbar on collapsed selection or whitespace-only selection
       if (!hasTextSelection && !caretMode) {
-        if (debugMode) {
-          console.debug('[FloatingToolbar] Hiding - no text in selection (prevents caret loops)', selectionSummary);
+        if (debugMode || DIAGNOSTIC_MODE) {
+          console.log('[FloatingToolbar] Hiding - no text in selection (prevents caret loops)', selectionSummary);
         }
         setPosition(prev => ({ ...prev, visible: false }));
         return;
@@ -164,8 +211,8 @@ export default function FloatingToolbar({
       // Edge case: Check if selection is inside a contenteditable element or editor root
       const anchorNode = selection.anchorNode;
       if (!anchorNode) {
-        if (debugMode) {
-          console.debug('[FloatingToolbar] Hiding - no anchor node');
+        if (debugMode || DIAGNOSTIC_MODE) {
+          console.log('[FloatingToolbar] Hiding - no anchor node');
         }
         setPosition(prev => ({ ...prev, visible: false }));
         return;
@@ -173,6 +220,20 @@ export default function FloatingToolbar({
 
       // Check if selection is within the editor root
       const editorRoot = document.querySelector(editorRootSelector);
+      
+      // Log editor root check in diagnostic mode
+      if (DIAGNOSTIC_MODE) {
+        console.log('[FloatingToolbar] DIAGNOSTIC: Editor root check', {
+          selector: editorRootSelector,
+          found: !!editorRoot,
+          elementInfo: editorRoot ? {
+            tagName: editorRoot.tagName,
+            className: editorRoot.className,
+            id: editorRoot.id
+          } : null
+        });
+      }
+      
       let anchorInEditorRoot = false;
       
       if (editorRoot) {
@@ -187,8 +248,8 @@ export default function FloatingToolbar({
       }
 
       if (!anchorInEditorRoot) {
-        if (debugMode) {
-          console.debug('[FloatingToolbar] Hiding - selection not in editor root', {
+        if (debugMode || DIAGNOSTIC_MODE) {
+          console.log('[FloatingToolbar] Hiding - selection not in editor root', {
             editorRootSelector,
             anchorInEditorRoot,
             checkedElement: anchorNode.nodeType === Node.TEXT_NODE ? anchorNode.parentElement?.className : anchorNode.className
@@ -205,8 +266,8 @@ export default function FloatingToolbar({
 
       // Hide toolbar if selection has no dimensions (can happen with certain nodes)
       if (rect.width === 0 && rect.height === 0) {
-        if (debugMode) {
-          console.debug('[FloatingToolbar] Hiding - selection has no dimensions', {
+        if (debugMode || DIAGNOSTIC_MODE) {
+          console.log('[FloatingToolbar] Hiding - selection has no dimensions', {
             rectWidth: rect.width,
             rectHeight: rect.height
           });
@@ -242,8 +303,8 @@ export default function FloatingToolbar({
         top = minTopPosition;
       }
 
-      if (debugMode) {
-        console.debug('[FloatingToolbar] Positioning toolbar', {
+      if (debugMode || DIAGNOSTIC_MODE) {
+        console.log('[FloatingToolbar] Positioning toolbar', {
           selectionSummary,
           anchorInEditorRoot,
           clientRects: {
@@ -299,6 +360,9 @@ export default function FloatingToolbar({
     };
 
     const debouncedUpdatePosition = () => {
+      if (DIAGNOSTIC_MODE) {
+        console.log('[FloatingToolbar] DIAGNOSTIC: debouncedUpdatePosition called');
+      }
       // Cancel any pending frame to avoid duplicate updates (rate limiting)
       if (updateFrameRef.current) {
         cancelAnimationFrame(updateFrameRef.current);
@@ -306,14 +370,41 @@ export default function FloatingToolbar({
       // Schedule update for next frame
       updateFrameRef.current = requestAnimationFrame(updatePosition);
     }
+    
+    // iOS-specific: Add delayed selection check after touch
+    const IOS_SELECTION_DELAY_MS = 100; // iOS Safari requires delay for selection to finalize after touch events
+    const handleTouchEndForSelection = () => {
+      if (DIAGNOSTIC_MODE) {
+        console.log('[FloatingToolbar] DIAGNOSTIC: Touch end event fired');
+      }
+      // iOS needs a small delay for selection to be finalized
+      setTimeout(() => {
+        if (DIAGNOSTIC_MODE) {
+          console.log('[FloatingToolbar] DIAGNOSTIC: Touch end - checking selection after delay');
+        }
+        updatePosition();
+      }, IOS_SELECTION_DELAY_MS);
+    };
+    
+    // iOS-specific: mouseup event as fallback
+    const handleMouseUp = () => {
+      if (DIAGNOSTIC_MODE) {
+        console.log('[FloatingToolbar] DIAGNOSTIC: Mouse up event fired');
+      }
+      debouncedUpdatePosition();
+    };
 
+    console.log('[FloatingToolbar] Attaching event listeners');
     document.addEventListener('selectionchange', debouncedUpdatePosition);
     window.addEventListener('scroll', debouncedUpdatePosition, { capture: true });
     window.addEventListener('resize', debouncedUpdatePosition);
     // Mobile: touchend triggers selection updates for touch-based text selection
-    document.addEventListener('touchend', debouncedUpdatePosition);
+    document.addEventListener('touchend', handleTouchEndForSelection);
+    // iOS fallback: mouseup event
+    document.addEventListener('mouseup', handleMouseUp);
 
     return () => {
+      console.log('[FloatingToolbar] Removing event listeners');
       // Cancel any pending frame on cleanup
       if (updateFrameRef.current) {
         cancelAnimationFrame(updateFrameRef.current);
@@ -321,7 +412,8 @@ export default function FloatingToolbar({
       document.removeEventListener('selectionchange', debouncedUpdatePosition);
       window.removeEventListener('scroll', debouncedUpdatePosition, { capture: true });
       window.removeEventListener('resize', debouncedUpdatePosition);
-      document.removeEventListener('touchend', debouncedUpdatePosition);
+      document.removeEventListener('touchend', handleTouchEndForSelection);
+      document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [editorRootSelector, offset, cooldownMs, caretMode]);
 
