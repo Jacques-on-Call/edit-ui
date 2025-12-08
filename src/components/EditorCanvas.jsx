@@ -32,7 +32,12 @@ export default function EditorCanvas(props) {
 
   return (
     <div class="flex flex-col h-full bg-transparent text-white relative">
-      <FloatingToolbar handleAction={handleAction} selectionState={selectionState} />
+      <FloatingToolbar 
+        handleAction={handleAction} 
+        selectionState={selectionState}
+        editorRootSelector=".editor-input"
+        debugMode={true}
+      />
       <VerticalToolbox handleAction={handleAction} />
       <main
         class="flex-grow relative overflow-y-auto"

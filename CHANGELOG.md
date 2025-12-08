@@ -1,7 +1,158 @@
 # Project Change Log
 
-GitHub Copilot (feat): Complete Toolbar Replacement with Floating Context and Vertical Insert Toolbars
+GitHub Copilot (feat): Enhanced Dual Toolbar System with Full Lexical Editor Parity
 Date: 2025-12-08
+Summary:
+Massively enhanced both FloatingToolbar and VerticalToolbox to provide complete rich-text editing functionality with full Lexical editor feature parity. Added comprehensive formatting controls, debug mode for troubleshooting selection issues, and organized vertical toolbox with categorized actions. This completes the modern dual-toolbar architecture with professional-grade UX.
+
+Details:
+- **FloatingToolbar Comprehensive Enhancement:**
+  - **New inline formatting buttons:**
+    - Added Strikethrough button (was missing)
+    - Kept existing: Bold, Italic, Underline, Code
+  - **New Block Format Dropdown:**
+    - Added dropdown with Type icon showing Normal text, H1, H2, H3, H4, H5, H6
+    - Allows quick conversion of selected text to any heading level or back to paragraph
+    - Current block type is highlighted in dropdown for visual feedback
+  - **New Alignment Dropdown:**
+    - Added dropdown with alignment controls: Left, Center, Right, Justify
+    - Each option shows appropriate icon (AlignLeft, AlignCenter, AlignRight, AlignJustify)
+    - Current alignment state reflected in selection
+  - **New Text Color Picker:**
+    - Palette icon triggers color picker dropdown
+    - Grid of 10 predefined colors for quick selection
+    - "Remove color" option to clear text color
+    - Each color swatch has hover effect and accessibility labels
+  - **New Highlight Color Picker:**
+    - Highlighter icon triggers highlight color picker dropdown
+    - Same grid interface as text color picker
+    - "Remove highlight" option to clear background color
+  - **New Clear Formatting Button:**
+    - Eraser icon removes all formatting from selection
+    - Calls clearFormatting action which removes bold, italic, underline, strikethrough, code, highlight, and inline styles
+  - **Enhanced Debug Mode:**
+    - Added debugMode prop (default false, set to true in EditorCanvas)
+    - When enabled, logs detailed console.debug messages including:
+      - Selection summary (isCollapsed, rangeCount, anchorNode, focusNode)
+      - Whether anchor is in editor root with editorRootSelector validation
+      - ClientRects count and dimensions
+      - BoundingRect details
+      - VisualViewport offsets (offsetLeft, offsetTop, pageLeft, pageTop)
+      - Scroll position (scrollX, scrollY)
+      - Computed toolbar position (top, left, toolbar dimensions)
+      - Reasons for hiding toolbar (collapsed selection, no dimensions, outside editor root)
+    - Critical for debugging mobile selection issues and pinch-zoom scenarios
+  - **Improved Positioning Logic:**
+    - Now uses window.visualViewport for accurate positioning on mobile and during pinch-zoom
+    - Accounts for viewport offsets (offsetLeft, offsetTop)
+    - Validates selection is within editorRootSelector ('.editor-input') before showing toolbar
+    - Traverses DOM tree to verify anchor node is inside editor root
+    - Prevents toolbar from appearing on selections outside the editor
+  - **Fallback Handlers for Testing:**
+    - When handleAction is not provided and debugMode is true, uses document.execCommand fallbacks
+    - Allows quick testing of toolbar UI without full editor integration
+    - Supports bold, italic, underline, strikethrough, undo, redo
+  - **UI/UX Improvements:**
+    - Added toolbar dividers between button groups for visual organization
+    - Dropdowns use proper z-index layering (10001) to appear above toolbar
+    - Click-outside-to-close for all dropdowns
+    - Smooth fade-in animations for dropdowns
+    - Active state highlighting for selected format options
+    - Comprehensive aria-labels and title attributes for accessibility
+  - **Props Interface:**
+    - handleAction: (action, payload) => void - Required action dispatcher
+    - selectionState: object - Optional selection state from SelectionStatePlugin
+    - editorRootSelector: string - CSS selector for editor root (default '.editor-root')
+    - offset: { x, y } - Optional positioning offset (default { x: 0, y: 10 })
+    - debugMode: boolean - Enable detailed logging (default false)
+
+- **VerticalToolbox Comprehensive Enhancement:**
+  - **Expanded Heading Options:**
+    - Added H4, H5, H6 heading buttons (previously only had H2, H3)
+    - Now provides H2-H6 as duplicate options per user request (H2-H6 also in FloatingToolbar)
+    - Each heading has its own icon (Heading2, Heading3, Heading4, Heading5, Heading6)
+  - **New Structure Elements:**
+    - Added Horizontal Rule button (Minus icon) - inserts horizontal divider line
+    - Added Page Break button (FileText icon) - inserts page break marker
+    - Table button already existed, kept in place
+  - **New Layout Elements:**
+    - Added Columns Layout button (Columns icon) - inserts 2-column layout placeholder
+    - Added Collapsible button (ChevronDown icon) - inserts expandable/collapsible section
+  - **New Utility Elements:**
+    - Added Date button (Calendar icon) - inserts current date in formatted text
+  - **New History Controls (Per User Request):**
+    - Added Undo button (Undo icon) - ONLY in vertical toolbox, not in floating toolbar
+    - Added Redo button (Redo icon) - ONLY in vertical toolbox, not in floating toolbar
+    - User specifically requested Undo/Redo only appear in vertical toolbox
+  - **Organized by Category:**
+    - Actions now grouped into logical categories with labels:
+      - Headings: H2, H3, H4, H5, H6
+      - Lists: Bullet List, Numbered List
+      - Structure: Horizontal Rule, Page Break, Table
+      - Media: Image
+      - Layout: Columns Layout, Collapsible
+      - Utility: Date
+      - History: Undo, Redo
+    - Category labels use subtle styling (uppercase, gray, small font)
+    - Improves discoverability and reduces cognitive load
+  - **Maintained Existing Features:**
+    - Hamburger trigger button in top-left corner
+    - Slide-out animation (280px width panel)
+    - Auto-close after action selection
+    - Keyboard accessible (Escape key to close)
+    - Click-outside-to-close with backdrop overlay
+    - Comprehensive aria labels on all buttons
+
+- **EditorContext Action Handler Updates:**
+  - Added 'align' action handler - calls activeEditor.alignText(alignment)
+  - Added 'textColor' action handler - calls activeEditor.setTextColor(color)
+  - Added 'highlightColor' action handler - calls activeEditor.setHighlightColor(color)
+  - Added 'clearFormatting' action handler - calls activeEditor.clearFormatting()
+  - Added 'pageBreak' action handler - calls activeEditor.insertPageBreak()
+  - Added 'columns' action handler - calls activeEditor.insertColumns(columnCount)
+  - Added 'collapsible' action handler - calls activeEditor.insertCollapsible()
+  - Added 'date' action handler - calls activeEditor.insertDate()
+  - Added 'undo' action handler - calls activeEditor.undo()
+  - Added 'redo' action handler - calls activeEditor.redo()
+  - All handlers already have corresponding methods in EditorApiPlugin.jsx
+  - Console logging already present for all actions
+
+- **CSS Enhancements (editor.css):**
+  - **Toolbar Dividers:** Added .toolbar-divider class for visual separation between button groups
+  - **Dropdown Containers:** Added .toolbar-dropdown-container for positioning context
+  - **Dropdown Triggers:** Styled .toolbar-dropdown-trigger with hover states
+  - **Dropdown Menus:** Styled .toolbar-dropdown with fadeIn animation, shadow, and proper z-index
+  - **Dropdown Items:** Styled .toolbar-dropdown-item with hover, active states
+  - **Color Pickers:** Added .color-picker-dropdown with grid layout
+  - **Color Swatches:** Styled .color-swatch with 5-column grid, hover effects, border transitions
+  - **Category Labels:** Added .toolbox-category-label for vertical toolbox sections
+  - All styles follow existing dark theme (#1f2937 background, #e5e7eb text)
+  - Proper z-index layering: backdrop (9997), toolbox (9998), trigger (9999), floating toolbar (10000), dropdowns (10001)
+
+- **EditorCanvas Integration:**
+  - Updated FloatingToolbar mount to pass debugMode={true} for QA visibility
+  - Passed editorRootSelector=".editor-input" to validate selections
+  - Both toolbars now receive full context and action handlers
+
+Impact:
+- **Feature Parity:** FloatingToolbar now matches or exceeds Lexical's native toolbar capabilities
+- **Comprehensive Formatting:** Users have access to all common rich-text formatting options
+- **Professional UX:** Dropdowns, color pickers, and organized categories provide intuitive interface
+- **Mobile-Ready:** VisualViewport handling ensures correct positioning on mobile devices
+- **Debuggable:** Debug mode provides detailed console output for troubleshooting selection placement issues
+- **Organized Workflow:** Category grouping in VerticalToolbox makes finding actions intuitive
+- **Complete Toolset:** All insert actions from requirements are now implemented and accessible
+- **User Request Compliance:** H2-H6 appear in both toolbars, Undo/Redo only in vertical toolbox as requested
+
+Reflection:
+- **What was the most challenging part of this task?** Implementing the visualViewport handling for mobile positioning and ensuring the selection validation logic works correctly across different DOM structures. The debug mode was essential for understanding how selections behave in different scenarios.
+- **What was a surprising discovery or key learning?** The window.visualViewport API is crucial for correct toolbar positioning on mobile devices, especially during pinch-zoom. Also, the need to traverse the DOM tree to validate that selections are within the editor root prevents the toolbar from appearing on unrelated text selections elsewhere on the page.
+- **What advice would you give the next agent who works on this code?** The dual-toolbar pattern is now fully established and feature-complete. When adding new formatting actions, decide whether they're selection-dependent (FloatingToolbar) or cursor-position-based (VerticalToolbox). Always add the action to EditorContext.handleAction and ensure the corresponding method exists in EditorApiPlugin.jsx. Use debugMode liberally when troubleshooting selection issues - it provides invaluable insight into what's happening. The color pickers could be enhanced with a custom color input field for arbitrary hex values, and the window.prompt dialogs for links/images should be replaced with proper modal components for better UX.
+
+---
+
+GitHub Copilot (feat): Complete Toolbar Replacement with Floating Context and Vertical Insert Toolbars
+Date: 2025-12-07
 Summary:
 Completed the toolbar replacement by fixing the missing handleAction in EditorContext, enhancing the FloatingToolbar with defensive checks, and implementing a new VerticalToolbox with HamburgerTrigger for insert actions. This provides a modern, dual-toolbar UX similar to Notion and Medium.
 

@@ -69,8 +69,23 @@ export function EditorProvider({ children }) {
         activeEditor.toggleList?.(args[0]);
         break;
       case 'heading':
-        // args[0] should be 'h2', 'h3', etc.
+        // args[0] should be 'h2', 'h3', etc. or null for paragraph
         activeEditor.toggleHeading?.(args[0]);
+        break;
+      case 'align':
+        // args[0] should be 'left', 'center', 'right', or 'justify'
+        activeEditor.alignText?.(args[0]);
+        break;
+      case 'textColor':
+        // args[0] is the color string or null to remove
+        activeEditor.setTextColor?.(args[0]);
+        break;
+      case 'highlightColor':
+        // args[0] is the color string or null to remove
+        activeEditor.setHighlightColor?.(args[0]);
+        break;
+      case 'clearFormatting':
+        activeEditor.clearFormatting?.();
         break;
       case 'image':
         // TODO: Replace sequential window.prompt calls with a single modal dialog form
@@ -87,6 +102,25 @@ export function EditorProvider({ children }) {
         break;
       case 'horizontalRule':
         activeEditor.insertHorizontalRule?.();
+        break;
+      case 'pageBreak':
+        activeEditor.insertPageBreak?.();
+        break;
+      case 'columns':
+        // args[0] is the number of columns (default 2)
+        activeEditor.insertColumns?.(args[0] || 2);
+        break;
+      case 'collapsible':
+        activeEditor.insertCollapsible?.();
+        break;
+      case 'date':
+        activeEditor.insertDate?.();
+        break;
+      case 'undo':
+        activeEditor.undo?.();
+        break;
+      case 'redo':
+        activeEditor.redo?.();
         break;
       default:
         console.warn('[EditorContext] Unknown action:', action);

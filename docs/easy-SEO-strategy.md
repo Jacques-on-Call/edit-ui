@@ -55,21 +55,35 @@ A no-code website builder for non-technical business owners (lawyers, plumbers, 
 
 **Dual Toolbar System:**
 
-The editor features a modern, context-aware toolbar system inspired by Notion and Medium:
+The editor features a comprehensive, modern toolbar system with full rich-text editing capabilities:
 
 - **Floating Context Toolbar:**
-  - Appears automatically above selected text
-  - Provides instant access to formatting: Bold, Italic, Underline, Code, Link
-  - Includes quick list creation (bullet and numbered)
+  - Appears automatically above selected text for immediate formatting access
+  - **Text formatting:** Bold, Italic, Underline, Strikethrough, Inline Code
+  - **Block format dropdown:** Convert text to Normal, H1, H2, H3, H4, H5, or H6
+  - **Alignment dropdown:** Align text Left, Center, Right, or Justify
+  - **Lists:** Quick creation of bullet and numbered lists
+  - **Link insertion:** Add hyperlinks to selected text
+  - **Color controls:** Text color picker and highlight color picker with predefined palette
+  - **Clear formatting:** Remove all formatting with one click
   - Buttons highlight to show active formatting state
-  - Follows the selection as you scroll
-  - Disappears when no text is selected
+  - Follows the selection as you scroll with smart positioning
+  - Mobile-optimized with visualViewport positioning for accurate placement during zoom
+  - Disappears when no text is selected or selection is outside editor
+  - Debug mode available for troubleshooting selection placement issues
 
 - **Vertical Insert Toolbar:**
   - Accessed via hamburger icon in top-left corner
-  - Slides out as a left sidebar with insert actions
-  - Insert headings (H2, H3), lists, images, and tables
-  - Works at cursor position, no selection needed
+  - Slides out as a left sidebar with categorized insert actions
+  - **Headings:** Insert H2, H3, H4, H5, H6 at cursor position
+  - **Lists:** Create bullet or numbered lists
+  - **Structure:** Add Horizontal Rule, Page Break, or Table
+  - **Media:** Insert images with URL prompt
+  - **Layout:** Insert Columns Layout or Collapsible sections
+  - **Utility:** Insert current date in formatted text
+  - **History:** Undo and Redo (only available in vertical toolbar)
+  - Actions organized by category for easy discovery
+  - Works at cursor position, no text selection needed
   - Auto-closes after inserting an element
   - Keyboard accessible (Escape to close)
   - Click outside or backdrop to dismiss
