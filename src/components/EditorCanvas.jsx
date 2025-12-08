@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useContext, useEffect } from 'preact/hooks';
+import { useContext, useEffect, useMemo } from 'preact/hooks';
 import FloatingToolbar from './FloatingToolbar';
 import SlideoutToolbar from './SlideoutToolbar';
 import BottomActionBar from './BottomActionBar';
@@ -18,6 +18,10 @@ export default function EditorCanvas(props) {
       console.log('[EditorCanvas] Component unmounting');
     };
   }, []);
+  
+  // Memoize offset object to prevent FloatingToolbar re-mount loop (Issue #3)
+  // Creating a new object on every render would cause useEffect dependencies to change
+  const toolbarOffset = useMemo(() => ({ x: 0, y: 10 }), []);
 
   const {
     viewMode,
@@ -44,6 +48,7 @@ export default function EditorCanvas(props) {
         handleAction={handleAction} 
         selectionState={selectionState}
         editorRootSelector=".editor-input"
+        offset={toolbarOffset}
         cooldownMs={200}
       />
       <SlideoutToolbar handleAction={handleAction} />

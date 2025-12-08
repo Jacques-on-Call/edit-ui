@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useState, useEffect, useRef } from 'preact/hooks';
+import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { 
   Bold, Italic, Underline, Strikethrough, Code, Link, List, ListOrdered,
@@ -68,6 +68,11 @@ export default function FloatingToolbar({
   const lastSelectionKeyRef = useRef(null); // Track last selection to dedupe updates
   const updateFrameRef = useRef(null); // Track pending RAF to avoid duplicate frames
   const lastUpdateTimeRef = useRef(0); // Track last update time for cooldown
+  const editorRootRef = useRef(null); // Cache editor root element to avoid repeated queries
+  const editorRootObserverRef = useRef(null); // MutationObserver for waiting for editor element
+  const isTouchActiveRef = useRef(false); // Track iOS touch lifecycle
+  const touchEndTimeRef = useRef(0); // Track when touch ended for iOS selection timing
+  const iosRetryCountRef = useRef(0); // Track iOS re-check attempts to prevent infinite recursion
   
   // Use runtime debug flag from window object
   const debugMode = typeof window !== 'undefined' && window.__EASY_SEO_TOOLBAR_DEBUG__;
@@ -77,12 +82,68 @@ export default function FloatingToolbar({
   // This is a temporary debugging instrumentation to diagnose iOS Safari issues
   const DIAGNOSTIC_MODE = true;
 
+  // Helper function to find editor root with fallback detection (Issue #1 fix)
+  // Uses selector first, then falls back to contenteditable attribute
+  const findEditorRoot = useCallback(() => {
+    // Return cached result if available
+    if (editorRootRef.current && document.body.contains(editorRootRef.current)) {
+      return editorRootRef.current;
+    }
+    
+    // Try primary selector
+    let element = document.querySelector(editorRootSelector);
+    
+    // Fallback: Find by contenteditable attribute if selector fails
+    if (!element) {
+      const editables = document.querySelectorAll('[contenteditable="true"]');
+      // Prefer elements with editor-related classes
+      for (const el of editables) {
+        if (el.className && (
+          el.className.includes('editor') || 
+          el.className.includes('lexical') ||
+          el.className.includes('content')
+        )) {
+          element = el;
+          break;
+        }
+      }
+      // If still not found, use first contenteditable
+      if (!element && editables.length > 0) {
+        element = editables[0];
+      }
+      
+      if (element && DIAGNOSTIC_MODE) {
+        console.log('[FloatingToolbar] Editor root found via contenteditable fallback', {
+          selector: editorRootSelector,
+          foundElement: {
+            tagName: element.tagName,
+            className: element.className,
+            id: element.id
+          }
+        });
+      }
+    }
+    
+    // Cache the result
+    if (element) {
+      editorRootRef.current = element;
+    }
+    
+    return element;
+  }, [editorRootSelector, DIAGNOSTIC_MODE]);
+  
   // Component mount instrumentation - always log regardless of debug mode
   useEffect(() => {
+    const editorRoot = findEditorRoot();
     console.log('[FloatingToolbar] Component mounted', {
       editorRootSelector,
       debugMode: window.__EASY_SEO_TOOLBAR_DEBUG__,
-      hasEditorRoot: !!document.querySelector(editorRootSelector),
+      hasEditorRoot: !!editorRoot,
+      editorRootInfo: editorRoot ? {
+        tagName: editorRoot.tagName,
+        className: editorRoot.className,
+        id: editorRoot.id
+      } : null,
       userAgent: navigator.userAgent, // Logged for debugging purposes only
       isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent)
     });
@@ -90,7 +151,7 @@ export default function FloatingToolbar({
     return () => {
       console.log('[FloatingToolbar] Component unmounting');
     };
-  }, []);
+  }, [findEditorRoot]);
   
   // Verify portal target exists
   useEffect(() => {
@@ -101,11 +162,71 @@ export default function FloatingToolbar({
       });
     }
   }, []);
-
+  
+  // Wait for editor root element to appear in DOM (Issue #1 fix)
+  // Uses MutationObserver to detect when the editor element is added
   useEffect(() => {
-    console.log('[FloatingToolbar] Setting up selection listeners');
+    const checkEditorRoot = () => {
+      const editorRoot = findEditorRoot();
+      if (editorRoot) {
+        if (DIAGNOSTIC_MODE) {
+          console.log('[FloatingToolbar] Editor root found and ready', {
+            tagName: editorRoot.tagName,
+            className: editorRoot.className
+          });
+        }
+        // Disconnect observer once found
+        if (editorRootObserverRef.current) {
+          editorRootObserverRef.current.disconnect();
+          editorRootObserverRef.current = null;
+        }
+        return true;
+      }
+      return false;
+    };
     
-    const updatePosition = () => {
+    // Check immediately
+    if (checkEditorRoot()) {
+      return;
+    }
+    
+    // If not found, set up MutationObserver to wait for it
+    if (DIAGNOSTIC_MODE) {
+      console.log('[FloatingToolbar] Editor root not found, setting up MutationObserver');
+    }
+    
+    const observer = new MutationObserver((mutations) => {
+      // Performance optimization: Only check when relevant nodes are added
+      const hasAddedNodes = mutations.some(m => m.addedNodes.length > 0);
+      if (hasAddedNodes && checkEditorRoot()) {
+        if (DIAGNOSTIC_MODE) {
+          console.log('[FloatingToolbar] Editor root detected via MutationObserver');
+        }
+      }
+    });
+    
+    // Observe only the body's direct children to reduce overhead
+    // Editor component should be mounted relatively high in the DOM tree
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      // Only observe childList changes (not attributes or characterData) for better performance
+      attributes: false,
+      characterData: false
+    });
+    
+    editorRootObserverRef.current = observer;
+    
+    return () => {
+      if (editorRootObserverRef.current) {
+        editorRootObserverRef.current.disconnect();
+        editorRootObserverRef.current = null;
+      }
+    };
+  }, [findEditorRoot, DIAGNOSTIC_MODE]);
+
+  // Main selection position update function (Issue #3 fix: use useCallback for stable reference)
+  const updatePosition = useCallback(() => {
       // Always log selection event firing in diagnostic mode
       if (DIAGNOSTIC_MODE) {
         console.log('[FloatingToolbar] DIAGNOSTIC: Selection event fired');
@@ -121,19 +242,64 @@ export default function FloatingToolbar({
 
       const selection = window.getSelection();
       
+      // iOS-specific handling (Issue #2 fix)
+      // Detect if we're on iOS
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
+      // Check if we're still within the touch window (touch just ended)
+      const now = Date.now();
+      const timeSinceTouchEnd = now - touchEndTimeRef.current;
+      const isRecentTouch = timeSinceTouchEnd < 500; // Within 500ms of touch end
+      
       // Log selection details in diagnostic mode
       if (DIAGNOSTIC_MODE) {
         console.log('[FloatingToolbar] DIAGNOSTIC: Selection object', {
           selection: !!selection,
           isCollapsed: selection?.isCollapsed,
           rangeCount: selection?.rangeCount,
-          selectionText: selection?.toString()?.substring(0, 50)
+          selectionText: selection?.toString()?.substring(0, 50),
+          isIOS,
+          isTouchActive: isTouchActiveRef.current,
+          isRecentTouch,
+          timeSinceTouchEnd
         });
       }
       
       // Get selection text to check if non-empty
       const selectionText = selection?.toString() || '';
       const hasTextSelection = selectionText.trim().length > 0;
+      
+      // iOS-specific: If selection appears collapsed but we just had a touch,
+      // wait a bit longer for iOS to finalize the selection (Issue #2 fix)
+      // Add recursion guard to prevent infinite loop if selection never finalizes
+      const MAX_IOS_RETRIES = 3;
+      if (isIOS && selection?.isCollapsed && isRecentTouch && !caretMode && iosRetryCountRef.current < MAX_IOS_RETRIES) {
+        iosRetryCountRef.current += 1;
+        if (DIAGNOSTIC_MODE) {
+          console.log('[FloatingToolbar] iOS: Selection collapsed but touch recent, will re-check', {
+            timeSinceTouchEnd,
+            willReCheckIn: '100ms',
+            retryCount: iosRetryCountRef.current,
+            maxRetries: MAX_IOS_RETRIES
+          });
+        }
+        // Schedule a re-check after iOS has had time to finalize
+        setTimeout(() => {
+          if (DIAGNOSTIC_MODE) {
+            console.log('[FloatingToolbar] iOS: Re-checking selection after delay');
+          }
+          updatePosition();
+        }, 100);
+        return;
+      }
+      
+      // Reset retry count on successful check or when we give up
+      if (iosRetryCountRef.current > 0 && (!isRecentTouch || !selection?.isCollapsed)) {
+        if (DIAGNOSTIC_MODE && iosRetryCountRef.current >= MAX_IOS_RETRIES) {
+          console.log('[FloatingToolbar] iOS: Max retries reached, giving up on collapsed selection');
+        }
+        iosRetryCountRef.current = 0;
+      }
       
       // Create unique key for this selection to dedupe updates
       const selectionKey = selection?.rangeCount > 0 
@@ -149,7 +315,7 @@ export default function FloatingToolbar({
       }
       
       // Cooldown: Prevent rapid updates within cooldownMs window
-      const now = Date.now();
+      // Reuse 'now' variable already declared above for iOS touch handling
       const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
       if (lastUpdateTimeRef.current > 0 && timeSinceLastUpdate < cooldownMs) {
         if (debugMode) {
@@ -218,8 +384,8 @@ export default function FloatingToolbar({
         return;
       }
 
-      // Check if selection is within the editor root
-      const editorRoot = document.querySelector(editorRootSelector);
+      // Check if selection is within the editor root (Issue #1 fix - use findEditorRoot with fallback)
+      const editorRoot = findEditorRoot();
       
       // Log editor root check in diagnostic mode
       if (DIAGNOSTIC_MODE) {
@@ -229,7 +395,8 @@ export default function FloatingToolbar({
           elementInfo: editorRoot ? {
             tagName: editorRoot.tagName,
             className: editorRoot.className,
-            id: editorRoot.id
+            id: editorRoot.id,
+            contentEditable: editorRoot.contentEditable
           } : null
         });
       }
@@ -239,7 +406,12 @@ export default function FloatingToolbar({
       if (editorRoot) {
         let node = anchorNode.nodeType === Node.TEXT_NODE ? anchorNode.parentElement : anchorNode;
         while (node && node !== document.body) {
-          if (node === editorRoot || (node.classList && node.classList.contains('editor-input'))) {
+          if (node === editorRoot) {
+            anchorInEditorRoot = true;
+            break;
+          }
+          // Also check for contenteditable as additional fallback
+          if (node.contentEditable === 'true' || node.isContentEditable) {
             anchorInEditorRoot = true;
             break;
           }
@@ -357,9 +529,10 @@ export default function FloatingToolbar({
       }
 
       setPosition({ top, left, visible: true });
-    };
+  }, [debugMode, DIAGNOSTIC_MODE, offset, caretMode, cooldownMs, findEditorRoot]);
 
-    const debouncedUpdatePosition = () => {
+  // Debounced wrapper for updatePosition (Issue #3 fix: use useCallback for stable reference)
+  const debouncedUpdatePosition = useCallback(() => {
       if (DIAGNOSTIC_MODE) {
         console.log('[FloatingToolbar] DIAGNOSTIC: debouncedUpdatePosition called');
       }
@@ -369,36 +542,58 @@ export default function FloatingToolbar({
       }
       // Schedule update for next frame
       updateFrameRef.current = requestAnimationFrame(updatePosition);
-    }
-    
-    // iOS-specific: Add delayed selection check after touch
-    const IOS_SELECTION_DELAY_MS = 100; // iOS Safari requires delay for selection to finalize after touch events
-    const handleTouchEndForSelection = () => {
+  }, [DIAGNOSTIC_MODE, updatePosition]);
+  
+  // iOS-specific: Track touch lifecycle and add delayed selection check
+  // Issue #2 fix: Increased delay to 400ms for iOS selection to finalize
+  const IOS_SELECTION_DELAY_MS = 400; // iOS Safari requires longer delay for selection to finalize after touch events
+  
+  // iOS touch handlers (Issue #3 fix: use useCallback for stable references)
+  const handleTouchStart = useCallback(() => {
+      isTouchActiveRef.current = true;
       if (DIAGNOSTIC_MODE) {
-        console.log('[FloatingToolbar] DIAGNOSTIC: Touch end event fired');
+        console.log('[FloatingToolbar] DIAGNOSTIC: Touch start - marking touch active');
       }
-      // iOS needs a small delay for selection to be finalized
+  }, [DIAGNOSTIC_MODE]);
+    
+  const handleTouchEndForSelection = useCallback(() => {
+      const touchEndTime = Date.now();
+      touchEndTimeRef.current = touchEndTime;
+      isTouchActiveRef.current = false;
+      
+      if (DIAGNOSTIC_MODE) {
+        console.log('[FloatingToolbar] DIAGNOSTIC: Touch end event fired', {
+          touchEndTime,
+          delayBeforeCheck: IOS_SELECTION_DELAY_MS
+        });
+      }
+      
+      // iOS needs a longer delay for selection to be finalized
+      // This gives iOS time to complete the selection gesture and update the Selection API
       setTimeout(() => {
         if (DIAGNOSTIC_MODE) {
           console.log('[FloatingToolbar] DIAGNOSTIC: Touch end - checking selection after delay');
         }
         updatePosition();
       }, IOS_SELECTION_DELAY_MS);
-    };
+  }, [DIAGNOSTIC_MODE, IOS_SELECTION_DELAY_MS, updatePosition]);
     
-    // iOS-specific: mouseup event as fallback
-    const handleMouseUp = () => {
+  // iOS-specific: mouseup event as fallback (Issue #3 fix: use useCallback for stable reference)
+  const handleMouseUp = useCallback(() => {
       if (DIAGNOSTIC_MODE) {
         console.log('[FloatingToolbar] DIAGNOSTIC: Mouse up event fired');
       }
       debouncedUpdatePosition();
-    };
+  }, [DIAGNOSTIC_MODE, debouncedUpdatePosition]);
 
-    console.log('[FloatingToolbar] Attaching event listeners');
+  // Set up event listeners (Issue #3 fix: stabilized with useCallback handlers)
+  useEffect(() => {
+    console.log('[FloatingToolbar] Setting up selection listeners and attaching event listeners');
     document.addEventListener('selectionchange', debouncedUpdatePosition);
     window.addEventListener('scroll', debouncedUpdatePosition, { capture: true });
     window.addEventListener('resize', debouncedUpdatePosition);
-    // Mobile: touchend triggers selection updates for touch-based text selection
+    // Mobile: touchstart/touchend for tracking iOS selection lifecycle (Issue #2 fix)
+    document.addEventListener('touchstart', handleTouchStart);
     document.addEventListener('touchend', handleTouchEndForSelection);
     // iOS fallback: mouseup event
     document.addEventListener('mouseup', handleMouseUp);
@@ -412,10 +607,11 @@ export default function FloatingToolbar({
       document.removeEventListener('selectionchange', debouncedUpdatePosition);
       window.removeEventListener('scroll', debouncedUpdatePosition, { capture: true });
       window.removeEventListener('resize', debouncedUpdatePosition);
+      document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchend', handleTouchEndForSelection);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [editorRootSelector, offset, cooldownMs, caretMode]);
+  }, [debouncedUpdatePosition, handleTouchStart, handleTouchEndForSelection, handleMouseUp]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -448,7 +644,7 @@ export default function FloatingToolbar({
     e.stopPropagation();
   };
   
-  const handleTouchStart = (e) => {
+  const handleToolbarTouchStart = (e) => {
     e.preventDefault();
     e.stopPropagation();
   };
@@ -528,7 +724,7 @@ export default function FloatingToolbar({
         left: `${position.left}px`,
       }}
       onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
+      onTouchStart={handleToolbarTouchStart}
     >
         {/* Text formatting group */}
         <div class="toolbar-group">
