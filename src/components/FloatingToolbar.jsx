@@ -8,6 +8,9 @@ import {
 } from 'lucide-preact';
 import './FloatingToolbar.css';
 
+// iOS viewport positioning constants
+const MIN_TOOLBAR_GAP_FROM_VIEWPORT_TOP = 8; // Minimum gap (px) from visual viewport top to keep toolbar visible
+
 /**
  * FloatingToolbar - Icon-only context-aware formatting toolbar with liquid glass theme
  * 
@@ -228,8 +231,16 @@ export default function FloatingToolbar({
 
       // Position toolbar above selection, centered horizontally
       // Use absolute positioning with scroll offsets and viewport offsets
-      const top = rect.top + window.scrollY - toolbarElement.offsetHeight - offset.y + viewportOffsetY;
+      let top = rect.top + window.scrollY - toolbarElement.offsetHeight - offset.y + viewportOffsetY;
       const left = rect.left + window.scrollX + (rect.width / 2) + viewportOffsetX + offset.x;
+
+      // iOS-specific bounds checking: Prevent toolbar from going off-screen above viewport
+      // When selection is near top of screen, the toolbar would render above visible area (negative top)
+      const minTopPosition = (viewport.offsetTop || 0) + MIN_TOOLBAR_GAP_FROM_VIEWPORT_TOP;
+      const wasAdjusted = top < minTopPosition;
+      if (wasAdjusted) {
+        top = minTopPosition;
+      }
 
       if (debugMode) {
         console.debug('[FloatingToolbar] Positioning toolbar', {
@@ -265,6 +276,21 @@ export default function FloatingToolbar({
             left,
             toolbarHeight: toolbarElement.offsetHeight,
             toolbarWidth: toolbarElement.offsetWidth
+          },
+          boundsChecking: {
+            minTopPosition,
+            wasAdjusted,
+            adjustmentReason: wasAdjusted ? 'Toolbar would be off-screen (negative top)' : 'No adjustment needed'
+          },
+          // iOS-specific debug info
+          userAgent: navigator.userAgent,
+          isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
+          visualViewport: {
+            height: viewport.height,
+            width: viewport.width,
+            offsetTop: viewport.offsetTop,
+            offsetLeft: viewport.offsetLeft,
+            scale: viewport.scale
           }
         });
       }

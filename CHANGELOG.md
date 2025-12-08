@@ -1,5 +1,48 @@
 # Project Change Log
 
+GitHub Copilot (fix): iOS Safari Mobile UX - FloatingToolbar Visibility and Hamburger Button Positioning
+Date: 2025-12-08
+Summary:
+Fixed two critical iOS Safari mobile UX issues: FloatingToolbar not appearing when selecting text, and hamburger menu button moving up when keyboard opens. Removed debug CSS, added viewport bounds checking, and applied visualViewport fix to hamburger button.
+
+Details:
+- **FloatingToolbar.css:**
+  - Removed debug CSS (red background, yellow border) left in production
+  - Clean liquid glass theme now visible properly
+
+- **FloatingToolbar.jsx - iOS Viewport Bounds Checking:**
+  - Added iOS-specific bounds checking to prevent toolbar going off-screen above viewport
+  - Calculate `minTopPosition` from `viewport.offsetTop + 8px` (8px safety margin)
+  - When `top < minTopPosition`, adjust `top` to `minTopPosition` to keep toolbar visible
+  - Prevents negative top values that render toolbar above visible screen area
+  
+- **FloatingToolbar.jsx - Enhanced iOS Debug Logging:**
+  - Added `boundsChecking` section to debug logs:
+    - `minTopPosition`: Minimum allowed top value
+    - `wasAdjusted`: Whether position was corrected
+    - `adjustmentReason`: Human-readable explanation
+  - Added iOS detection: `/iPad|iPhone|iPod/.test(navigator.userAgent)`
+  - Added complete `visualViewport` object logging:
+    - `height`, `width`, `offsetTop`, `offsetLeft`, `scale`
+  - Added `userAgent` to logs for device identification
+  - All debug info available via `window.__EASY_SEO_TOOLBAR_DEBUG__ = true`
+
+- **SlideoutToolbar.jsx - Hamburger Button iOS Fix:**
+  - Imported `useVisualViewportFix` hook from `../hooks/useVisualViewportFix`
+  - Added `hamburgerRef` using `useRef(null)`
+  - Applied hook: `useVisualViewportFix(hamburgerRef)`
+  - Attached ref to hamburger button: `<button ref={hamburgerRef}>`
+  - Hamburger now stays pinned to visual viewport top-left when keyboard opens
+  - Uses same iOS visualViewport solution documented in RECOVERY.md
+
+**Testing Impact:**
+These fixes specifically target iOS Safari's viewport quirks. Desktop behavior unchanged. FloatingToolbar now appears reliably when selecting text near top of screen on iOS, and hamburger button remains accessible when keyboard is open.
+
+**Reflection:**
+The most challenging part was understanding iOS Safari's dual viewport system (layout vs visual). The existing `useVisualViewportFix` hook provided the pattern for the hamburger button fix. Key learning: iOS requires JavaScript-based viewport adjustments for proper fixed positioning - CSS alone is insufficient. Future advice: Always test iOS fixes on real devices, as desktop DevTools don't accurately simulate iOS viewport behavior.
+
+---
+
 GitHub Copilot (feat): Mobile-First Toolbar Instrumentation and Collapsible Vertical Toolbox
 Date: 2025-12-08
 Summary:

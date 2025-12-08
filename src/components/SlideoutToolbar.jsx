@@ -7,6 +7,7 @@ import {
   Minus, FileText, Calendar, Columns, ChevronDown,
   Undo, Redo
 } from 'lucide-preact';
+import { useVisualViewportFix } from '../hooks/useVisualViewportFix';
 import './SlideoutToolbar.css';
 
 /**
@@ -29,6 +30,10 @@ export default function SlideoutToolbar({ handleAction }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const toolbarRef = useRef(null);
+  const hamburgerRef = useRef(null);
+  
+  // Apply iOS Safari visualViewport fix to hamburger button to prevent it from moving when virtual keyboard opens
+  useVisualViewportFix(hamburgerRef);
   
   // Track which category groups are expanded (accordion pattern)
   const [expandedGroups, setExpandedGroups] = useState({
@@ -256,6 +261,7 @@ export default function SlideoutToolbar({ handleAction }) {
     <>
       {/* Floating hamburger trigger */}
       <button
+        ref={hamburgerRef}
         className="floating-hamburger"
         onClick={toggleOpen}
         aria-label={isExpanded ? 'Close menu' : isOpen ? 'Expand menu' : 'Open menu'}
