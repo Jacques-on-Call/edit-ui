@@ -197,46 +197,49 @@ export default function EditorFloatingToolbar({
     setPosition({ top, left, visible: true });
   }, [position.visible, debugMode]);
 
-  // Debounced wrapper for updatePosition (Issue #3 fix: use useCallback for stable reference)
   const debouncedUpdatePosition = useCallback(() => {
-      if (DIAGNOSTIC_MODE) {
-        console.log('[EditorFloatingToolbar] DIAGNOSTIC: debouncedUpdatePosition called');
-      }
-      // Cancel any pending frame to avoid duplicate updates (rate limiting)
-      if (updateFrameRef.current) {
-        cancelAnimationFrame(updateFrameRef.current);
-      }
-      // Schedule update for next frame
-      updateFrameRef.current = requestAnimationFrame(updatePosition);
-  }, [DIAGNOSTIC_MODE, updatePosition]);
+    // A simple RAF debounce is sufficient for non-iOS devices.
+    if (updateFrameRef.current) {
+      cancelAnimationFrame(updateFrameRef.current);
+    }
+    updateFrameRef.current = requestAnimationFrame(updatePosition);
+  }, [updatePosition]);
+
+  const debouncedUpdatePositionIos = useCallback(() => {
+    // iOS requires a longer delay for the selection to be stable after a touch gesture.
+    // 300ms seems to be a reliable value.
+    setTimeout(updatePosition, 300);
+  }, [updatePosition]);
   
   // Set up event listeners
   useEffect(() => {
-    console.log('[EditorFloatingToolbar] Setting up event listeners');
-    document.addEventListener('selectionchange', debouncedUpdatePosition);
-    window.addEventListener('scroll', debouncedUpdatePosition, { capture: true });
-    window.addEventListener('resize', debouncedUpdatePosition);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const updateFn = isIOS ? debouncedUpdatePositionIos : debouncedUpdatePosition;
+
+    console.log(`[EditorFloatingToolbar] Setting up event listeners (iOS: ${isIOS})`);
+    document.addEventListener('selectionchange', updateFn);
+    window.addEventListener('scroll', updateFn, { capture: true });
+    window.addEventListener('resize', updateFn);
 
     // Also listen to the visualViewport for resize events, crucial for mobile keyboard
     const vp = window.visualViewport;
     if (vp) {
-      vp.addEventListener('resize', debouncedUpdatePosition);
+      vp.addEventListener('resize', updateFn);
     }
 
     return () => {
       console.log('[EditorFloatingToolbar] Removing event listeners');
-      // Cancel any pending frame on cleanup
       if (updateFrameRef.current) {
         cancelAnimationFrame(updateFrameRef.current);
       }
-      document.removeEventListener('selectionchange', debouncedUpdatePosition);
-      window.removeEventListener('scroll', debouncedUpdatePosition, { capture: true });
-      window.removeEventListener('resize', debouncedUpdatePosition);
+      document.removeEventListener('selectionchange', updateFn);
+      window.removeEventListener('scroll', updateFn, { capture: true });
+      window.removeEventListener('resize', updateFn);
       if (vp) {
-        vp.removeEventListener('resize', debouncedUpdatePosition);
+        vp.removeEventListener('resize', updateFn);
       }
     };
-  }, [debouncedUpdatePosition]);
+  }, [debouncedUpdatePosition, debouncedUpdatePositionIos]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
