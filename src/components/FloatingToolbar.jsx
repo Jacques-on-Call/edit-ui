@@ -152,7 +152,7 @@ export default function FloatingToolbar({
     const toolbarRect = toolbarElement.getBoundingClientRect();
 
     // Critical guard: if toolbar has no width, it's not rendered yet.
-    if (toolbarRect.width === 0) return;
+    // if (toolbarRect.width === 0) return;
 
     // Use visualViewport for mobile-first, robust positioning
     const vp = window.visualViewport || {
