@@ -13,7 +13,6 @@
 
 .floating-toolbar {
   position: absolute;
-  transform: translateX(-50%);
   
   /* Liquid glass background */
   background: linear-gradient(
