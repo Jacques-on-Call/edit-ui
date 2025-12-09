@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { useState, useContext, useEffect, useMemo } from 'preact/hooks';
-import FloatingToolbar from './FloatingToolbar';
+import EditorFloatingToolbar from './EditorFloatingToolbar';
 import SlideoutToolbar from './SlideoutToolbar';
 import BottomActionBar from './BottomActionBar';
 import AddSectionModal from './AddSectionModal';
@@ -11,6 +11,10 @@ import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 export default function EditorCanvas(props) {
   const { selectionState, handleAction } = useContext(EditorContext);
   const [isEditorReady, setIsEditorReady] = useState(false);
+
+  useEffect(() => {
+    console.log('[EditorCanvas] Component mounted');
+  }, []);
 
   // Callback for child to signal readiness
   const handleEditorReady = () => {
@@ -43,15 +47,13 @@ export default function EditorCanvas(props) {
   return (
     <div class="flex flex-col h-full bg-transparent text-white relative">
       {isEditorReady && (
-        <FloatingToolbar
-          handleAction={handleAction}
-          selectionState={selectionState}
+        <EditorFloatingToolbar
           editorRootSelector=".editor-input"
           offset={toolbarOffset}
           cooldownMs={200}
         />
       )}
-      <SlideoutToolbar handleAction={handleAction} />
+      <SlideoutToolbar />
       <main
         class="flex-grow relative overflow-y-auto"
         style={{

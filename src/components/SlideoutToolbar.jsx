@@ -1,6 +1,7 @@
 import { h } from 'preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
+import { useEditor } from '../../contexts/EditorContext';
 import { 
   Heading2, Heading3, Heading4, Heading5, Heading6,
   List, ListOrdered, Image, Table, X, Menu,
@@ -26,7 +27,8 @@ import './SlideoutToolbar.css';
  * Props:
  * - handleAction: (action: string, payload?: any) => void - Handler for toolbar actions
  */
-export default function SlideoutToolbar({ handleAction }) {
+export default function SlideoutToolbar() {
+  const { activeEditor, handleAction } = useEditor();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const toolbarRef = useRef(null);
@@ -267,6 +269,7 @@ export default function SlideoutToolbar({ handleAction }) {
         aria-label={isExpanded ? 'Close menu' : isOpen ? 'Expand menu' : 'Open menu'}
         aria-expanded={isOpen || isExpanded}
         title="Insert elements"
+        disabled={!activeEditor}
       >
         <Menu size={24} />
       </button>
