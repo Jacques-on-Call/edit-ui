@@ -80,7 +80,7 @@ export default function FloatingToolbar({
   // Temporary diagnostic mode - always log key events regardless of debug flag
   // IMPORTANT: Set to false after debugging is complete to avoid excessive production logging
   // This is a temporary debugging instrumentation to diagnose iOS Safari issues
-  const DIAGNOSTIC_MODE = false;
+  const DIAGNOSTIC_MODE = true;
 
   // Helper function to find editor root with fallback detection (Issue #1 fix)
   // Uses selector first, then falls back to contenteditable attribute
@@ -253,9 +253,13 @@ export default function FloatingToolbar({
       lastSelectionKeyRef.current = selectionKey;
       lastUpdateTimeRef.current = now;
 
-      const anchorNode = selection.anchorNode;
+      // Resilient editor finding: re-check for the editor on every selection event.
       const editorRoot = findEditorRoot();
-      if (!anchorNode || !editorRoot || !editorRoot.contains(anchorNode)) {
+      const anchorNode = selection.anchorNode;
+      if (!editorRoot || !anchorNode || !editorRoot.contains(anchorNode)) {
+          if (DIAGNOSTIC_MODE) {
+            console.log('[FloatingToolbar] Hiding: Editor root not found or selection is outside of it.');
+          }
           setPosition(prev => prev.visible ? { ...prev, visible: false } : prev);
           return;
       }
