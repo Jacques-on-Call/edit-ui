@@ -1,7 +1,7 @@
 # Project Change Log
 
 Jules (fix/feat): Floating selection toolbar — center above selection, viewport clamping, and reliable formatting
-Date: 2025-12-09
+Date: 2024-07-26
 Summary: Reworked floating toolbar to be centered above the selection, clamp to viewport edges, and call Lexical editor commands reliably using pointerdown with preventDefault.
 Impact: Improved selection UX on desktop and mobile; fixes toolbar left-alignment and non-applying button issues
 

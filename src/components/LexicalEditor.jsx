@@ -1,4 +1,5 @@
 import { h } from 'preact';
+import { memo } from 'preact/compat';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -158,4 +159,4 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
   );
 });
 
-export default LexicalEditor;
+export default memo(LexicalEditor);
