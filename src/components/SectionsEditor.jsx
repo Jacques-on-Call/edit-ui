@@ -3,8 +3,15 @@ import { useState, useEffect } from 'preact/hooks';
 import editorComponentRegistry from './editor-components/registry';
 import { Settings } from 'lucide-preact';
 
-export default function SectionsEditor({ sections = [], onChange, onEdit }) {
+export default function SectionsEditor({ sections = [], onChange, onEdit, onReady }) {
   const [local, setLocal] = useState(JSON.parse(JSON.stringify(sections)));
+
+  // Signal that the editor is ready on initial mount
+  useEffect(() => {
+    if (onReady) {
+      onReady();
+    }
+  }, [onReady]);
 
   // This effect synchronizes the internal state with the parent's prop.
   // This is crucial to prevent stale state if the parent re-renders.

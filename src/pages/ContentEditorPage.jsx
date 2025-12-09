@@ -690,12 +690,12 @@ export default function ContentEditorPage(props) {
   }, [pathIdentifier, previewKey]);
 
   // Render the appropriate view based on viewMode
-  const renderContent = () => {
+  const renderContent = ({ onEditorReady }) => {
     if (viewMode === 'editor') {
       return (
         <>
           {sections ? (
-            <SectionsEditor sections={sections} onChange={handleSectionsChange} onEdit={handleEditSection} />
+            <SectionsEditor sections={sections} onChange={handleSectionsChange} onEdit={handleEditSection} onReady={onEditorReady} />
           ) : contentBody !== null ? (
             <LexicalEditor
               // This is the legacy editor for 'astro' mode.
