@@ -82,55 +82,20 @@ export default function FloatingToolbar({
   // This is a temporary debugging instrumentation to diagnose iOS Safari issues
   const DIAGNOSTIC_MODE = false;
 
-  // Helper function to find editor root with fallback detection (Issue #1 fix)
-  // Uses selector first, then falls back to contenteditable attribute
+  // New helper to find the currently active editor root based on selection
   const findEditorRoot = useCallback(() => {
-    // Return cached result if available
-    if (editorRootRef.current && document.body.contains(editorRootRef.current)) {
-      return editorRootRef.current;
-    }
-    
-    // Try primary selector
-    let element = document.querySelector(editorRootSelector);
-    
-    // Fallback: Find by contenteditable attribute if selector fails
-    if (!element) {
-      const editables = document.querySelectorAll('[contenteditable="true"]');
-      // Prefer elements with editor-related classes
-      for (const el of editables) {
-        if (el.className && (
-          el.className.includes('editor') || 
-          el.className.includes('lexical') ||
-          el.className.includes('content')
-        )) {
-          element = el;
-          break;
-        }
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return null;
+
+    let node = selection.anchorNode;
+    while (node && node !== document.body) {
+      if (node.matches && node.matches(editorRootSelector)) {
+        return node;
       }
-      // If still not found, use first contenteditable
-      if (!element && editables.length > 0) {
-        element = editables[0];
-      }
-      
-      if (element && DIAGNOSTIC_MODE) {
-        console.log('[FloatingToolbar] Editor root found via contenteditable fallback', {
-          selector: editorRootSelector,
-          foundElement: {
-            tagName: element.tagName,
-            className: element.className,
-            id: element.id
-          }
-        });
-      }
+      node = node.parentNode;
     }
-    
-    // Cache the result
-    if (element) {
-      editorRootRef.current = element;
-    }
-    
-    return element;
-  }, [editorRootSelector, DIAGNOSTIC_MODE]);
+    return null; // No editor root found in the selection ancestry
+  }, [editorRootSelector]);
   
   // Component mount instrumentation - always log regardless of debug mode
   useEffect(() => {
@@ -163,67 +128,6 @@ export default function FloatingToolbar({
     }
   }, []);
   
-  // Wait for editor root element to appear in DOM (Issue #1 fix)
-  // Uses MutationObserver to detect when the editor element is added
-  useEffect(() => {
-    const checkEditorRoot = () => {
-      const editorRoot = findEditorRoot();
-      if (editorRoot) {
-        if (DIAGNOSTIC_MODE) {
-          console.log('[FloatingToolbar] Editor root found and ready', {
-            tagName: editorRoot.tagName,
-            className: editorRoot.className
-          });
-        }
-        // Disconnect observer once found
-        if (editorRootObserverRef.current) {
-          editorRootObserverRef.current.disconnect();
-          editorRootObserverRef.current = null;
-        }
-        return true;
-      }
-      return false;
-    };
-    
-    // Check immediately
-    if (checkEditorRoot()) {
-      return;
-    }
-    
-    // If not found, set up MutationObserver to wait for it
-    if (DIAGNOSTIC_MODE) {
-      console.log('[FloatingToolbar] Editor root not found, setting up MutationObserver');
-    }
-    
-    const observer = new MutationObserver((mutations) => {
-      // Performance optimization: Only check when relevant nodes are added
-      const hasAddedNodes = mutations.some(m => m.addedNodes.length > 0);
-      if (hasAddedNodes && checkEditorRoot()) {
-        if (DIAGNOSTIC_MODE) {
-          console.log('[FloatingToolbar] Editor root detected via MutationObserver');
-        }
-      }
-    });
-    
-    // Observe only the body's direct children to reduce overhead
-    // Editor component should be mounted relatively high in the DOM tree
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      // Only observe childList changes (not attributes or characterData) for better performance
-      attributes: false,
-      characterData: false
-    });
-    
-    editorRootObserverRef.current = observer;
-    
-    return () => {
-      if (editorRootObserverRef.current) {
-        editorRootObserverRef.current.disconnect();
-        editorRootObserverRef.current = null;
-      }
-    };
-  }, [findEditorRoot, DIAGNOSTIC_MODE]);
 
   const arrowRef = useRef(null);
   // Main selection position update function (Issue #3 fix: use useCallback for stable reference)

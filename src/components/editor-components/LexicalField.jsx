@@ -14,7 +14,10 @@ export default function LexicalField({ value, onChange, placeholder, className, 
   };
 
   const handleBlur = () => {
-    setActiveEditor(null);
+    // Delay clearing the active editor to allow toolbar buttons to be clicked
+    setTimeout(() => {
+      setActiveEditor(null);
+    }, 150);
   };
 
   return (
