@@ -1,4 +1,5 @@
 // easy-seo/src/pages/FileExplorerPage.jsx
+import { route } from 'preact-router';
 import { useAuth } from '../contexts/AuthContext';
 import { useHeader } from '../contexts/HeaderContext';
 import { useUI } from '../contexts/UIContext';
@@ -73,19 +74,33 @@ export function FileExplorerPage() {
       const fullPath = `${currentPath}/${fileName}`;
 
       // Create a blank JSON structure for the content editor
+      // Create a blank JSON structure with a default Hero section
       const draftPayload = {
         slug,
         path: fullPath,
         meta: { title: slug }, // Use the slug as the initial title
-        sections: [], // Start with an empty sections array
+        sections: [
+          {
+            id: `section-${Date.now()}`,
+            type: 'hero',
+            props: {
+              title: '',
+              subtitle: '',
+              body: '',
+            },
+          },
+        ],
         savedAt: new Date().toISOString(),
       };
 
       localStorage.setItem(`easy-seo-draft:${slug}`, JSON.stringify(draftPayload));
-      console.log(`[FileExplorer] createDraft -> slug: ${slug}`);
+      console.log(`[FileExplorer] createDraft -> slug: ${slug}, path: ${fullPath}`);
 
       setCreateOpen(false);
-      setRefreshTrigger(prev => prev + 1); // Trigger refresh
+      setRefreshTrigger(prev => prev + 1); // Trigger refresh in file explorer
+
+      // Automatically navigate to the editor for the new file
+      route(`/editor/${encodeURIComponent(fullPath)}`);
     } catch (err) {
       console.error('Create draft error:', err);
       alert(`Failed to create draft: ${err.message}`);
