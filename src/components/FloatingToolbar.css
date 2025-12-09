@@ -137,29 +137,6 @@
   filter: drop-shadow(0 10px 15px rgba(0,0,0,0.25));
 }
 
-/* Arrow pointer with liquid glass styling */
-.toolbar-arrow {
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  position: relative;
-  z-index: 1;
-  transform: translateX(-50%);
-  left: 50%;
-  transition: left 0.15s ease-out;
-}
-
-.toolbar-arrow.up {
-  order: 2; /* Ensures it's below the toolbar */
-  border-top: 10px solid var(--toolbar-border);
-}
-
-.toolbar-arrow.down {
-  order: 0; /* Ensures it's above the toolbar */
-  border-bottom: 10px solid var(--toolbar-border);
-  margin-bottom: -2px; /* Fine-tuning */
-}
 
 @keyframes fadeIn {
   from {

@@ -129,113 +129,65 @@ export default function FloatingToolbar({
   }, []);
   
 
-  const arrowRef = useRef(null);
-  // Main selection position update function (Issue #3 fix: use useCallback for stable reference)
   const updatePosition = useCallback(() => {
     if (typeof window === 'undefined' || !window.getSelection) return;
 
     const selection = window.getSelection();
-    const now = Date.now();
 
-    // All the original safety checks to prevent loops
     const selectionText = selection?.toString() || '';
     const hasTextSelection = selectionText.trim().length > 0;
-    if (!selection || selection.rangeCount === 0 || (!hasTextSelection && !caretMode) || (selection.isCollapsed && !caretMode)) {
-      setPosition(prev => prev.visible ? { ...prev, visible: false } : prev);
+    if (!selection || selection.rangeCount === 0 || !hasTextSelection) {
+      if (position.visible) {
+        setPosition({ top: 0, left: 0, visible: false });
+      }
       return;
     }
 
-    const selectionKey = selection?.rangeCount > 0
-      ? `${selection.anchorNode?.nodeName}-${selection.anchorOffset}-${selection.focusNode?.nodeName}-${selection.focusOffset}-${selectionText.length}`
-      : null;
-
-    if (selectionKey && selectionKey === lastSelectionKeyRef.current) return;
-
-    const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
-    if (lastUpdateTimeRef.current > 0 && timeSinceLastUpdate < cooldownMs) return;
-
-    lastSelectionKeyRef.current = selectionKey;
-    lastUpdateTimeRef.current = now;
-
-    // Resilient editor finding: re-check for the editor on every selection event.
-    const editorRoot = findEditorRoot();
-    const anchorNode = selection.anchorNode;
-    if (!editorRoot || !anchorNode || !editorRoot.contains(anchorNode)) {
-        if (DIAGNOSTIC_MODE) {
-          console.log('[FloatingToolbar] Hiding: Editor root not found or selection is outside of it.');
-        }
-        setPosition(prev => prev.visible ? { ...prev, visible: false } : prev);
-        return;
-    }
+    const toolbarElement = toolbarRef.current;
+    if (!toolbarElement) return;
 
     const range = selection.getRangeAt(0);
     const selectionRect = range.getBoundingClientRect();
-    const toolbarElement = toolbarRef.current;
-    const arrowElement = arrowRef.current;
-
-    // Guard against positioning when elements aren't ready
-    if (!toolbarElement || !arrowElement || (selectionRect.width === 0 && selectionRect.height === 0)) {
-      setPosition(prev => prev.visible ? { ...prev, visible: false } : prev);
-      return;
-    }
 
     const toolbarRect = toolbarElement.getBoundingClientRect();
-    // NEW CRITICAL CHECK: If toolbar has no width, it's not rendered yet. Abort and wait for the next frame.
-    if (toolbarRect.width === 0) {
-      if (DIAGNOSTIC_MODE) console.log('[FloatingToolbar] Hiding: toolbarRect has zero width, waiting for next frame.');
-      setPosition(prev => prev.visible ? { ...prev, visible: false } : prev);
-      return;
-    }
+
+    // Critical guard: if toolbar has no width, it's not rendered yet.
+    if (toolbarRect.width === 0) return;
 
     // Use visualViewport for mobile-first, robust positioning
     const vp = window.visualViewport || {
-        width: window.innerWidth,
-        height: window.innerHeight,
-        offsetLeft: 0,
-        offsetTop: 0,
-        pageLeft: window.scrollX,
-        pageTop: window.scrollY,
+      width: window.innerWidth,
+      height: window.innerHeight,
+      pageTop: window.scrollY,
+      pageLeft: window.scrollX,
     };
 
-    const ARROW_HEIGHT = 8;
-    const GAP = 12;
+    const GAP = 10; // Gap between selection and toolbar
     const VIEWPORT_PADDING = 8;
 
-    // Decide whether to show above or below selection
+    // Decide if toolbar should be above or below
     const spaceAbove = selectionRect.top;
     const spaceBelow = vp.height - selectionRect.bottom;
-    const showAbove = spaceAbove > (toolbarRect.height + ARROW_HEIGHT + GAP) || spaceAbove > spaceBelow;
 
-    let idealTop;
-    if (showAbove) {
-        idealTop = vp.pageTop + selectionRect.top - toolbarRect.height - ARROW_HEIGHT;
-        arrowElement.classList.remove('down');
-        arrowElement.classList.add('up');
+    let top;
+    if (spaceAbove > toolbarRect.height + GAP || spaceAbove > spaceBelow) {
+      // Position above
+      top = vp.pageTop + selectionRect.top - toolbarRect.height - GAP;
     } else {
-        idealTop = vp.pageTop + selectionRect.bottom + GAP;
-        arrowElement.classList.remove('up');
-        arrowElement.classList.add('down');
+      // Position below
+      top = vp.pageTop + selectionRect.bottom + GAP;
     }
 
-    // Horizontal centering and clamping
-    const idealLeft = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarRect.width / 2);
+    // Calculate centered left position
+    let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarRect.width / 2);
 
+    // Clamp left position to stay within the viewport
     const minLeft = vp.pageLeft + VIEWPORT_PADDING;
     const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
-    const clampedLeft = Math.max(minLeft, Math.min(idealLeft, maxLeft));
+    left = Math.max(minLeft, Math.min(left, maxLeft));
 
-    // Arrow positioning
-    const selectionCenterX = vp.pageLeft + selectionRect.left + (selectionRect.width / 2);
-    const arrowLeft = selectionCenterX - clampedLeft;
-
-    const minArrowLeft = 15;
-    const maxArrowLeft = toolbarRect.width - 15;
-    const clampedArrowLeft = Math.max(minArrowLeft, Math.min(arrowLeft, maxArrowLeft));
-
-    arrowElement.style.left = `${clampedArrowLeft}px`;
-
-    setPosition({ top: idealTop, left: clampedLeft, visible: true });
-}, [debugMode, DIAGNOSTIC_MODE, offset, caretMode, cooldownMs, findEditorRoot]);
+    setPosition({ top, left, visible: true });
+  }, [position.visible]);
 
   // Debounced wrapper for updatePosition (Issue #3 fix: use useCallback for stable reference)
   const debouncedUpdatePosition = useCallback(() => {
@@ -653,8 +605,6 @@ export default function FloatingToolbar({
           />
         )}
       </div>
-      {/* The arrow is now separate and positioned by the container */}
-      <div ref={arrowRef} className="toolbar-arrow"></div>
     </div>,
     document.body
   );
