@@ -135,8 +135,8 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
       <div class="relative">
         <RichTextPlugin
           contentEditable={
-            <div onFocus={onFocus} onBlur={onBlur} class="px-2">
-              <ContentEditable className={finalEditorInputClass} />
+            <div class="px-2">
+              <ContentEditable className={finalEditorInputClass} onFocus={onFocus} onBlur={onBlur} />
             </div>
           }
           placeholder={
