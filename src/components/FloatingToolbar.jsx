@@ -132,76 +132,110 @@ export default function FloatingToolbar({
   const arrowRef = useRef(null);
   // Main selection position update function (Issue #3 fix: use useCallback for stable reference)
   const updatePosition = useCallback(() => {
-      if (typeof window === 'undefined' || !window.getSelection) return;
+    if (typeof window === 'undefined' || !window.getSelection) return;
 
-      const selection = window.getSelection();
-      const now = Date.now();
+    const selection = window.getSelection();
+    const now = Date.now();
 
-      // All the original safety checks to prevent loops
-      const selectionText = selection?.toString() || '';
-      const hasTextSelection = selectionText.trim().length > 0;
-      if (!selection || selection.rangeCount === 0 || (!hasTextSelection && !caretMode) || (selection.isCollapsed && !caretMode)) {
+    // All the original safety checks to prevent loops
+    const selectionText = selection?.toString() || '';
+    const hasTextSelection = selectionText.trim().length > 0;
+    if (!selection || selection.rangeCount === 0 || (!hasTextSelection && !caretMode) || (selection.isCollapsed && !caretMode)) {
+      setPosition(prev => prev.visible ? { ...prev, visible: false } : prev);
+      return;
+    }
+
+    const selectionKey = selection?.rangeCount > 0
+      ? `${selection.anchorNode?.nodeName}-${selection.anchorOffset}-${selection.focusNode?.nodeName}-${selection.focusOffset}-${selectionText.length}`
+      : null;
+
+    if (selectionKey && selectionKey === lastSelectionKeyRef.current) return;
+
+    const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
+    if (lastUpdateTimeRef.current > 0 && timeSinceLastUpdate < cooldownMs) return;
+
+    lastSelectionKeyRef.current = selectionKey;
+    lastUpdateTimeRef.current = now;
+
+    // Resilient editor finding: re-check for the editor on every selection event.
+    const editorRoot = findEditorRoot();
+    const anchorNode = selection.anchorNode;
+    if (!editorRoot || !anchorNode || !editorRoot.contains(anchorNode)) {
+        if (DIAGNOSTIC_MODE) {
+          console.log('[FloatingToolbar] Hiding: Editor root not found or selection is outside of it.');
+        }
         setPosition(prev => prev.visible ? { ...prev, visible: false } : prev);
         return;
-      }
-      
-      const selectionKey = selection?.rangeCount > 0 
-        ? `${selection.anchorNode?.nodeName}-${selection.anchorOffset}-${selection.focusNode?.nodeName}-${selection.focusOffset}-${selectionText.length}`
-        : null;
+    }
 
-      if (selectionKey && selectionKey === lastSelectionKeyRef.current) return;
-      
-      const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
-      if (lastUpdateTimeRef.current > 0 && timeSinceLastUpdate < cooldownMs) return;
+    const range = selection.getRangeAt(0);
+    const selectionRect = range.getBoundingClientRect();
+    const toolbarElement = toolbarRef.current;
+    const arrowElement = arrowRef.current;
 
-      lastSelectionKeyRef.current = selectionKey;
-      lastUpdateTimeRef.current = now;
+    // Guard against positioning when elements aren't ready
+    if (!toolbarElement || !arrowElement || (selectionRect.width === 0 && selectionRect.height === 0)) {
+      setPosition(prev => prev.visible ? { ...prev, visible: false } : prev);
+      return;
+    }
 
-      // Resilient editor finding: re-check for the editor on every selection event.
-      const editorRoot = findEditorRoot();
-      const anchorNode = selection.anchorNode;
-      if (!editorRoot || !anchorNode || !editorRoot.contains(anchorNode)) {
-          if (DIAGNOSTIC_MODE) {
-            console.log('[FloatingToolbar] Hiding: Editor root not found or selection is outside of it.');
-          }
-          setPosition(prev => prev.visible ? { ...prev, visible: false } : prev);
-          return;
-      }
+    const toolbarRect = toolbarElement.getBoundingClientRect();
+    // NEW CRITICAL CHECK: If toolbar has no width, it's not rendered yet. Abort and wait for the next frame.
+    if (toolbarRect.width === 0) {
+      if (DIAGNOSTIC_MODE) console.log('[FloatingToolbar] Hiding: toolbarRect has zero width, waiting for next frame.');
+      setPosition(prev => prev.visible ? { ...prev, visible: false } : prev);
+      return;
+    }
 
-      const range = selection.getRangeAt(0);
-      const selectionRect = range.getBoundingClientRect();
-      const toolbarElement = toolbarRef.current;
-      const arrowElement = arrowRef.current;
+    // Use visualViewport for mobile-first, robust positioning
+    const vp = window.visualViewport || {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        offsetLeft: 0,
+        offsetTop: 0,
+        pageLeft: window.scrollX,
+        pageTop: window.scrollY,
+    };
 
-      if (!toolbarElement || !arrowElement || (selectionRect.width === 0 && selectionRect.height === 0)) {
-        setPosition(prev => prev.visible ? { ...prev, visible: false } : prev);
-        return;
-      }
-      
-      // New smart positioning logic
-      const toolbarRect = toolbarElement.getBoundingClientRect();
-      const ARROW_HEIGHT = 10;
-      const GAP = 8;
-      const VIEWPORT_PADDING = 8;
+    const ARROW_HEIGHT = 8;
+    const GAP = 12;
+    const VIEWPORT_PADDING = 8;
 
-      const idealTop = selectionRect.top + window.scrollY - toolbarRect.height - ARROW_HEIGHT - GAP;
-      const idealLeft = selectionRect.left + window.scrollX + (selectionRect.width / 2) - (toolbarRect.width / 2);
+    // Decide whether to show above or below selection
+    const spaceAbove = selectionRect.top;
+    const spaceBelow = vp.height - selectionRect.bottom;
+    const showAbove = spaceAbove > (toolbarRect.height + ARROW_HEIGHT + GAP) || spaceAbove > spaceBelow;
 
-      const minLeft = VIEWPORT_PADDING;
-      const maxLeft = window.innerWidth - toolbarRect.width - VIEWPORT_PADDING;
-      const clampedLeft = Math.max(minLeft, Math.min(idealLeft, maxLeft));
+    let idealTop;
+    if (showAbove) {
+        idealTop = vp.pageTop + selectionRect.top - toolbarRect.height - ARROW_HEIGHT;
+        arrowElement.classList.remove('down');
+        arrowElement.classList.add('up');
+    } else {
+        idealTop = vp.pageTop + selectionRect.bottom + GAP;
+        arrowElement.classList.remove('up');
+        arrowElement.classList.add('down');
+    }
 
-      const selectionCenterX = selectionRect.left + (selectionRect.width / 2);
-      const arrowLeft = selectionCenterX - clampedLeft;
+    // Horizontal centering and clamping
+    const idealLeft = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarRect.width / 2);
 
-      const minArrowLeft = 15;
-      const maxArrowLeft = toolbarRect.width - 15;
-      const clampedArrowLeft = Math.max(minArrowLeft, Math.min(arrowLeft, maxArrowLeft));
+    const minLeft = vp.pageLeft + VIEWPORT_PADDING;
+    const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
+    const clampedLeft = Math.max(minLeft, Math.min(idealLeft, maxLeft));
 
-      arrowElement.style.left = `${clampedArrowLeft}px`;
+    // Arrow positioning
+    const selectionCenterX = vp.pageLeft + selectionRect.left + (selectionRect.width / 2);
+    const arrowLeft = selectionCenterX - clampedLeft;
 
-      setPosition({ top: idealTop, left: clampedLeft, visible: true });
-  }, [debugMode, DIAGNOSTIC_MODE, offset, caretMode, cooldownMs, findEditorRoot]);
+    const minArrowLeft = 15;
+    const maxArrowLeft = toolbarRect.width - 15;
+    const clampedArrowLeft = Math.max(minArrowLeft, Math.min(arrowLeft, maxArrowLeft));
+
+    arrowElement.style.left = `${clampedArrowLeft}px`;
+
+    setPosition({ top: idealTop, left: clampedLeft, visible: true });
+}, [debugMode, DIAGNOSTIC_MODE, offset, caretMode, cooldownMs, findEditorRoot]);
 
   // Debounced wrapper for updatePosition (Issue #3 fix: use useCallback for stable reference)
   const debouncedUpdatePosition = useCallback(() => {
@@ -426,6 +460,7 @@ export default function FloatingToolbar({
       >
         {/* Reordered buttons for priority */}
         <button
+          onMouseDown={handleMouseDown}
           onClick={() => safeHandleAction('bold')}
           className={selectionState?.isBold ? 'active' : ''}
           title="Bold"
@@ -434,6 +469,7 @@ export default function FloatingToolbar({
             <Bold size={18} />
         </button>
         <button
+          onMouseDown={handleMouseDown}
           onClick={() => safeHandleAction('italic')}
           className={selectionState?.isItalic ? 'active' : ''}
           title="Italic"
@@ -442,6 +478,7 @@ export default function FloatingToolbar({
             <Italic size={18} />
         </button>
         <button
+          onMouseDown={handleMouseDown}
           onClick={handleListCycle}
           className={selectionState?.blockType === 'ul' || selectionState?.blockType === 'ol' ? 'active' : ''}
           title="Cycle List (UL/OL/Off)"
@@ -450,6 +487,7 @@ export default function FloatingToolbar({
             <List size={18} />
         </button>
         <button
+          onMouseDown={handleMouseDown}
           onClick={handleHeadingCycle}
           className={selectionState?.blockType?.startsWith('h') ? 'active' : ''}
           title="Cycle Heading (H2-H6)"
@@ -461,6 +499,7 @@ export default function FloatingToolbar({
         <div class="toolbar-divider"></div>
 
         <button
+          onMouseDown={handleMouseDown}
           onClick={() => safeHandleAction('link')}
           className={selectionState?.isLink ? 'active' : ''}
           title="Insert Link"
@@ -472,6 +511,7 @@ export default function FloatingToolbar({
         <div class="toolbar-divider"></div>
 
         <button
+          onMouseDown={handleMouseDown}
           onClick={() => safeHandleAction('underline')}
           className={selectionState?.isUnderline ? 'active' : ''}
           title="Underline"
@@ -480,6 +520,7 @@ export default function FloatingToolbar({
             <Underline size={18} />
         </button>
         <button
+          onMouseDown={handleMouseDown}
           onClick={() => safeHandleAction('strikethrough')}
           className={selectionState?.isStrikethrough ? 'active' : ''}
           title="Strikethrough"
@@ -488,6 +529,7 @@ export default function FloatingToolbar({
             <Strikethrough size={18} />
         </button>
         <button
+          onMouseDown={handleMouseDown}
           onClick={() => safeHandleAction('code')}
           className={selectionState?.isCode ? 'active' : ''}
           title="Inline Code"
@@ -499,6 +541,7 @@ export default function FloatingToolbar({
         {/* Text color picker */}
         <div class="toolbar-dropdown-container" ref={colorPickerRef}>
           <button
+            onMouseDown={handleMouseDown}
             onClick={() => setShowColorPicker(!showColorPicker)}
             className="toolbar-dropdown-trigger"
             title="Text color"
@@ -512,6 +555,7 @@ export default function FloatingToolbar({
               <div class="color-grid">
                 {colors.map(color => (
                   <button
+                    onMouseDown={handleMouseDown}
                     key={color}
                     class="color-swatch"
                     style={{ backgroundColor: color }}
@@ -525,6 +569,7 @@ export default function FloatingToolbar({
                 ))}
               </div>
               <button
+                onMouseDown={handleMouseDown}
                 class="toolbar-dropdown-item"
                 onClick={() => {
                   safeHandleAction('textColor', null);
@@ -540,6 +585,7 @@ export default function FloatingToolbar({
         {/* Highlight color picker */}
         <div class="toolbar-dropdown-container" ref={highlightPickerRef}>
           <button
+            onMouseDown={handleMouseDown}
             onClick={() => setShowHighlightPicker(!showHighlightPicker)}
             className="toolbar-dropdown-trigger"
             title="Highlight color"
@@ -553,6 +599,7 @@ export default function FloatingToolbar({
               <div class="color-grid">
                 {colors.map(color => (
                   <button
+                    onMouseDown={handleMouseDown}
                     key={color}
                     class="color-swatch"
                     style={{ backgroundColor: color }}
@@ -566,6 +613,7 @@ export default function FloatingToolbar({
                 ))}
               </div>
               <button
+                onMouseDown={handleMouseDown}
                 class="toolbar-dropdown-item"
                 onClick={() => {
                   safeHandleAction('highlightColor', null);
@@ -579,6 +627,7 @@ export default function FloatingToolbar({
         </div>
 
         <button
+          onMouseDown={handleMouseDown}
           onClick={() => safeHandleAction('clearFormatting')}
           title="Clear formatting"
           aria-label="Clear formatting"

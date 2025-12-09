@@ -143,15 +143,22 @@
   height: 0;
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
-  /* Use border-top to create a downward-pointing triangle */
-  border-top: 10px solid var(--toolbar-border);
-  /* Position it relative to the container */
   position: relative;
-  /* Remove bottom positioning */
   z-index: 1;
   transform: translateX(-50%);
   left: 50%;
   transition: left 0.15s ease-out;
+}
+
+.toolbar-arrow.up {
+  order: 2; /* Ensures it's below the toolbar */
+  border-top: 10px solid var(--toolbar-border);
+}
+
+.toolbar-arrow.down {
+  order: 0; /* Ensures it's above the toolbar */
+  border-bottom: 10px solid var(--toolbar-border);
+  margin-bottom: -2px; /* Fine-tuning */
 }
 
 @keyframes fadeIn {
