@@ -14,7 +14,7 @@ export function FileExplorerPage() {
   const { searchQuery, setSearchQuery } = useHeader();
   const { isCreateOpen, setCreateOpen } = useUI();
 
-  const [currentPath, setCurrentPath] = useState('src/pages');
+  const [currentPath, setCurrentPath] = useState('content/pages');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Clear the search query when the component unmounts
@@ -67,14 +67,17 @@ export function FileExplorerPage() {
         return;
       }
 
-      const slug = name.replace(/\.[^/.]+$/, "");
-      const fullPath = `${currentPath}/${name}`;
-      const initialContent = '---\ntitle: New Page\n---\n<h1>New Page</h1>';
+      // Ensure the name has a .json extension
+      const fileName = name.endsWith('.json') ? name : `${name}.json`;
+      const slug = fileName.replace(/\.json$/, "");
+      const fullPath = `${currentPath}/${fileName}`;
+
+      // Create a blank JSON structure for the content editor
       const draftPayload = {
         slug,
         path: fullPath,
-        content: initialContent,
-        meta: { title: 'New Page' },
+        meta: { title: slug }, // Use the slug as the initial title
+        sections: [], // Start with an empty sections array
         savedAt: new Date().toISOString(),
       };
 

@@ -531,14 +531,14 @@ export default function ContentEditorPage(props) {
           console.log('[CEP-useEffect] Local draft found. Attempting to parse and validate.');
           try {
             const draft = JSON.parse(savedDraft);
-            // A draft is valid ONLY if it has a `sections` array with at least one section.
-            if (Array.isArray(draft.sections) && draft.sections.length > 0) {
+            // A draft is valid if it has a `sections` array (even an empty one).
+            if (Array.isArray(draft.sections)) {
               console.log('[CEP-useEffect] Draft is valid. Loading sections from local draft.');
               setSections(draft.sections);
               // If the draft is valid, we stop here. We don't fetch from the repo.
-              return; 
+              return;
             } else {
-              console.warn('[CEP-useEffect] Local draft found but is empty or invalid. It will be ignored and removed.');
+              console.warn('[CEP-useEffect] Local draft found but is invalid (missing sections array). It will be ignored and removed.');
               localStorage.removeItem(draftKey);
             }
           } catch (e) {
