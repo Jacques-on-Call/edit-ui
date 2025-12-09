@@ -6,12 +6,13 @@
 // Please do not alter this structure without a clear understanding of the design goal.
 
 import { h } from 'preact';
-import { useState, useCallback } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import LexicalField from './LexicalField';
 import { useAuth } from '../../contexts/AuthContext';
 import { getPreviewImageUrl, getGitHubRawUrl } from '../../lib/imageHelpers';
 
 export default function BodySectionEditor({ props, onChange }) {
+  console.log('[BodySectionEditor] Component rendering.');
   const { selectedRepo } = useAuth();
   // Track if primary URL failed and we're using fallback
   const [imageUseFallback, setImageUseFallback] = useState(false);
@@ -19,12 +20,10 @@ export default function BodySectionEditor({ props, onChange }) {
   
   const rawImagePath = props?.featureImage || props?.headerImageUrl;
   
-  const handleFieldChange = useCallback((fieldName, fieldValue) => {
+  const handleFieldChange = (fieldName, fieldValue) => {
+    console.log(`[BodySectionEditor] handleFieldChange called for field: ${fieldName}`);
     onChange({ ...props, [fieldName]: fieldValue });
-  }, [onChange, props]);
-
-  const handleTitleChange = useCallback((newValue) => handleFieldChange('title', newValue), [handleFieldChange]);
-  const handleBodyChange = useCallback((newValue) => handleFieldChange('body', newValue), [handleFieldChange]);
+  };
 
   // Primary: proxy URL, Fallback: GitHub raw URL
   const imageProxyUrl = getPreviewImageUrl(rawImagePath, selectedRepo?.full_name);
@@ -66,7 +65,7 @@ export default function BodySectionEditor({ props, onChange }) {
             <div class="relative pb-2 editor-field-overflow-visible">
               <LexicalField
                 value={props?.title || ''}
-                onChange={handleTitleChange}
+                onChange={(newValue) => handleFieldChange('title', newValue)}
                 placeholder="Add a section title..."
                 className="text-4xl font-extrabold text-white tracking-tight"
               />
@@ -75,7 +74,7 @@ export default function BodySectionEditor({ props, onChange }) {
             <div class="editor-field-overflow-visible">
               <LexicalField
                 value={props?.body || ''}
-                onChange={handleBodyChange}
+                onChange={(newValue) => handleFieldChange('body', newValue)}
                 placeholder="Start writing your content for this section..."
                 className="text-lg text-gray-300 -mt-8"
               />

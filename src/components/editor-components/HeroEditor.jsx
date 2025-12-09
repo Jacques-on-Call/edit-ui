@@ -9,7 +9,7 @@
 // a section-level base color. Users can select text and apply colors directly.
 
 import { h } from 'preact';
-import { useState, useCallback } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import LexicalField from './LexicalField';
 import { useAuth } from '../../contexts/AuthContext';
 import { getPreviewImageUrl, getGitHubRawUrl } from '../../lib/imageHelpers';
@@ -24,13 +24,9 @@ export default function HeroEditor({ props, onChange }) {
   // Support both featureImage and featureImageUrl props for compatibility
   const rawFeatureImage = props?.featureImage || props?.featureImageUrl;
 
-  const handleFieldChange = useCallback((fieldName, fieldValue) => {
+  const handleFieldChange = (fieldName, fieldValue) => {
     onChange({ ...props, [fieldName]: fieldValue });
-  }, [onChange, props]);
-
-  const handleTitleChange = useCallback((newValue) => handleFieldChange('title', newValue), [handleFieldChange]);
-  const handleSubtitleChange = useCallback((newValue) => handleFieldChange('subtitle', newValue), [handleFieldChange]);
-  const handleBodyChange = useCallback((newValue) => handleFieldChange('body', newValue), [handleFieldChange]);
+  };
 
   // Primary: proxy URL, Fallback: GitHub raw URL
   const featureImageProxyUrl = getPreviewImageUrl(rawFeatureImage, selectedRepo?.full_name);
@@ -88,21 +84,21 @@ export default function HeroEditor({ props, onChange }) {
           )}
           <LexicalField
             value={props?.title || ''}
-            onChange={handleTitleChange}
+            onChange={(newValue) => handleFieldChange('title', newValue)}
             placeholder="Enter your title (H1)"
             className="text-5xl font-extrabold tracking-tight text-white"
             transparentBg={hasBackgroundImage}
           />
           <LexicalField
             value={props?.subtitle || ''}
-            onChange={handleSubtitleChange}
+            onChange={(newValue) => handleFieldChange('subtitle', newValue)}
             placeholder="Enter your slogan (optional)"
             className="text-lg text-gray-400"
             transparentBg={hasBackgroundImage}
           />
           <LexicalField
             value={props?.body || ''}
-            onChange={handleBodyChange}
+            onChange={(newValue) => handleFieldChange('body', newValue)}
             placeholder="Enter your paragraph (optional)"
             className="text-lg text-gray-300"
             transparentBg={hasBackgroundImage}
