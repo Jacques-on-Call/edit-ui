@@ -78,6 +78,8 @@ function InitialContentPlugin({ initialContent, lastHtmlRef }) {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
     if (editor && initialContent && initialContent !== lastHtmlRef.current) {
+      // Set the ref immediately to prevent the initial onChange from firing
+      lastHtmlRef.current = initialContent;
       editor.update(() => {
         const parser = new DOMParser();
         const dom = parser.parseFromString(initialContent, 'text/html');
