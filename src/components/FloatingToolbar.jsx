@@ -80,7 +80,7 @@ export default function FloatingToolbar({
   // Temporary diagnostic mode - always log key events regardless of debug flag
   // IMPORTANT: Set to false after debugging is complete to avoid excessive production logging
   // This is a temporary debugging instrumentation to diagnose iOS Safari issues
-  const DIAGNOSTIC_MODE = true;
+  const DIAGNOSTIC_MODE = false;
 
   // Helper function to find editor root with fallback detection (Issue #1 fix)
   // Uses selector first, then falls back to contenteditable attribute
@@ -510,9 +510,8 @@ export default function FloatingToolbar({
       ref={toolbarRef}
       className="floating-toolbar-container"
       style={{
-        top: `${position.top}px`,
-        left: `${position.left}px`,
-        visibility: position.visible ? 'visible' : 'hidden',
+        top: position.visible ? `${position.top}px` : '-1000px',
+        left: position.visible ? `${position.left}px` : '-1000px',
         opacity: position.visible ? 1 : 0,
       }}
     >
