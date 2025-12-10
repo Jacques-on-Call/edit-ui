@@ -201,27 +201,13 @@ export default function EditorFloatingToolbar({
     const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
     left = Math.max(minLeft, Math.min(left, maxLeft));
 
-    // Enhanced diagnostic logging
-    console.log('[EditorFloatingToolbar] Positioning Calculation', {
-      selectionRect: JSON.parse(JSON.stringify(selectionRect)), // Log full rect object
-      toolbarRect: JSON.parse(JSON.stringify(toolbarRect)),   // Log full rect object
-      visualViewport: {
-        width: vp.width,
-        height: vp.height,
-        pageTop: vp.pageTop,
-        pageLeft: vp.pageLeft,
-        scale: vp.scale,
-      },
-      calculated: {
-        spaceAbove,
-        spaceBelow,
-        centeredLeft: vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarWidth / 2),
-        minLeft,
-        maxLeft,
-        finalTop: top,
-        finalLeft: left,
-      }
-    });
+    // Enhanced, primitive-based diagnostic logging for mobile consoles
+    console.log(
+      `[TBar Pos] sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
+      `| tbar(w:${Math.round(toolbarRect.width)}, h:${Math.round(toolbarRect.height)}) ` +
+      `| vp(w:${Math.round(vp.width)}, h:${Math.round(vp.height)}, pT:${Math.round(vp.pageTop)}, pL:${Math.round(vp.pageLeft)}) ` +
+      `| final(t:${Math.round(top)}, l:${Math.round(left)})`
+    );
 
     setPosition({ top, left, visible: true });
   }, [position.visible, debugMode]);
