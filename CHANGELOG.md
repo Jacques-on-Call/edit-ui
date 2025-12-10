@@ -1,33 +1,5 @@
 # Project Change Log
 
-GitHub Copilot (fix): Stabilize Editor Toolbar Focus and Positioning
-Date: 2025-12-10
-Summary:
-Resolved two critical bugs affecting the floating toolbar: 1) a race condition that caused the editor to lose focus when toolbar buttons were clicked, and 2) a positioning bug that caused the toolbar to appear off-screen on mobile devices.
-
-Details:
-- **Focus Stealing Fix (Race Condition):**
-  - **Problem:** The editor's `blur` event was firing before the toolbar's `click` event, causing the active editor state to be cleared before a formatting command could be executed.
-  - **Solution:** Implemented a shared `isToolbarInteractionRef` in the `EditorContext`. A `pointerdown` event on the toolbar now sets this ref to `true`. The editor's `blur` handler checks this ref and aborts if an interaction is in progress, allowing the toolbar action to complete.
-
-- **Positioning Fix (The "Zero-Width" Problem):**
-  - **Problem:** The toolbar's position was being calculated *before* it was rendered, meaning its dimensions were always `(width: 0, height: 0)`. This made it impossible to correctly center it or clamp it to the viewport edges.
-  - **Solution:** Implemented a robust **two-step "render-measure-position"** strategy:
-    1.  When a selection is made, the toolbar is first rendered invisibly off-screen (`top: -1000px`).
-    2.  A `useEffect` hook then runs, measures the now-rendered toolbar's *actual* dimensions, and calculates the final, correct centered position.
-  - This ensures the positioning logic always works with the real size of the toolbar, solving the off-screen bug.
-
-- **UX Improvement:** After a toolbar action, focus is now programmatically returned to the editor, allowing the user to continue typing seamlessly.
-
-Impact:
-The floating toolbar is now both fully functional and visually stable on all devices. Users can reliably apply formatting without losing focus, and the toolbar will correctly position itself over the selected text, even on small mobile screens.
-
-Reflection:
-- **Key Learning 1 (Race Conditions):** A shared `useRef` is an excellent pattern for managing transient UI states (like "is an interaction in progress?") between components without triggering re-renders. It's the perfect tool for solving focus-related race conditions.
-- **Key Learning 2 (Dynamic Positioning):** Never try to measure an element in the same render cycle where it becomes visible. The correct pattern is to render it off-screen, then use a `useEffect` to measure it in the next cycle. This guarantees you're working with the element's true dimensions.
-
----
-
 GitHub Copilot (fix): Prevent Toolbar from Stealing Editor Focus
 Date: 2025-12-09
 Summary:

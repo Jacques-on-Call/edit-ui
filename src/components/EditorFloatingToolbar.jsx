@@ -122,75 +122,95 @@ export default function EditorFloatingToolbar({
     }
   }, []);
 
-  // Step 2: This effect runs after the toolbar has been rendered off-screen.
-  // Now we can measure its actual dimensions and calculate the final position.
-  useEffect(() => {
-    if (position.visible && toolbarRef.current) {
-      const selection = window.getSelection();
-      if (!selection || selection.rangeCount === 0) return;
-
-      const range = selection.getRangeAt(0);
-      const selectionRect = range.getBoundingClientRect();
-      const toolbarRect = toolbarRef.current.getBoundingClientRect();
-
-      // Ensure toolbar has dimensions before calculating
-      if (toolbarRect.width === 0 || toolbarRect.height === 0) return;
-
-      const vp = window.visualViewport || {
-        width: window.innerWidth,
-        height: window.innerHeight,
-        pageTop: window.scrollY,
-        pageLeft: window.scrollX,
-      };
-
-      const GAP = 10;
-      const VIEWPORT_PADDING = 8;
-
-      const spaceAbove = selectionRect.top;
-      const spaceBelow = vp.height - selectionRect.bottom;
-
-      let top;
-      if (spaceAbove > toolbarRect.height + GAP || spaceAbove > spaceBelow) {
-        top = vp.pageTop + selectionRect.top - toolbarRect.height - GAP;
-      } else {
-        top = vp.pageTop + selectionRect.bottom + GAP;
-      }
-
-      let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarRect.width / 2);
-
-      const minLeft = vp.pageLeft + VIEWPORT_PADDING;
-      const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
-      left = Math.max(minLeft, Math.min(left, maxLeft));
-
-      // This is the final, correct position.
-      setPosition({ top, left, visible: true });
-    }
-  }, [position.visible]);
-
 
   const updatePosition = useCallback(() => {
     if (typeof window === 'undefined' || !window.getSelection) return;
 
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
+    const toolbarElement = toolbarRef.current;
+
+    if (!toolbarElement) {
+      return;
+    }
+
+    const selectionText = selection?.toString() || '';
+    const hasTextSelection = selectionText.trim().length > 0;
+
+    if (!selection || selection.rangeCount === 0 || !hasTextSelection) {
       if (position.visible) {
         setPosition({ top: 0, left: 0, visible: false });
+        // Don't clear lastActiveEditorRef here so we can still use it if needed,
+        // but typically if selection is gone, we don't need it.
       }
       return;
     }
 
-    const selectionText = selection.toString().trim();
-    if (selectionText.length === 0) {
-      if (position.visible) {
-        setPosition({ top: 0, left: 0, visible: false });
-      }
-      return;
+    // Update last active editor if we have one
+    if (activeEditor) {
+      lastActiveEditorRef.current = activeEditor;
     }
 
-    // Step 1: Set a temporary off-screen position to make the toolbar render
-    // with its content, so we can measure it in the next step.
-    setPosition({ top: -1000, left: -1000, visible: true });
-  }, [position.visible]);
+    const range = selection.getRangeAt(0);
+    const selectionRect = range.getBoundingClientRect();
+    const toolbarRect = toolbarElement.getBoundingClientRect();
+
+
+    // Critical guard: if toolbar has no width, it's not rendered yet.
+    // Instead of returning, we'll try to estimate or use a default width
+    let toolbarWidth = toolbarRect.width;
+    if (toolbarWidth === 0) {
+      // Fallback width based on typical size (approx 5 buttons * 40px + padding)
+      // This prevents the "vanish" issue where it never gets a width
+      toolbarWidth = 220;
+
+      // We can also schedule another update to correct it once rendered
+      if (!updateFrameRef.current) {
+        updateFrameRef.current = requestAnimationFrame(updatePosition);
+      }
+    }
+
+    // Use visualViewport for mobile-first, robust positioning
+    const vp = window.visualViewport || {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      pageTop: window.scrollY,
+      pageLeft: window.scrollX,
+    };
+
+    const GAP = 10; // Gap between selection and toolbar
+    const VIEWPORT_PADDING = 8;
+
+    // Decide if toolbar should be above or below
+    const spaceAbove = selectionRect.top;
+    const spaceBelow = vp.height - selectionRect.bottom;
+
+    let top;
+    // Prefer to position above, unless there's not enough space OR significantly more space below
+    if (spaceAbove > toolbarRect.height + GAP || spaceAbove > spaceBelow) {
+      top = vp.pageTop + selectionRect.top - toolbarRect.height - GAP;
+    } else {
+      top = vp.pageTop + selectionRect.bottom + GAP;
+    }
+
+    // Calculate centered left position
+    // Use the potentially fallback toolbarWidth
+    let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarWidth / 2);
+
+    // Clamp left position to stay within the viewport
+    const minLeft = vp.pageLeft + VIEWPORT_PADDING;
+    const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
+    left = Math.max(minLeft, Math.min(left, maxLeft));
+
+    // Enhanced, primitive-based diagnostic logging for mobile consoles
+    console.log(
+      `[TBar Pos] sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
+      `| tbar(w:${Math.round(toolbarRect.width)}, h:${Math.round(toolbarRect.height)}) ` +
+      `| vp(w:${Math.round(vp.width)}, h:${Math.round(vp.height)}, pT:${Math.round(vp.pageTop)}, pL:${Math.round(vp.pageLeft)}) ` +
+      `| final(t:${Math.round(top)}, l:${Math.round(left)})`
+    );
+
+    setPosition({ top, left, visible: true });
+  }, [position.visible, debugMode]);
 
   const debouncedUpdatePosition = useCallback(() => {
     // A simple RAF debounce is sufficient for non-iOS devices.
