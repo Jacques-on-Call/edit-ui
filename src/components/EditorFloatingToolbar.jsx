@@ -2,7 +2,7 @@ import { h } from 'preact';
 import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { useEditor } from '../contexts/EditorContext';
-import { 
+import {
   Bold, Italic, Underline, Strikethrough, Code, Link, List, ListOrdered,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   Type, Palette, Highlighter, Eraser, ChevronDown
@@ -65,11 +65,13 @@ export default function EditorFloatingToolbar({
   const alignDropdownRef = useRef(null);
   const colorPickerRef = useRef(null);
   const highlightPickerRef = useRef(null);
+  const highlightPickerRef = useRef(null);
   const updateFrameRef = useRef(null); // Track pending RAF to avoid duplicate frames
-  
+  const lastActiveEditorRef = useRef(null); // Cache the last known active editor
+
   // Use runtime debug flag from window object
   const debugMode = typeof window !== 'undefined' && window.__EASY_SEO_TOOLBAR_DEBUG__;
-  
+
   // Temporary diagnostic mode - always log key events regardless of debug flag
   // IMPORTANT: Set to false after debugging is complete to avoid excessive production logging
   // This is a temporary debugging instrumentation to diagnose iOS Safari issues
@@ -89,7 +91,7 @@ export default function EditorFloatingToolbar({
     }
     return null; // No editor root found in the selection ancestry
   }, [editorRootSelector]);
-  
+
   // Component mount instrumentation - always log regardless of debug mode
   useEffect(() => {
     const editorRoot = findEditorRoot();
@@ -105,12 +107,12 @@ export default function EditorFloatingToolbar({
       userAgent: navigator.userAgent, // Logged for debugging purposes only
       isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent)
     });
-    
+
     return () => {
       console.log('[EditorFloatingToolbar] Component unmounting');
     };
   }, [findEditorRoot]);
-  
+
   // Verify portal target exists
   useEffect(() => {
     if (DIAGNOSTIC_MODE) {
@@ -120,7 +122,7 @@ export default function EditorFloatingToolbar({
       });
     }
   }, []);
-  
+
 
   const updatePosition = useCallback(() => {
     if (typeof window === 'undefined' || !window.getSelection) return;
@@ -138,20 +140,34 @@ export default function EditorFloatingToolbar({
     if (!selection || selection.rangeCount === 0 || !hasTextSelection) {
       if (position.visible) {
         setPosition({ top: 0, left: 0, visible: false });
+        // Don't clear lastActiveEditorRef here so we can still use it if needed,
+        // but typically if selection is gone, we don't need it.
       }
       return;
+    }
+
+    // Update last active editor if we have one
+    if (activeEditor) {
+      lastActiveEditorRef.current = activeEditor;
     }
 
     const range = selection.getRangeAt(0);
     const selectionRect = range.getBoundingClientRect();
     const toolbarRect = toolbarElement.getBoundingClientRect();
 
+
     // Critical guard: if toolbar has no width, it's not rendered yet.
-    // This is a common cause of left-alignment bugs.
-    if (toolbarRect.width === 0) {
-      // Optional: request another frame to try again once it might be rendered.
-      // requestAnimationFrame(updatePosition);
-      return;
+    // Instead of returning, we'll try to estimate or use a default width
+    let toolbarWidth = toolbarRect.width;
+    if (toolbarWidth === 0) {
+      // Fallback width based on typical size (approx 5 buttons * 40px + padding)
+      // This prevents the "vanish" issue where it never gets a width
+      toolbarWidth = 220;
+
+      // We can also schedule another update to correct it once rendered
+      if (!updateFrameRef.current) {
+        updateFrameRef.current = requestAnimationFrame(updatePosition);
+      }
     }
 
     // Use visualViewport for mobile-first, robust positioning
@@ -178,7 +194,8 @@ export default function EditorFloatingToolbar({
     }
 
     // Calculate centered left position
-    let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarRect.width / 2);
+    // Use the potentially fallback toolbarWidth
+    let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarWidth / 2);
 
     // Clamp left position to stay within the viewport
     const minLeft = vp.pageLeft + VIEWPORT_PADDING;
@@ -209,7 +226,7 @@ export default function EditorFloatingToolbar({
     // 300ms seems to be a reliable value.
     setTimeout(updatePosition, 300);
   }, [updatePosition]);
-  
+
   // Set up event listeners
   useEffect(() => {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -270,7 +287,7 @@ export default function EditorFloatingToolbar({
     e.preventDefault();
     e.stopPropagation();
   };
-  
+
   const handleToolbarTouchStart = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -306,24 +323,28 @@ export default function EditorFloatingToolbar({
   const currentBlockType = selectionState?.blockType || 'paragraph';
   const currentAlignment = selectionState?.alignment || 'left';
 
+  const getEditor = () => activeEditor || lastActiveEditorRef.current;
+
   const handleHeadingCycle = () => {
-    if (!activeEditor) return;
+    const editor = getEditor();
+    if (!editor) return;
     const current = selectionState?.blockType || 'paragraph';
     const sequence = ['paragraph', 'h2', 'h3', 'h4', 'h5', 'h6'];
     const currentIndex = sequence.indexOf(current);
     const nextType = sequence[(currentIndex + 1) % sequence.length];
-    activeEditor.toggleHeading?.(nextType === 'paragraph' ? null : nextType);
+    editor.toggleHeading?.(nextType === 'paragraph' ? null : nextType);
   };
 
   const handleListCycle = () => {
-    if (!activeEditor) return;
+    const editor = getEditor();
+    if (!editor) return;
     const current = selectionState?.blockType;
     if (current === 'ul') {
-      activeEditor.toggleList?.('ol'); // From UL to OL
+      editor.toggleList?.('ol'); // From UL to OL
     } else if (current === 'ol') {
-      activeEditor.toggleList?.(null); // From OL to no list
+      editor.toggleList?.(null); // From OL to no list
     } else {
-      activeEditor.toggleList?.('ul'); // From anything else to UL
+      editor.toggleList?.('ul'); // From anything else to UL
     }
   };
 
@@ -343,12 +364,13 @@ export default function EditorFloatingToolbar({
       >
         {/* Reordered buttons for priority */}
         <button
-          onPointerDown={(e) => {
+          onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('[EditorFloatingToolbar] Bold button clicked, activeEditor:', !!activeEditor);
-            if (activeEditor) {
-              activeEditor.toggleBold();
+            const editor = getEditor();
+            console.log('[EditorFloatingToolbar] Bold button clicked, has editor:', !!editor);
+            if (editor) {
+              editor.toggleBold();
             } else {
               console.warn('[EditorFloatingToolbar] No active editor for Bold action');
             }
@@ -357,15 +379,16 @@ export default function EditorFloatingToolbar({
           title="Bold"
           aria-label="Bold"
         >
-            <Bold size={18} />
+          <Bold size={18} />
         </button>
         <button
-          onPointerDown={(e) => {
+          onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('[EditorFloatingToolbar] Italic button clicked, activeEditor:', !!activeEditor);
-            if (activeEditor) {
-              activeEditor.toggleItalic();
+            const editor = getEditor();
+            console.log('[EditorFloatingToolbar] Italic button clicked, has editor:', !!editor);
+            if (editor) {
+              editor.toggleItalic();
             } else {
               console.warn('[EditorFloatingToolbar] No active editor for Italic action');
             }
@@ -374,14 +397,15 @@ export default function EditorFloatingToolbar({
           title="Italic"
           aria-label="Italic"
         >
-            <Italic size={18} />
+          <Italic size={18} />
         </button>
         <button
-          onPointerDown={(e) => {
+          onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('[EditorFloatingToolbar] List cycle button clicked, activeEditor:', !!activeEditor);
-            if (activeEditor) {
+            const editor = getEditor();
+            console.log('[EditorFloatingToolbar] List cycle button clicked, has editor:', !!editor);
+            if (editor) {
               handleListCycle();
             } else {
               console.warn('[EditorFloatingToolbar] No active editor for List cycle action');
@@ -391,14 +415,15 @@ export default function EditorFloatingToolbar({
           title="Cycle List (UL/OL/Off)"
           aria-label="Cycle List"
         >
-            <List size={18} />
+          <List size={18} />
         </button>
         <button
-          onPointerDown={(e) => {
+          onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('[EditorFloatingToolbar] Heading cycle button clicked, activeEditor:', !!activeEditor);
-            if (activeEditor) {
+            const editor = getEditor();
+            console.log('[EditorFloatingToolbar] Heading cycle button clicked, has editor:', !!editor);
+            if (editor) {
               handleHeadingCycle();
             } else {
               console.warn('[EditorFloatingToolbar] No active editor for Heading cycle action');
@@ -408,81 +433,85 @@ export default function EditorFloatingToolbar({
           title="Cycle Heading (H2-H6)"
           aria-label="Cycle Heading"
         >
-            <Type size={18} />
+          <Type size={18} />
         </button>
 
         <div class="toolbar-divider"></div>
 
         <button
-          onPointerDown={(e) => {
+          onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('[EditorFloatingToolbar] Link button clicked, activeEditor:', !!activeEditor);
-            if (!activeEditor) {
+            const editor = getEditor();
+            console.log('[EditorFloatingToolbar] Link button clicked, has editor:', !!editor);
+            if (!editor) {
               console.warn('[EditorFloatingToolbar] No active editor for Link action');
               return;
             }
             const url = window.prompt('Enter URL:');
             if (url) {
-              activeEditor.insertLink?.(url);
+              editor.insertLink?.(url);
             }
           }}
           className={selectionState?.isLink ? 'active' : ''}
           title="Insert Link"
           aria-label="Insert Link"
         >
-            <Link size={18} />
+          <Link size={18} />
         </button>
 
         <div class="toolbar-divider"></div>
 
         <button
-          onPointerDown={(e) => {
+          onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (activeEditor) {
-              activeEditor.toggleUnderline();
+            const editor = getEditor();
+            if (editor) {
+              editor.toggleUnderline();
             }
           }}
           className={selectionState?.isUnderline ? 'active' : ''}
           title="Underline"
           aria-label="Underline"
         >
-            <Underline size={18} />
+          <Underline size={18} />
         </button>
         <button
-          onPointerDown={(e) => {
+          onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (activeEditor) {
-              activeEditor.toggleStrikethrough();
+            const editor = getEditor();
+            if (editor) {
+              editor.toggleStrikethrough();
             }
           }}
           className={selectionState?.isStrikethrough ? 'active' : ''}
           title="Strikethrough"
           aria-label="Strikethrough"
         >
-            <Strikethrough size={18} />
+          <Strikethrough size={18} />
         </button>
         <button
-          onPointerDown={(e) => {
+          onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (activeEditor) {
-              activeEditor.toggleCode();
+            const editor = getEditor();
+            if (editor) {
+              editor.toggleCode();
             }
           }}
           className={selectionState?.isCode ? 'active' : ''}
           title="Inline Code"
           aria-label="Inline Code"
         >
-            <Code size={18} />
+          <Code size={18} />
         </button>
 
         {/* Text color picker */}
         <div class="toolbar-dropdown-container" ref={colorPickerRef}>
           <button
-            onPointerDown={(e) => {
+            onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               setShowColorPicker(!showColorPicker);
@@ -492,7 +521,7 @@ export default function EditorFloatingToolbar({
             aria-label="Text color"
             aria-expanded={showColorPicker}
           >
-              <Palette size={18} />
+            <Palette size={18} />
           </button>
           {showColorPicker && (
             <div class="toolbar-dropdown color-picker-dropdown">
@@ -502,11 +531,12 @@ export default function EditorFloatingToolbar({
                     key={color}
                     class="color-swatch"
                     style={{ backgroundColor: color }}
-                    onPointerDown={(e) => {
+                    onMouseDown={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      if (activeEditor) {
-                        activeEditor.setTextColor(color);
+                      const editor = getEditor();
+                      if (editor) {
+                        editor.setTextColor(color);
                       }
                       setShowColorPicker(false);
                     }}
@@ -517,11 +547,12 @@ export default function EditorFloatingToolbar({
               </div>
               <button
                 class="toolbar-dropdown-item"
-                onPointerDown={(e) => {
+                onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (activeEditor) {
-                    activeEditor.setTextColor(null);
+                  const editor = getEditor();
+                  if (editor) {
+                    editor.setTextColor(null);
                   }
                   setShowColorPicker(false);
                 }}
@@ -535,7 +566,7 @@ export default function EditorFloatingToolbar({
         {/* Highlight color picker */}
         <div class="toolbar-dropdown-container" ref={highlightPickerRef}>
           <button
-            onPointerDown={(e) => {
+            onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               setShowHighlightPicker(!showHighlightPicker);
@@ -545,7 +576,7 @@ export default function EditorFloatingToolbar({
             aria-label="Highlight color"
             aria-expanded={showHighlightPicker}
           >
-              <Highlighter size={18} />
+            <Highlighter size={18} />
           </button>
           {showHighlightPicker && (
             <div class="toolbar-dropdown color-picker-dropdown">
@@ -555,11 +586,12 @@ export default function EditorFloatingToolbar({
                     key={color}
                     class="color-swatch"
                     style={{ backgroundColor: color }}
-                    onPointerDown={(e) => {
+                    onMouseDown={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      if (activeEditor) {
-                        activeEditor.setHighlightColor(color);
+                      const editor = getEditor();
+                      if (editor) {
+                        editor.setHighlightColor(color);
                       }
                       setShowHighlightPicker(false);
                     }}
@@ -570,11 +602,12 @@ export default function EditorFloatingToolbar({
               </div>
               <button
                 class="toolbar-dropdown-item"
-                onPointerDown={(e) => {
+                onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (activeEditor) {
-                    activeEditor.setHighlightColor(null);
+                  const editor = getEditor();
+                  if (editor) {
+                    editor.setHighlightColor(null);
                   }
                   setShowHighlightPicker(false);
                 }}
@@ -586,23 +619,24 @@ export default function EditorFloatingToolbar({
         </div>
 
         <button
-          onPointerDown={(e) => {
+          onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (activeEditor) {
-              activeEditor.clearFormatting();
+            const editor = getEditor();
+            if (editor) {
+              editor.clearFormatting();
             }
           }}
           title="Clear formatting"
           aria-label="Clear formatting"
         >
-            <Eraser size={18} />
+          <Eraser size={18} />
         </button>
 
         {/* Debug instrumentation dot - only visible when debug mode is enabled */}
         {debugMode && (
-          <div 
-            className="floating-toolbar-debug-dot" 
+          <div
+            className="floating-toolbar-debug-dot"
             title="Debug mode active"
             aria-hidden="true"
           />
