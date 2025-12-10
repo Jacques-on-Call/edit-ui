@@ -53,6 +53,37 @@ export default function ContentEditorPage(props) {
     selectedRepoRef.current = selectedRepo;
   }, [selectedRepo]);
 
+  // Temporary diagnostic logging for visual viewport
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.visualViewport) {
+      const vv = window.visualViewport;
+      const logViewport = () => {
+        console.log('[CEP Viewport] Viewport changed:', {
+          width: vv.width,
+          height: vv.height,
+          offsetLeft: vv.offsetLeft,
+          offsetTop: vv.offsetTop,
+          pageLeft: vv.pageLeft,
+          pageTop: vv.pageTop,
+          scale: vv.scale,
+        });
+      };
+
+      console.log('[CEP Viewport] Attaching viewport listeners.');
+      vv.addEventListener('resize', logViewport);
+      vv.addEventListener('scroll', logViewport);
+
+      // Log initial state
+      logViewport();
+
+      return () => {
+        console.log('[CEP Viewport] Removing viewport listeners.');
+        vv.removeEventListener('resize', logViewport);
+        vv.removeEventListener('scroll', logViewport);
+      };
+    }
+  }, []);
+
   // Debug render only in development - commented out to reduce console spam
   // console.log('[ContentEditorPage] RENDER - syncStatus:', syncStatus, 'isPreviewBuilding:', isPreviewBuilding);
 

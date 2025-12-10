@@ -185,14 +185,13 @@ export default function EditorFloatingToolbar({
     const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
     left = Math.max(minLeft, Math.min(left, maxLeft));
 
-    if (debugMode) {
-      console.log('[EditorFloatingToolbar] Positioning', {
-        selectionRect: { top: selectionRect.top, left: selectionRect.left, width: selectionRect.width, height: selectionRect.height },
-        toolbarRect: { width: toolbarRect.width, height: toolbarRect.height },
-        viewport: { width: vp.width, pageTop: vp.pageTop, pageLeft: vp.pageLeft },
-        calculated: { top, left }
-      });
-    }
+    // A log has been added to help with debugging.
+    console.log('[EditorFloatingToolbar] updatePosition', {
+      selectionRect: { top: selectionRect.top, bottom: selectionRect.bottom, left: selectionRect.left, width: selectionRect.width },
+      toolbarRect: { width: toolbarRect.width, height: toolbarRect.height },
+      visualViewport: { width: vp.width, height: vp.height, pageTop: vp.pageTop, pageLeft: vp.pageLeft },
+      calculatedPosition: { top, left }
+    });
 
     setPosition({ top, left, visible: true });
   }, [position.visible, debugMode]);
