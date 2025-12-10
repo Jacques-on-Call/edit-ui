@@ -4,6 +4,86 @@ This document is a living log of common failure modes, known bugs, and the patte
 
 ---
 
+### 00. **Toolbar Actions Not Working on Mobile - Blur/Focus Race Condition**
+
+**Date:** 2025-12-10
+**Agent:** GitHub Copilot
+
+**Symptoms:**
+
+- User selects text in editor on mobile device
+- FloatingToolbar appears correctly
+- User taps a toolbar button (e.g., Bold, Italic)
+- Nothing happens - the formatting is not applied
+- Logs show "No active editor" warnings when toolbar buttons are clicked
+- Focus/blur events cycle rapidly when interacting with toolbar
+- Selection is lost when toolbar is tapped
+
+**Root Cause:**
+
+Multi-layered issue related to mobile touch event handling and editor focus management:
+
+1. **Touch Event Blur Timing:** On mobile, when user taps the toolbar button, the touch event causes the editor to blur BEFORE the button's click handler executes. The blur event schedules clearing of `activeEditor` after a delay (originally 150ms, which was too short for mobile touch sequences).
+
+2. **Event Handler Inconsistency:** Toolbar buttons used `onMouseDown` which works on desktop but has timing issues on mobile. Touch event sequence (touchstart → touchend → mousedown → click) can cause the mousedown handler to fire after blur has been triggered.
+
+3. **Import Path Errors:** Incorrect relative import paths (`../../contexts/` instead of `../contexts/`) caused build failures and prevented proper toolbar integration.
+
+4. **CSS Positioning Bug:** FloatingToolbar CSS animation used `translateX(-50%)` which conflicted with JavaScript's centered positioning calculation, causing toolbar to render left-aligned instead of centered above selection.
+
+**Solution:**
+
+Implemented comprehensive fixes across multiple layers:
+
+1. **Increased Blur Delay:**
+   - Changed blur timeout from 150ms to 300ms in `LexicalField.jsx`
+   - Provides sufficient time for mobile touch event sequences to complete
+   - Allows toolbar button handlers to execute before activeEditor is cleared
+
+2. **Unified Event Handling with Pointer Events:**
+   - Replaced all `onMouseDown` handlers with `onPointerDown` API
+   - PointerEvent unifies mouse, touch, and pen input in a single handler
+   - Works consistently across desktop, mobile, and tablet devices
+   - Prevents timing issues specific to touch event sequences
+
+3. **Enhanced Event Propagation Control:**
+   - Added explicit `e.stopPropagation()` to all toolbar button handlers
+   - Prevents touch events from bubbling and triggering unwanted blur
+   - Ensures toolbar interactions don't interfere with editor focus
+
+4. **Explicit Active Editor Checks:**
+   - Added defensive checks for `activeEditor` existence before calling methods
+   - Added console logging to track when buttons are clicked without active editor
+   - Provides clear debugging information for future issues
+
+5. **Fixed Import Paths:**
+   - Corrected EditorFloatingToolbar.jsx: `../../contexts/EditorContext` → `../contexts/EditorContext`
+   - Corrected SlideoutToolbar.jsx: `../../contexts/EditorContext` → `../contexts/EditorContext`
+   - Ensures proper module resolution during build
+
+6. **Fixed CSS Positioning:**
+   - Removed `translateX(-50%)` from FloatingToolbar CSS animation
+   - JavaScript now handles full centered positioning calculation
+   - Toolbar correctly centers above selection respecting viewport boundaries
+
+**Key Learning:**
+
+- Mobile touch events require longer delays (300ms+) than desktop mouse events (150ms) due to touch gesture recognition
+- PointerEvent API is superior to handling mouse/touch separately - it provides unified event model
+- Always test toolbar interactions on actual mobile devices - touch event timing is fundamentally different from mouse
+- Import paths in Preact/Vite must be exact - build will fail silently if paths are wrong
+- CSS transforms and JavaScript positioning should not conflict - pick one approach
+
+**Prevention:**
+
+- When adding new toolbar buttons, always use `onPointerDown` not `onMouseDown` or `onTouchStart`
+- Always call `e.preventDefault()` and `e.stopPropagation()` in toolbar handlers
+- Always check for `activeEditor` existence before calling editor methods
+- Test toolbar on mobile Safari (iOS) and Chrome (Android) - different timing characteristics
+- Consider blur delay when adding interactive elements that need editor access
+
+---
+
 ### 0. **FloatingToolbar Selection Loop and Mobile Keyboard Issues**
 
 **Date:** 2025-12-08

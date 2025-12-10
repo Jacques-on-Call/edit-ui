@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
-import { useEditor } from '../../contexts/EditorContext';
+import { useEditor } from '../contexts/EditorContext';
 import { 
   Heading2, Heading3, Heading4, Heading5, Heading6,
   List, ListOrdered, Image, Table, X, Menu,
@@ -80,6 +80,10 @@ export default function SlideoutToolbar() {
   }, [isOpen, isExpanded]);
 
   const handleInsert = (action, ...args) => {
+    console.log('[SlideoutToolbar] Action triggered:', action, 'activeEditor:', !!activeEditor);
+    if (!activeEditor) {
+      console.warn('[SlideoutToolbar] No active editor, action may not work:', action);
+    }
     handleAction(action, ...args);
     // Close toolbar after selection
     setIsExpanded(false);

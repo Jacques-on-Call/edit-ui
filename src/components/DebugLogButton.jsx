@@ -39,7 +39,7 @@ export function FloatingLogButton() {
         display: 'flex',
         flexDirection: 'column',
         gap: '10px',
-        zIndex: 1000
+        zIndex: 10001
       }}>
         {logs.length > 0 && (
           <button
@@ -87,7 +87,7 @@ export function FloatingLogButton() {
           maxHeight: '200px',
           overflow: 'auto',
           fontSize: '12px',
-          zIndex: 1000
+          zIndex: 10001
         }}>
           {logs.slice(-10).map((log, i) => (
             <div key={i}>{log}</div>

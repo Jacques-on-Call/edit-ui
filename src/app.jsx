@@ -94,7 +94,7 @@ const AppContent = () => {
       </div>
 
       {/* Debug tools are also rendered at the root, outside the main layout wrapper */}
-      {import.meta.env.DEV && <FloatingLogButton />}
+      <FloatingLogButton />
       {import.meta.env.DEV && <AuthDebugMonitor />}
     </>
   );

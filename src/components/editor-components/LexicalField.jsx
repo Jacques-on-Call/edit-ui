@@ -16,16 +16,20 @@ export default function LexicalField({ value, onChange, placeholder, className, 
       blurTimeoutRef.current = null;
     }
 
+    console.log('[LexicalField] Focus event. Setting active editor.');
     if (editorApiRef.current) {
       setActiveEditor(editorApiRef.current);
     }
   };
 
   const handleBlur = () => {
+    console.log('[LexicalField] Blur event. Clearing active editor after delay.');
     // Delay clearing the active editor to allow toolbar buttons to be clicked without losing focus.
+    // Increased delay for mobile devices where touch events take longer
     blurTimeoutRef.current = setTimeout(() => {
+      console.log('[LexicalField] Delay complete. Clearing active editor.');
       setActiveEditor(null);
-    }, 150);
+    }, 300);
   };
 
   return (

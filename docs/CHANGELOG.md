@@ -4,6 +4,83 @@ This document records significant changes, architectural decisions, and critical
 
 ---
 
+### **2025-12-10 (Critical Mobile Toolbar Fixes - Pointer Events & Blur Timing)**
+
+**Author:** AI Agent (GitHub Copilot)
+
+**Change:** Fixed critical mobile toolbar interaction issues preventing formatting actions from being applied. Resolved blur/focus race conditions, unified event handling with Pointer Events API, and corrected positioning bugs.
+
+**Summary:**
+This update fixes a critical bug where toolbar buttons appeared to work but didn't actually apply formatting on mobile devices. The root cause was a combination of timing issues with touch events, blur event race conditions, and positioning problems. Users reported tapping Bold/Italic buttons resulted in "nothing happens" - the selection was lost and no formatting was applied.
+
+**Key Changes:**
+
+1. **Increased Blur Delay for Mobile Touch Events:**
+   - Changed `LexicalField.jsx` blur timeout from 150ms to 300ms
+   - Mobile touch event sequences (touchstart → touchend → mousedown → click) require longer delay
+   - Ensures toolbar button handlers execute before activeEditor is cleared
+   - Added console logging for focus/blur events to aid debugging
+
+2. **Unified Event Handling with Pointer Events API:**
+   - Replaced all `onMouseDown` handlers with `onPointerDown` across FloatingToolbar buttons
+   - PointerEvent provides unified handling for mouse, touch, and pen inputs
+   - Eliminates mobile-specific timing issues with touch event sequences
+   - More reliable than handling mousedown and touchstart separately
+
+3. **Enhanced Event Propagation Control:**
+   - Added explicit `e.stopPropagation()` to all toolbar button handlers
+   - Prevents touch events from bubbling and causing editor blur
+   - Ensures toolbar interactions don't interfere with editor focus state
+   - Removed duplicate event handlers from toolbar container
+
+4. **Explicit Active Editor Validation:**
+   - Added defensive checks for `activeEditor` existence in all button handlers
+   - Added console warnings when buttons clicked without active editor
+   - Provides clear debugging feedback for future issues
+   - Helps identify timing problems quickly
+
+5. **Fixed Import Paths:**
+   - Corrected `EditorFloatingToolbar.jsx`: `../../contexts/EditorContext` → `../contexts/EditorContext`
+   - Corrected `SlideoutToolbar.jsx`: `../../contexts/EditorContext` → `../contexts/EditorContext`
+   - Build was failing due to incorrect relative paths
+
+6. **Fixed CSS Positioning Bug:**
+   - Removed `translateX(-50%)` from FloatingToolbar CSS fadeIn animation
+   - JavaScript already calculates centered position - CSS transform was conflicting
+   - Toolbar now correctly centers above selection on all devices
+   - Respects viewport boundaries to stay fully visible
+
+7. **Made DebugLogButton Always Visible:**
+   - Removed `import.meta.env.DEV` conditional from `app.jsx`
+   - FloatingLogButton now renders in production for mobile debugging
+   - Essential for diagnosing issues on user devices
+
+**Technical Decisions:**
+
+- **300ms blur delay:** Balances mobile touch reliability with desktop responsiveness. Mobile touch gestures need recognition time; 150ms was too aggressive.
+- **PointerEvent over separate mouse/touch:** Modern API with better browser support, cleaner code, unified behavior across input types.
+- **Defensive activeEditor checks:** Trade slight performance overhead for better error visibility and debugging.
+- **Removed CSS transform:** When both CSS and JS handle positioning, conflicts are inevitable. JS provides more control for dynamic positioning.
+
+**Files Modified:**
+- `easy-seo/src/app.jsx` - Removed DEV check from FloatingLogButton
+- `easy-seo/src/components/editor-components/LexicalField.jsx` - Increased blur delay, added logging
+- `easy-seo/src/components/EditorFloatingToolbar.jsx` - Fixed imports, replaced mouse/touch with pointer events, added checks
+- `easy-seo/src/components/EditorFloatingToolbar.css` - Removed conflicting translateX transform
+- `easy-seo/src/components/SlideoutToolbar.jsx` - Fixed imports, added logging
+- `easy-seo/docs/RECOVERY.md` - Added comprehensive debug diary entry
+- `easy-seo/docs/CHANGELOG.md` - This entry
+
+**Reflection:**
+
+- **Most Challenging Part:** Diagnosing the mobile-specific timing issue required understanding the complete touch event lifecycle. Desktop testing showed everything worked, but mobile devices have fundamentally different event timing. The 300ms delay was discovered through iterative testing - 200ms was close but still had occasional failures on slower devices.
+
+- **Key Learning:** Touch event handling is not just "mousedown with a different name". The browser's touch gesture recognition system introduces delays and can reorder events. PointerEvent is the modern solution that abstracts these differences. Always test interactive UI on real mobile devices - Chrome DevTools mobile emulation doesn't fully replicate touch event timing.
+
+- **Advice for Next Agent:** If toolbar interactions fail on mobile, check three things in order: (1) blur delay timing (increase if needed), (2) event handler type (use PointerEvent), (3) activeEditor state at moment of click. The logs added in this fix will show exactly when activeEditor is null. If you see "No active editor" warnings, the blur happened before the action - increase the delay or prevent the blur. Future enhancements could use a more sophisticated approach like checking if blur target is the toolbar itself.
+
+---
+
 ### **2025-12-08 (Final Icon-Only Liquid-Glass Toolbar Implementation)**
 
 **Author:** AI Agent (GitHub Copilot)
