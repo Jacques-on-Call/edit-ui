@@ -131,13 +131,20 @@ export default function EditorFloatingToolbar({
     }
 
     updateFrameRef.current = requestAnimationFrame(() => {
-      if (typeof window === 'undefined' || !window.getSelection) return;
+      console.log('[TBar-Debug] RAF callback started.');
+      if (typeof window === 'undefined' || !window.getSelection) {
+        console.log('[TBar-Debug] Exit: No window or getSelection.');
+        return;
+      }
 
       const selection = window.getSelection();
       const toolbarElement = toolbarRef.current;
+      console.log('[TBar-Debug] Got selection and toolbarElement:', !!selection, !!toolbarElement);
+
 
       // Guard 1: Ensure we have the necessary elements and a selection.
       if (!toolbarElement || !selection || selection.rangeCount === 0) {
+        console.log(`[TBar-Debug] Exit Guard 1: toolbar=${!!toolbarElement}, selection=${!!selection}, rangeCount=${selection?.rangeCount}`);
         if (position.visible) setPosition((p) => ({ ...p, visible: false }));
         return;
       }
@@ -145,6 +152,7 @@ export default function EditorFloatingToolbar({
       // Guard 2: Only show for non-empty text selections to avoid mobile keyboard loops.
       const selectionText = selection.toString() || '';
       if (selectionText.trim().length === 0 && !caretMode) {
+        console.log(`[TBar-Debug] Exit Guard 2: selectionText empty and not in caretMode.`);
         if (position.visible) setPosition((p) => ({ ...p, visible: false }));
         return;
       }
@@ -152,11 +160,14 @@ export default function EditorFloatingToolbar({
       const range = selection.getRangeAt(0);
       const selectionRect = range.getBoundingClientRect();
       const toolbarRect = toolbarElement.getBoundingClientRect();
+      console.log(`[TBar-Debug] Measured rects. Toolbar w=${toolbarRect.width}, h=${toolbarRect.height}`);
+
 
       // Guard 3: Ensure the toolbar is actually rendered with dimensions.
       // This is the key fix for the race condition. Because we are in a RAF callback,
       // the dimensions read here are post-paint and should be accurate.
       if (toolbarRect.width === 0 || toolbarRect.height === 0) {
+        console.log(`[TBar-Debug] Exit Guard 3: Toolbar has zero dimensions.`);
         if (position.visible) setPosition((p) => ({ ...p, visible: false }));
         return;
       }
