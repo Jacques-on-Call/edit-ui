@@ -65,7 +65,6 @@ export default function EditorFloatingToolbar({
   const alignDropdownRef = useRef(null);
   const colorPickerRef = useRef(null);
   const highlightPickerRef = useRef(null);
-  const highlightPickerRef = useRef(null);
   const updateFrameRef = useRef(null); // Track pending RAF to avoid duplicate frames
   const lastActiveEditorRef = useRef(null); // Cache the last known active editor
 
