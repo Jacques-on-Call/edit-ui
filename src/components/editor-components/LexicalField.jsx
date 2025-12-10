@@ -5,10 +5,13 @@ import { useEditor } from '../../contexts/EditorContext';
 
 export default function LexicalField({ value, onChange, placeholder, className, transparentBg = false, darkText = false }) {
   const editorApiRef = useRef(null);
-  const { setActiveEditor, setSelectionState } = useEditor();
+  const { activeEditor, setActiveEditor, setSelectionState } = useEditor();
 
   const handleFocus = () => {
-    console.log('[LexicalField] Focus event. Setting active editor.');
+    console.log('[LexicalField] Focus event triggered.', {
+      isEditorAlreadyActive: !!activeEditor,
+      editorApiRefPresent: !!editorApiRef.current
+    });
     if (editorApiRef.current) {
       setActiveEditor(editorApiRef.current);
     } else {
@@ -17,11 +20,25 @@ export default function LexicalField({ value, onChange, placeholder, className, 
   };
 
   const handleBlur = () => {
-    console.log('[LexicalField] Blur event. Clearing active editor after delay.');
+    const newFocusTarget = document.activeElement;
+    console.log('[LexicalField] Blur event triggered. New focus target:', {
+      tagName: newFocusTarget?.tagName,
+      className: newFocusTarget?.className,
+      id: newFocusTarget?.id,
+    });
+
     // Delay clearing the active editor to allow toolbar buttons to be clicked
     setTimeout(() => {
-      console.log('[LexicalField] Delay complete. Clearing active editor.');
-      setActiveEditor(null);
+      console.log('[LexicalField] Delay complete. Now checking if blur was temporary.');
+      // Re-check the active element. If focus moved to a toolbar, don't clear the editor.
+      const focusHasMovedToToolbar = document.activeElement?.closest('.floating-toolbar, .slideout-toolbar');
+
+      if (focusHasMovedToToolbar) {
+        console.log('[LexicalField] Blur was temporary (moved to a toolbar). NOT clearing active editor.');
+      } else {
+        console.log('[LexicalField] Focus moved elsewhere. Clearing active editor.');
+        setActiveEditor(null);
+      }
     }, 150);
   };
 
