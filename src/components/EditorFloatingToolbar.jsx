@@ -162,6 +162,7 @@ export default function EditorFloatingToolbar({
       const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
       left = Math.max(minLeft, Math.min(left, maxLeft));
 
+      console.log(`[EditorFloatingToolbar] Step 2: Measured toolbar (w:${toolbarRect.width}). Calculating final position.`);
       // This is the final, correct position.
       setPosition({ top, left, visible: true });
     }
@@ -169,28 +170,24 @@ export default function EditorFloatingToolbar({
 
 
   const updatePosition = useCallback(() => {
-    if (typeof window === 'undefined' || !window.getSelection) return;
-
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
-      if (position.visible) {
-        setPosition({ top: 0, left: 0, visible: false });
-      }
+    if (!selection || selection.rangeCount === 0 || selection.toString().trim().length === 0) {
+      // Use a functional update to avoid stale state issues. This ensures we always
+      // get the latest `position` state to check against.
+      setPosition(currentPosition => {
+        if (currentPosition.visible) {
+          return { top: 0, left: 0, visible: false };
+        }
+        return currentPosition;
+      });
       return;
     }
 
-    const selectionText = selection.toString().trim();
-    if (selectionText.length === 0) {
-      if (position.visible) {
-        setPosition({ top: 0, left: 0, visible: false });
-      }
-      return;
-    }
-
+    console.log('[EditorFloatingToolbar] Step 1: Selection detected. Rendering toolbar off-screen.');
     // Step 1: Set a temporary off-screen position to make the toolbar render
     // with its content, so we can measure it in the next step.
     setPosition({ top: -1000, left: -1000, visible: true });
-  }, [position.visible]);
+  }, []); // <-- Dependency array is now empty
 
   const debouncedUpdatePosition = useCallback(() => {
     // A simple RAF debounce is sufficient for non-iOS devices.
