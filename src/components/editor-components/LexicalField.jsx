@@ -6,7 +6,7 @@ import { useEditor } from '../../contexts/EditorContext';
 export default function LexicalField({ value, onChange, placeholder, className, transparentBg = false, darkText = false }) {
   const editorApiRef = useRef(null);
   const blurTimeoutRef = useRef(null);
-  const { setActiveEditor, setSelectionState } = useEditor();
+  const { setActiveEditor, setSelectionState, isToolbarInteractionRef } = useEditor();
 
   const handleFocus = () => {
     // If a blur timeout is pending, cancel it. This prevents the editor from being cleared
@@ -23,13 +23,18 @@ export default function LexicalField({ value, onChange, placeholder, className, 
   };
 
   const handleBlur = () => {
-    console.log('[LexicalField] Blur event. Clearing active editor after delay.');
-    // Delay clearing the active editor to allow toolbar buttons to be clicked without losing focus.
-    // Increased delay for mobile devices where touch events take longer
+    console.log('[LexicalField] Blur event. Scheduling active editor clear.');
+
     blurTimeoutRef.current = setTimeout(() => {
+      // Before clearing, check if the user is interacting with the toolbar.
+      // If they are, we abort the clear and let the toolbar handle things.
+      if (isToolbarInteractionRef?.current) {
+        console.log('[LexicalField] Aborting clear: Toolbar interaction detected.');
+        return;
+      }
       console.log('[LexicalField] Delay complete. Clearing active editor.');
       setActiveEditor(null);
-    }, 300);
+    }, 50);
   };
 
   return (

@@ -54,7 +54,7 @@ export default function EditorFloatingToolbar({
   cooldownMs = 200, // Configurable cooldown to prevent selection loop spam
   caretMode = false // Opt-in to show toolbar on caret (collapsed selection), default false to avoid mobile keyboard loops
 }) {
-  const { activeEditor, selectionState } = useEditor();
+  const { activeEditor, selectionState, isToolbarInteractionRef } = useEditor();
   const [position, setPosition] = useState({ top: 0, left: 0, visible: false });
   const [showBlockDropdown, setShowBlockDropdown] = useState(false);
   const [showAlignDropdown, setShowAlignDropdown] = useState(false);
@@ -279,17 +279,23 @@ export default function EditorFloatingToolbar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showBlockDropdown, showAlignDropdown, showColorPicker, showHighlightPicker]);
 
-  // Prevent mousedown/touchstart from clearing selection before click handler executes
-  // preventDefault: Stops browser's default text selection behavior
-  // stopPropagation: Prevents event bubbling to parent elements that might handle clicks differently
-  const handleMouseDown = (e) => {
+  const handleToolbarInteraction = (e) => {
     e.preventDefault();
     e.stopPropagation();
-  };
 
-  const handleToolbarTouchStart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    if (isToolbarInteractionRef) {
+      isToolbarInteractionRef.current = true;
+      console.log('[EditorFloatingToolbar] Toolbar interaction START.');
+      // After a short delay, reset the ref. This allows the blur event to
+      // proceed as normal if the user clicks away from the editor after
+      // interacting with the toolbar.
+      setTimeout(() => {
+        if (isToolbarInteractionRef) {
+          isToolbarInteractionRef.current = false;
+          console.log('[EditorFloatingToolbar] Toolbar interaction END.');
+        }
+      }, 300);
+    }
   };
 
   // Actions are now dispatched directly to the active editor instance from the context.
@@ -359,17 +365,16 @@ export default function EditorFloatingToolbar({
     >
       <div
         className="floating-toolbar"
-        onPointerDown={handleMouseDown}
+        onPointerDown={handleToolbarInteraction}
       >
         {/* Reordered buttons for priority */}
         <button
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          onClick={() => {
             const editor = getEditor();
             console.log('[EditorFloatingToolbar] Bold button clicked, has editor:', !!editor);
             if (editor) {
               editor.toggleBold();
+              editor.focus();
             } else {
               console.warn('[EditorFloatingToolbar] No active editor for Bold action');
             }
@@ -381,13 +386,12 @@ export default function EditorFloatingToolbar({
           <Bold size={18} />
         </button>
         <button
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          onClick={() => {
             const editor = getEditor();
             console.log('[EditorFloatingToolbar] Italic button clicked, has editor:', !!editor);
             if (editor) {
               editor.toggleItalic();
+              editor.focus();
             } else {
               console.warn('[EditorFloatingToolbar] No active editor for Italic action');
             }
@@ -399,13 +403,12 @@ export default function EditorFloatingToolbar({
           <Italic size={18} />
         </button>
         <button
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          onClick={() => {
             const editor = getEditor();
             console.log('[EditorFloatingToolbar] List cycle button clicked, has editor:', !!editor);
             if (editor) {
               handleListCycle();
+              editor.focus();
             } else {
               console.warn('[EditorFloatingToolbar] No active editor for List cycle action');
             }
@@ -417,13 +420,12 @@ export default function EditorFloatingToolbar({
           <List size={18} />
         </button>
         <button
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          onClick={() => {
             const editor = getEditor();
             console.log('[EditorFloatingToolbar] Heading cycle button clicked, has editor:', !!editor);
             if (editor) {
               handleHeadingCycle();
+              editor.focus();
             } else {
               console.warn('[EditorFloatingToolbar] No active editor for Heading cycle action');
             }
@@ -438,9 +440,7 @@ export default function EditorFloatingToolbar({
         <div class="toolbar-divider"></div>
 
         <button
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          onClick={() => {
             const editor = getEditor();
             console.log('[EditorFloatingToolbar] Link button clicked, has editor:', !!editor);
             if (!editor) {
@@ -451,6 +451,7 @@ export default function EditorFloatingToolbar({
             if (url) {
               editor.insertLink?.(url);
             }
+            editor.focus();
           }}
           className={selectionState?.isLink ? 'active' : ''}
           title="Insert Link"
@@ -462,12 +463,11 @@ export default function EditorFloatingToolbar({
         <div class="toolbar-divider"></div>
 
         <button
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          onClick={() => {
             const editor = getEditor();
             if (editor) {
               editor.toggleUnderline();
+              editor.focus();
             }
           }}
           className={selectionState?.isUnderline ? 'active' : ''}
@@ -477,12 +477,11 @@ export default function EditorFloatingToolbar({
           <Underline size={18} />
         </button>
         <button
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          onClick={() => {
             const editor = getEditor();
             if (editor) {
               editor.toggleStrikethrough();
+              editor.focus();
             }
           }}
           className={selectionState?.isStrikethrough ? 'active' : ''}
@@ -492,12 +491,11 @@ export default function EditorFloatingToolbar({
           <Strikethrough size={18} />
         </button>
         <button
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          onClick={() => {
             const editor = getEditor();
             if (editor) {
               editor.toggleCode();
+              editor.focus();
             }
           }}
           className={selectionState?.isCode ? 'active' : ''}
@@ -510,9 +508,7 @@ export default function EditorFloatingToolbar({
         {/* Text color picker */}
         <div class="toolbar-dropdown-container" ref={colorPickerRef}>
           <button
-            onMouseDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
+            onClick={() => {
               setShowColorPicker(!showColorPicker);
             }}
             className="toolbar-dropdown-trigger"
@@ -530,12 +526,11 @@ export default function EditorFloatingToolbar({
                     key={color}
                     class="color-swatch"
                     style={{ backgroundColor: color }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                    onClick={() => {
                       const editor = getEditor();
                       if (editor) {
                         editor.setTextColor(color);
+                        editor.focus();
                       }
                       setShowColorPicker(false);
                     }}
@@ -546,12 +541,11 @@ export default function EditorFloatingToolbar({
               </div>
               <button
                 class="toolbar-dropdown-item"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
+                onClick={() => {
                   const editor = getEditor();
                   if (editor) {
                     editor.setTextColor(null);
+                    editor.focus();
                   }
                   setShowColorPicker(false);
                 }}
@@ -565,9 +559,7 @@ export default function EditorFloatingToolbar({
         {/* Highlight color picker */}
         <div class="toolbar-dropdown-container" ref={highlightPickerRef}>
           <button
-            onMouseDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
+            onClick={() => {
               setShowHighlightPicker(!showHighlightPicker);
             }}
             className="toolbar-dropdown-trigger"
@@ -585,12 +577,11 @@ export default function EditorFloatingToolbar({
                     key={color}
                     class="color-swatch"
                     style={{ backgroundColor: color }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                    onClick={() => {
                       const editor = getEditor();
                       if (editor) {
                         editor.setHighlightColor(color);
+                        editor.focus();
                       }
                       setShowHighlightPicker(false);
                     }}
@@ -601,12 +592,11 @@ export default function EditorFloatingToolbar({
               </div>
               <button
                 class="toolbar-dropdown-item"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
+                onClick={() => {
                   const editor = getEditor();
                   if (editor) {
                     editor.setHighlightColor(null);
+                    editor.focus();
                   }
                   setShowHighlightPicker(false);
                 }}
@@ -618,12 +608,11 @@ export default function EditorFloatingToolbar({
         </div>
 
         <button
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          onClick={() => {
             const editor = getEditor();
             if (editor) {
               editor.clearFormatting();
+              editor.focus();
             }
           }}
           title="Clear formatting"

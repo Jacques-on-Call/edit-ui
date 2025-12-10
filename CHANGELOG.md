@@ -1,5 +1,29 @@
 # Project Change Log
 
+GitHub Copilot (fix): Prevent Toolbar from Stealing Editor Focus
+Date: 2025-12-09
+Summary:
+Fixed a critical bug where clicking any button on the floating toolbar would cause the main editor to lose focus, preventing the formatting action from being applied. This was a classic race condition between the editor's `blur` event and the button's `click` event.
+
+Details:
+- **The Race Condition:** When a user clicked a toolbar button, the editor's `blur` event would fire first, which immediately cleared the `activeEditor` from the global context. By the time the button's `click` handler fired milliseconds later, there was no active editor to send the command to.
+- **The Solution (Interaction Ref):**
+  - A new `isToolbarInteractionRef` was added to the `EditorContext`.
+  - When the user presses down on the toolbar (`onPointerDown`), this ref is set to `true`.
+  - The editor's `blur` handler was modified. It now waits for a short delay, and before clearing the active editor, it checks if `isToolbarInteractionRef.current` is `true`.
+  - If it is, the blur handler aborts, leaving the editor active and allowing the button's `click` handler to execute successfully.
+  - The toolbar interaction ref is reset to `false` after a short timeout, ensuring normal blur behavior is restored after the toolbar action is complete.
+
+Impact:
+The rich-text formatting toolbars (both floating and slide-out) are now fully functional and reliable. Users can select text and apply formatting without the editor losing focus, providing a smooth and intuitive editing experience.
+
+Reflection:
+- **What was the most challenging part of this task?** The most challenging part was correctly diagnosing the race condition. The logs showed the blur event happening, but it wasn't immediately obvious that it was happening *before* the click event could be processed.
+- **What was a surprising discovery or key learning?** A shared `useRef` is an elegant and powerful pattern for coordinating state between otherwise decoupled components (the editor field and the toolbar) without triggering unnecessary re-renders. It's a perfect solution for managing transient UI states like this.
+- **What advice would you give the next agent who works on this code?** When debugging issues related to focus and UI events, always think about the sequence of events. `mousedown`/`pointerdown` fires before `blur`, which fires before `mouseup` and `click`. Using the `down` event to set a state and the `blur` event to check it is a reliable way to handle these kinds of race conditions.
+
+---
+
 GitHub Copilot (fix): iOS Safari FloatingToolbar - Comprehensive Diagnostic Instrumentation for Missing Toolbar
 Date: 2025-12-08
 Summary:

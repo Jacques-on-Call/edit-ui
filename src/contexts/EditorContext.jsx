@@ -1,5 +1,5 @@
 import { h, createContext } from 'preact';
-import { useState, useMemo, useContext } from 'preact/hooks';
+import { useState, useMemo, useContext, useRef } from 'preact/hooks';
 
 // 1. Create the Context
 export const EditorContext = createContext(null);
@@ -7,6 +7,7 @@ export const EditorContext = createContext(null);
 // 2. Create the Provider Component
 export function EditorProvider({ children }) {
   const [activeEditor, setActiveEditorInternal] = useState(null);
+  const isToolbarInteractionRef = useRef(false);
   const [selectionState, setSelectionState] = useState({
     blockType: 'paragraph',
     alignment: 'left',
@@ -133,6 +134,7 @@ export function EditorProvider({ children }) {
     selectionState,
     setSelectionState,
     handleAction,
+    isToolbarInteractionRef,
   }), [activeEditor, selectionState]);
 
   return (
