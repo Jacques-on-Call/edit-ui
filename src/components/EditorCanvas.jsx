@@ -12,10 +12,6 @@ export default function EditorCanvas(props) {
   const { selectionState, handleAction } = useContext(EditorContext);
   const [isEditorReady, setIsEditorReady] = useState(false);
 
-  useEffect(() => {
-    console.log('[EditorCanvas] Component mounted');
-  }, []);
-
   // Callback for child to signal readiness
   const handleEditorReady = () => {
     console.log('[EditorCanvas] Editor is ready, rendering toolbar.');
