@@ -11,11 +11,15 @@ import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 export default function EditorCanvas(props) {
   const { selectionState, handleAction } = useContext(EditorContext);
   const [isEditorReady, setIsEditorReady] = useState(false);
+  const editorReadyRef = useRef(false);
 
   // Callback for child to signal readiness
   const handleEditorReady = () => {
-    console.log('[EditorCanvas] Editor is ready, rendering toolbar.');
-    setIsEditorReady(true);
+    if (!editorReadyRef.current) {
+      console.log('[EditorCanvas] Editor is ready, rendering toolbar for the first time.');
+      setIsEditorReady(true);
+      editorReadyRef.current = true;
+    }
   };
   
   // Memoize offset object to prevent re-renders
