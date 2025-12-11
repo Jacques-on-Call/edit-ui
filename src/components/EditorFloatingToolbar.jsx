@@ -155,9 +155,9 @@ export default function EditorFloatingToolbar({
     //   - This allows the `requestAnimationFrame` logic to run correctly, ensuring the toolbar is measured
     //     *after* it has been painted by the browser.
 
-    let frameId;
+    let timeoutId;
     if (positioningState.phase === 'measuring') {
-      frameId = requestAnimationFrame(() => {
+      timeoutId = setTimeout(() => {
         const toolbarNode = toolbarRef.current;
         if (!toolbarNode) return;
 
@@ -176,25 +176,20 @@ export default function EditorFloatingToolbar({
 
         const vp = window.visualViewport || { width: window.innerWidth, height: window.innerHeight, pageTop: window.scrollY, pageLeft: window.scrollX };
 
-        const GAP = 10;
-        const VIEWPORT_PADDING = 8;
-
         const spaceAbove = selectionRect.top;
         const spaceBelow = vp.height - selectionRect.bottom;
 
         let top;
         // Prefer to position above, unless there's not enough space OR significantly more space below
-        if (spaceAbove > toolbarRect.height + GAP || spaceAbove > spaceBelow) {
-          top = vp.pageTop + selectionRect.top - toolbarRect.height - GAP;
+        if (spaceAbove > toolbarRect.height + 10 || spaceAbove > spaceBelow) {
+          top = vp.pageTop + selectionRect.top - toolbarRect.height - 10;
         } else {
-          top = vp.pageTop + selectionRect.bottom + GAP;
+          top = vp.pageTop + selectionRect.bottom + 10;
         }
 
         let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarRect.width / 2);
 
-        const minLeft = vp.pageLeft + VIEWPORT_PADDING;
-        const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
-        left = Math.max(minLeft, Math.min(left, maxLeft));
+        left = Math.max(vp.pageLeft + 8, Math.min(left, vp.pageLeft + vp.width - toolbarRect.width - 8));
 
         console.log(
           `[TBar Pos] sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
@@ -215,7 +210,7 @@ export default function EditorFloatingToolbar({
     } else if (positioningState.phase === 'hidden' && debugInfo) {
       setDebugInfo(null);
     }
-    return () => cancelAnimationFrame(frameId);
+    return () => clearTimeout(timeoutId);
   }, [positioningState.phase, debugMode, debugInfo]);
 
 
