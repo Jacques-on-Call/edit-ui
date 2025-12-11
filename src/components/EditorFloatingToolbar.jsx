@@ -172,9 +172,10 @@ export default function EditorFloatingToolbar({
         console.log(`[TBar Pos] Frame Measure | tbar(w:${toolbarRect.width}, h:${toolbarRect.height})`);
 
         if (toolbarRect.width === 0) {
-            console.warn('[TBar Pos] Frame Measure FAILED. Toolbar width is 0.');
-            setPositioningState(s => ({ ...s, phase: 'positioned', error: true, top: 8, left: 8 }));
-            return;
+            console.warn('[TBar Pos] Frame Measure FAILED. Toolbar width is 0. FORCING VISIBILITY FOR DEBUG.');
+            // Temporarily skip return and error state to see *where* the zero-width element is.
+            // setPositioningState(s => ({ ...s, phase: 'positioned', error: true, top: 8, left: 8 }));
+            // return;
         }
 
         const vp = window.visualViewport || { width: window.innerWidth, height: window.innerHeight, pageTop: window.scrollY, pageLeft: window.scrollX };
