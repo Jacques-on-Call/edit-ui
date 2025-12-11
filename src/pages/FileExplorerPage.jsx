@@ -61,24 +61,21 @@ export function FileExplorerPage() {
   const handleCreate = async (name, type) => {
     try {
       if (type === 'folder') {
-        // Folder creation might still need a backend call.
-        // For now, we'll just log it.
-        console.log(`[FileExplorer] Folder creation not implemented for client-only drafts.`);
+        console.log(`[FileExplorer] Folder creation not implemented.`);
         alert('Folder creation is not supported in this version.');
         return;
       }
 
-      // Ensure the name has a .json extension
-      const fileName = name.endsWith('.json') ? name : `${name}.json`;
-      const slug = fileName.replace(/\.json$/, "");
-      const fullPath = `${currentPath}/${fileName}`;
+      // 1. Prepare file names and paths
+      const fileName = name.endsWith('.json') ? name.replace(/\.json$/, '') : name;
+      const slug = fileName;
+      const jsonPath = `content/pages/_${slug}.json`;
+      const astroPath = `src/pages/json-preview/_${slug}.astro`;
 
-      // Create a blank JSON structure for the content editor
-      // Create a blank JSON structure with a default Hero section
-      const draftPayload = {
+      // 2. Create the JSON content payload
+      const pageData = {
         slug,
-        path: fullPath,
-        meta: { title: slug }, // Use the slug as the initial title
+        meta: { title: slug },
         sections: [
           {
             id: `section-${Date.now()}`,
@@ -90,20 +87,58 @@ export function FileExplorerPage() {
             },
           },
         ],
-        savedAt: new Date().toISOString(),
       };
 
-      localStorage.setItem(`easy-seo-draft:${slug}`, JSON.stringify(draftPayload));
-      console.log(`[FileExplorer] createDraft -> slug: ${slug}, path: ${fullPath}`);
+      // 3. Call the backend to create the .json file
+      const jsonResponse = await fetchJson('/api/page-json/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repo: repoName, pageData }),
+      });
 
+      if (!jsonResponse) {
+         throw new Error('Failed to create JSON file on the server.');
+      }
+      console.log('Successfully created JSON file:', jsonResponse);
+
+
+      // 4. Create the Astro file content, pointing to the new JSON file
+      const astroContent = `---
+import MainLayout from '../../layouts/MainLayout.astro';
+import PageRenderer from '../../components/PageRenderer.astro';
+import pageData from '../../../${jsonPath}';
+---
+<MainLayout title={pageData.meta.title}>
+  <PageRenderer page={pageData} />
+</MainLayout>
+`;
+
+      // 5. Call the backend to create the .astro file
+      const astroResponse = await fetchJson('/api/file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              repo: repoName,
+              path: astroPath,
+              content: astroContent,
+              message: `feat: create new page ${slug}`
+          })
+      });
+
+      if (!astroResponse) {
+          throw new Error('Failed to create Astro file on the server.');
+      }
+      console.log('Successfully created Astro file:', astroResponse);
+
+
+      // 6. Success: close modal, trigger refresh, and navigate
       setCreateOpen(false);
-      setRefreshTrigger(prev => prev + 1); // Trigger refresh in file explorer
+      setRefreshTrigger(prev => prev + 1);
+      route(`/editor/${encodeURIComponent(astroPath)}`);
 
-      // Automatically navigate to the editor for the new file
-      route(`/editor/${encodeURIComponent(fullPath)}`);
     } catch (err) {
-      console.error('Create draft error:', err);
-      alert(`Failed to create draft: ${err.message}`);
+      console.error('Create file error:', err);
+      alert(`Failed to create file: ${err.message}`);
     }
   };
 
