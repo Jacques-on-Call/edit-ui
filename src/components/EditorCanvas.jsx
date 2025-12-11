@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useState, useContext, useEffect, useMemo } from 'preact/hooks';
+import { useState, useContext, useEffect, useMemo, useRef } from 'preact/hooks';
 import EditorFloatingToolbar from './EditorFloatingToolbar';
 import SlideoutToolbar from './SlideoutToolbar';
 import BottomActionBar from './BottomActionBar';
