@@ -69,8 +69,12 @@ export function FileExplorerPage() {
       // 1. Prepare file names and paths
       const fileName = name.endsWith('.json') ? name.replace(/\.json$/, '') : name;
       const slug = fileName;
-      const jsonPath = `content/pages/_${slug}.json`;
-      const astroPath = `src/pages/json-preview/_${slug}.astro`;
+
+      // Mirror the path from `content/pages` to `src/pages`
+      const relativePath = currentPath.startsWith('content/pages') ? currentPath.substring('content/pages'.length) : '';
+
+      const jsonPath = `${currentPath}/_${slug}.json`;
+      const astroPath = `src/pages${relativePath}/_${slug}.astro`;
 
       // 2. Create the JSON content payload
       const pageData = {
@@ -102,11 +106,14 @@ export function FileExplorerPage() {
       console.log('Successfully created JSON file:', jsonResponse);
 
 
-      // 4. Create the Astro file content, pointing to the new JSON file
+      // 4. Create the Astro file content with robust relative paths
+      const astroDirDepth = astroPath.split('/').length - 2; // e.g., src/pages/foo -> 3 parts, depth 1
+      const dataPath = '../'.repeat(astroDirDepth) + jsonPath;
+
       const astroContent = `---
-import MainLayout from '../../layouts/MainLayout.astro';
-import PageRenderer from '../../components/PageRenderer.astro';
-import pageData from '../../../${jsonPath}';
+import MainLayout from '~/layouts/MainLayout.astro';
+import PageRenderer from '~/components/PageRenderer.astro';
+import pageData from '${dataPath}';
 ---
 <MainLayout title={pageData.meta.title}>
   <PageRenderer page={pageData} />

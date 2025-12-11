@@ -95,7 +95,8 @@ export default function ContentEditorPage(props) {
 
   const isJsonFile = pathIdentifier.endsWith('.json');
   const isTestFile = pathIdentifier.startsWith('src/pages/json-preview/') && pathIdentifier.endsWith('.astro');
-  const editorMode = isTestFile || isJsonFile ? 'json' : 'astro';
+  const isDraftFile = pathIdentifier.split('/').pop().startsWith('_') && pathIdentifier.endsWith('.astro');
+  const editorMode = isTestFile || isJsonFile || isDraftFile ? 'json' : 'astro';
 
   // Debug mode logging - only log once per unique combination to reduce spam
   console.log(`[CEP] Derived State: mode=${editorMode} slug=${pageId} path=${pathIdentifier}`);
