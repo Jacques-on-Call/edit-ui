@@ -68,6 +68,7 @@ export default function EditorFloatingToolbar({
   const highlightPickerRef = useRef(null);
   const updateFrameRef = useRef(null); // Track pending RAF to avoid duplicate frames
   const lastActiveEditorRef = useRef(null); // Cache the last known active editor
+  const measureTimeoutRef = useRef(null); // Ref for the measurement retry timeout
 
   // Use runtime debug flag from window object
   const debugMode = typeof window !== 'undefined' && window.__EASY_SEO_TOOLBAR_DEBUG__;
@@ -155,66 +156,82 @@ export default function EditorFloatingToolbar({
     //   - This allows the `requestAnimationFrame` logic to run correctly, ensuring the toolbar is measured
     //     *after* it has been painted by the browser.
 
+    const measureAndPosition = (attempt = 1) => {
+      const MAX_ATTEMPTS = 3;
+      const RETRY_DELAY = 50; // ms
+
+      const toolbarNode = toolbarRef.current;
+      if (!toolbarNode || !document.body.contains(toolbarNode)) {
+        console.warn(`[TBar Pos] Aborting measurement (Attempt ${attempt}): toolbar node not in DOM.`);
+        return;
+      }
+
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return; // Should already be handled, but good practice
+
+      const range = selection.getRangeAt(0);
+      const selectionRect = range.getBoundingClientRect();
+      const toolbarRect = toolbarNode.getBoundingClientRect();
+
+      console.log(`[TBar Pos] Measure Attempt ${attempt} | tbar(w:${toolbarRect.width}, h:${toolbarRect.height})`);
+
+      if (toolbarRect.width === 0 && attempt < MAX_ATTEMPTS) {
+        console.warn(`[TBar Pos] Toolbar width is 0. Retrying in ${RETRY_DELAY}ms...`);
+        measureTimeoutRef.current = setTimeout(() => measureAndPosition(attempt + 1), RETRY_DELAY);
+        return;
+      }
+
+      if (toolbarRect.width === 0 && attempt >= MAX_ATTEMPTS) {
+        console.error('[TBar Pos] Frame Measure FAILED after all attempts. Toolbar width is 0.');
+        setPositioningState(s => ({ ...s, phase: 'positioned', error: true, top: 8, left: 8 }));
+        return;
+      }
+
+      const vp = window.visualViewport || { width: window.innerWidth, height: window.innerHeight, pageTop: window.scrollY, pageLeft: window.scrollX };
+
+      const spaceAbove = selectionRect.top;
+      const spaceBelow = vp.height - selectionRect.bottom;
+
+      let top;
+      if (spaceAbove > toolbarRect.height + 10 || spaceAbove > spaceBelow) {
+        top = vp.pageTop + selectionRect.top - toolbarRect.height - 10;
+      } else {
+        top = vp.pageTop + selectionRect.bottom + 10;
+      }
+
+      let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarRect.width / 2);
+
+      left = Math.max(vp.pageLeft + 8, Math.min(left, vp.pageLeft + vp.width - toolbarRect.width - 8));
+
+      console.log(
+        `[TBar Pos] sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
+        `| tbar(w:${Math.round(toolbarRect.width)}, h:${Math.round(toolbarRect.height)}) ` +
+        `| vp(w:${Math.round(vp.width)}, h:${Math.round(vp.height)}, pT:${Math.round(vp.pageTop)}, pL:${Math.round(vp.pageLeft)}) ` +
+        `| final(t:${Math.round(top)}, l:${Math.round(left)})`
+      );
+
+      if (debugMode) {
+        setDebugInfo({
+          selection: { top: vp.pageTop + selectionRect.top, left: vp.pageLeft + selectionRect.left, width: selectionRect.width, height: selectionRect.height },
+          toolbar: { top, left, width: toolbarRect.width, height: toolbarRect.height }
+        });
+      }
+
+      setPositioningState({ phase: 'positioned', top, left, error: false });
+    };
+
     let frameId;
     if (positioningState.phase === 'measuring') {
-      frameId = requestAnimationFrame(() => {
-        const toolbarNode = toolbarRef.current;
-        if (!toolbarNode || !document.body.contains(toolbarNode)) {
-          console.warn('[TBar Pos] Aborting measurement: toolbar node not attached to DOM.');
-          return;
-        }
-
-        const selection = window.getSelection();
-        const range = selection.getRangeAt(0);
-        const selectionRect = range.getBoundingClientRect();
-        const toolbarRect = toolbarNode.getBoundingClientRect();
-
-        console.log(`[TBar Pos] Frame Measure | tbar(w:${toolbarRect.width}, h:${toolbarRect.height})`);
-
-        if (toolbarRect.width === 0) {
-            console.warn('[TBar Pos] Frame Measure FAILED. Toolbar width is 0. FORCING VISIBILITY FOR DEBUG.');
-            // Temporarily skip return and error state to see *where* the zero-width element is.
-            // setPositioningState(s => ({ ...s, phase: 'positioned', error: true, top: 8, left: 8 }));
-            // return;
-        }
-
-        const vp = window.visualViewport || { width: window.innerWidth, height: window.innerHeight, pageTop: window.scrollY, pageLeft: window.scrollX };
-
-        const spaceAbove = selectionRect.top;
-        const spaceBelow = vp.height - selectionRect.bottom;
-
-        let top;
-        // Prefer to position above, unless there's not enough space OR significantly more space below
-        if (spaceAbove > toolbarRect.height + 10 || spaceAbove > spaceBelow) {
-          top = vp.pageTop + selectionRect.top - toolbarRect.height - 10;
-        } else {
-          top = vp.pageTop + selectionRect.bottom + 10;
-        }
-
-        let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarRect.width / 2);
-
-        left = Math.max(vp.pageLeft + 8, Math.min(left, vp.pageLeft + vp.width - toolbarRect.width - 8));
-
-        console.log(
-          `[TBar Pos] sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
-          `| tbar(w:${Math.round(toolbarRect.width)}, h:${Math.round(toolbarRect.height)}) ` +
-          `| vp(w:${Math.round(vp.width)}, h:${Math.round(vp.height)}, pT:${Math.round(vp.pageTop)}, pL:${Math.round(vp.pageLeft)}) ` +
-          `| final(t:${Math.round(top)}, l:${Math.round(left)})`
-        );
-
-        if (debugMode) {
-          setDebugInfo({
-            selection: { top: vp.pageTop + selectionRect.top, left: vp.pageLeft + selectionRect.left, width: selectionRect.width, height: selectionRect.height },
-            toolbar: { top, left, width: toolbarRect.width, height: toolbarRect.height }
-          });
-        }
-
-        setPositioningState({ phase: 'positioned', top, left, error: false });
-      });
+      frameId = requestAnimationFrame(() => measureAndPosition(1));
     } else if (positioningState.phase === 'hidden' && debugInfo) {
       setDebugInfo(null);
     }
-    return () => cancelAnimationFrame(frameId);
+    return () => {
+      cancelAnimationFrame(frameId);
+      if (measureTimeoutRef.current) {
+        clearTimeout(measureTimeoutRef.current);
+      }
+    };
   }, [positioningState.phase, debugMode, debugInfo]);
 
 
