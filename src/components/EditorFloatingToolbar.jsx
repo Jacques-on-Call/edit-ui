@@ -125,88 +125,71 @@ export default function EditorFloatingToolbar({
 
 
   const updatePosition = useCallback(() => {
-    if (typeof window === 'undefined' || !window.getSelection) return;
-
     const selection = window.getSelection();
-    const toolbarElement = toolbarRef.current;
-
-    if (!toolbarElement) {
-      return;
-    }
-
     const selectionText = selection?.toString() || '';
     const hasTextSelection = selectionText.trim().length > 0;
 
     if (!selection || selection.rangeCount === 0 || !hasTextSelection) {
-      if (positioningState.phase !== 'hidden') {
-        setPositioningState({ phase: 'hidden', top: 0, left: 0, error: false });
-      }
+      setPositioningState(prev => prev.phase !== 'hidden' ? { ...prev, phase: 'hidden' } : prev);
       return;
     }
 
-    // A valid selection exists, begin the positioning process.
     if (activeEditor) {
       lastActiveEditorRef.current = activeEditor;
     }
 
-    // Phase 1: Trigger the measurement phase.
-    // The actual calculation will happen in a useEffect hook.
-    setPositioningState(prevState => ({ ...prevState, phase: 'measuring' }));
-
+    setPositioningState(prev => (prev.phase === 'hidden' || prev.phase === 'positioned') ? { ...prev, phase: 'measuring' } : prev);
   }, [activeEditor]);
 
   useEffect(() => {
     // Positioning Logic Changelog & Rationale
-    //
     // V1 (Initial): Direct calculation in the `selectionchange` handler.
     //   - Outcome: Failed. Read toolbar dimensions as zero because the DOM had not been painted yet.
-    //
     // V2 (useEffect): Moved calculation to a `useEffect` hook based on a `measuring` state.
     //   - Outcome: Failed. `useEffect` ran too soon, immediately after the Preact render but before the
     //     browser's layout and paint cycle, still resulting in zero dimensions.
-    //
-    // V3 (rAF): The current, correct implementation.
-    //   - By wrapping the measurement logic in `requestAnimationFrame`, we guarantee that the code
-    //     runs in the *next browser frame*. This ensures the toolbar has been fully rendered and
-    //     its `getBoundingClientRect()` will return the correct, non-zero dimensions.
-    //   - This is the standard, robust solution for layout-dependent calculations in React/Preact.
+    // V3 (Stale Closure): `useCallback` on `updatePosition` created a stale closure, causing a render loop.
+    //   - Outcome: Failed. The rAF logic was starved by the component constantly re-rendering with old state.
+    // V4 (Functional `setState` + rAF): The current, correct implementation.
+    //   - By using the functional update pattern for `setState` in the `useCallback`, we break the stale closure.
+    //   - This allows the `requestAnimationFrame` logic to run correctly, ensuring the toolbar is measured
+    //     *after* it has been painted by the browser.
 
     let frameId;
-
     if (positioningState.phase === 'measuring') {
-      // Use rAF to ensure the browser has painted the toolbar before we measure it
       frameId = requestAnimationFrame(() => {
-        const toolbarElement = toolbarRef.current;
+        const toolbarNode = toolbarRef.current;
+        if (!toolbarNode) return;
+
         const selection = window.getSelection();
-
-        if (!toolbarElement || !selection || selection.rangeCount === 0) {
-          setPositioningState(s => ({ ...s, phase: 'hidden' }));
-          return;
-        }
-
         const range = selection.getRangeAt(0);
         const selectionRect = range.getBoundingClientRect();
-        const toolbarRect = toolbarElement.getBoundingClientRect();
+        const toolbarRect = toolbarNode.getBoundingClientRect();
 
-        console.log(`[TBar Pos] Phase: Measuring (Frame) | tbar(w:${Math.round(toolbarRect.width)}, h:${Math.round(toolbarRect.height)})`);
+        console.log(`[TBar Pos] Frame Measure | tbar(w:${toolbarRect.width}, h:${toolbarRect.height})`);
 
         if (toolbarRect.width === 0) {
-          console.warn('[TBar Pos] Phase: Measure FAILED (Frame). Toolbar has zero width.');
-          setPositioningState({ phase: 'positioned', top: 8, left: 8, error: true });
-          return;
+            console.warn('[TBar Pos] Frame Measure FAILED. Toolbar width is 0.');
+            setPositioningState(s => ({ ...s, phase: 'positioned', error: true, top: 8, left: 8 }));
+            return;
         }
 
-        const vp = window.visualViewport || {
-          width: window.innerWidth,
-          height: window.innerHeight,
-          pageTop: window.scrollY,
-          pageLeft: window.scrollX,
-        };
+        const vp = window.visualViewport || { width: window.innerWidth, height: window.innerHeight, pageTop: window.scrollY, pageLeft: window.scrollX };
 
         const GAP = 10;
         const VIEWPORT_PADDING = 8;
 
-        let top = vp.pageTop + selectionRect.top - toolbarRect.height - GAP;
+        const spaceAbove = selectionRect.top;
+        const spaceBelow = vp.height - selectionRect.bottom;
+
+        let top;
+        // Prefer to position above, unless there's not enough space OR significantly more space below
+        if (spaceAbove > toolbarRect.height + GAP || spaceAbove > spaceBelow) {
+          top = vp.pageTop + selectionRect.top - toolbarRect.height - GAP;
+        } else {
+          top = vp.pageTop + selectionRect.bottom + GAP;
+        }
+
         let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarRect.width / 2);
 
         const minLeft = vp.pageLeft + VIEWPORT_PADDING;
@@ -214,7 +197,9 @@ export default function EditorFloatingToolbar({
         left = Math.max(minLeft, Math.min(left, maxLeft));
 
         console.log(
-          `[TBar Pos] Phase: Applying (Frame) | sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
+          `[TBar Pos] sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
+          `| tbar(w:${Math.round(toolbarRect.width)}, h:${Math.round(toolbarRect.height)}) ` +
+          `| vp(w:${Math.round(vp.width)}, h:${Math.round(vp.height)}, pT:${Math.round(vp.pageTop)}, pL:${Math.round(vp.pageLeft)}) ` +
           `| final(t:${Math.round(top)}, l:${Math.round(left)})`
         );
 
@@ -230,12 +215,7 @@ export default function EditorFloatingToolbar({
     } else if (positioningState.phase === 'hidden' && debugInfo) {
       setDebugInfo(null);
     }
-
-    return () => {
-      if (frameId) {
-        cancelAnimationFrame(frameId);
-      }
-    };
+    return () => cancelAnimationFrame(frameId);
   }, [positioningState.phase, debugMode, debugInfo]);
 
 
@@ -377,10 +357,10 @@ export default function EditorFloatingToolbar({
       style={{
         top: positioningState.phase === 'positioned' ? `${positioningState.top}px` : '-9999px',
         left: positioningState.phase === 'positioned' ? `${positioningState.left}px` : '-9999px',
-        opacity: positioningState.phase === 'positioned' ? 1 : 0,
+        opacity: (positioningState.phase === 'positioned' && !positioningState.error) ? 1 : 0,
         visibility: positioningState.phase === 'hidden' ? 'hidden' : 'visible',
+        transition: 'opacity 0.15s ease',
       }}
-      data-position-phase={positioningState.phase}
     >
       <div
         className={`floating-toolbar ${positioningState.error ? 'position-error' : ''}`}
@@ -658,26 +638,10 @@ export default function EditorFloatingToolbar({
           />
         )}
       </div>
-      {debugMode && debugInfo && positioningState.phase === 'positioned' && (
+      {debugMode && debugInfo && (
         <>
-          <div
-            className="debug-overlay selection-box"
-            style={{
-              top: `${debugInfo.selection.top}px`,
-              left: `${debugInfo.selection.left}px`,
-              width: `${debugInfo.selection.width}px`,
-              height: `${debugInfo.selection.height}px`,
-            }}
-          />
-          <div
-            className="debug-overlay toolbar-box"
-            style={{
-              top: `${debugInfo.toolbar.top}px`,
-              left: `${debugInfo.toolbar.left}px`,
-              width: `${debugInfo.toolbar.width}px`,
-              height: `${debugInfo.toolbar.height}px`,
-            }}
-          />
+          <div className="debug-overlay selection-box" style={{ top: `${debugInfo.selection.top}px`, left: `${debugInfo.selection.left}px`, width: `${debugInfo.selection.width}px`, height: `${debugInfo.selection.height}px` }} />
+          <div className="debug-overlay toolbar-box" style={{ top: `${debugInfo.toolbar.top}px`, left: `${debugInfo.toolbar.left}px`, width: `${debugInfo.toolbar.width}px`, height: `${debugInfo.toolbar.height}px` }} />
         </>
       )}
     </div>,
