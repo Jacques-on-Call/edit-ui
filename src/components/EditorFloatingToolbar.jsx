@@ -55,7 +55,7 @@ export default function EditorFloatingToolbar({
   caretMode = false // Opt-in to show toolbar on caret (collapsed selection), default false to avoid mobile keyboard loops
 }) {
   const { activeEditor, selectionState, isToolbarInteractionRef } = useEditor();
-  const [position, setPosition] = useState({ top: 0, left: 0, visible: false });
+  const [position, setPosition] = useState({ top: 0, left: 0, visible: false, opacity: 0, transformY: '-100%' });
   const [showBlockDropdown, setShowBlockDropdown] = useState(false);
   const [showAlignDropdown, setShowAlignDropdown] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -131,44 +131,33 @@ export default function EditorFloatingToolbar({
     }
 
     updateFrameRef.current = requestAnimationFrame(() => {
-      console.log('[TBar-Debug] RAF callback started.');
-      if (typeof window === 'undefined' || !window.getSelection) {
-        console.log('[TBar-Debug] Exit: No window or getSelection.');
-        return;
-      }
+      if (typeof window === 'undefined' || !window.getSelection) return;
 
       const selection = window.getSelection();
       const toolbarElement = toolbarRef.current;
-      console.log('[TBar-Debug] Got selection and toolbarElement:', !!selection, !!toolbarElement);
-
 
       // Guard 1: Ensure we have the necessary elements and a selection.
       if (!toolbarElement || !selection || selection.rangeCount === 0) {
-        console.log(`[TBar-Debug] Exit Guard 1: toolbar=${!!toolbarElement}, selection=${!!selection}, rangeCount=${selection?.rangeCount}`);
-        if (position.visible) setPosition((p) => ({ ...p, visible: false }));
+        if (position.opacity === 1) setPosition((p) => ({ ...p, opacity: 0 }));
         return;
       }
 
       // Guard 2: Only show for non-empty text selections to avoid mobile keyboard loops.
       const selectionText = selection.toString() || '';
       if (selectionText.trim().length === 0 && !caretMode) {
-        console.log(`[TBar-Debug] Exit Guard 2: selectionText empty and not in caretMode.`);
-        if (position.visible) setPosition((p) => ({ ...p, visible: false }));
+        if (position.opacity === 1) setPosition((p) => ({ ...p, opacity: 0 }));
         return;
       }
 
       const range = selection.getRangeAt(0);
       const selectionRect = range.getBoundingClientRect();
       const toolbarRect = toolbarElement.getBoundingClientRect();
-      console.log(`[TBar-Debug] Measured rects. Toolbar w=${toolbarRect.width}, h=${toolbarRect.height}`);
-
 
       // Guard 3: Ensure the toolbar is actually rendered with dimensions.
       // This is the key fix for the race condition. Because we are in a RAF callback,
       // the dimensions read here are post-paint and should be accurate.
       if (toolbarRect.width === 0 || toolbarRect.height === 0) {
-        console.log(`[TBar-Debug] Exit Guard 3: Toolbar has zero dimensions.`);
-        if (position.visible) setPosition((p) => ({ ...p, visible: false }));
+        if (position.opacity === 1) setPosition((p) => ({ ...p, opacity: 0 }));
         return;
       }
 
@@ -231,9 +220,9 @@ export default function EditorFloatingToolbar({
         );
       }
 
-      setPosition({ top, left, transformY, visible: true });
+      setPosition({ top, left, transformY, opacity: 1 });
     });
-  }, [position.visible, caretMode, debugMode, activeEditor]);
+  }, [position.opacity, caretMode, debugMode, activeEditor]);
 
   // Set up event listeners
   useEffect(() => {
@@ -368,10 +357,12 @@ export default function EditorFloatingToolbar({
       className="floating-toolbar-container"
       style={{
         position: 'absolute',
-        top: position.visible ? `${position.top}px` : '-1000px',
-        left: position.visible ? `${position.left}px` : '-1000px',
-        opacity: position.visible ? 1 : 0,
-        transform: position.visible ? `translate(-50%, ${position.transformY || '-100%'})` : 'none',
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        opacity: position.opacity,
+        visibility: position.opacity === 1 ? 'visible' : 'hidden',
+        pointerEvents: position.opacity === 1 ? 'auto' : 'none',
+        transform: `translate(-50%, ${position.transformY || '-100%'})`,
         transition: 'opacity 0.15s ease-in-out',
       }}
     >
