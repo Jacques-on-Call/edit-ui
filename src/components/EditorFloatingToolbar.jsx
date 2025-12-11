@@ -55,7 +55,7 @@ export default function EditorFloatingToolbar({
   caretMode = false // Opt-in to show toolbar on caret (collapsed selection), default false to avoid mobile keyboard loops
 }) {
   const { activeEditor, selectionState, isToolbarInteractionRef } = useEditor();
-  const [position, setPosition] = useState({ top: 0, left: 0, visible: false, opacity: 0, transformY: '-100%' });
+  const [position, setPosition] = useState({ top: 0, left: 0, visible: false });
   const [showBlockDropdown, setShowBlockDropdown] = useState(false);
   const [showAlignDropdown, setShowAlignDropdown] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -124,117 +124,119 @@ export default function EditorFloatingToolbar({
 
 
   const updatePosition = useCallback(() => {
-    // Throttle updates with requestAnimationFrame to avoid layout thrashing
-    // and ensure we're measuring after a browser paint.
+    if (typeof window === 'undefined' || !window.getSelection) return;
+
+    const selection = window.getSelection();
+    const toolbarElement = toolbarRef.current;
+
+    if (!toolbarElement) {
+      return;
+    }
+
+    const selectionText = selection?.toString() || '';
+    const hasTextSelection = selectionText.trim().length > 0;
+
+    if (!selection || selection.rangeCount === 0 || !hasTextSelection) {
+      if (position.visible) {
+        setPosition({ top: 0, left: 0, visible: false });
+        // Don't clear lastActiveEditorRef here so we can still use it if needed,
+        // but typically if selection is gone, we don't need it.
+      }
+      return;
+    }
+
+    // Update last active editor if we have one
+    if (activeEditor) {
+      lastActiveEditorRef.current = activeEditor;
+    }
+
+    const range = selection.getRangeAt(0);
+    const selectionRect = range.getBoundingClientRect();
+    const toolbarRect = toolbarElement.getBoundingClientRect();
+
+
+    // Critical guard: if toolbar has no width, it's not rendered yet.
+    // Instead of returning, we'll try to estimate or use a default width
+    let toolbarWidth = toolbarRect.width;
+    if (toolbarWidth === 0) {
+      // Fallback width based on typical size (approx 5 buttons * 40px + padding)
+      // This prevents the "vanish" issue where it never gets a width
+      toolbarWidth = 220;
+
+      // We can also schedule another update to correct it once rendered
+      if (!updateFrameRef.current) {
+        updateFrameRef.current = requestAnimationFrame(updatePosition);
+      }
+    }
+
+    // Use visualViewport for mobile-first, robust positioning
+    const vp = window.visualViewport || {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      pageTop: window.scrollY,
+      pageLeft: window.scrollX,
+    };
+
+    const GAP = 10; // Gap between selection and toolbar
+    const VIEWPORT_PADDING = 8;
+
+    // Decide if toolbar should be above or below
+    const spaceAbove = selectionRect.top;
+    const spaceBelow = vp.height - selectionRect.bottom;
+
+    let top;
+    // Prefer to position above, unless there's not enough space OR significantly more space below
+    if (spaceAbove > toolbarRect.height + GAP || spaceAbove > spaceBelow) {
+      top = vp.pageTop + selectionRect.top - toolbarRect.height - GAP;
+    } else {
+      top = vp.pageTop + selectionRect.bottom + GAP;
+    }
+
+    // Calculate centered left position
+    // Use the potentially fallback toolbarWidth
+    let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarWidth / 2);
+
+    // Clamp left position to stay within the viewport
+    const minLeft = vp.pageLeft + VIEWPORT_PADDING;
+    const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
+    left = Math.max(minLeft, Math.min(left, maxLeft));
+
+    // Enhanced, primitive-based diagnostic logging for mobile consoles
+    console.log(
+      `[TBar Pos] sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
+      `| tbar(w:${Math.round(toolbarRect.width)}, h:${Math.round(toolbarRect.height)}) ` +
+      `| vp(w:${Math.round(vp.width)}, h:${Math.round(vp.height)}, pT:${Math.round(vp.pageTop)}, pL:${Math.round(vp.pageLeft)}) ` +
+      `| final(t:${Math.round(top)}, l:${Math.round(left)})`
+    );
+
+    setPosition({ top, left, visible: true });
+  }, [position.visible, debugMode]);
+
+  const debouncedUpdatePosition = useCallback(() => {
+    // A simple RAF debounce is sufficient for non-iOS devices.
     if (updateFrameRef.current) {
       cancelAnimationFrame(updateFrameRef.current);
     }
+    updateFrameRef.current = requestAnimationFrame(updatePosition);
+  }, [updatePosition]);
 
-    updateFrameRef.current = requestAnimationFrame(() => {
-      if (typeof window === 'undefined' || !window.getSelection) return;
-
-      const selection = window.getSelection();
-      const toolbarElement = toolbarRef.current;
-
-      // Guard 1: Ensure we have the necessary elements and a selection.
-      if (!toolbarElement || !selection || selection.rangeCount === 0) {
-        if (position.opacity === 1) setPosition((p) => ({ ...p, opacity: 0 }));
-        return;
-      }
-
-      // Guard 2: Only show for non-empty text selections to avoid mobile keyboard loops.
-      const selectionText = selection.toString() || '';
-      if (selectionText.trim().length === 0 && !caretMode) {
-        if (position.opacity === 1) setPosition((p) => ({ ...p, opacity: 0 }));
-        return;
-      }
-
-      const range = selection.getRangeAt(0);
-      const selectionRect = range.getBoundingClientRect();
-      const toolbarRect = toolbarElement.getBoundingClientRect();
-
-      // Guard 3: Ensure the toolbar is actually rendered with dimensions.
-      // This is the key fix for the race condition. Because we are in a RAF callback,
-      // the dimensions read here are post-paint and should be accurate.
-      if (toolbarRect.width === 0 || toolbarRect.height === 0) {
-        if (position.opacity === 1) setPosition((p) => ({ ...p, opacity: 0 }));
-        return;
-      }
-
-      // Update last active editor if we have one
-      if (activeEditor) {
-        lastActiveEditorRef.current = activeEditor;
-      }
-
-      // Use visualViewport for mobile-first, robust positioning
-      const vp = window.visualViewport || {
-        width: window.innerWidth,
-        height: window.innerHeight,
-        pageTop: window.scrollY,
-        pageLeft: window.scrollX,
-      };
-
-      const GAP = 10;
-      const VIEWPORT_PADDING = 8;
-
-      // --- POSITIONING LOGIC ---
-
-      // 1. Calculate vertical position (top) and determine transform Y value
-      let top;
-      let transformY = '-100%';
-      const spaceAbove = selectionRect.top;
-      const spaceBelow = vp.height - selectionRect.bottom;
-
-      // Prefer to position above, unless there's not enough space OR significantly more space below
-      if (spaceAbove > toolbarRect.height + GAP || spaceAbove > spaceBelow) {
-        top = vp.pageTop + selectionRect.top - GAP;
-        transformY = '-100%';
-      } else {
-        top = vp.pageTop + selectionRect.bottom + GAP;
-        transformY = '0%';
-      }
-
-      // 2. Calculate horizontal position (left) based on selection midpoint
-      let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2);
-
-      // --- VIEWPORT CLAMPING ---
-
-      // Clamp the final position to prevent the toolbar from overflowing the viewport.
-      const minLeft = vp.pageLeft + VIEWPORT_PADDING;
-      const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
-
-      // We calculate the left offset based on the centered-by-default transform.
-      let clampedLeft = left - (toolbarRect.width / 2);
-      clampedLeft = Math.max(minLeft, Math.min(clampedLeft, maxLeft));
-
-      // To keep the CSS simple, we adjust the `left` property and keep the transform.
-      left = clampedLeft + (toolbarRect.width / 2);
-
-      // --- LOGGING ---
-      if (debugMode) {
-        console.log(
-          `[TBar Pos] sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
-          `| tbar(w:${Math.round(toolbarRect.width)}, h:${Math.round(toolbarRect.height)}) ` +
-          `| vp(w:${Math.round(vp.width)}, h:${Math.round(vp.height)}, pT:${Math.round(vp.pageTop)}, pL:${Math.round(vp.pageLeft)}) ` +
-          `| final(t:${Math.round(top)}, l:${Math.round(left)}, tY:${transformY})`
-        );
-      }
-
-      setPosition({ top, left, transformY, opacity: 1 });
-    });
-  }, [position.opacity, caretMode, debugMode, activeEditor]);
+  const debouncedUpdatePositionIos = useCallback(() => {
+    // iOS requires a longer delay for the selection to be stable after a touch gesture.
+    // 300ms seems to be a reliable value.
+    setTimeout(updatePosition, 300);
+  }, [updatePosition]);
 
   // Set up event listeners
   useEffect(() => {
-    // The updatePosition function now has requestAnimationFrame throttling built-in,
-    // so it can be used directly as the event handler.
-    const updateFn = updatePosition;
-    console.log(`[EditorFloatingToolbar] Setting up event listeners`);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const updateFn = isIOS ? debouncedUpdatePositionIos : debouncedUpdatePosition;
 
+    console.log(`[EditorFloatingToolbar] Setting up event listeners (iOS: ${isIOS})`);
     document.addEventListener('selectionchange', updateFn);
     window.addEventListener('scroll', updateFn, { capture: true });
     window.addEventListener('resize', updateFn);
 
+    // Also listen to the visualViewport for resize events, crucial for mobile keyboard
     const vp = window.visualViewport;
     if (vp) {
       vp.addEventListener('resize', updateFn);
@@ -252,7 +254,7 @@ export default function EditorFloatingToolbar({
         vp.removeEventListener('resize', updateFn);
       }
     };
-  }, [updatePosition]);
+  }, [debouncedUpdatePosition, debouncedUpdatePositionIos]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -356,14 +358,9 @@ export default function EditorFloatingToolbar({
       ref={toolbarRef}
       className="floating-toolbar-container"
       style={{
-        position: 'absolute',
-        top: `${position.top}px`,
-        left: `${position.left}px`,
-        opacity: position.opacity,
-        visibility: position.opacity === 1 ? 'visible' : 'hidden',
-        pointerEvents: position.opacity === 1 ? 'auto' : 'none',
-        transform: `translate(-50%, ${position.transformY || '-100%'})`,
-        transition: 'opacity 0.15s ease-in-out',
+        top: position.visible ? `${position.top}px` : '-1000px',
+        left: position.visible ? `${position.left}px` : '-1000px',
+        opacity: position.visible ? 1 : 0,
       }}
     >
       <div
