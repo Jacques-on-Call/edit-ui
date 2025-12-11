@@ -1,5 +1,6 @@
 import { h, createContext } from 'preact';
 import { useState, useMemo, useContext, useRef } from 'preact/hooks';
+import EditorFloatingToolbar from '../components/EditorFloatingToolbar';
 
 // 1. Create the Context
 export const EditorContext = createContext(null);
@@ -140,6 +141,7 @@ export function EditorProvider({ children }) {
   return (
     <EditorContext.Provider value={contextValue}>
       {children}
+      <EditorFloatingToolbar editorRootSelector=".editor-input" />
     </EditorContext.Provider>
   );
 }

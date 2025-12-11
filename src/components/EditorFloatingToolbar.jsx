@@ -155,11 +155,14 @@ export default function EditorFloatingToolbar({
     //   - This allows the `requestAnimationFrame` logic to run correctly, ensuring the toolbar is measured
     //     *after* it has been painted by the browser.
 
-    let timeoutId;
+    let frameId;
     if (positioningState.phase === 'measuring') {
-      timeoutId = setTimeout(() => {
+      frameId = requestAnimationFrame(() => {
         const toolbarNode = toolbarRef.current;
-        if (!toolbarNode) return;
+        if (!toolbarNode || !document.body.contains(toolbarNode)) {
+          console.warn('[TBar Pos] Aborting measurement: toolbar node not attached to DOM.');
+          return;
+        }
 
         const selection = window.getSelection();
         const range = selection.getRangeAt(0);
@@ -210,7 +213,7 @@ export default function EditorFloatingToolbar({
     } else if (positioningState.phase === 'hidden' && debugInfo) {
       setDebugInfo(null);
     }
-    return () => clearTimeout(timeoutId);
+    return () => cancelAnimationFrame(frameId);
   }, [positioningState.phase, debugMode, debugInfo]);
 
 
@@ -229,10 +232,10 @@ export default function EditorFloatingToolbar({
     window.addEventListener('scroll', debouncedUpdatePosition, { capture: true });
     window.addEventListener('resize', debouncedUpdatePosition);
 
-    const vp = window.visualViewport;
-    if (vp) {
-      vp.addEventListener('resize', debouncedUpdatePosition);
-    }
+    // const vp = window.visualViewport;
+    // if (vp) {
+    //   vp.addEventListener('resize', debouncedUpdatePosition);
+    // }
 
     return () => {
       console.log('[EditorFloatingToolbar] Removing event listeners');
@@ -242,9 +245,9 @@ export default function EditorFloatingToolbar({
       document.removeEventListener('selectionchange', debouncedUpdatePosition);
       window.removeEventListener('scroll', debouncedUpdatePosition, { capture: true });
       window.removeEventListener('resize', debouncedUpdatePosition);
-      if (vp) {
-        vp.removeEventListener('resize', debouncedUpdatePosition);
-      }
+      // if (vp) {
+      //   vp.removeEventListener('resize', debouncedUpdatePosition);
+      // }
     };
   }, [debouncedUpdatePosition]);
 
@@ -350,9 +353,10 @@ export default function EditorFloatingToolbar({
       ref={toolbarRef}
       className="floating-toolbar-container"
       style={{
-        top: positioningState.phase === 'positioned' ? `${positioningState.top}px` : '-9999px',
-        left: positioningState.phase === 'positioned' ? `${positioningState.left}px` : '-9999px',
+        top: positioningState.phase === 'positioned' ? `${positioningState.top}px` : '0px',
+        left: positioningState.phase === 'positioned' ? `${positioningState.left}px` : '0px',
         opacity: (positioningState.phase === 'positioned' && !positioningState.error) ? 1 : 0,
+        pointerEvents: positioningState.phase === 'positioned' ? 'auto' : 'none',
         visibility: positioningState.phase === 'hidden' ? 'hidden' : 'visible',
         transition: 'opacity 0.15s ease',
       }}
