@@ -145,16 +145,10 @@ export default function EditorFloatingToolbar({
 
   const updatePosition = useCallback(() => {
     const selection = window.getSelection();
-    const selectionText = selection?.toString() || '';
-    const hasTextSelection = selectionText.trim().length > 0;
 
-    if (!selection || selection.rangeCount === 0 || !hasTextSelection) {
+    if (!activeEditor || !selection || selection.rangeCount === 0 || (selection.isCollapsed && selection.toString().length === 0)) {
       setPositioningState(prev => prev.phase !== 'hidden' ? { ...prev, phase: 'hidden' } : prev);
       return;
-    }
-
-    if (activeEditor) {
-      lastActiveEditorRef.current = activeEditor;
     }
 
     setPositioningState(prev => (prev.phase === 'hidden' || prev.phase === 'positioned') ? { ...prev, phase: 'measuring' } : prev);
