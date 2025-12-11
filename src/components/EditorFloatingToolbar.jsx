@@ -55,7 +55,8 @@ export default function EditorFloatingToolbar({
   caretMode = false // Opt-in to show toolbar on caret (collapsed selection), default false to avoid mobile keyboard loops
 }) {
   const { activeEditor, selectionState, isToolbarInteractionRef } = useEditor();
-  const [position, setPosition] = useState({ top: 0, left: 0, visible: false });
+  const [positioningState, setPositioningState] = useState({ phase: 'hidden', top: 0, left: 0, error: false });
+  const [debugInfo, setDebugInfo] = useState(null); // For visual debugging overlays
   const [showBlockDropdown, setShowBlockDropdown] = useState(false);
   const [showAlignDropdown, setShowAlignDropdown] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -137,80 +138,102 @@ export default function EditorFloatingToolbar({
     const hasTextSelection = selectionText.trim().length > 0;
 
     if (!selection || selection.rangeCount === 0 || !hasTextSelection) {
-      if (position.visible) {
-        setPosition({ top: 0, left: 0, visible: false });
-        // Don't clear lastActiveEditorRef here so we can still use it if needed,
-        // but typically if selection is gone, we don't need it.
+      if (positioningState.phase !== 'hidden') {
+        setPositioningState({ phase: 'hidden', top: 0, left: 0, error: false });
       }
       return;
     }
 
-    // Update last active editor if we have one
+    // A valid selection exists, begin the positioning process.
     if (activeEditor) {
       lastActiveEditorRef.current = activeEditor;
     }
 
-    const range = selection.getRangeAt(0);
-    const selectionRect = range.getBoundingClientRect();
-    const toolbarRect = toolbarElement.getBoundingClientRect();
+    // Phase 1: Trigger the measurement phase.
+    // The actual calculation will happen in a useEffect hook.
+    setPositioningState(prevState => ({ ...prevState, phase: 'measuring' }));
 
+  }, [positioningState.phase, activeEditor, debugMode]);
 
-    // Critical guard: if toolbar has no width, it's not rendered yet.
-    // Instead of returning, we'll try to estimate or use a default width
-    let toolbarWidth = toolbarRect.width;
-    if (toolbarWidth === 0) {
-      // Fallback width based on typical size (approx 5 buttons * 40px + padding)
-      // This prevents the "vanish" issue where it never gets a width
-      toolbarWidth = 220;
+  useEffect(() => {
+    if (positioningState.phase === 'measuring') {
+      const toolbarElement = toolbarRef.current;
+      const selection = window.getSelection();
 
-      // We can also schedule another update to correct it once rendered
-      if (!updateFrameRef.current) {
-        updateFrameRef.current = requestAnimationFrame(updatePosition);
+      if (!toolbarElement || !selection || selection.rangeCount === 0) {
+        setPositioningState(s => ({ ...s, phase: 'hidden' }));
+        return;
       }
+
+      const range = selection.getRangeAt(0);
+      const selectionRect = range.getBoundingClientRect();
+      const toolbarRect = toolbarElement.getBoundingClientRect();
+
+      console.log(`[TBar Pos] Phase: Measuring | tbar(w:${Math.round(toolbarRect.width)}, h:${Math.round(toolbarRect.height)})`);
+
+      if (toolbarRect.width === 0) {
+        console.warn('[TBar Pos] Phase: Measure FAILED. Toolbar has zero width.');
+        // Don't hide, but enter error state at a safe position
+        setPositioningState({ phase: 'positioned', top: 8, left: 8, error: true });
+        return;
+      }
+
+      const vp = window.visualViewport || {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        pageTop: window.scrollY,
+        pageLeft: window.scrollX,
+      };
+
+      const GAP = 10;
+      const VIEWPORT_PADDING = 8;
+
+      const spaceAbove = selectionRect.top;
+      const spaceBelow = vp.height - selectionRect.bottom;
+
+      let top;
+      if (spaceAbove > toolbarRect.height + GAP || spaceAbove > spaceBelow) {
+        top = vp.pageTop + selectionRect.top - toolbarRect.height - GAP;
+      } else {
+        top = vp.pageTop + selectionRect.bottom + GAP;
+      }
+
+      let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarRect.width / 2);
+
+      const minLeft = vp.pageLeft + VIEWPORT_PADDING;
+      const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
+      left = Math.max(minLeft, Math.min(left, maxLeft));
+
+      console.log(
+        `[TBar Pos] Phase: Applying | sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
+        `| vp(w:${Math.round(vp.width)}, h:${Math.round(vp.height)}, pT:${Math.round(vp.pageTop)}, pL:${Math.round(vp.pageLeft)}) ` +
+        `| final(t:${Math.round(top)}, l:${Math.round(left)})`
+      );
+
+      if (debugMode) {
+        setDebugInfo({
+          selection: {
+            top: vp.pageTop + selectionRect.top,
+            left: vp.pageLeft + selectionRect.left,
+            width: selectionRect.width,
+            height: selectionRect.height,
+          },
+          toolbar: {
+            top: top,
+            left: left,
+            width: toolbarRect.width,
+            height: toolbarRect.height,
+          }
+        });
+      }
+
+      setPositioningState({ phase: 'positioned', top, left, error: false });
+    } else if (positioningState.phase === 'hidden' && debugInfo) {
+      // Clear debug info when toolbar is hidden
+      setDebugInfo(null);
     }
+  }, [positioningState.phase, debugMode]);
 
-    // Use visualViewport for mobile-first, robust positioning
-    const vp = window.visualViewport || {
-      width: window.innerWidth,
-      height: window.innerHeight,
-      pageTop: window.scrollY,
-      pageLeft: window.scrollX,
-    };
-
-    const GAP = 10; // Gap between selection and toolbar
-    const VIEWPORT_PADDING = 8;
-
-    // Decide if toolbar should be above or below
-    const spaceAbove = selectionRect.top;
-    const spaceBelow = vp.height - selectionRect.bottom;
-
-    let top;
-    // Prefer to position above, unless there's not enough space OR significantly more space below
-    if (spaceAbove > toolbarRect.height + GAP || spaceAbove > spaceBelow) {
-      top = vp.pageTop + selectionRect.top - toolbarRect.height - GAP;
-    } else {
-      top = vp.pageTop + selectionRect.bottom + GAP;
-    }
-
-    // Calculate centered left position
-    // Use the potentially fallback toolbarWidth
-    let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarWidth / 2);
-
-    // Clamp left position to stay within the viewport
-    const minLeft = vp.pageLeft + VIEWPORT_PADDING;
-    const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
-    left = Math.max(minLeft, Math.min(left, maxLeft));
-
-    // Enhanced, primitive-based diagnostic logging for mobile consoles
-    console.log(
-      `[TBar Pos] sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
-      `| tbar(w:${Math.round(toolbarRect.width)}, h:${Math.round(toolbarRect.height)}) ` +
-      `| vp(w:${Math.round(vp.width)}, h:${Math.round(vp.height)}, pT:${Math.round(vp.pageTop)}, pL:${Math.round(vp.pageLeft)}) ` +
-      `| final(t:${Math.round(top)}, l:${Math.round(left)})`
-    );
-
-    setPosition({ top, left, visible: true });
-  }, [position.visible, debugMode]);
 
   const debouncedUpdatePosition = useCallback(() => {
     // A simple RAF debounce is sufficient for non-iOS devices.
@@ -358,13 +381,15 @@ export default function EditorFloatingToolbar({
       ref={toolbarRef}
       className="floating-toolbar-container"
       style={{
-        top: position.visible ? `${position.top}px` : '-1000px',
-        left: position.visible ? `${position.left}px` : '-1000px',
-        opacity: position.visible ? 1 : 0,
+        top: positioningState.phase === 'positioned' ? `${positioningState.top}px` : '-9999px',
+        left: positioningState.phase === 'positioned' ? `${positioningState.left}px` : '-9999px',
+        opacity: positioningState.phase === 'positioned' ? 1 : 0,
+        visibility: positioningState.phase === 'hidden' ? 'hidden' : 'visible',
       }}
+      data-position-phase={positioningState.phase}
     >
       <div
-        className="floating-toolbar"
+        className={`floating-toolbar ${positioningState.error ? 'position-error' : ''}`}
         onPointerDown={handleToolbarInteraction}
       >
         {/* Reordered buttons for priority */}
@@ -639,6 +664,28 @@ export default function EditorFloatingToolbar({
           />
         )}
       </div>
+      {debugMode && debugInfo && positioningState.phase === 'positioned' && (
+        <>
+          <div
+            className="debug-overlay selection-box"
+            style={{
+              top: `${debugInfo.selection.top}px`,
+              left: `${debugInfo.selection.left}px`,
+              width: `${debugInfo.selection.width}px`,
+              height: `${debugInfo.selection.height}px`,
+            }}
+          />
+          <div
+            className="debug-overlay toolbar-box"
+            style={{
+              top: `${debugInfo.toolbar.top}px`,
+              left: `${debugInfo.toolbar.left}px`,
+              width: `${debugInfo.toolbar.width}px`,
+              height: `${debugInfo.toolbar.height}px`,
+            }}
+          />
+        </>
+      )}
     </div>,
     document.body
   );

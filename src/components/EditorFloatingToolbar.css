@@ -330,3 +330,26 @@
     transform: scale(1.15);
   }
 }
+
+.floating-toolbar.position-error {
+  border: 1px dashed #ef4444; /* Use a bright red for high visibility */
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5); /* Add a subtle glow to draw attention */
+}
+
+/* Debug Overlay Styling */
+.debug-overlay {
+  position: absolute;
+  z-index: 10001; /* Above toolbar */
+  pointer-events: none; /* Make them non-interactive */
+  opacity: 0.8;
+}
+
+.selection-box {
+  background-color: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.8);
+}
+
+.toolbar-box {
+  background-color: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.8);
+}
