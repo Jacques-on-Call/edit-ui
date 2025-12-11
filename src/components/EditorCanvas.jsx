@@ -1,5 +1,6 @@
 import { h } from 'preact';
 import { useState, useContext, useEffect, useMemo } from 'preact/hooks';
+import EditorFloatingToolbar from './EditorFloatingToolbar';
 import SlideoutToolbar from './SlideoutToolbar';
 import BottomActionBar from './BottomActionBar';
 import AddSectionModal from './AddSectionModal';
@@ -39,8 +40,19 @@ export default function EditorCanvas(props) {
     handleUpdateSection,
   } = props;
 
+  const memoizedToolbar = useMemo(() => {
+    return isEditorReady ? (
+      <EditorFloatingToolbar
+        editorRootSelector=".editor-input"
+        offset={toolbarOffset}
+        cooldownMs={200}
+      />
+    ) : null;
+  }, [isEditorReady, toolbarOffset]);
+
   return (
     <div class="flex flex-col h-full bg-transparent text-white relative">
+      {memoizedToolbar}
       <SlideoutToolbar />
       <main
         class="flex-grow relative overflow-y-auto"

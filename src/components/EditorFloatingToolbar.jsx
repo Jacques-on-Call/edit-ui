@@ -251,6 +251,31 @@ export default function EditorFloatingToolbar({
     };
   }, [debouncedUpdatePosition]);
 
+  useEffect(() => {
+    const observer = new MutationObserver((mutationsList) => {
+      for (const mutation of mutationsList) {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach(node => {
+            if (node === toolbarRef.current) {
+              console.log(`[TBar MO] Toolbar node ADDED to DOM at ${new Date().toISOString()}`);
+            }
+          });
+          mutation.removedNodes.forEach(node => {
+            if (node === toolbarRef.current) {
+              console.log(`[TBar MO] Toolbar node REMOVED from DOM at ${new Date().toISOString()}`);
+            }
+          });
+        }
+      }
+    });
+
+    observer.observe(document.body, { childList: true });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
