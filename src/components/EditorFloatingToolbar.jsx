@@ -68,7 +68,7 @@ export default function EditorFloatingToolbar({
   const highlightPickerRef = useRef(null);
   const updateFrameRef = useRef(null); // Track pending RAF to avoid duplicate frames
   const lastActiveEditorRef = useRef(null); // Cache the last known active editor
-  const measureTimeoutRef = useRef(null); // Ref for the measurement retry timeout
+  const toolbarSizeRef = useRef({ width: 0, height: 0 }); // Ref to store the toolbar's dimensions
 
   // Use runtime debug flag from window object
   const debugMode = typeof window !== 'undefined' && window.__EASY_SEO_TOOLBAR_DEBUG__;
@@ -92,6 +92,24 @@ export default function EditorFloatingToolbar({
     }
     return null; // No editor root found in the selection ancestry
   }, [editorRootSelector]);
+
+  // Measure the toolbar's dimensions once on mount
+  useEffect(() => {
+    const measureToolbar = () => {
+      if (toolbarRef.current) {
+        const rect = toolbarRef.current.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          toolbarSizeRef.current = { width: rect.width, height: rect.height };
+          console.log(`[TBar Measure] Stored toolbar size: w:${rect.width}, h:${rect.height}`);
+        } else {
+          // Retry if the measurement is zero, which can happen on the very first render
+          setTimeout(measureToolbar, 100);
+        }
+      }
+    };
+    // Use a timeout to ensure the toolbar has been rendered and styled
+    setTimeout(measureToolbar, 0);
+  }, []);
 
   // Component mount instrumentation - always log regardless of debug mode
   useEffect(() => {
@@ -143,56 +161,27 @@ export default function EditorFloatingToolbar({
   }, [activeEditor]);
 
   useEffect(() => {
-    // Positioning Logic Changelog & Rationale
-    // V1 (Initial): Direct calculation in the `selectionchange` handler.
-    //   - Outcome: Failed. Read toolbar dimensions as zero because the DOM had not been painted yet.
-    // V2 (useEffect): Moved calculation to a `useEffect` hook based on a `measuring` state.
-    //   - Outcome: Failed. `useEffect` ran too soon, immediately after the Preact render but before the
-    //     browser's layout and paint cycle, still resulting in zero dimensions.
-    // V3 (Stale Closure): `useCallback` on `updatePosition` created a stale closure, causing a render loop.
-    //   - Outcome: Failed. The rAF logic was starved by the component constantly re-rendering with old state.
-    // V4 (Functional `setState` + rAF): The current, correct implementation.
-    //   - By using the functional update pattern for `setState` in the `useCallback`, we break the stale closure.
-    //   - This allows the `requestAnimationFrame` logic to run correctly, ensuring the toolbar is measured
-    //     *after* it has been painted by the browser.
-
-    const measureAndPosition = (attempt = 1) => {
-      const MAX_ATTEMPTS = 3;
-      const RETRY_DELAY = 50; // ms
-
+    const positionToolbar = () => {
       const toolbarNode = toolbarRef.current;
-      if (!toolbarNode || !document.body.contains(toolbarNode)) {
-        console.warn(`[TBar Pos] Aborting measurement (Attempt ${attempt}): toolbar node not in DOM.`);
+      const selection = window.getSelection();
+      const toolbarRect = toolbarSizeRef.current;
+
+      if (!toolbarNode || !selection || selection.rangeCount === 0 || toolbarRect.width === 0) {
+        if (toolbarRect.width === 0) {
+           console.warn('[TBar Pos] Positioning aborted: stored toolbar width is 0.');
+        }
         return;
       }
-
-      const selection = window.getSelection();
-      if (!selection || selection.rangeCount === 0) return; // Should already be handled, but good practice
 
       const range = selection.getRangeAt(0);
       const selectionRect = range.getBoundingClientRect();
-      const toolbarRect = toolbarNode.getBoundingClientRect();
-
-      console.log(`[TBar Pos] Measure Attempt ${attempt} | tbar(w:${toolbarRect.width}, h:${toolbarRect.height})`);
-
-      if (toolbarRect.width === 0 && attempt < MAX_ATTEMPTS) {
-        console.warn(`[TBar Pos] Toolbar width is 0. Retrying in ${RETRY_DELAY}ms...`);
-        measureTimeoutRef.current = setTimeout(() => measureAndPosition(attempt + 1), RETRY_DELAY);
-        return;
-      }
-
-      if (toolbarRect.width === 0 && attempt >= MAX_ATTEMPTS) {
-        console.error('[TBar Pos] Frame Measure FAILED after all attempts. Toolbar width is 0.');
-        setPositioningState(s => ({ ...s, phase: 'positioned', error: true, top: 8, left: 8 }));
-        return;
-      }
 
       const vp = window.visualViewport || { width: window.innerWidth, height: window.innerHeight, pageTop: window.scrollY, pageLeft: window.scrollX };
 
+      let top;
       const spaceAbove = selectionRect.top;
       const spaceBelow = vp.height - selectionRect.bottom;
 
-      let top;
       if (spaceAbove > toolbarRect.height + 10 || spaceAbove > spaceBelow) {
         top = vp.pageTop + selectionRect.top - toolbarRect.height - 10;
       } else {
@@ -200,7 +189,6 @@ export default function EditorFloatingToolbar({
       }
 
       let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarRect.width / 2);
-
       left = Math.max(vp.pageLeft + 8, Math.min(left, vp.pageLeft + vp.width - toolbarRect.width - 8));
 
       console.log(
@@ -222,16 +210,12 @@ export default function EditorFloatingToolbar({
 
     let frameId;
     if (positioningState.phase === 'measuring') {
-      frameId = requestAnimationFrame(() => measureAndPosition(1));
+      frameId = requestAnimationFrame(positionToolbar);
     } else if (positioningState.phase === 'hidden' && debugInfo) {
       setDebugInfo(null);
     }
-    return () => {
-      cancelAnimationFrame(frameId);
-      if (measureTimeoutRef.current) {
-        clearTimeout(measureTimeoutRef.current);
-      }
-    };
+
+    return () => cancelAnimationFrame(frameId);
   }, [positioningState.phase, debugMode, debugInfo]);
 
 
