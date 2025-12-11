@@ -153,116 +153,110 @@ export default function EditorFloatingToolbar({
     // The actual calculation will happen in a useEffect hook.
     setPositioningState(prevState => ({ ...prevState, phase: 'measuring' }));
 
-  }, [positioningState.phase, activeEditor, debugMode]);
+  }, [activeEditor]);
 
   useEffect(() => {
+    // Positioning Logic Changelog & Rationale
+    //
+    // V1 (Initial): Direct calculation in the `selectionchange` handler.
+    //   - Outcome: Failed. Read toolbar dimensions as zero because the DOM had not been painted yet.
+    //
+    // V2 (useEffect): Moved calculation to a `useEffect` hook based on a `measuring` state.
+    //   - Outcome: Failed. `useEffect` ran too soon, immediately after the Preact render but before the
+    //     browser's layout and paint cycle, still resulting in zero dimensions.
+    //
+    // V3 (rAF): The current, correct implementation.
+    //   - By wrapping the measurement logic in `requestAnimationFrame`, we guarantee that the code
+    //     runs in the *next browser frame*. This ensures the toolbar has been fully rendered and
+    //     its `getBoundingClientRect()` will return the correct, non-zero dimensions.
+    //   - This is the standard, robust solution for layout-dependent calculations in React/Preact.
+
+    let frameId;
+
     if (positioningState.phase === 'measuring') {
-      const toolbarElement = toolbarRef.current;
-      const selection = window.getSelection();
+      // Use rAF to ensure the browser has painted the toolbar before we measure it
+      frameId = requestAnimationFrame(() => {
+        const toolbarElement = toolbarRef.current;
+        const selection = window.getSelection();
 
-      if (!toolbarElement || !selection || selection.rangeCount === 0) {
-        setPositioningState(s => ({ ...s, phase: 'hidden' }));
-        return;
-      }
+        if (!toolbarElement || !selection || selection.rangeCount === 0) {
+          setPositioningState(s => ({ ...s, phase: 'hidden' }));
+          return;
+        }
 
-      const range = selection.getRangeAt(0);
-      const selectionRect = range.getBoundingClientRect();
-      const toolbarRect = toolbarElement.getBoundingClientRect();
+        const range = selection.getRangeAt(0);
+        const selectionRect = range.getBoundingClientRect();
+        const toolbarRect = toolbarElement.getBoundingClientRect();
 
-      console.log(`[TBar Pos] Phase: Measuring | tbar(w:${Math.round(toolbarRect.width)}, h:${Math.round(toolbarRect.height)})`);
+        console.log(`[TBar Pos] Phase: Measuring (Frame) | tbar(w:${Math.round(toolbarRect.width)}, h:${Math.round(toolbarRect.height)})`);
 
-      if (toolbarRect.width === 0) {
-        console.warn('[TBar Pos] Phase: Measure FAILED. Toolbar has zero width.');
-        // Don't hide, but enter error state at a safe position
-        setPositioningState({ phase: 'positioned', top: 8, left: 8, error: true });
-        return;
-      }
+        if (toolbarRect.width === 0) {
+          console.warn('[TBar Pos] Phase: Measure FAILED (Frame). Toolbar has zero width.');
+          setPositioningState({ phase: 'positioned', top: 8, left: 8, error: true });
+          return;
+        }
 
-      const vp = window.visualViewport || {
-        width: window.innerWidth,
-        height: window.innerHeight,
-        pageTop: window.scrollY,
-        pageLeft: window.scrollX,
-      };
+        const vp = window.visualViewport || {
+          width: window.innerWidth,
+          height: window.innerHeight,
+          pageTop: window.scrollY,
+          pageLeft: window.scrollX,
+        };
 
-      const GAP = 10;
-      const VIEWPORT_PADDING = 8;
+        const GAP = 10;
+        const VIEWPORT_PADDING = 8;
 
-      const spaceAbove = selectionRect.top;
-      const spaceBelow = vp.height - selectionRect.bottom;
+        let top = vp.pageTop + selectionRect.top - toolbarRect.height - GAP;
+        let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarRect.width / 2);
 
-      let top;
-      if (spaceAbove > toolbarRect.height + GAP || spaceAbove > spaceBelow) {
-        top = vp.pageTop + selectionRect.top - toolbarRect.height - GAP;
-      } else {
-        top = vp.pageTop + selectionRect.bottom + GAP;
-      }
+        const minLeft = vp.pageLeft + VIEWPORT_PADDING;
+        const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
+        left = Math.max(minLeft, Math.min(left, maxLeft));
 
-      let left = vp.pageLeft + selectionRect.left + (selectionRect.width / 2) - (toolbarRect.width / 2);
+        console.log(
+          `[TBar Pos] Phase: Applying (Frame) | sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
+          `| final(t:${Math.round(top)}, l:${Math.round(left)})`
+        );
 
-      const minLeft = vp.pageLeft + VIEWPORT_PADDING;
-      const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
-      left = Math.max(minLeft, Math.min(left, maxLeft));
+        if (debugMode) {
+          setDebugInfo({
+            selection: { top: vp.pageTop + selectionRect.top, left: vp.pageLeft + selectionRect.left, width: selectionRect.width, height: selectionRect.height },
+            toolbar: { top, left, width: toolbarRect.width, height: toolbarRect.height }
+          });
+        }
 
-      console.log(
-        `[TBar Pos] Phase: Applying | sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
-        `| vp(w:${Math.round(vp.width)}, h:${Math.round(vp.height)}, pT:${Math.round(vp.pageTop)}, pL:${Math.round(vp.pageLeft)}) ` +
-        `| final(t:${Math.round(top)}, l:${Math.round(left)})`
-      );
-
-      if (debugMode) {
-        setDebugInfo({
-          selection: {
-            top: vp.pageTop + selectionRect.top,
-            left: vp.pageLeft + selectionRect.left,
-            width: selectionRect.width,
-            height: selectionRect.height,
-          },
-          toolbar: {
-            top: top,
-            left: left,
-            width: toolbarRect.width,
-            height: toolbarRect.height,
-          }
-        });
-      }
-
-      setPositioningState({ phase: 'positioned', top, left, error: false });
+        setPositioningState({ phase: 'positioned', top, left, error: false });
+      });
     } else if (positioningState.phase === 'hidden' && debugInfo) {
-      // Clear debug info when toolbar is hidden
       setDebugInfo(null);
     }
-  }, [positioningState.phase, debugMode]);
+
+    return () => {
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+      }
+    };
+  }, [positioningState.phase, debugMode, debugInfo]);
 
 
   const debouncedUpdatePosition = useCallback(() => {
-    // A simple RAF debounce is sufficient for non-iOS devices.
     if (updateFrameRef.current) {
       cancelAnimationFrame(updateFrameRef.current);
     }
     updateFrameRef.current = requestAnimationFrame(updatePosition);
   }, [updatePosition]);
 
-  const debouncedUpdatePositionIos = useCallback(() => {
-    // iOS requires a longer delay for the selection to be stable after a touch gesture.
-    // 300ms seems to be a reliable value.
-    setTimeout(updatePosition, 300);
-  }, [updatePosition]);
-
   // Set up event listeners
   useEffect(() => {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const updateFn = isIOS ? debouncedUpdatePositionIos : debouncedUpdatePosition;
-
     console.log(`[EditorFloatingToolbar] Setting up event listeners (iOS: ${isIOS})`);
-    document.addEventListener('selectionchange', updateFn);
-    window.addEventListener('scroll', updateFn, { capture: true });
-    window.addEventListener('resize', updateFn);
+    document.addEventListener('selectionchange', debouncedUpdatePosition);
+    window.addEventListener('scroll', debouncedUpdatePosition, { capture: true });
+    window.addEventListener('resize', debouncedUpdatePosition);
 
-    // Also listen to the visualViewport for resize events, crucial for mobile keyboard
     const vp = window.visualViewport;
     if (vp) {
-      vp.addEventListener('resize', updateFn);
+      vp.addEventListener('resize', debouncedUpdatePosition);
     }
 
     return () => {
@@ -270,14 +264,14 @@ export default function EditorFloatingToolbar({
       if (updateFrameRef.current) {
         cancelAnimationFrame(updateFrameRef.current);
       }
-      document.removeEventListener('selectionchange', updateFn);
-      window.removeEventListener('scroll', updateFn, { capture: true });
-      window.removeEventListener('resize', updateFn);
+      document.removeEventListener('selectionchange', debouncedUpdatePosition);
+      window.removeEventListener('scroll', debouncedUpdatePosition, { capture: true });
+      window.removeEventListener('resize', debouncedUpdatePosition);
       if (vp) {
-        vp.removeEventListener('resize', updateFn);
+        vp.removeEventListener('resize', debouncedUpdatePosition);
       }
     };
-  }, [debouncedUpdatePosition, debouncedUpdatePositionIos]);
+  }, [debouncedUpdatePosition]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
