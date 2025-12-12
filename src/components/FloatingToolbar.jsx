@@ -60,7 +60,10 @@ export default function FloatingToolbar({
   const [showAlignDropdown, setShowAlignDropdown] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
-  const toolbarRef = useRef(null);
+  const toolbarNodeRef = useRef(null);
+  const toolbarRef = useCallback((node) => {
+    toolbarNodeRef.current = node;
+  }, []);
   const toolbarSizeRef = useRef({ width: 0, height: 0 }); // New ref for measured size
   const blockDropdownRef = useRef(null);
   const alignDropdownRef = useRef(null);
@@ -132,8 +135,8 @@ export default function FloatingToolbar({
   // NEW: useEffect for single, delayed measurement after initial render
   useEffect(() => {
     const measureToolbar = () => {
-      if (toolbarRef.current) {
-        const rect = toolbarRef.current.getBoundingClientRect();
+      if (toolbarNodeRef.current) {
+        const rect = toolbarNodeRef.current.getBoundingClientRect();
         if (rect.width > 0 && rect.height > 0) {
           toolbarSizeRef.current = { width: rect.width, height: rect.height };
           console.log(`[TBar Measure] SUCCESS: Stored toolbar size: w:${rect.width}, h:${rect.height}`);
@@ -146,7 +149,7 @@ export default function FloatingToolbar({
     };
     // Use a timeout to ensure the toolbar has been rendered and styled in the DOM
     setTimeout(measureToolbar, 0);
-  }, []); // Run only once on mount
+  }, [toolbarRef]); // Rerun when the callback ref changes
   
 
   const updatePosition = useCallback(() => {
@@ -163,7 +166,7 @@ export default function FloatingToolbar({
       return;
     }
 
-    const toolbarElement = toolbarRef.current;
+    const toolbarElement = toolbarNodeRef.current;
     if (!toolbarElement) return;
 
     const range = selection.getRangeAt(0);
