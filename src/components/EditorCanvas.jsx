@@ -1,6 +1,6 @@
 import { h } from 'preact';
-import { useState, useContext, useEffect, useMemo, useRef } from 'preact/hooks';
-import EditorFloatingToolbar from './EditorFloatingToolbar';
+import { useContext, useMemo } from 'preact/hooks';
+import FloatingToolbar from './FloatingToolbar';
 import SlideoutToolbar from './SlideoutToolbar';
 import BottomActionBar from './BottomActionBar';
 import AddSectionModal from './AddSectionModal';
@@ -10,32 +10,9 @@ import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 
 export default function EditorCanvas(props) {
   const { selectionState, handleAction } = useContext(EditorContext);
-  const [isToolbarVisible, setIsToolbarVisible] = useState(false);
-  const [isEditorReady, setIsEditorReady] = useState(false);
-  const editorReadyRef = useRef(false);
-
-  // Callback for child to signal readiness
-  const handleEditorReady = () => {
-    if (!editorReadyRef.current) {
-      console.log('[EditorCanvas] Editor is ready, rendering toolbar for the first time.');
-      setIsEditorReady(true);
-      editorReadyRef.current = true;
-    }
-  };
   
-  useEffect(() => {
-    const handleSelectionChange = () => {
-      const selection = window.getSelection();
-      if (selection && !selection.isCollapsed && selection.toString().trim().length > 0) {
-        setIsToolbarVisible(true);
-      } else {
-        setIsToolbarVisible(false);
-      }
-    };
-
-    document.addEventListener('selectionchange', handleSelectionChange);
-    return () => document.removeEventListener('selectionchange', handleSelectionChange);
-  }, []);
+  // Memoize offset object to prevent re-renders
+  const toolbarOffset = useMemo(() => ({ x: 0, y: 10 }), []);
 
   const {
     viewMode,
@@ -58,7 +35,11 @@ export default function EditorCanvas(props) {
 
   return (
     <div class="flex flex-col h-full bg-transparent text-white relative">
-      {isToolbarVisible && <EditorFloatingToolbar />}
+      <FloatingToolbar
+        editorRootSelector=".editor-input"
+        offset={toolbarOffset}
+        cooldownMs={200}
+      />
       <SlideoutToolbar />
       <main
         class="flex-grow relative overflow-y-auto"
@@ -66,7 +47,7 @@ export default function EditorCanvas(props) {
           paddingBottom: 'var(--bottom-bar-height)'
         }}
       >
-        {renderContent({ onEditorReady: handleEditorReady })}
+        {renderContent({ onEditorReady: () => {} })}
       </main>
       <BottomActionBar
         saveStatus={saveStatus}

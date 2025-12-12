@@ -61,6 +61,7 @@ export default function FloatingToolbar({
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
   const toolbarRef = useRef(null);
+  const toolbarSizeRef = useRef({ width: 0, height: 0 }); // New ref for measured size
   const blockDropdownRef = useRef(null);
   const alignDropdownRef = useRef(null);
   const colorPickerRef = useRef(null);
@@ -127,6 +128,25 @@ export default function FloatingToolbar({
       });
     }
   }, []);
+
+  // NEW: useEffect for single, delayed measurement after initial render
+  useEffect(() => {
+    const measureToolbar = () => {
+      if (toolbarRef.current) {
+        const rect = toolbarRef.current.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          toolbarSizeRef.current = { width: rect.width, height: rect.height };
+          console.log(`[TBar Measure] SUCCESS: Stored toolbar size: w:${rect.width}, h:${rect.height}`);
+        } else {
+          // If measurement is zero, retry once, but log a warning
+          console.warn(`[TBar Measure] WARNING: Initial size is w:${rect.width}, h:${rect.height}. Retrying measurement in 100ms.`);
+          setTimeout(measureToolbar, 100);
+        }
+      }
+    };
+    // Use a timeout to ensure the toolbar has been rendered and styled in the DOM
+    setTimeout(measureToolbar, 0);
+  }, []); // Run only once on mount
   
 
   const updatePosition = useCallback(() => {
@@ -149,10 +169,17 @@ export default function FloatingToolbar({
     const range = selection.getRangeAt(0);
     const selectionRect = range.getBoundingClientRect();
 
-    const toolbarRect = toolbarElement.getBoundingClientRect();
+    const toolbarRect = toolbarSizeRef.current; // <--- USE REF SIZE HERE
 
-    // Critical guard: if toolbar has no width, it's not rendered yet.
-    // if (toolbarRect.width === 0) return;
+    // CRITICAL GUARD: Do not position if size is still zero
+    if (toolbarRect.width === 0) {
+        console.warn(`[TBar Pos] Positioning aborted: Stored toolbar width is 0. Waiting for measurement.`);
+        // Ensure visibility is false until we have dimensions
+        if (position.visible) {
+             setPosition({ top: 0, left: 0, visible: false });
+        }
+        return;
+    }
 
     // Use visualViewport for mobile-first, robust positioning
     const vp = window.visualViewport || {
@@ -185,6 +212,13 @@ export default function FloatingToolbar({
     const minLeft = vp.pageLeft + VIEWPORT_PADDING;
     const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
     left = Math.max(minLeft, Math.min(left, maxLeft));
+
+    console.log(
+      `[TBar Pos] sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
+      `| tbar(w:${Math.round(toolbarRect.width)}, h:${Math.round(toolbarRect.height)}) ` +
+      `| vp(w:${Math.round(vp.width)}, h:${Math.round(vp.height)}, pT:${Math.round(vp.pageTop)}, pL:${Math.round(vp.pageLeft)}) ` +
+      `| final(t:${Math.round(top)}, l:${Math.round(left)})`
+    );
 
     setPosition({ top, left, visible: true });
   }, [position.visible]);
