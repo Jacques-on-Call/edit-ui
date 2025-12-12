@@ -55,7 +55,7 @@ export default function EditorFloatingToolbar({
   caretMode = false // Opt-in to show toolbar on caret (collapsed selection), default false to avoid mobile keyboard loops
 }) {
   const { activeEditor, selectionState, isToolbarInteractionRef } = useEditor();
-  const [positioningState, setPositioningState] = useState({ phase: 'hidden', top: 0, left: 0, error: false });
+  const [position, setPosition] = useState({ top: 0, left: 0 });
   const [debugInfo, setDebugInfo] = useState(null); // For visual debugging overlays
   const [showBlockDropdown, setShowBlockDropdown] = useState(false);
   const [showAlignDropdown, setShowAlignDropdown] = useState(false);
@@ -143,17 +143,6 @@ export default function EditorFloatingToolbar({
   }, []);
 
 
-  const updatePosition = useCallback(() => {
-    const selection = window.getSelection();
-
-    if (!activeEditor || !selection || selection.rangeCount === 0 || (selection.isCollapsed && selection.toString().length === 0)) {
-      setPositioningState(prev => prev.phase !== 'hidden' ? { ...prev, phase: 'hidden' } : prev);
-      return;
-    }
-
-    setPositioningState(prev => (prev.phase === 'hidden' || prev.phase === 'positioned') ? { ...prev, phase: 'measuring' } : prev);
-  }, [activeEditor]);
-
   useEffect(() => {
     const positionToolbar = () => {
       const toolbarNode = toolbarRef.current;
@@ -210,23 +199,16 @@ export default function EditorFloatingToolbar({
     }
 
     return () => cancelAnimationFrame(frameId);
-  }, [positioningState.phase, debugMode, debugInfo]);
+  }, [debugMode]);
 
-
-  const debouncedUpdatePosition = useCallback(() => {
-    if (updateFrameRef.current) {
-      cancelAnimationFrame(updateFrameRef.current);
-    }
-    updateFrameRef.current = requestAnimationFrame(updatePosition);
-  }, [updatePosition]);
 
   // Set up event listeners
   useEffect(() => {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    console.log(`[EditorFloatingToolbar] Setting up event listeners (iOS: ${isIOS})`);
-    document.addEventListener('selectionchange', debouncedUpdatePosition);
-    window.addEventListener('scroll', debouncedUpdatePosition, { capture: true });
-    window.addEventListener('resize', debouncedUpdatePosition);
+    const update = () => requestAnimationFrame(positionToolbar);
+
+    document.addEventListener('selectionchange', update);
+    window.addEventListener('scroll', update, { capture: true });
+    window.addEventListener('resize', update);
 
     // const vp = window.visualViewport;
     // if (vp) {
@@ -374,16 +356,14 @@ export default function EditorFloatingToolbar({
       ref={toolbarRef}
       className="floating-toolbar-container"
       style={{
-        top: positioningState.phase === 'positioned' ? `${positioningState.top}px` : '0px',
-        left: positioningState.phase === 'positioned' ? `${positioningState.left}px` : '0px',
-        opacity: (positioningState.phase === 'positioned' && !positioningState.error) ? 1 : 0,
-        pointerEvents: positioningState.phase === 'positioned' ? 'auto' : 'none',
-        visibility: positioningState.phase === 'hidden' ? 'hidden' : 'visible',
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        opacity: 1,
         transition: 'opacity 0.15s ease',
       }}
     >
       <div
-        className={`floating-toolbar ${positioningState.error ? 'position-error' : ''}`}
+        className="floating-toolbar"
         onPointerDown={handleToolbarInteraction}
       >
         {/* Reordered buttons for priority */}

@@ -1,5 +1,6 @@
 import { h } from 'preact';
 import { useState, useContext, useEffect, useMemo, useRef } from 'preact/hooks';
+import EditorFloatingToolbar from './EditorFloatingToolbar';
 import SlideoutToolbar from './SlideoutToolbar';
 import BottomActionBar from './BottomActionBar';
 import AddSectionModal from './AddSectionModal';
@@ -9,6 +10,7 @@ import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 
 export default function EditorCanvas(props) {
   const { selectionState, handleAction } = useContext(EditorContext);
+  const [isToolbarVisible, setIsToolbarVisible] = useState(false);
   const [isEditorReady, setIsEditorReady] = useState(false);
   const editorReadyRef = useRef(false);
 
@@ -21,6 +23,20 @@ export default function EditorCanvas(props) {
     }
   };
   
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const selection = window.getSelection();
+      if (selection && !selection.isCollapsed && selection.toString().trim().length > 0) {
+        setIsToolbarVisible(true);
+      } else {
+        setIsToolbarVisible(false);
+      }
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => document.removeEventListener('selectionchange', handleSelectionChange);
+  }, []);
+
   const {
     viewMode,
     pageId,
@@ -42,6 +58,7 @@ export default function EditorCanvas(props) {
 
   return (
     <div class="flex flex-col h-full bg-transparent text-white relative">
+      {isToolbarVisible && <EditorFloatingToolbar />}
       <SlideoutToolbar />
       <main
         class="flex-grow relative overflow-y-auto"
