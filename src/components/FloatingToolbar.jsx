@@ -47,7 +47,7 @@ const MIN_TOOLBAR_GAP_FROM_VIEWPORT_TOP = 8; // Minimum gap (px) from visual vie
  * - cooldownMs: number - Cooldown period between selection updates (default 200ms)
  * - caretMode: boolean - Show toolbar on collapsed selection (default false)
  */
-export default function FloatingToolbar({ 
+const FloatingToolbar = ({
   handleAction, 
   selectionState, 
   editorRootSelector = '.editor-root',
@@ -55,6 +55,7 @@ export default function FloatingToolbar({
   cooldownMs = 200, // Configurable cooldown to prevent selection loop spam
   caretMode = false // Opt-in to show toolbar on caret (collapsed selection), default false to avoid mobile keyboard loops
 }) {
+  console.log('[FloatingToolbar] Component INSTANTIATED');
   const [position, setPosition] = useState({ top: 0, left: 0, visible: false });
   const [showBlockDropdown, setShowBlockDropdown] = useState(false);
   const [showAlignDropdown, setShowAlignDropdown] = useState(false);
@@ -646,3 +647,5 @@ export default function FloatingToolbar({
     document.body
   );
 }
+
+export default FloatingToolbar;
