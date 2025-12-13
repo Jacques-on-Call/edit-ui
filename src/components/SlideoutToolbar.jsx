@@ -269,7 +269,7 @@ export default function SlideoutToolbar() {
       <button
         ref={hamburgerRef}
         className="floating-hamburger"
-        onClick={toggleOpen}
+        onPointerDown={(e) => { e.preventDefault(); toggleOpen(); }}
         aria-label={isExpanded ? 'Close menu' : isOpen ? 'Expand menu' : 'Open menu'}
         aria-expanded={isOpen || isExpanded}
         title="Insert elements"
@@ -291,7 +291,8 @@ export default function SlideoutToolbar() {
             <div className="slideout-toolbar-header">
               <h3>Insert</h3>
               <button
-                onClick={() => {
+                onPointerDown={(e) => {
+                  e.preventDefault();
                   setIsExpanded(false);
                   setIsOpen(false);
                 }}
@@ -317,7 +318,7 @@ export default function SlideoutToolbar() {
                   {isExpanded && (
                     <button 
                       className="toolbar-category-header"
-                      onClick={() => toggleGroup(categoryName)}
+                      onPointerDown={(e) => { e.preventDefault(); toggleGroup(categoryName); }}
                       aria-expanded={isCategoryExpanded}
                       aria-label={`${isCategoryExpanded ? 'Collapse' : 'Expand'} ${categoryName} section`}
                     >
@@ -337,7 +338,11 @@ export default function SlideoutToolbar() {
                         return (
                           <button
                             key={item.id}
-                            onClick={item.action}
+                            onPointerDown={(e) => {
+                              e.preventDefault();
+                              console.log(`[SlideoutToolbar] PointerDown: ${item.label} button`);
+                              item.action();
+                            }}
                             className="toolbar-item"
                             aria-label={item.ariaLabel}
                             role="menuitem"

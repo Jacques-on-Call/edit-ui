@@ -16,14 +16,14 @@ export default function LexicalField({ value, onChange, placeholder, className, 
       blurTimeoutRef.current = null;
     }
 
-    console.log('[LexicalField] Focus event. Setting active editor.');
+    console.log('[LexicalField] handleFocus: A content-editable field has received focus. Cancelling any pending blur and setting this instance as the active editor.');
     if (editorApiRef.current) {
       setActiveEditor(editorApiRef.current);
     }
   };
 
   const handleBlur = () => {
-    console.log('[LexicalField] Blur event. Scheduling active editor clear.');
+    console.log('[LexicalField] handleBlur: A content-editable field has lost focus. Scheduling a delayed clear of the active editor.');
 
     blurTimeoutRef.current = setTimeout(() => {
       // Before clearing, check if the user is interacting with the toolbar.
@@ -32,7 +32,7 @@ export default function LexicalField({ value, onChange, placeholder, className, 
         console.log('[LexicalField] Aborting clear: Toolbar interaction detected.');
         return;
       }
-      console.log('[LexicalField] Delay complete. Clearing active editor.');
+      console.log('[LexicalField] handleBlur Timeout: Delay complete and no toolbar interaction detected. Clearing active editor.');
       setActiveEditor(null);
     }, 50);
   };

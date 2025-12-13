@@ -299,18 +299,8 @@ export default function FloatingToolbar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showBlockDropdown, showAlignDropdown, showColorPicker, showHighlightPicker]);
 
-  // Prevent mousedown/touchstart from clearing selection before click handler executes
-  // preventDefault: Stops browser's default text selection behavior
-  // stopPropagation: Prevents event bubbling to parent elements that might handle clicks differently
-  const handleMouseDown = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-  
-  const handleToolbarTouchStart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
+  // handleMouseDown and handleToolbarTouchStart removed in favor of inline onPointerDown handlers
+  // that call e.preventDefault() and e.stopPropagation() directly.
 
   // Helper to safely call handleAction (reduces duplication and improves readability)
   const safeHandleAction = (action, ...args) => {
@@ -407,13 +397,15 @@ export default function FloatingToolbar({
     >
       <div
         className="floating-toolbar"
-        onMouseDown={handleMouseDown}
-        onTouchStart={handleToolbarTouchStart}
+        onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
       >
         {/* Reordered buttons for priority */}
         <button
-          onMouseDown={handleMouseDown}
-          onClick={() => safeHandleAction('bold')}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            console.log('[FloatingToolbar] PointerDown: Bold button');
+            safeHandleAction('bold');
+          }}
           className={selectionState?.isBold ? 'active' : ''}
           title="Bold"
           aria-label="Bold"
@@ -421,8 +413,11 @@ export default function FloatingToolbar({
             <Bold size={18} />
         </button>
         <button
-          onMouseDown={handleMouseDown}
-          onClick={() => safeHandleAction('italic')}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            console.log('[FloatingToolbar] PointerDown: Italic button');
+            safeHandleAction('italic');
+          }}
           className={selectionState?.isItalic ? 'active' : ''}
           title="Italic"
           aria-label="Italic"
@@ -430,8 +425,11 @@ export default function FloatingToolbar({
             <Italic size={18} />
         </button>
         <button
-          onMouseDown={handleMouseDown}
-          onClick={handleListCycle}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            console.log('[FloatingToolbar] PointerDown: List cycle button');
+            handleListCycle();
+          }}
           className={selectionState?.blockType === 'ul' || selectionState?.blockType === 'ol' ? 'active' : ''}
           title="Cycle List (UL/OL/Off)"
           aria-label="Cycle List"
@@ -439,8 +437,11 @@ export default function FloatingToolbar({
             <List size={18} />
         </button>
         <button
-          onMouseDown={handleMouseDown}
-          onClick={handleHeadingCycle}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            console.log('[FloatingToolbar] PointerDown: Heading cycle button');
+            handleHeadingCycle();
+          }}
           className={selectionState?.blockType?.startsWith('h') ? 'active' : ''}
           title="Cycle Heading (H2-H6)"
           aria-label="Cycle Heading"
@@ -451,8 +452,11 @@ export default function FloatingToolbar({
         <div class="toolbar-divider"></div>
 
         <button
-          onMouseDown={handleMouseDown}
-          onClick={() => safeHandleAction('link')}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            console.log('[FloatingToolbar] PointerDown: Link button');
+            safeHandleAction('link');
+          }}
           className={selectionState?.isLink ? 'active' : ''}
           title="Insert Link"
           aria-label="Insert Link"
@@ -463,8 +467,11 @@ export default function FloatingToolbar({
         <div class="toolbar-divider"></div>
 
         <button
-          onMouseDown={handleMouseDown}
-          onClick={() => safeHandleAction('underline')}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            console.log('[FloatingToolbar] PointerDown: Underline button');
+            safeHandleAction('underline');
+          }}
           className={selectionState?.isUnderline ? 'active' : ''}
           title="Underline"
           aria-label="Underline"
@@ -472,8 +479,11 @@ export default function FloatingToolbar({
             <Underline size={18} />
         </button>
         <button
-          onMouseDown={handleMouseDown}
-          onClick={() => safeHandleAction('strikethrough')}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            console.log('[FloatingToolbar] PointerDown: Strikethrough button');
+            safeHandleAction('strikethrough');
+          }}
           className={selectionState?.isStrikethrough ? 'active' : ''}
           title="Strikethrough"
           aria-label="Strikethrough"
@@ -481,8 +491,11 @@ export default function FloatingToolbar({
             <Strikethrough size={18} />
         </button>
         <button
-          onMouseDown={handleMouseDown}
-          onClick={() => safeHandleAction('code')}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            console.log('[FloatingToolbar] PointerDown: Code button');
+            safeHandleAction('code');
+          }}
           className={selectionState?.isCode ? 'active' : ''}
           title="Inline Code"
           aria-label="Inline Code"
@@ -493,8 +506,10 @@ export default function FloatingToolbar({
         {/* Text color picker */}
         <div class="toolbar-dropdown-container" ref={colorPickerRef}>
           <button
-            onMouseDown={handleMouseDown}
-            onClick={() => setShowColorPicker(!showColorPicker)}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              setShowColorPicker(!showColorPicker);
+            }}
             className="toolbar-dropdown-trigger"
             title="Text color"
             aria-label="Text color"
@@ -507,26 +522,26 @@ export default function FloatingToolbar({
               <div class="color-grid">
                 {colors.map(color => (
                   <button
-                    onMouseDown={handleMouseDown}
-                    key={color}
-                    class="color-swatch"
-                    style={{ backgroundColor: color }}
-                    onClick={() => {
+                    onPointerDown={(e) => {
+                      e.preventDefault();
                       safeHandleAction('textColor', color);
                       setShowColorPicker(false);
                     }}
+                    key={color}
+                    class="color-swatch"
+                    style={{ backgroundColor: color }}
                     title={color}
                     aria-label={`Text color ${color}`}
                   />
                 ))}
               </div>
               <button
-                onMouseDown={handleMouseDown}
-                class="toolbar-dropdown-item"
-                onClick={() => {
+                onPointerDown={(e) => {
+                  e.preventDefault();
                   safeHandleAction('textColor', null);
                   setShowColorPicker(false);
                 }}
+                class="toolbar-dropdown-item"
               >
                 Remove color
               </button>
@@ -537,8 +552,10 @@ export default function FloatingToolbar({
         {/* Highlight color picker */}
         <div class="toolbar-dropdown-container" ref={highlightPickerRef}>
           <button
-            onMouseDown={handleMouseDown}
-            onClick={() => setShowHighlightPicker(!showHighlightPicker)}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              setShowHighlightPicker(!showHighlightPicker);
+            }}
             className="toolbar-dropdown-trigger"
             title="Highlight color"
             aria-label="Highlight color"
@@ -551,26 +568,26 @@ export default function FloatingToolbar({
               <div class="color-grid">
                 {colors.map(color => (
                   <button
-                    onMouseDown={handleMouseDown}
-                    key={color}
-                    class="color-swatch"
-                    style={{ backgroundColor: color }}
-                    onClick={() => {
+                    onPointerDown={(e) => {
+                      e.preventDefault();
                       safeHandleAction('highlightColor', color);
                       setShowHighlightPicker(false);
                     }}
+                    key={color}
+                    class="color-swatch"
+                    style={{ backgroundColor: color }}
                     title={color}
                     aria-label={`Highlight color ${color}`}
                   />
                 ))}
               </div>
               <button
-                onMouseDown={handleMouseDown}
-                class="toolbar-dropdown-item"
-                onClick={() => {
+                onPointerDown={(e) => {
+                  e.preventDefault();
                   safeHandleAction('highlightColor', null);
                   setShowHighlightPicker(false);
                 }}
+                class="toolbar-dropdown-item"
               >
                 Remove highlight
               </button>
@@ -579,8 +596,11 @@ export default function FloatingToolbar({
         </div>
 
         <button
-          onMouseDown={handleMouseDown}
-          onClick={() => safeHandleAction('clearFormatting')}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            console.log('[FloatingToolbar] PointerDown: Clear Formatting button');
+            safeHandleAction('clearFormatting');
+          }}
           title="Clear formatting"
           aria-label="Clear formatting"
         >
