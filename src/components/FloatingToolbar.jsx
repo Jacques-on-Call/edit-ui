@@ -47,7 +47,7 @@ const MIN_TOOLBAR_GAP_FROM_VIEWPORT_TOP = 8; // Minimum gap (px) from visual vie
  * - cooldownMs: number - Cooldown period between selection updates (default 200ms)
  * - caretMode: boolean - Show toolbar on collapsed selection (default false)
  */
-export default function FloatingToolbar({
+export default function FloatingToolbar({ 
   handleAction, 
   selectionState, 
   editorRootSelector = '.editor-root',
@@ -55,17 +55,12 @@ export default function FloatingToolbar({
   cooldownMs = 200, // Configurable cooldown to prevent selection loop spam
   caretMode = false // Opt-in to show toolbar on caret (collapsed selection), default false to avoid mobile keyboard loops
 }) {
-  console.log('[FloatingToolbar] Component INSTANTIATED');
   const [position, setPosition] = useState({ top: 0, left: 0, visible: false });
   const [showBlockDropdown, setShowBlockDropdown] = useState(false);
   const [showAlignDropdown, setShowAlignDropdown] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
-  const toolbarNodeRef = useRef(null);
-  const toolbarRef = useCallback((node) => {
-    toolbarNodeRef.current = node;
-  }, []);
-  const toolbarSizeRef = useRef({ width: 0, height: 0 }); // New ref for measured size
+  const toolbarRef = useRef(null);
   const blockDropdownRef = useRef(null);
   const alignDropdownRef = useRef(null);
   const colorPickerRef = useRef(null);
@@ -132,25 +127,6 @@ export default function FloatingToolbar({
       });
     }
   }, []);
-
-  // NEW: useEffect for single, delayed measurement after initial render
-  useEffect(() => {
-    const measureToolbar = () => {
-      if (toolbarNodeRef.current) {
-        const rect = toolbarNodeRef.current.getBoundingClientRect();
-        if (rect.width > 0 && rect.height > 0) {
-          toolbarSizeRef.current = { width: rect.width, height: rect.height };
-          console.log(`[TBar Measure] SUCCESS: Stored toolbar size: w:${rect.width}, h:${rect.height}`);
-        } else {
-          // If measurement is zero, retry once, but log a warning
-          console.warn(`[TBar Measure] WARNING: Initial size is w:${rect.width}, h:${rect.height}. Retrying measurement in 100ms.`);
-          setTimeout(measureToolbar, 100);
-        }
-      }
-    };
-    // Use a timeout to ensure the toolbar has been rendered and styled in the DOM
-    setTimeout(measureToolbar, 0);
-  }, [toolbarRef]); // Rerun when the callback ref changes
   
 
   const updatePosition = useCallback(() => {
@@ -167,23 +143,16 @@ export default function FloatingToolbar({
       return;
     }
 
-    const toolbarElement = toolbarNodeRef.current;
+    const toolbarElement = toolbarRef.current;
     if (!toolbarElement) return;
 
     const range = selection.getRangeAt(0);
     const selectionRect = range.getBoundingClientRect();
 
-    const toolbarRect = toolbarSizeRef.current; // <--- USE REF SIZE HERE
+    const toolbarRect = toolbarElement.getBoundingClientRect();
 
-    // CRITICAL GUARD: Do not position if size is still zero
-    if (toolbarRect.width === 0) {
-        console.warn(`[TBar Pos] Positioning aborted: Stored toolbar width is 0. Waiting for measurement.`);
-        // Ensure visibility is false until we have dimensions
-        if (position.visible) {
-             setPosition({ top: 0, left: 0, visible: false });
-        }
-        return;
-    }
+    // Critical guard: if toolbar has no width, it's not rendered yet.
+    // if (toolbarRect.width === 0) return;
 
     // Use visualViewport for mobile-first, robust positioning
     const vp = window.visualViewport || {
@@ -216,13 +185,6 @@ export default function FloatingToolbar({
     const minLeft = vp.pageLeft + VIEWPORT_PADDING;
     const maxLeft = vp.pageLeft + vp.width - toolbarRect.width - VIEWPORT_PADDING;
     left = Math.max(minLeft, Math.min(left, maxLeft));
-
-    console.log(
-      `[TBar Pos] sel(t:${Math.round(selectionRect.top)}, l:${Math.round(selectionRect.left)}, w:${Math.round(selectionRect.width)}, h:${Math.round(selectionRect.height)}) ` +
-      `| tbar(w:${Math.round(toolbarRect.width)}, h:${Math.round(toolbarRect.height)}) ` +
-      `| vp(w:${Math.round(vp.width)}, h:${Math.round(vp.height)}, pT:${Math.round(vp.pageTop)}, pL:${Math.round(vp.pageLeft)}) ` +
-      `| final(t:${Math.round(top)}, l:${Math.round(left)})`
-    );
 
     setPosition({ top, left, visible: true });
   }, [position.visible]);
