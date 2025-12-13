@@ -4,13 +4,13 @@
 
 /* Liquid glass background */ background: linear-gradient( 180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 20%, rgba(0, 0, 0, 0.03) 100% ); backdrop-filter: blur(var(--toolbar-blur)) saturate(var(--toolbar-saturation)); -webkit-backdrop-filter: blur(var(--toolbar-blur)) saturate(var(--toolbar-saturation));
 
-border: 1px solid var(--toolbar-border); border-radius: 12px; padding: 6px; display: flex; /* Changed to row for horizontal layout / flex-direction: row; align-items: center; / Enable horizontal scrolling / overflow-x: auto; overflow-y: hidden; / Hide scrollbar for a cleaner look / scrollbar-width: none; / Firefox */
+border: 1px solid var(--toolbar-border); border-radius: 12px; padding: 6px; display: flex; /* Changed to row for horizontal layout */ flex-direction: row; align-items: center; /* Enable horizontal scrolling */ overflow-x: auto; overflow-y: hidden; /* Hide scrollbar for a cleaner look */ scrollbar-width: none; /* Firefox */
 
 /* Liquid glass shadows */ box-shadow: 0 10px 30px -10px var(--toolbar-shadow-dark), inset 0 6px 12px -8px rgba(255, 255, 255, 0.08), inset 0 -18px 40px -20px var(--toolbar-inner-shadow);
 
 z-index: 10000; animation: fadeIn 0.2s ease-out;
 
-/* GPU acceleration / transform-style: preserve-3d; will-change: transform, opacity; / Set a max-width to control the visible area on mobile / max-width: 210px; / Approx 4.5 buttons visible */
+/* GPU acceleration */ transform-style: preserve-3d; will-change: transform, opacity; /* Set a max-width to control the visible area on mobile */ max-width: 210px; /* Approx 4.5 buttons visible */
 
 /* Fade-out effect on the right to indicate scrollability */ -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); }
 
@@ -18,7 +18,8 @@ z-index: 10000; animation: fadeIn 0.2s ease-out;
 
 .floating-toolbar .toolbar-group { display: flex; gap: 3px; }
 
-/* Icon-only buttons: compact square buttons / .floating-toolbar::-webkit-scrollbar { display: none; / Safari and Chrome */ }
+/* Icon-only buttons: compact square buttons */
+.floating-toolbar::-webkit-scrollbar { display: none; /* Safari and Chrome */ }
 
 .floating-toolbar button { background: transparent; border: none; color: rgba(255, 255, 255, 0.85); width: var(--toolbar-button-size); height: var(--toolbar-button-size); padding: 0; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all var(--toolbar-transition) ease; position: relative; }
 
@@ -28,7 +29,8 @@ z-index: 10000; animation: fadeIn 0.2s ease-out;
 
 .floating-toolbar button:active { transform: translateY(1px) scale(0.97); background-color: rgba(255, 255, 255, 0.08); }
 
-/* New container to hold both toolbar and arrow for positioning / .floating-toolbar-container { position: absolute; / This container will be positioned, the inner toolbar is just for content / z-index: 10000; display: flex; flex-direction: column; align-items: center; / Use filter for drop shadow to avoid affecting layout */ filter: drop-shadow(0 10px 15px rgba(0,0,0,0.25)); }
+/* New container to hold both toolbar and arrow for positioning */
+.floating-toolbar-container { position: absolute; /* This container will be positioned, the inner toolbar is just for content */ z-index: 10000; display: flex; flex-direction: column; align-items: center; /* Use filter for drop shadow to avoid affecting layout */ filter: drop-shadow(0 10px 15px rgba(0,0,0,0.25)); }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.95); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
 
@@ -70,6 +72,6 @@ z-index: 10001; animation: dropdownFadeIn 0.2s ease-out; }
 
 .color-swatch:active { transform: scale(1.05) translateY(0); }
 
-/* Debug instrumentation dot - only shown when debug mode is enabled */ .floating-toolbar-debug-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 0 8px rgba(239, 68, 68, 0.6), 0 0 4px rgba(239, 68, 68, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.4); animation: debugPulse 2s ease-in-out infinite; z-index: 10; }
+/* Debug instrumentation dot - only shown when debug mode is enabled */ .floating-toolbar-debug-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-schadow: 0 0 8px rgba(239, 68, 68, 0.6), 0 0 4px rgba(239, 68, 68, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.4); animation: debugPulse 2s ease-in-out infinite; z-index: 10; }
 
 @keyframes debugPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.15); } }

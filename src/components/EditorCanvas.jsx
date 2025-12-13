@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { useState, useContext, useEffect, useMemo } from 'preact/hooks';
-import EditorFloatingToolbar from './EditorFloatingToolbar';
+import FloatingToolbar from './FloatingToolbar';
 import SlideoutToolbar from './SlideoutToolbar';
 import BottomActionBar from './BottomActionBar';
 import AddSectionModal from './AddSectionModal';
@@ -43,7 +43,7 @@ export default function EditorCanvas(props) {
   return (
     <div class="flex flex-col h-full bg-transparent text-white relative">
       {isEditorReady && (
-        <EditorFloatingToolbar
+        <FloatingToolbar
           editorRootSelector=".editor-input"
           offset={toolbarOffset}
           cooldownMs={200}
