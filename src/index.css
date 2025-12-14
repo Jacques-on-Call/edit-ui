@@ -222,6 +222,14 @@ button[type="button"] svg {
   font-size: 0.875em;
 }
 
+.editor-input strong {
+  font-weight: bold;
+}
+
+.editor-input em {
+  font-style: italic;
+}
+
 /* Highlight text formatting */
 .editor-input mark,
 .editor-input [data-lexical-highlight="true"],

@@ -79,18 +79,6 @@ export default function SlideoutToolbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen, isExpanded]);
 
-  const handleInsert = (action, ...args) => {
-    console.log('[SlideoutToolbar] Action triggered:', action, 'activeEditor:', !!activeEditor);
-    if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
-    if (!activeEditor) {
-      console.warn('[SlideoutToolbar] No active editor, action may not work:', action);
-    }
-    handleAction(action, ...args);
-    // Close toolbar after selection
-    setIsExpanded(false);
-    setIsOpen(false);
-  };
-
   const toggleOpen = () => {
     if (!isOpen) {
       // Open in collapsed (icon-rail) state
@@ -112,7 +100,7 @@ export default function SlideoutToolbar() {
       id: 'undo',
       icon: Undo,
       label: 'Undo',
-      action: () => handleInsert('undo'),
+      action: 'undo',
       ariaLabel: 'Undo',
       category: 'History'
     },
@@ -120,7 +108,7 @@ export default function SlideoutToolbar() {
       id: 'redo',
       icon: Redo,
       label: 'Redo',
-      action: () => handleInsert('redo'),
+      action: 'redo',
       ariaLabel: 'Redo',
       category: 'History'
     },
@@ -129,7 +117,8 @@ export default function SlideoutToolbar() {
       id: 'heading-2',
       icon: Heading2,
       label: 'Heading 2',
-      action: () => handleInsert('heading', 'h2'),
+      action: 'heading',
+      payload: 'h2',
       ariaLabel: 'Insert Heading 2',
       category: 'Headings'
     },
@@ -137,7 +126,8 @@ export default function SlideoutToolbar() {
       id: 'heading-3',
       icon: Heading3,
       label: 'Heading 3',
-      action: () => handleInsert('heading', 'h3'),
+      action: 'heading',
+      payload: 'h3',
       ariaLabel: 'Insert Heading 3',
       category: 'Headings'
     },
@@ -145,7 +135,8 @@ export default function SlideoutToolbar() {
       id: 'heading-4',
       icon: Heading4,
       label: 'Heading 4',
-      action: () => handleInsert('heading', 'h4'),
+      action: 'heading',
+      payload: 'h4',
       ariaLabel: 'Insert Heading 4',
       category: 'Headings'
     },
@@ -153,7 +144,8 @@ export default function SlideoutToolbar() {
       id: 'heading-5',
       icon: Heading5,
       label: 'Heading 5',
-      action: () => handleInsert('heading', 'h5'),
+      action: 'heading',
+      payload: 'h5',
       ariaLabel: 'Insert Heading 5',
       category: 'Headings'
     },
@@ -161,7 +153,8 @@ export default function SlideoutToolbar() {
       id: 'heading-6',
       icon: Heading6,
       label: 'Heading 6',
-      action: () => handleInsert('heading', 'h6'),
+      action: 'heading',
+      payload: 'h6',
       ariaLabel: 'Insert Heading 6',
       category: 'Headings'
     },
@@ -170,7 +163,8 @@ export default function SlideoutToolbar() {
       id: 'bullet-list',
       icon: List,
       label: 'Bullet List',
-      action: () => handleInsert('list', 'ul'),
+      action: 'list',
+      payload: 'ul',
       ariaLabel: 'Insert Bullet List',
       category: 'Lists'
     },
@@ -178,7 +172,8 @@ export default function SlideoutToolbar() {
       id: 'numbered-list',
       icon: ListOrdered,
       label: 'Numbered List',
-      action: () => handleInsert('list', 'ol'),
+      action: 'list',
+      payload: 'ol',
       ariaLabel: 'Insert Numbered List',
       category: 'Lists'
     },
@@ -187,7 +182,7 @@ export default function SlideoutToolbar() {
       id: 'horizontal-rule',
       icon: Minus,
       label: 'Horizontal Rule',
-      action: () => handleInsert('horizontalRule'),
+      action: 'horizontalRule',
       ariaLabel: 'Insert Horizontal Rule',
       category: 'Structure'
     },
@@ -195,7 +190,7 @@ export default function SlideoutToolbar() {
       id: 'page-break',
       icon: FileText,
       label: 'Page Break',
-      action: () => handleInsert('pageBreak'),
+      action: 'pageBreak',
       ariaLabel: 'Insert Page Break',
       category: 'Structure'
     },
@@ -203,7 +198,7 @@ export default function SlideoutToolbar() {
       id: 'table',
       icon: Table,
       label: 'Table',
-      action: () => handleInsert('table'),
+      action: 'table',
       ariaLabel: 'Insert Table',
       category: 'Structure'
     },
@@ -212,7 +207,7 @@ export default function SlideoutToolbar() {
       id: 'image',
       icon: Image,
       label: 'Image',
-      action: () => handleInsert('image'),
+      action: 'image',
       ariaLabel: 'Insert Image',
       category: 'Media'
     },
@@ -221,7 +216,8 @@ export default function SlideoutToolbar() {
       id: 'columns',
       icon: Columns,
       label: 'Columns Layout',
-      action: () => handleInsert('columns', 2),
+      action: 'columns',
+      payload: 2,
       ariaLabel: 'Insert Columns Layout',
       category: 'Layout'
     },
@@ -229,7 +225,7 @@ export default function SlideoutToolbar() {
       id: 'collapsible',
       icon: ChevronDown,
       label: 'Collapsible',
-      action: () => handleInsert('collapsible'),
+      action: 'collapsible',
       ariaLabel: 'Insert Collapsible Container',
       category: 'Layout'
     },
@@ -238,7 +234,7 @@ export default function SlideoutToolbar() {
       id: 'date',
       icon: Calendar,
       label: 'Date',
-      action: () => handleInsert('date'),
+      action: 'date',
       ariaLabel: 'Insert Current Date',
       category: 'Utility'
     },
@@ -350,8 +346,12 @@ export default function SlideoutToolbar() {
                             key={item.id}
                             onPointerDown={(e) => {
                               e.preventDefault();
+                              if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
                               console.log(`[SlideoutToolbar] PointerDown: ${item.label} button`);
-                              item.action();
+                              handleAction(item.action, item.payload);
+                              // Close toolbar after selection
+                              setIsExpanded(false);
+                              setIsOpen(false);
                             }}
                             className="toolbar-item"
                             aria-label={item.ariaLabel}

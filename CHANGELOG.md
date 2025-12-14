@@ -1,26 +1,30 @@
 # Project Change Log
 
-Jules #218 (fix): Prevent Toolbar from Stealing Editor Focus
+Jules #218 (fix): Stabilize Editor Toolbars and Fix Invisible Styling
 Date: 2025-12-10
 Summary:
-Fixed a critical bug where clicking any button on the rich-text toolbars (`FloatingToolbar` and `SlideoutToolbar`) would cause the main editor to lose focus, preventing the formatting action from being applied. This was a classic race condition between the editor's `blur` event and the button's `click` event.
+Fixed two critical bugs that were making the rich-text editor toolbars non-functional. The first bug was a race condition that caused the editor to lose focus when a toolbar button was clicked. The second was a CSS issue that made `<strong>` and `<em>` tags visually indistinguishable from normal text.
 
 Details:
-- **The Race Condition:** When a user clicked a toolbar button, the editor's `blur` event would fire first, which immediately cleared the `activeEditor` from the global context. By the time the button's `click` handler fired milliseconds later, there was no active editor to send the command to.
-- **The Solution (Interaction Ref):**
-  - A new `isToolbarInteractionRef` was added to the `EditorContext`.
-  - When the user presses down on the toolbar (`onPointerDown`), this ref is set to `true`.
-  - The editor's `blur` handler was modified. It now waits for a short delay, and before clearing the active editor, it checks if `isToolbarInteractionRef.current` is `true`.
-  - If it is, the blur handler aborts, leaving the editor active and allowing the button's `click` handler to execute successfully.
-  - The toolbar interaction ref is reset to `false` after a short timeout, ensuring normal blur behavior is restored after the toolbar action is complete.
+- **Focus Race Condition Fix (Interaction Ref):**
+  - **The Problem:** When a user clicked a toolbar button, the editor's `blur` event would fire and clear the active editor from the global context before the button's `click` handler could execute.
+  - **The Solution:** An "interaction lock" was implemented using a shared `isToolbarInteractionRef`. The toolbars now set this ref to `true` on `pointerdown`. The editor's `blur` handler checks this ref and aborts if a toolbar interaction is in progress, preventing the focus from being cleared. The ref is then reset to `false` to restore normal blur behavior.
+
+- **Invisible Styling Fix (CSS):**
+  - **The Problem:** After the focus issue was fixed, it was discovered that formatting was being applied to the HTML (e.g., wrapping text in `<strong>` tags), but the text did not appear bold.
+  - **The Solution:** Explicit CSS rules were added to `easy-seo/src/index.css` to ensure that `<strong>` and `<em>` tags within the `.editor-input` scope are rendered with `font-weight: bold;` and `font-style: italic;` respectively.
+
+- **Stale State Bug in `SlideoutToolbar`:**
+  - **The Problem:** The `SlideoutToolbar` was still failing because its action handlers were created with a stale reference to the `handleAction` function, causing it to call the function when the `activeEditor` was `null`.
+  - **The Solution:** The component was refactored to remove the intermediate `handleInsert` function. The toolbar buttons now call `handleAction` directly from the context, ensuring they always have the most up-to-date reference.
 
 Impact:
-The rich-text formatting toolbars (both floating and slide-out) are now fully functional and reliable. Users can select text and apply formatting without the editor losing focus, providing a smooth and intuitive editing experience.
+The rich-text formatting toolbars are now fully functional, reliable, and visually correct. Users can apply all formatting options and see the results immediately, providing a smooth and intuitive editing experience on all devices.
 
 Reflection:
-- **What was the most challenging part of this task?** The most challenging part was correctly diagnosing the race condition. The logs showed the blur event happening, but it wasn't immediately obvious that it was happening *before* the click event could be processed.
-- **What was a surprising discovery or key learning?** A shared `useRef` is an elegant and powerful pattern for coordinating state between otherwise decoupled components (the editor field and the toolbar) without triggering unnecessary re-renders. It's a perfect solution for managing transient UI states like this.
-- **What advice would you give the next agent who works on this code?** When debugging issues related to focus and UI events, always think about the sequence of events. `mousedown`/`pointerdown` fires before `blur`, which fires before `mouseup` and `click`. Using the `down` event to set a state and the `blur` event to check it is a reliable way to handle these kinds of race conditions.
+- **What was the most challenging part of this task?** The most challenging part was the multi-layered nature of the bug. Fixing the focus issue only revealed a deeper styling problem, which in turn revealed a stale state bug in one of the components. It required a methodical, iterative debugging process.
+- **What was a surprising discovery or key learning?** A shared `useRef` is an incredibly powerful and elegant pattern for coordinating state between decoupled components (like the editor field and the toolbars) without triggering re-renders. It's the perfect solution for managing transient UI states.
+- **What advice would you give the next agent who works on this code?** When debugging a UI that doesn't "look" right, always verify the underlying data/HTML first. The browser's inspector is your best friend. If the HTML is correct but the styling isn't, you know it's a CSS issue. If the HTML isn't correct, you know the problem is in the JavaScript logic.
 
 ---
 
