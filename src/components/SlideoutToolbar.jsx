@@ -28,7 +28,7 @@ import './SlideoutToolbar.css';
  * - handleAction: (action: string, payload?: any) => void - Handler for toolbar actions
  */
 export default function SlideoutToolbar() {
-  const { activeEditor, handleAction } = useEditor();
+  const { activeEditor, handleAction, isToolbarInteractionRef } = useEditor();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const toolbarRef = useRef(null);
@@ -81,6 +81,7 @@ export default function SlideoutToolbar() {
 
   const handleInsert = (action, ...args) => {
     console.log('[SlideoutToolbar] Action triggered:', action, 'activeEditor:', !!activeEditor);
+    if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
     if (!activeEditor) {
       console.warn('[SlideoutToolbar] No active editor, action may not work:', action);
     }
@@ -269,7 +270,11 @@ export default function SlideoutToolbar() {
       <button
         ref={hamburgerRef}
         className="floating-hamburger"
-        onPointerDown={(e) => { e.preventDefault(); toggleOpen(); }}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
+          toggleOpen();
+        }}
         aria-label={isExpanded ? 'Close menu' : isOpen ? 'Expand menu' : 'Open menu'}
         aria-expanded={isOpen || isExpanded}
         title="Insert elements"
@@ -293,6 +298,7 @@ export default function SlideoutToolbar() {
               <button
                 onPointerDown={(e) => {
                   e.preventDefault();
+                  if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
                   setIsExpanded(false);
                   setIsOpen(false);
                 }}
@@ -318,7 +324,11 @@ export default function SlideoutToolbar() {
                   {isExpanded && (
                     <button 
                       className="toolbar-category-header"
-                      onPointerDown={(e) => { e.preventDefault(); toggleGroup(categoryName); }}
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
+                        toggleGroup(categoryName);
+                      }}
                       aria-expanded={isCategoryExpanded}
                       aria-label={`${isCategoryExpanded ? 'Collapse' : 'Expand'} ${categoryName} section`}
                     >

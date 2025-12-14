@@ -6,6 +6,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   Type, Palette, Highlighter, Eraser, ChevronDown
 } from 'lucide-preact';
+import { useEditor } from '../contexts/EditorContext';
 import './FloatingToolbar.css';
 
 // iOS viewport positioning constants
@@ -55,6 +56,7 @@ export default function FloatingToolbar({
   cooldownMs = 200, // Configurable cooldown to prevent selection loop spam
   caretMode = false // Opt-in to show toolbar on caret (collapsed selection), default false to avoid mobile keyboard loops
 }) {
+  const { isToolbarInteractionRef } = useEditor();
   const [position, setPosition] = useState({ top: 0, left: 0, visible: false });
   const [showBlockDropdown, setShowBlockDropdown] = useState(false);
   const [showAlignDropdown, setShowAlignDropdown] = useState(false);
@@ -404,6 +406,7 @@ export default function FloatingToolbar({
           onPointerDown={(e) => {
             e.preventDefault();
             console.log('[FloatingToolbar] PointerDown: Bold button');
+            if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
             safeHandleAction('bold');
           }}
           className={selectionState?.isBold ? 'active' : ''}
@@ -416,6 +419,7 @@ export default function FloatingToolbar({
           onPointerDown={(e) => {
             e.preventDefault();
             console.log('[FloatingToolbar] PointerDown: Italic button');
+            if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
             safeHandleAction('italic');
           }}
           className={selectionState?.isItalic ? 'active' : ''}
@@ -428,6 +432,7 @@ export default function FloatingToolbar({
           onPointerDown={(e) => {
             e.preventDefault();
             console.log('[FloatingToolbar] PointerDown: List cycle button');
+            if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
             handleListCycle();
           }}
           className={selectionState?.blockType === 'ul' || selectionState?.blockType === 'ol' ? 'active' : ''}
@@ -440,6 +445,7 @@ export default function FloatingToolbar({
           onPointerDown={(e) => {
             e.preventDefault();
             console.log('[FloatingToolbar] PointerDown: Heading cycle button');
+            if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
             handleHeadingCycle();
           }}
           className={selectionState?.blockType?.startsWith('h') ? 'active' : ''}
@@ -455,6 +461,7 @@ export default function FloatingToolbar({
           onPointerDown={(e) => {
             e.preventDefault();
             console.log('[FloatingToolbar] PointerDown: Link button');
+            if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
             safeHandleAction('link');
           }}
           className={selectionState?.isLink ? 'active' : ''}
@@ -470,6 +477,7 @@ export default function FloatingToolbar({
           onPointerDown={(e) => {
             e.preventDefault();
             console.log('[FloatingToolbar] PointerDown: Underline button');
+            if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
             safeHandleAction('underline');
           }}
           className={selectionState?.isUnderline ? 'active' : ''}
@@ -482,6 +490,7 @@ export default function FloatingToolbar({
           onPointerDown={(e) => {
             e.preventDefault();
             console.log('[FloatingToolbar] PointerDown: Strikethrough button');
+            if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
             safeHandleAction('strikethrough');
           }}
           className={selectionState?.isStrikethrough ? 'active' : ''}
@@ -494,6 +503,7 @@ export default function FloatingToolbar({
           onPointerDown={(e) => {
             e.preventDefault();
             console.log('[FloatingToolbar] PointerDown: Code button');
+            if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
             safeHandleAction('code');
           }}
           className={selectionState?.isCode ? 'active' : ''}
@@ -508,6 +518,7 @@ export default function FloatingToolbar({
           <button
             onPointerDown={(e) => {
               e.preventDefault();
+              if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
               setShowColorPicker(!showColorPicker);
             }}
             className="toolbar-dropdown-trigger"
@@ -524,6 +535,7 @@ export default function FloatingToolbar({
                   <button
                     onPointerDown={(e) => {
                       e.preventDefault();
+                      if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
                       safeHandleAction('textColor', color);
                       setShowColorPicker(false);
                     }}
@@ -538,6 +550,7 @@ export default function FloatingToolbar({
               <button
                 onPointerDown={(e) => {
                   e.preventDefault();
+                  if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
                   safeHandleAction('textColor', null);
                   setShowColorPicker(false);
                 }}
@@ -554,6 +567,7 @@ export default function FloatingToolbar({
           <button
             onPointerDown={(e) => {
               e.preventDefault();
+              if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
               setShowHighlightPicker(!showHighlightPicker);
             }}
             className="toolbar-dropdown-trigger"
@@ -570,6 +584,7 @@ export default function FloatingToolbar({
                   <button
                     onPointerDown={(e) => {
                       e.preventDefault();
+                      if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
                       safeHandleAction('highlightColor', color);
                       setShowHighlightPicker(false);
                     }}
@@ -584,6 +599,7 @@ export default function FloatingToolbar({
               <button
                 onPointerDown={(e) => {
                   e.preventDefault();
+                  if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
                   safeHandleAction('highlightColor', null);
                   setShowHighlightPicker(false);
                 }}
@@ -599,6 +615,7 @@ export default function FloatingToolbar({
           onPointerDown={(e) => {
             e.preventDefault();
             console.log('[FloatingToolbar] PointerDown: Clear Formatting button');
+            if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
             safeHandleAction('clearFormatting');
           }}
           title="Clear formatting"

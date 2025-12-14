@@ -30,6 +30,8 @@ export default function LexicalField({ value, onChange, placeholder, className, 
       // If they are, we abort the clear and let the toolbar handle things.
       if (isToolbarInteractionRef?.current) {
         console.log('[LexicalField] Aborting clear: Toolbar interaction detected.');
+        // Reset the flag after checking it.
+        isToolbarInteractionRef.current = false;
         return;
       }
       console.log('[LexicalField] handleBlur Timeout: Delay complete and no toolbar interaction detected. Clearing active editor.');
