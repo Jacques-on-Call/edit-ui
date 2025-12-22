@@ -1,3 +1,4 @@
+import { memo } from 'preact/compat';
 import { useState, useRef, useCallback } from 'preact/hooks';
 import Icon from './Icon.jsx';
 import ContextMenu from './ContextMenu.jsx';
@@ -123,4 +124,7 @@ function FileTile({ file, isSelected, metadata, hasDraft, isPublished, onOpen, o
   );
 }
 
-export default FileTile;
+// ⚡ Bolt: Memoized FileTile to prevent unnecessary re-renders in the file explorer.
+// This is a significant performance boost when navigating and selecting files in large folders,
+// as it avoids re-rendering every single tile when only one tile's state (e.g., isSelected) changes.
+export default memo(FileTile);
