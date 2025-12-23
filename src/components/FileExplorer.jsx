@@ -183,12 +183,6 @@ return a.name.localeCompare(b.name);
 });
 setFiles(sortedData);
 
-sortedData.forEach(file => {
-  if (!file.isDraft) {
-    fetchDetailsForFile(file);
-  }
-});
-
 const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');
 if (readmeFile) {
 setReadmeLoading(true);
@@ -395,6 +389,7 @@ return (
                       isPublished={isPublished}
                       onOpen={handleOpen}
                       onShowActions={handleLongPress}
+                      fetchDetailsForFile={fetchDetailsForFile}
                     />
                   );
                 })}

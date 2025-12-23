@@ -1,7 +1,13 @@
 import { memo } from 'preact/compat';
-import { useState, useRef, useCallback } from 'preact/hooks';
+import { useState, useRef, useCallback, useEffect } from 'preact/hooks';
 import Icon from './Icon.jsx';
 import ContextMenu from './ContextMenu.jsx';
+import { useOnScreen } from '../hooks/useOnScreen';
+
+// ⚡ Bolt: Define Intersection Observer options outside the component.
+// This ensures the options object is stable and not recreated on every render,
+// preventing the `useOnScreen` hook from re-triggering its `useEffect` needlessly.
+const onScreenOptions = { rootMargin: '200px' };
 
 function formatRelativeDate(dateString) {
   if (!dateString) return '';
@@ -24,7 +30,23 @@ function getIconForFile(fileName) {
   return 'File';
 }
 
-function FileTile({ file, isSelected, metadata, hasDraft, isPublished, onOpen, onShowActions }) {
+function FileTile({ file, isSelected, metadata, hasDraft, isPublished, onOpen, onShowActions, fetchDetailsForFile }) {
+  // ⚡ Bolt: Set up Intersection Observer for lazy loading metadata.
+  // The ref is attached to the tile's root element. `isOnScreen` becomes true
+  // when the tile enters the viewport. We add a rootMargin to fetch data
+  // just before the tile becomes visible for a smoother experience.
+  const [ref, isOnScreen] = useOnScreen(onScreenOptions);
+
+  // ⚡ Bolt: Trigger data fetching when the component becomes visible.
+  useEffect(() => {
+    // This effect runs when the tile's visibility changes.
+    // It fetches details only if the tile is on screen, it's not a local draft,
+    // and metadata hasn't already been loaded. This prevents the N+1 problem.
+    if (isOnScreen && !file.isDraft && !metadata && fetchDetailsForFile) {
+      fetchDetailsForFile(file);
+    }
+  }, [isOnScreen, file, metadata, fetchDetailsForFile]);
+
   const longPressTimer = useRef();
   const isLongPress = useRef(false);
 
@@ -84,6 +106,7 @@ function FileTile({ file, isSelected, metadata, hasDraft, isPublished, onOpen, o
   return (
     <>
       <div
+        ref={ref}
         className={tileClassName}
         onClick={handleClick}
         onMouseDown={handleMouseDown}
@@ -114,10 +137,15 @@ function FileTile({ file, isSelected, metadata, hasDraft, isPublished, onOpen, o
             </div>
           </div>
         </div>
-        {metadata?.lastEditor && (
+        {metadata ? (
           <div className="flex-shrink-0 text-xs text-gray-500 mt-1 truncate w-full">
-            {metadata.lastEditor} - {formatRelativeDate(metadata.lastModified)}
+            {metadata.lastEditor
+              ? `${metadata.lastEditor} - ${formatRelativeDate(metadata.lastModified)}`
+              : '\u00A0' /* &nbsp; to maintain layout */}
           </div>
+        ) : (
+          // ⚡ Bolt: Placeholder to prevent layout shift while metadata is loading.
+          <div className="flex-shrink-0 h-4 w-full mt-1" />
         )}
       </div>
     </>
