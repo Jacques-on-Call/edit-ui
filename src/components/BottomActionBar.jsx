@@ -1,10 +1,11 @@
 import { h } from 'preact';
+import { memo } from 'preact/compat';
 import { route } from 'preact-router';
 import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil } from 'lucide-preact';
 import './BottomActionBar.css';
 import { getPageScoreColor } from '../lib/pageScoring';
 
-export default function BottomActionBar({ 
+const BottomActionBar = memo(({
   saveStatus, 
   syncStatus = 'idle', 
   viewMode = 'editor', 
@@ -123,4 +124,11 @@ export default function BottomActionBar({
       )}
     </footer>
   );
-}
+});
+
+// ⚡ Bolt: Memoized BottomActionBar to prevent unnecessary re-renders.
+// This is a presentational component that receives several props. Without memoization,
+// it would re-render every time its parent component re-renders, even if its own props
+// haven't changed. This optimization improves UI responsiveness, especially during
+// frequent state updates in the editor (e.g., typing).
+export default BottomActionBar;
