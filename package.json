@@ -22,6 +22,7 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@preact/preset-vite": "^2.10.2",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
