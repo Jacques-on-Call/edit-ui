@@ -9,8 +9,6 @@ import { fetchJson } from '../lib/fetchJson';
 
 export function RepoSelectPage() {
   const { user, isAuthenticated, isLoading, repositories, selectRepo } = useAuth();
-  const [validationState, setValidationState] = useState({});
-  const [error, setError] = useState(null);
 
 
   if (isLoading) {
@@ -26,27 +24,12 @@ export function RepoSelectPage() {
     return null;
   }
 
-  const handleSelectRepo = async (repo) => {
-    // Set loading state for the specific repo
-    setValidationState(prev => ({ ...prev, [repo.full_name]: 'validating' }));
-    setError(null);
-
-    try {
-      // Check if src/pages exists
-      const response = await fetchJson(`/api/repo/validate?repo=${repo.full_name}`);
-
-      if (response && response.isValid) {
-        setValidationState(prev => ({ ...prev, [repo.full_name]: 'valid' }));
-        selectRepo(repo);
-        route('/explorer');
-      } else {
-        throw new Error("Repository does not contain a 'src/pages' directory.");
-      }
-    } catch (err) {
-      console.error("Repo validation error:", err);
-      setValidationState(prev => ({ ...prev, [repo.full_name]: 'invalid' }));
-      setError(`'${repo.full_name}' is not a valid project. It must contain a 'src/pages' directory.`);
-    }
+  // The repository list is pre-filtered by the backend (`/api/repos`) to only include
+  // repositories that contain a `src/pages` directory. Therefore, no additional
+  // client-side validation is needed before selecting a repository.
+  const handleSelectRepo = (repo) => {
+    selectRepo(repo);
+    route('/explorer');
   };
 
   return (
@@ -62,30 +45,17 @@ export function RepoSelectPage() {
 
         <main className="w-full">
           <div className="flex flex-col items-center gap-4">
-            {error && (
-                <div className="w-full bg-red-500/20 border border-red-500/50 text-red-200 p-3 rounded-lg text-center">
-                    {error}
-                </div>
-            )}
             {repositories.length > 0 ? (
-              repositories.map((repo) => {
-                const isvalidating = validationState[repo.full_name] === 'validating';
-                return (
-                    <button
-                      key={repo.id}
-                      className="w-full bg-white/5 hover:bg-white/10 text-white font-semibold flex items-center justify-center gap-3 py-4 px-6 rounded-xl border border-white/20 backdrop-blur-sm shadow-md transition-all duration-300 transform hover:shadow-xl hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                      onClick={() => handleSelectRepo(repo)}
-                      disabled={isvalidating}
-                    >
-                      {isvalidating ? (
-                        <Loader className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <Github className="w-5 h-5 text-accent-lime" />
-                      )}
-                      <span>{repo.name}</span>
-                    </button>
-                )
-            })
+              repositories.map((repo) => (
+                <button
+                  key={repo.id}
+                  className="w-full bg-white/5 hover:bg-white/10 text-white font-semibold flex items-center justify-center gap-3 py-4 px-6 rounded-xl border border-white/20 backdrop-blur-sm shadow-md transition-all duration-300 transform hover:shadow-xl hover:-translate-y-1"
+                  onClick={() => handleSelectRepo(repo)}
+                >
+                  <Github className="w-5 h-5 text-accent-lime" />
+                  <span>{repo.name}</span>
+                </button>
+              ))
             ) : (
               <div className="text-center bg-black/20 p-6 rounded-lg border border-white/10">
                 <AlertTriangle className="mx-auto h-12 w-12 text-accent-lime/50 mb-4" />
