@@ -5,17 +5,18 @@ import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Penc
 import './BottomActionBar.css';
 import { getPageScoreColor } from '../lib/pageScoring';
 
-const BottomActionBar = memo(({
-  saveStatus, 
-  syncStatus = 'idle', 
-  viewMode = 'editor', 
-  previewState = 'idle', // 'idle' | 'building' | 'ready'
-  pageScore = null, // Page Score (0-100) or null if not calculated
-  onSync, 
-  onAdd, 
-  onPreview,
-  onRefreshPreview
-}) {
+const BottomActionBar = memo((props) => {
+  const {
+    saveStatus,
+    syncStatus = 'idle',
+    viewMode = 'editor',
+    previewState = 'idle',
+    pageScore = null,
+    onSync,
+    onAdd,
+    onPreview,
+    onRefreshPreview
+  } = props;
   const getStatusColor = () => {
     if (saveStatus === 'saved') return 'bg-yellow-green';
     return 'bg-scarlet';
