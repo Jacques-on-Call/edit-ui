@@ -95,32 +95,29 @@ performSearch(searchQuery);
 
 const RELEVANT_EXTENSIONS = ['.md', '.mdx', '.astro'];
 
+// ⚡ Bolt: This function now calls the optimized `/api/file/details` endpoint.
+// Instead of two sequential network requests (one for commits, one for content),
+// it now makes a single call, reducing latency and improving UI responsiveness.
 const fetchDetailsForFile = useCallback(async (file) => {
     if (file.type === 'dir') return;
 
     let metadata = {};
     try {
-      // First, try to get commit data for all file types
-      try {
-        const commitData = await fetchJson(`/api/file/commits?repo=${repo}&path=${file.path}`);
-        const lastCommit = commitData[0];
+      const url = `/api/file/details?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
+      const response = await fetchJson(url);
+
+      if (response) {
+        // Extract commit data from the new combined payload
+        const lastCommit = response.lastCommit;
         if (lastCommit) {
           metadata.lastEditor = lastCommit.commit?.author?.name;
           metadata.lastModified = lastCommit.commit?.author?.date;
         }
-      } catch (commitErr) {
-        console.warn(`Could not fetch commits for ${file.path}:`, commitErr);
-      }
 
-      // Then, only attempt to parse content for relevant file types
-      const fileExtension = file.name.substring(file.name.lastIndexOf('.'));
-      if (RELEVANT_EXTENSIONS.includes(fileExtension)) {
-        const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
-        const response = await fetchJson(url);
-
-        if (response && typeof response.content === 'string') {
+        // Extract and parse frontmatter from the content
+        const fileExtension = file.name.substring(file.name.lastIndexOf('.'));
+        if (RELEVANT_EXTENSIONS.includes(fileExtension) && typeof response.content === 'string') {
           try {
-            // Decode base64 content with proper UTF-8 handling
             const binaryString = atob(response.content);
             const decodedContent = decodeURIComponent(escape(binaryString));
             const { data: frontmatter } = matter(decodedContent);
@@ -129,15 +126,14 @@ const fetchDetailsForFile = useCallback(async (file) => {
             console.error(`Error decoding or parsing frontmatter for ${file.path}:`, e);
             metadata.error = 'Invalid content';
           }
-        } else {
-          metadata.error = 'Missing or invalid content';
         }
+      } else {
+        metadata.error = 'Missing or invalid response';
       }
 
       setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
     } catch (err) {
-      // This is the global catch block for the entire process
-      console.error(`CRITICAL: An unexpected error occurred while processing ${file.path}:`, err);
+      console.error(`CRITICAL: An unexpected error occurred while fetching details for ${file.path}:`, err);
       metadata.error = 'Processing failed';
       setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
     }
