@@ -6,25 +6,6 @@ This document outlines a list of known issues ("snags") and their agreed-upon so
 
 ## Snag List
 
-### 1. Repository Selection
-
-*   **Problem:** The repository selection screen shows all of the user's repositories, including empty ones or ones that are not compatible with the editor, which creates a confusing user experience.
-*   **Agreed Solution:** Only display repositories that contain a `src/pages/` directory.
-
-#### Technical Implementation Plan
-
-1.  **Modify Backend API:**
-    *   **File:** `cloudflare-worker-src/router.js`
-    *   **Endpoint:** Locate the handler for listing user repositories (e.g., `/api/user/repos`).
-    *   **Logic:** The current handler fetches a list of repos from the GitHub API. This logic needs to be augmented. For each repository returned, the backend will make an additional GitHub API call to check for the existence of the `src/pages/` directory.
-    *   **API Call:** Use the "Get repository content" endpoint: `GET /repos/{owner}/{repo}/contents/src/pages`. A successful `200 OK` response indicates the directory exists. A `404 Not Found` response means it does not.
-    *   **Filtering:** Only repositories that return a `200 OK` for the `src/pages` check will be included in the final list sent to the frontend.
-2.  **Testing Steps:**
-    *   **Verify:** Call the repository list endpoint directly.
-    *   **Confirm:** The JSON response only contains repositories that have a `src/pages` directory in their root.
-    *   **Confirm:** The "Select a Repository" screen in the UI correctly displays only the filtered, valid repositories.
-
----
 
 ### 2. File & Folder Deletion
 
@@ -199,6 +180,79 @@ This document outlines a list of known issues ("snags") and their agreed-upon so
 
 ---
 
-## Technical Jargon Glossary
+## Repository selection snag
 
-*   **(To be populated as we work)**
+• Observed problem: The repository picker lists incompatible or empty repositories and sometimes surfaces the wrong project (e.g., Edit UI / easy-SEO) while the intended site repo (Strategy Content) is missing, creating confusion and blocking the editing flow.
+• Desired behavior: Only show repositories that are valid for the editor. Strategy Content should appear; Edit UI (easy-SEO) should not, unless it meets the editor criteria.
+
+
+---
+
+### Eligibility rule for repos
+
+• Primary rule: Include repositories that have a root-level src/pages/ directory.
+• Optional fallback: If src/pages/ is missing, allow a repo with a valid site entry point (e.g., src/content/ or a pages/ at root) if we explicitly support it. Otherwise, exclude.
+
+
+---
+
+### Technical implementation plan
+
+1. Backend filtering• File: cloudflare-worker-src/router.js
+• Endpoint: /api/user/repos
+• Logic:• Fetch: Get user repos (as is).
+• Validate: For each repo, call GET /repos/{owner}/{repo}/contents/src/pages.• 200 OK: Include repo.
+• 404 Not Found: Exclude repo.
+
+• Optional extensions: Support additional allowed paths via a small whitelist array (e.g., ['src/pages', 'pages']) so Strategy Content isn’t wrongly excluded if it uses a supported alternative.
+
+• Performance:• Batch: Limit concurrent validation calls.
+• Cache: Memoize successful directory checks per repo commit SHA for short TTL to avoid rate limits.
+
+
+2. Frontend display• Filter: Render only the validated repo list.
+• Ranking:• Promote: Place Strategy Content at the top if it matches eligibility.
+• Demote: Push non-eligible repos out of the list entirely (no greyed-out noise).
+
+
+3. Testing• API verification: Confirm /api/user/repos returns only repos with allowed directories.
+• UI verification: Ensure Strategy Content is visible; Edit UI (easy-SEO) is hidden when ineligible.
+• Edge cases: Private repos, rate limits, nested src/pages (reject), monorepos (see below).
+
+
+
+---
+
+### Empty state and creation flow
+
+• Empty state trigger: If the filtered list is empty after validation.
+• UI guidance:• Message: “No compatible repositories found.”
+• Actions:• Create new repo: Offer a “Create site repo” button.
+• Use template: Provide a starter with src/pages/ pre-populated to ensure eligibility.
+• Manual setup help: Short checklist to convert an existing repo.
+
+
+• Backend support (optional):• Create via API: POST /user/repos with name and description.
+• Initialize content: Commit a minimal scaffold (src/pages/index.md, basic config) via PUT /repos/{owner}/{repo}/contents/... with a single initial commit.
+• Return new repo: Re-run validation and show the newly created repo immediately.
+
+
+
+---
+
+### Monorepo consideration
+
+• Policy: Only accept repos where src/pages/ exists at the repo root.
+• Future extension: If monorepos are common, add a directory picker after repo selection to choose a valid subpath, then store that path for the editor session.
+
+
+---
+
+### Acceptance criteria
+
+• Visibility: Strategy Content appears in the list; Edit UI (easy-SEO) does not unless it has src/pages/.
+• Signal: No empty or incompatible repos are shown.
+• Resilience: If no eligible repos exist, the user can create a compatible repo in one step and start editing immediately.
+
+
+If Strategy Content uses a slightly different structure, share its exact path layout and we’ll add it to the whitelist so it’s recognized without weakening the rule.
