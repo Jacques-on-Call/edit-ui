@@ -26,36 +26,9 @@ To revise: “””### 2.2 Implement Search Results UI
     3.  **Integrate into `FileExplorerPage.jsx`:** In `easy-seo/src/pages/FileExplorerPage.jsx`, add state for `searchResults`. When search results are returned from the API, update this state. Conditionally render the `<SearchResults>` component if there are results.
 *   **Acceptance Criteria:** A search performed in the File Explorer now renders a list of results, each displaying the file name and a highlighted snippet of the content.””
 *   ”
-### File & Folder Deletion
 
-*   **Problem:** File and folder deletion in the File Explorer is not working.
-*   **Agreed Solution:** Fix the deletion functionality. Deletion should require confirmation. Deleting a non-empty folder should recursively delete all of its contents after a clear warning and confirmation.
 
-#### Technical Implementation Plan
-
-1.  **Review Frontend Logic:**
-    *   **File:** `easy-seo/src/components/FileExplorer.jsx`
-    *   **Function:** `handleDelete`
-    *   **Action:** Verify that the function is correctly calling the backend API (`DELETE /api/files`) and is sending the `repo`, `path`, and `sha` for the selected file or folder in the request body. Ensure the existing `confirm()` prompt is functioning as expected.
-2.  **Fix Backend API:**
-    *   **File:** `cloudflare-worker-src/router.js`
-    *   **Endpoint:** Locate the `DELETE` handler for the `/api/files` route.
-    *   **File Deletion Logic:** Ensure the handler is correctly using the GitHub API (`DELETE /repos/{owner}/{repo}/contents/{path}`) to delete single files, using the `sha` provided in the request.
-    *   **Folder Deletion Logic:**
-        *   If the request is for a `type: 'dir'`, the handler must initiate a recursive deletion process.
-        *   First, call the GitHub API to get the contents of the target directory: `GET /repos/{owner}/{repo}/contents/{path}`.
-        *   For each item in the directory list:
-            *   If the item is a file, add it to a "to-be-deleted" queue with its path and SHA.
-            *   If the item is a directory, recursively call the function to get its contents and add its files to the queue.
-        *   Once the entire file list is compiled, iterate through it and call the GitHub `DELETE` endpoint for each file. Use `Promise.all` to perform deletions in parallel for better performance.
-3.  **Testing Steps:**
-    *   **Test File Deletion:** Right-click a single file, select "Delete," and confirm. Verify the file is removed from the UI and the repository.
-    *   **Test Empty Folder Deletion:** Right-click an empty folder, select "Delete," and confirm. Verify the folder is removed.
-    *   **Test Non-Empty Folder Deletion:** Right-click a folder containing files and sub-folders, select "Delete," and confirm. Verify the folder and all its contents are removed from the UI and the repository.
-
----
-
-### Context Menu: Rename & Move
+## Context Menu: Rename & Move
 
 *   **Problem:** The context menu is missing a "Rename" option. The "Move" modal is broken: it shows the entire repo tree instead of just `src/pages`, and folders within the tree do not expand.
 *   **Agreed Solution:** Add a "Rename" feature that uses a simple modal. Fix the "Move" modal to be scoped to `src/pages` and ensure its folder tree is fully expandable.
@@ -86,7 +59,7 @@ To revise: “””### 2.2 Implement Search Results UI
 
 ---
 
-### Creating New Files
+## Creating New Files
 
 *   **Problem:** The "Create" menu creates files in a hardcoded location, not the user's current directory.
 *   **Agreed Solution:** New files and folders should be created within the directory the user is currently viewing in the File Explorer.
