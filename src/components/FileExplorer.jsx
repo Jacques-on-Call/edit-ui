@@ -95,114 +95,121 @@ performSearch(searchQuery);
 
 const RELEVANT_EXTENSIONS = ['.md', '.mdx', '.astro'];
 
-// ⚡ Bolt: This function now calls the optimized `/api/file/details` endpoint.
-// Instead of two sequential network requests (one for commits, one for content),
-// it now makes a single call, reducing latency and improving UI responsiveness.
-const fetchDetailsForFile = useCallback(async (file) => {
-    if (file.type === 'dir') return;
+const fetchFiles = useCallback(async () => {
+  setLoading(true);
+  setError(null);
 
-    let metadata = {};
-    try {
-      const url = `/api/file/details?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(file.path)}`;
-      const response = await fetchJson(url);
+  try {
+    // Step 1: Fetch the initial file list
+    let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`);
 
-      if (response) {
-        // Extract commit data from the new combined payload
-        const lastCommit = response.lastCommit;
-        if (lastCommit) {
-          metadata.lastEditor = lastCommit.commit?.author?.name;
-          metadata.lastModified = lastCommit.commit?.author?.date;
-        }
+    // Merge with drafts from localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith('easy-seo-draft:')) {
+        const draftData = JSON.parse(localStorage.getItem(key));
+        const draftPath = draftData.path || '';
+        const draftDir = draftPath.substring(0, draftPath.lastIndexOf('/'));
 
-        // Extract and parse frontmatter from the content
-        const fileExtension = file.name.substring(file.name.lastIndexOf('.'));
-        if (RELEVANT_EXTENSIONS.includes(fileExtension) && typeof response.content === 'string') {
-          try {
-            const binaryString = atob(response.content);
-            const decodedContent = decodeURIComponent(escape(binaryString));
-            const { data: frontmatter } = matter(decodedContent);
-            metadata = { ...metadata, ...frontmatter };
-          } catch (e) {
-            console.error(`Error decoding or parsing frontmatter for ${file.path}:`, e);
-            metadata.error = 'Invalid content';
+        if (draftDir === path) {
+          const slug = key.replace('easy-seo-draft:', '');
+          const filename = draftPath.substring(draftPath.lastIndexOf('/') + 1);
+
+          // Avoid duplicates
+          if (!data.some(file => file.path === draftPath)) {
+            data.push({
+              name: filename,
+              path: draftPath,
+              sha: `draft-${slug}`,
+              type: 'file',
+              isDraft: true,
+            });
           }
         }
-      } else {
-        metadata.error = 'Missing or invalid response';
-      }
-
-      setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
-    } catch (err) {
-      console.error(`CRITICAL: An unexpected error occurred while fetching details for ${file.path}:`, err);
-      metadata.error = 'Processing failed';
-      setMetadataCache(prev => ({ ...prev, [file.sha]: metadata }));
-    }
-  }, [repo]);
-
-const fetchFiles = useCallback(async () => {
-setLoading(true);
-setError(null);
-
-try {
-let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`);
-
-// Merge with drafts from localStorage
-for (let i = 0; i < localStorage.length; i++) {
-  const key = localStorage.key(i);
-  if (key.startsWith('easy-seo-draft:')) {
-    const draftData = JSON.parse(localStorage.getItem(key));
-    const draftPath = draftData.path || '';
-    const draftDir = draftPath.substring(0, draftPath.lastIndexOf('/'));
-
-    if (draftDir === path) {
-      const slug = key.replace('easy-seo-draft:', '');
-      const filename = draftPath.substring(draftPath.lastIndexOf('/') + 1);
-
-      // Avoid duplicates
-      if (!data.some(file => file.path === draftPath)) {
-        data.push({
-          name: filename,
-          path: draftPath,
-          sha: `draft-${slug}`,
-          type: 'file',
-          isDraft: true,
-        });
       }
     }
+
+    const sortedData = data.sort((a, b) => {
+      if (a.type === 'dir' && b.type !== 'dir') return -1;
+      if (a.type !== 'dir' && b.type === 'dir') return 1;
+      return a.name.localeCompare(b.name);
+    });
+    setFiles(sortedData);
+
+    // ⚡ Bolt: Batch fetch details for all files in a single network request.
+    const pathsToFetch = sortedData
+      .filter(file => file.type === 'file' && !file.isDraft)
+      .map(file => file.path);
+
+    if (pathsToFetch.length > 0) {
+      const detailsMap = await fetchJson('/api/files/details', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repo, paths: pathsToFetch }),
+      });
+
+      const newMetadata = {};
+      sortedData.forEach(file => {
+        if (file.type === 'file' && detailsMap[file.path] && file.sha) {
+          const details = detailsMap[file.path];
+          if (details.error) {
+            console.error(`Error fetching details for ${file.path}:`, details.error);
+            newMetadata[file.sha] = { error: 'Failed to load details' };
+          } else {
+             let metadata = {};
+             const lastCommit = details.lastCommit;
+             if (lastCommit) {
+               metadata.lastEditor = lastCommit.commit?.author?.name;
+               metadata.lastModified = lastCommit.commit?.author?.date;
+             }
+
+             const fileExtension = file.name.substring(file.name.lastIndexOf('.'));
+             if (RELEVANT_EXTENSIONS.includes(fileExtension) && typeof details.content === 'string') {
+               try {
+                 const binaryString = atob(details.content);
+                 const decodedContent = decodeURIComponent(escape(binaryString));
+                 const { data: frontmatter } = matter(decodedContent);
+                 metadata = { ...metadata, ...frontmatter };
+               } catch (e) {
+                 console.error(`Error decoding or parsing frontmatter for ${file.path}:`, e);
+                 metadata.error = 'Invalid content';
+               }
+             }
+             newMetadata[file.sha] = metadata;
+          }
+        }
+      });
+      setMetadataCache(prev => ({ ...prev, ...newMetadata }));
+    }
+
+    // Fetch README content
+    const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');
+    if (readmeFile) {
+      setReadmeLoading(true);
+      try {
+        const readmeData = await fetchJson(`/api/get-file-content?repo=${repo}&path=${readmeFile.path}`);
+        if(readmeData.content) {
+            const binaryString = atob(readmeData.content);
+            const decodedContent = decodeURIComponent(escape(binaryString));
+            setReadmeContent(decodedContent);
+        } else {
+            setReadmeContent('Could not load README.');
+        }
+      } catch (readmeErr) {
+        console.error("Failed to fetch or decode README:", readmeErr);
+        setReadmeContent('Could not load README.');
+      } finally {
+        setReadmeLoading(false);
+      }
+    }
+
+  } catch (err) {
+    console.error("Error fetching files:", err);
+    setError(`Failed to load repository contents. Please check your connection and repository permissions. Details: ${err.message}`);
+  } finally {
+    setLoading(false);
   }
-}
-
-const sortedData = data.sort((a, b) => {
-if (a.type === 'dir' && b.type !== 'dir') return -1;
-if (a.type !== 'dir' && b.type === 'dir') return 1;
-return a.name.localeCompare(b.name);
-});
-setFiles(sortedData);
-
-const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');
-if (readmeFile) {
-setReadmeLoading(true);
-try {
-const readmeData = await fetchJson(`/api/files?repo=${repo}&path=${readmeFile.path}`);
-// Decode base64 content with proper UTF-8 handling
-const binaryString = atob(readmeData.content);
-const decodedContent = decodeURIComponent(escape(binaryString));
-setReadmeContent(decodedContent);
-} catch (readmeErr) {
-console.error("Failed to fetch or decode README:", readmeErr);
-setReadmeContent('Could not load README.');
-} finally {
-setReadmeLoading(false);
-}
-}
-
-} catch (err) {
-console.error("Error fetching files:", err);
-setError(`Failed to load repository contents. Please check your connection and repository permissions. Details: ${err.message}`);
-} finally {
-setLoading(false);
-}
-}, [repo, path, fetchDetailsForFile]);
+}, [repo, path]);
 
 useEffect(() => {
 fetchFiles();
@@ -385,7 +392,6 @@ return (
                       isPublished={isPublished}
                       onOpen={handleOpen}
                       onShowActions={handleLongPress}
-                      fetchDetailsForFile={fetchDetailsForFile}
                     />
                   );
                 })}
