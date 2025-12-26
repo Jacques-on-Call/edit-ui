@@ -2,12 +2,31 @@
 
 This document outlines a list of known issues ("snags") and their agreed-upon solutions, including a detailed technical plan for each. It also serves as a glossary for technical terms used during development.
 
+NB: Follow Agents.md instructions 
 ---
 
 ## Snag List
 
+Search works like this, and term is highlighted. But “let’s” returns nothing.  EDITING_GUIDE.md should be EDITING_GUIDE and Get/README
 
-### 2. File & Folder Deletion
+🔍 Let
+Search Results
+EDITING_GUIDE.md
+...visual design (the components) is completely separate from the content (the fron...
+README.md
+Get/README.md
+...ges where users can sign up for a newsletter, a trial, or an account.
+
+To revise: “””### 2.2 Implement Search Results UI
+
+*   **Goal:** Build the frontend UI to display search results from the existing `/api/search` endpoint.
+*   **Steps:**
+    1.  **Create `SearchResults.jsx` Component:** Create a new file `easy-seo/src/components/FileExplorer/SearchResults.jsx`. This component will receive search results as a prop and render them in a list.
+    2.  **Create `SearchResultTile.jsx` Component:** Create a new file `easy-seo/src/components/FileExplorer/SearchResultTile.jsx`. This component will display a single search result, including the friendly file name and the highlighted content snippet. The snippet should be rendered using `dangerouslySetInnerHTML`.
+    3.  **Integrate into `FileExplorerPage.jsx`:** In `easy-seo/src/pages/FileExplorerPage.jsx`, add state for `searchResults`. When search results are returned from the API, update this state. Conditionally render the `<SearchResults>` component if there are results.
+*   **Acceptance Criteria:** A search performed in the File Explorer now renders a list of results, each displaying the file name and a highlighted snippet of the content.””
+*   ”
+### File & Folder Deletion
 
 *   **Problem:** File and folder deletion in the File Explorer is not working.
 *   **Agreed Solution:** Fix the deletion functionality. Deletion should require confirmation. Deleting a non-empty folder should recursively delete all of its contents after a clear warning and confirmation.
@@ -36,7 +55,7 @@ This document outlines a list of known issues ("snags") and their agreed-upon so
 
 ---
 
-### 3. Context Menu: Rename & Move
+### Context Menu: Rename & Move
 
 *   **Problem:** The context menu is missing a "Rename" option. The "Move" modal is broken: it shows the entire repo tree instead of just `src/pages`, and folders within the tree do not expand.
 *   **Agreed Solution:** Add a "Rename" feature that uses a simple modal. Fix the "Move" modal to be scoped to `src/pages` and ensure its folder tree is fully expandable.
@@ -67,7 +86,7 @@ This document outlines a list of known issues ("snags") and their agreed-upon so
 
 ---
 
-### 4. Creating New Files
+### Creating New Files
 
 *   **Problem:** The "Create" menu creates files in a hardcoded location, not the user's current directory.
 *   **Agreed Solution:** New files and folders should be created within the directory the user is currently viewing in the File Explorer.
@@ -86,7 +105,7 @@ This document outlines a list of known issues ("snags") and their agreed-upon so
 
 ---
 
-### 5. Content Editor Toolbar
+## Content Editor Toolbar
 
 *   **Problem:** The experimental floating toolbar is unreliable and difficult to use.
 *   **Agreed Solution:** Shelve the floating toolbar. Implement a new "Side Panel" toolbar that slides out from the left app edge when text is selected. This panel will contain the full set of styling options and will slide *over* the content.
@@ -128,7 +147,7 @@ This document outlines a list of known issues ("snags") and their agreed-upon so
 
 ---
 
-### 6. Incorrect Preview Page Displayed
+## Incorrect Preview Page Displayed
 
 *   **Problem:** Clicking "Preview" for a specific page (e.g., `_new-index.astro`) incorrectly shows the site's main index page instead of the page being edited.
 *   **Agreed Solution:** The preview `<iframe>` must load the correct URL corresponding to the file being edited.
@@ -155,7 +174,7 @@ This document outlines a list of known issues ("snags") and their agreed-upon so
 
 ---
 
-### 7. Editor UI Visible in Preview Mode
+## Editor UI Visible in Preview Mode
 
 *   **Problem:** Editor-specific UI elements (like the slide-out toolbar's hamburger icon) are visible on top of the preview `<iframe>`.
 *   **Agreed Solution:** All editor-specific UI must be hidden when the `viewMode` is set to `livePreview`.
