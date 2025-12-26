@@ -243,7 +243,8 @@ const handleDelete = async (file) => {
       const body = {
         repo: repo,
         path: file.path,
-        sha: file.sha, // Required for deleting files
+        sha: file.sha,
+        type: file.type, // Add the type of the item to the request body
       };
 
       await fetchJson('/api/files', {
