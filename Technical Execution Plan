@@ -1,0 +1,151 @@
+# easy-seo: Technical Execution Plan
+
+This document provides a detailed, sequential, and verifiable breakdown of the tasks outlined in the `CONSOLIDATED_ROADMAP.md`. Each step is designed to be small enough for autonomous execution and includes clear acceptance criteria.
+
+---
+
+## Phase 1: Foundational Fixes & Core UX
+
+This phase focuses on improving the stability, consistency, and overall user experience of the application's core.
+
+### 1.1 UI Standardization: Icons
+
+*   **Goal:** Ensure all icons in the application are rendered using the `lucide-preact` library for a consistent visual language.
+*   **Steps:**
+    1.  **Audit Icon Usage:** Systematically go through all JSX components in `easy-seo/src/` and identify any hardcoded SVGs, `<img>` tags used for icons, or icons from other libraries.
+    2.  **Replace with Lucide Icons:** Replace each identified icon with the appropriate equivalent from `lucide-preact`, using the existing `<Icon>` wrapper component.
+    3.  **Verify:** Manually review the application to ensure all icons render correctly and have been replaced.
+*   **Acceptance Criteria:** A `grep` for `<svg` and `<img>` tags used as icons in the `easy-seo/src/` directory returns no results, and all UI icons are instances of the `<Icon>` component.
+
+### 1.2 UI Standardization: Reusable Components
+
+*   **Goal:** Create a small, reusable component library for common UI elements to ensure consistency.
+*   **Steps:**
+    1.  **Create `<Button>` Component:** Create a new file `easy-seo/src/components/ui/Button.jsx`. This component will accept `variant` (primary, secondary, danger) and `size` (sm, md, lg) props and apply appropriate Tailwind CSS classes.
+    2.  **Create `<Modal>` Component:** Create a new file `easy-seo/src/components/ui/Modal.jsx`. This component will handle the modal overlay, container, title, and close button. It will be controllable via an `isOpen` prop.
+    3.  **Refactor Existing UI:** Identify and refactor at least one existing button and one existing modal implementation to use the new reusable components.
+*   **Acceptance Criteria:** The new `<Button>` and `<Modal>` components are created, and at least one instance of each is being used in the application.
+
+### 1.3 Minor Technical Fixes: UTF-8 Safety
+
+*   **Goal:** Ensure all backend file content handlers are safe for UTF-8 characters.
+*   **Steps:**
+    1.  **Identify Vulnerable Handlers:** Review all handlers in `cloudflare-worker-src/routes/content.js` that read or write file content.
+    2.  **Apply `TextDecoder` and `TextEncoder`:** Ensure that any conversion from `ArrayBuffer` to string uses `new TextDecoder('utf-8').decode()` and any conversion from string to `ArrayBuffer` uses `new TextEncoder().encode()`.
+    3.  **Verify:** Review the diff to confirm the correct encoding/decoding methods are used in all relevant handlers.
+*   **Acceptance Criteria:** All file content manipulations in the Cloudflare worker use `TextDecoder` and `TextEncoder` to ensure UTF-8 safety.
+
+---
+
+## Phase 2: File Explorer
+
+This phase focuses on improving the usability and functionality of the file explorer.
+
+### 2.1 Enhance User-Friendliness: Helper Hints
+
+*   **Goal:** Add simple, one-line helper hints under files and folders to guide non-technical users.
+*   **Steps:**
+    1.  **Modify `FileTile.jsx`:** Open `easy-seo/src/components/FileExplorer/FileTile.jsx`.
+    2.  **Add Hint Logic:** Below the file/folder name, add a `<span>` that conditionally renders a hint based on the item's type (file or folder). For example, "Click to open this folder" or "Click to edit this page."
+    3.  **Verify:** Check the UI to confirm the helper hints appear correctly under both files and folders.
+*   **Acceptance Criteria:** The `FileTile.jsx` component renders a descriptive helper hint for both file and folder items.
+
+---
+
+## Phase 3: Create Page Modal
+
+This phase simplifies the page creation process for non-technical users.
+
+### 3.1 Simplify User Choices
+
+*   **Goal:** Remove technical jargon from the "Create Page" modal.
+*   **Steps:**
+    1.  **Locate `CreatePageModal.jsx`:** Find the component responsible for the "Create Page" modal (likely `easy-seo/src/components/FileExplorer/CreatePageModal.jsx` or similar).
+    2.  **Remove Technical Fields:** Remove any UI elements related to file extensions (`.astro`, `.md`), layouts, or other technical choices.
+    3.  **Implement Simple Fields:** Ensure the modal only contains two fields: "Page Name" (a text input) and "Design Type" (a dropdown/select with options like General, Blog, Service).
+*   **Acceptance Criteria:** The "Create Page" modal only presents "Page Name" and "Design Type" fields to the user.
+
+### 3.2 Implement Smart Folder Suggestions
+
+*   **Goal:** Suggest a logical folder for the new page based on its "Design Type."
+*   **Steps:**
+    1.  **Add Suggestion Logic:** In the `CreatePageModal` component, add a `useEffect` hook that watches the "Design Type" field. When the type changes, update a state variable with a suggested folder path (e.g., "Blog" -> `/blog`, "Service" -> `/services`).
+    2.  **Display Suggestion:** Render the suggested path in the UI, along with a button like "Use this folder."
+    3.  **Handle Folder Creation:** If the user accepts a suggestion for a folder that doesn't exist, the page creation logic must first create the folder.
+    4.  **Update Page Creation Logic:** Modify the final "Create" button handler to place the new page in the selected folder.
+*   **Acceptance Criteria:** Selecting a "Design Type" in the modal displays a smart folder suggestion, and the created page is saved to the correct location.
+
+---
+
+## Phase 4: Content Editor
+
+This phase focuses on enhancing the core content editing experience.
+
+.
+
+### 4.3 Implement Technical SEO Layer
+
+*   **Goal:** Auto-pre-fill meta, Open Graph, and JSON-LD data for the page.
+*   **Steps:**
+    1.  **Create `SeoEditor.jsx` Component:** Create a new component `easy-seo/src/components/ContentEditor/SeoEditor.jsx` that contains input fields for Title, Meta Description, and Open Graph Title/Description.
+    2.  **Auto-fill Logic:** When a new page is created, or when the main H1/body content changes, use this content to pre-fill the SEO fields with sensible defaults. For example, the H1 becomes the default Title.
+    3.  **Frontmatter Integration:** Ensure that the data entered in these fields is saved correctly into the page's YAML frontmatter when the file is saved.
+*   **Acceptance Criteria:** SEO-related input fields are available in the editor, are pre-filled with intelligent defaults, and save their data to the file's frontmatter.
+
+Ask me to expand these:
+*(Note: "Whisper Flow," "Priority Engine," and "n8n Workflows" require further discovery and are not included in this technical plan).*
+
+---
+
+## Phase 5: Visual Editor & Live Preview
+
+This phase implements the "what you see is what you get" (WYSIWYG) editing experience.
+
+### 5.1 Develop Interactive Overlay
+
+*   **Goal:** Build a transparent overlay that allows users to select components in the live preview.
+*   **Steps:**
+    1.  **Create `PreviewOverlay.jsx`:** Create a new component that renders a `<div>` with `position: absolute` to sit on top of the preview `<iframe>`.
+    2.  **Implement `postMessage` Bridge:** In the preview page's JavaScript (running inside the iframe), add a listener that sends the bounding boxes of all rendered components to the parent window (`PreviewOverlay.jsx`) via `postMessage`.
+    3.  **Render Selection Boxes:** In `PreviewOverlay.jsx`, listen for the `postMessage` event. When it receives the component bounding boxes, render a `<div>` for each one with a transparent background and a colored border.
+    4.  **Handle Click Events:** Add a click handler to the overlay. When the user clicks, determine which component's bounding box was clicked and store the selected component's ID in state.
+*   **Acceptance Criteria:** The live preview displays bordered boxes around components, and clicking inside a box selects that component.
+
+### 5.2 Create Dynamic Properties Panel
+
+*   **Goal:** Implement a context-aware settings panel that displays controls for the selected component.
+*   **Steps:**
+    1.  **Create `PropertiesPanel.jsx`:** Create a new component that will serve as the container for the settings.
+    2.  **Render Controls Based on Selection:** The panel will receive the ID of the selected component as a prop. It will then look up the component's schema (from a future `component-schemas.json`) and dynamically render the appropriate controls (e.g., a text input for a `title` property, a color picker for a `backgroundColor` property).
+    3.  **Implement Real-Time Updates:** When a control in the panel is changed, update the central state and send a `postMessage` event to the iframe with the new style information. The preview will listen for this and apply the change in real-time.
+*   **Acceptance Criteria:** Selecting a component in the preview populates a properties panel with the correct controls, and changing a value in the panel updates the component in the preview in real-time.
+
+---
+
+## Phase 6: Backend API
+
+This phase focuses on improving the structure, security, and capabilities of the Cloudflare Worker backend.
+
+### 6.3 Enhance Security
+
+*   **Goal:** Formalize the authentication flow and standardize error handling.
+*   **Steps:**
+    1.  **Implement CSRF Protection:** Modify the `/api/callback` handler to include `state` parameter validation to protect against Cross-Site Request Forgery attacks.
+    2.  **Standardize Error Responses:** Create a utility function that formats all error responses into a consistent JSON structure (e.g., `{ error: { message: '...', status: 400 } }`). Refactor all handlers to use this utility.
+    3.  **Add Input Validation:** In each handler, add validation for incoming request bodies and parameters to ensure they are of the expected type and format.
+*   **Acceptance Criteria:** The OAuth callback is protected against CSRF, and all API endpoints return errors in a standardized JSON format and validate their inputs.
+
+---
+
+## Phase 7: Publishing & SEO
+
+This phase adds a crucial quality gate to the publishing process.
+
+### 7.1 Implement SEO Pre-Publish Gate
+
+*   **Goal:** Prevent users from publishing a page without basic SEO elements.
+*   **Steps:**
+    1.  **Modify "Publish" Button Logic:** Locate the "Publish" button's `onClick` handler.
+    2.  **Add Validation Check:** Before triggering the build, check the page's frontmatter for the presence and non-empty values of `title`, `description`, and `slug`.
+    3.  **Show Suggested Modal:** If any of the required fields are missing, show a `<Modal>` with a user-friendly suggestions message, listing the missing fields and explaining why they are important. Maybe allow them to fill in the same time to simplify the process.
+*   **Acceptance Criteria:** Clicking the "Publish" button on a page with a missing title or description displays a modal with a c
