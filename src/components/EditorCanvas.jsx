@@ -38,6 +38,7 @@ export default function EditorCanvas(props) {
     handleAddSection,
     editingSectionIndex,
     handleUpdateSection,
+    needsDeployment
   } = props;
 
   return (

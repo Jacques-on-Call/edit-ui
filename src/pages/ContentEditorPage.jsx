@@ -34,6 +34,8 @@ export default function ContentEditorPage(props) {
   const [previewKey, setPreviewKey] = useState(Date.now());
   const [buildError, setBuildError] = useState(null);
   const [editingSectionIndex, setEditingSectionIndex] = useState(null); // Track which section is being edited
+  const [needsDeployment, setNeedsDeployment] = useState(false);
+  const [deploymentUrl, setDeploymentUrl] = useState('');
 
   // Ref Hooks
   // const editorApiRef = useRef(null); // No longer needed for the header
@@ -485,6 +487,10 @@ export default function ContentEditorPage(props) {
   }, [selectedRepo, pageId, editorMode, triggerBuild, syncStatus, isPreviewBuilding, sections]);
 
   const handlePreview = useCallback(async () => {
+    if (needsDeployment) {
+      setViewMode('deploymentSetup');
+      return;
+    }
     // If we're in a preview mode, switch back to the editor
     if (viewMode !== 'editor') {
       setViewMode('editor');

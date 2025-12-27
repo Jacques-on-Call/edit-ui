@@ -15,7 +15,8 @@ const BottomActionBar = memo((props) => {
     onSync,
     onAdd,
     onPreview,
-    onRefreshPreview
+    onRefreshPreview,
+    needsDeployment
   } = props;
   const getStatusColor = () => {
     if (saveStatus === 'saved') return 'bg-yellow-green';
@@ -39,15 +40,15 @@ const BottomActionBar = memo((props) => {
   // Determine preview button icon based on current view mode
   const renderPreviewIcon = () => {
     if (viewMode === 'editor') {
-      return <Eye size={28} />; // Show eye icon to indicate "preview"
+      return <Eye size={28} className={needsDeployment ? 'text-orange-500' : ''} />;
     }
-    return <Pencil size={28} />; // Show pencil to go back to editor
+    return <Pencil size={28} />;
   };
 
   // Get accessible label for preview button
   const getPreviewLabel = () => {
     if (viewMode === 'editor') {
-      return 'Preview';
+      return needsDeployment ? 'Setup Deployment' : 'Preview';
     }
     return 'Edit';
   };
@@ -127,9 +128,4 @@ const BottomActionBar = memo((props) => {
   );
 });
 
-// ⚡ Bolt: Memoized BottomActionBar to prevent unnecessary re-renders.
-// This is a presentational component that receives several props. Without memoization,
-// it would re-render every time its parent component re-renders, even if its own props
-// haven't changed. This optimization improves UI responsiveness, especially during
-// frequent state updates in the editor (e.g., typing).
 export default BottomActionBar;
