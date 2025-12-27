@@ -6,8 +6,8 @@ NB: Follow Agents.md instructions
 ---
 
 ## Snag List
-
-Search works like this, and term is highlighted. But “let’s” returns nothing.  EDITING_GUIDE.md should be EDITING_GUIDE and Get/README
+after last commit search finds nothing! work done was cache 10min was introduced to reduce api calls. 
+Search did work like this, and term is highlighted. But “let’s” returns nothing.  EDITING_GUIDE.md should be EDITING_GUIDE and Get/README
 
 🔍 Let
 Search Results
