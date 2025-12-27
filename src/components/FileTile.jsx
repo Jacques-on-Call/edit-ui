@@ -135,6 +135,9 @@ function FileTile({ file, isSelected, metadata, hasDraft, isPublished, onOpen, o
             <div className="font-semibold text-sm text-white truncate" title={file.name}>
               {file.name.replace(/\.[^/.]+$/, "")}
             </div>
+            <div className="text-[10px] text-gray-400 mt-0.5 opacity-80">
+              {isDir ? 'Click to open this folder' : 'Click to edit this page'}
+            </div>
           </div>
         </div>
         {metadata ? (
