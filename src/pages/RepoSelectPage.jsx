@@ -1,7 +1,8 @@
 // easy-seo/src/pages/RepoSelectPage.jsx
 import { useAuth } from '../contexts/AuthContext';
 import { theme } from '../themes/theme';
-import { AlertTriangle, Github, Loader, Rocket } from 'lucide-preact';
+import Icon from '../components/Icon';
+import Button from '../components/ui/Button';
 import { route } from 'preact-router';
 import { useState } from 'preact/hooks';
 import { fetchJson } from '../lib/fetchJson';
@@ -66,33 +67,43 @@ export function RepoSelectPage() {
           <div className="flex flex-col items-center gap-4">
             {repositories.length > 0 ? (
               repositories.map((repo) => (
-                <button
+                <Button
                   key={repo.id}
-                  className="w-full bg-white/5 hover:bg-white/10 text-white font-semibold flex items-center justify-center gap-3 py-4 px-6 rounded-xl border border-white/20 backdrop-blur-sm shadow-md transition-all duration-300 transform hover:shadow-xl hover:-translate-y-1"
+                  className="w-full flex items-center justify-center gap-3"
                   onClick={() => handleSelectRepo(repo)}
                 >
-                  <Github className="w-5 h-5 text-accent-lime" />
+                  <Icon name="Github" className="w-5 h-5 text-accent-lime" />
                   <span>{repo.name}</span>
-                </button>
+                </Button>
               ))
             ) : (
-              <button
-                className="w-full bg-accent-lime/80 hover:bg-accent-lime text-black font-bold flex items-center justify-center gap-3 py-4 px-6 rounded-xl border border-white/20 backdrop-blur-sm shadow-lg transition-all duration-300 transform hover:shadow-2xl hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleCreateRepo}
-                disabled={isCreatingRepo}
-              >
-                {isCreatingRepo ? (
-                  <>
-                    <Loader className="w-6 h-6 animate-spin" />
-                    <span>Creating your site...</span>
-                  </>
-                ) : (
-                  <>
-                    <Rocket className="w-6 h-6" />
-                    <span>Click here to get started</span>
-                  </>
-                )}
-              </button>
+              <>
+                <div className="text-center bg-black/20 p-6 rounded-lg border border-white/10 w-full mb-4">
+                  <Icon name="AlertTriangle" className="mx-auto h-12 w-12 text-accent-lime/50 mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No Repositories Found</h3>
+                  <p className="text-gray-400">
+                    Please make sure the application has access to your repositories.
+                  </p>
+                </div>
+                <Button
+                  variant="secondary"
+                  className="w-full flex items-center justify-center gap-3"
+                  onClick={handleCreateRepo}
+                  disabled={isCreatingRepo}
+                >
+                  {isCreatingRepo ? (
+                    <>
+                      <Icon name="Loader" className="w-6 h-6 animate-spin" />
+                      <span>Creating your site...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="Rocket" className="w-6 h-6" />
+                      <span>Click here to get started</span>
+                    </>
+                  )}
+                </Button>
+              </>
             )}
           </div>
         </main>

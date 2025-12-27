@@ -19,7 +19,7 @@ import { useState, useEffect, useCallback } from 'preact/hooks';
 import { useAuth } from '../contexts/AuthContext';
 import { getPreviewImageUrl } from '../lib/imageHelpers';
 import { calculateImageScore, getScoreColorClass, getScoreBgClass, getScoreStatus } from '../lib/imageScoring';
-import { Edit2, Image, HelpCircle, RefreshCw, CheckCircle, AlertCircle, Info } from 'lucide-preact';
+import Icon from './Icon';
 import ImageUploader from './ImageUploader';
 
 // Helper to extract just the filename from a path
@@ -62,10 +62,10 @@ const Tooltip = ({ text, children }) => (
   </div>
 );
 
-export default function ImageEditor({ 
-  imagePath, 
-  imageAlt = '', 
-  imageTitle = '', 
+export default function ImageEditor({
+  imagePath,
+  imageAlt = '',
+  imageTitle = '',
   imageDescription = '',
   imageLoading = 'lazy',
   pageSlug,
@@ -78,24 +78,24 @@ export default function ImageEditor({
   const [mode, setMode] = useState('view'); // 'view', 'edit', 'replace'
   const [imageError, setImageError] = useState(false);
   const [showScoreDetails, setShowScoreDetails] = useState(false);
-  
+
   // Editable fields
   const [filename, setFilename] = useState(getFilenameFromPath(imagePath));
   const [alt, setAlt] = useState(imageAlt);
   const [title, setTitle] = useState(imageTitle);
   const [description, setDescription] = useState(imageDescription);
   const [loading, setLoading] = useState(imageLoading);
-  
+
   // Track if filename was manually edited
   const [filenameManuallyEdited, setFilenameManuallyEdited] = useState(false);
-  
+
   // Get the preview URL for displaying the image
   const previewUrl = getPreviewImageUrl(imagePath, selectedRepo?.full_name);
-  
+
   // Get file extension
   const extension = filename.split('.').pop() || '';
   const filenameWithoutExt = filename.replace(`.${extension}`, '');
-  
+
   // Calculate ID Score using the scoring module
   const idScore = calculateImageScore({
     filename,
@@ -104,7 +104,7 @@ export default function ImageEditor({
     description,
     loading
   }, topicWords);
-  
+
   // Reset state when imagePath changes
   useEffect(() => {
     setFilename(getFilenameFromPath(imagePath));
@@ -115,7 +115,7 @@ export default function ImageEditor({
     setImageError(false);
     setFilenameManuallyEdited(false);
   }, [imagePath, imageAlt, imageTitle, imageDescription, imageLoading]);
-  
+
   // Auto-generate filename from alt text if not manually edited
   useEffect(() => {
     if (alt && !filenameManuallyEdited && extension) {
@@ -125,12 +125,12 @@ export default function ImageEditor({
       }
     }
   }, [alt, filenameManuallyEdited, extension]);
-  
+
   // Handle saving changes
   const handleSave = useCallback(() => {
     const directory = getDirectoryFromPath(imagePath);
     const newPath = directory ? `${directory}/${filename}` : filename;
-    
+
     onUpdate({
       path: newPath,
       alt: alt,
@@ -141,10 +141,10 @@ export default function ImageEditor({
       // Pass the original path so we know if rename is needed
       originalPath: imagePath
     });
-    
+
     setMode('view');
   }, [imagePath, filename, alt, title, description, loading, idScore.total, onUpdate]);
-  
+
   // Handle image replacement from ImageUploader
   const handleReplaceComplete = useCallback(({ path, alt: newAlt, title: newTitle, description: newDesc, loading: newLoading }) => {
     onUpdate({
@@ -158,7 +158,7 @@ export default function ImageEditor({
     });
     setMode('view');
   }, [imagePath, alt, title, description, loading, onUpdate]);
-  
+
   // Helper to render a score detail row
   const renderScoreDetail = (label, detail, points) => {
     const statusColors = {
@@ -170,7 +170,7 @@ export default function ImageEditor({
       na: 'text-gray-500',
       unknown: 'text-gray-500'
     };
-    
+
     return (
       <div class="flex items-center justify-between text-xs py-1 border-b border-gray-700 last:border-0">
         <span class="text-gray-400">{label}</span>
@@ -183,7 +183,7 @@ export default function ImageEditor({
       </div>
     );
   };
-  
+
   // Render view mode - shows the current image with edit button
   if (mode === 'view') {
     return (
@@ -197,7 +197,7 @@ export default function ImageEditor({
                 class="flex items-center gap-1 px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
                 title="Edit image settings"
               >
-                <Edit2 size={14} />
+                <Icon name="Edit2" size={14} />
                 <span>Edit</span>
               </button>
               {onRemove && (
@@ -211,7 +211,7 @@ export default function ImageEditor({
               )}
             </div>
           </div>
-          
+
           {/* Image Preview */}
           <div class="relative bg-gray-900 rounded-lg overflow-hidden">
             {previewUrl && !imageError ? (
@@ -223,11 +223,11 @@ export default function ImageEditor({
               />
             ) : (
               <div class="w-full h-32 flex items-center justify-center text-gray-500">
-                <Image size={40} />
+                <Icon name="Image" size={40} />
               </div>
             )}
           </div>
-          
+
           {/* Quick Info */}
           <div class="mt-2 space-y-1">
             <p class="text-xs text-gray-400 truncate" title={filename}>
@@ -244,11 +244,11 @@ export default function ImageEditor({
                 class={`text-xs flex items-center gap-1 ${getScoreColorClass(idScore.total)} hover:underline`}
               >
                 ID Score: {idScore.total}/100
-                <Info size={12} />
+                <Icon name="Info" size={12} />
               </button>
               <span class="text-xs text-gray-500">{getScoreStatus(idScore.total)}</span>
             </div>
-            
+
             {/* ID Score Details (collapsible) */}
             {showScoreDetails && (
               <div class="mt-2 p-2 bg-gray-900/50 rounded border border-gray-700">
@@ -271,7 +271,7 @@ export default function ImageEditor({
       </div>
     );
   }
-  
+
   // Render replace mode - shows ImageUploader
   if (mode === 'replace') {
     return (
@@ -286,15 +286,15 @@ export default function ImageEditor({
               ← Back
             </button>
           </div>
-          <ImageUploader 
-            pageSlug={pageSlug} 
+          <ImageUploader
+            pageSlug={pageSlug}
             onComplete={handleReplaceComplete}
           />
         </div>
       </div>
     );
   }
-  
+
   // Render edit mode - shows editable fields
   return (
     <div class="border border-gray-600 rounded-lg overflow-hidden">
@@ -312,12 +312,12 @@ export default function ImageEditor({
               onClick={handleSave}
               class="flex items-center gap-1 px-2 py-1 text-xs bg-green-700 hover:bg-green-600 text-white rounded transition-colors"
             >
-              <CheckCircle size={14} />
+              <Icon name="CheckCircle" size={14} />
               Save
             </button>
           </div>
         </div>
-        
+
         {/* Image Preview */}
         <div class="relative bg-gray-900 rounded-lg overflow-hidden mb-4">
           {previewUrl && !imageError ? (
@@ -329,18 +329,18 @@ export default function ImageEditor({
             />
           ) : (
             <div class="w-full h-32 flex items-center justify-center text-gray-500">
-              <Image size={40} />
+              <Icon name="Image" size={40} />
             </div>
           )}
           <button
             onClick={() => setMode('replace')}
             class="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 text-xs bg-gray-900/80 hover:bg-gray-800 text-white rounded transition-colors"
           >
-            <RefreshCw size={12} />
+            <Icon name="RefreshCw" size={12} />
             Replace Image
           </button>
         </div>
-        
+
         {/* ID Score - Live feedback as user edits */}
         <div class="bg-gray-900/50 border border-gray-700 rounded-lg p-2 mb-4">
           <div class="flex items-center justify-between mb-1">
@@ -364,7 +364,7 @@ export default function ImageEditor({
             ></div>
           </div>
           <p class="text-xs text-gray-500 mt-1">{getScoreStatus(idScore.total)} - This score contributes to your Page Score</p>
-          
+
           {/* Detailed breakdown */}
           {showScoreDetails && (
             <div class="mt-2 pt-2 border-t border-gray-700">
@@ -382,14 +382,14 @@ export default function ImageEditor({
             </div>
           )}
         </div>
-        
+
         <div class="space-y-3">
           {/* Filename */}
           <div>
             <label class="flex items-center gap-1 text-xs font-medium text-gray-300 mb-1">
               Filename
               <Tooltip text="SEO-friendly filename. Auto-generated from alt text. Edit to customize.">
-                <HelpCircle size={12} class="text-gray-500 cursor-help" />
+                <Icon name="HelpCircle" size={12} class="text-gray-500 cursor-help" />
               </Tooltip>
             </label>
             <input
@@ -405,13 +405,13 @@ export default function ImageEditor({
               <p class="text-xs text-amber-400 mt-0.5">⚠️ Spaces are not SEO-friendly. Use hyphens instead.</p>
             )}
           </div>
-          
+
           {/* Alt Text */}
           <div>
             <label class="flex items-center gap-1 text-xs font-medium text-gray-300 mb-1">
               Alt Text
               <Tooltip text="Describes the image for screen readers and SEO. Keep it descriptive but concise.">
-                <HelpCircle size={12} class="text-gray-500 cursor-help" />
+                <Icon name="HelpCircle" size={12} class="text-gray-500 cursor-help" />
               </Tooltip>
             </label>
             <input
@@ -428,13 +428,13 @@ export default function ImageEditor({
               <p class="text-xs text-gray-500">{alt.length}/125</p>
             </div>
           </div>
-          
+
           {/* Title */}
           <div>
             <label class="flex items-center gap-1 text-xs font-medium text-gray-300 mb-1">
               Title (Optional)
               <Tooltip text="Appears as tooltip on hover. Adds extra context for users.">
-                <HelpCircle size={12} class="text-gray-500 cursor-help" />
+                <Icon name="HelpCircle" size={12} class="text-gray-500 cursor-help" />
               </Tooltip>
             </label>
             <input
@@ -445,13 +445,13 @@ export default function ImageEditor({
               class="w-full px-2 py-1.5 text-sm bg-gray-900 border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-accent-lime"
             />
           </div>
-          
+
           {/* Description */}
           <div>
             <label class="flex items-center gap-1 text-xs font-medium text-gray-300 mb-1">
               Description (Optional)
               <Tooltip text="Additional context about the image. Useful for captions.">
-                <HelpCircle size={12} class="text-gray-500 cursor-help" />
+                <Icon name="HelpCircle" size={12} class="text-gray-500 cursor-help" />
               </Tooltip>
             </label>
             <textarea
@@ -462,7 +462,7 @@ export default function ImageEditor({
               rows="2"
             />
           </div>
-          
+
           {/* Loading Strategy */}
           <div>
             <label class="block text-xs font-medium text-gray-300 mb-1">Loading Strategy</label>

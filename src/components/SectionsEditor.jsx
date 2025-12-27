@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import editorComponentRegistry from './editor-components/registry';
-import { Settings } from 'lucide-preact';
+import Icon from './Icon';
 
 export default function SectionsEditor({ sections = [], onChange, onEdit, onReady }) {
   const [local, setLocal] = useState(JSON.parse(JSON.stringify(sections)));
@@ -71,7 +71,7 @@ export default function SectionsEditor({ sections = [], onChange, onEdit, onRead
                 aria-label="Edit section settings"
                 title="Edit section settings"
               >
-                <Settings size={18} />
+                <Icon name="Settings" size={18} />
               </button>
               <button
                 onClick={() => moveSection(i, 'up')}
@@ -79,7 +79,7 @@ export default function SectionsEditor({ sections = [], onChange, onEdit, onRead
                 class="text-gray-500 hover:text-blue-500 disabled:opacity-50 transition-colors p-1"
                 aria-label="Move section up"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 15 7-7 7 7" /></svg>
+                <Icon name="ChevronUp" size={18} />
               </button>
               <button
                 onClick={() => moveSection(i, 'down')}
@@ -87,14 +87,14 @@ export default function SectionsEditor({ sections = [], onChange, onEdit, onRead
                 class="text-gray-500 hover:text-blue-500 disabled:opacity-50 transition-colors p-1"
                 aria-label="Move section down"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 9-7 7-7-7" /></svg>
+                <Icon name="ChevronDown" size={18} />
               </button>
               <button
                 onClick={() => handleRemove(i)}
                 class="text-gray-500 hover:text-red-500 transition-colors p-1"
                 aria-label="Remove section"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>
+                <Icon name="Trash2" size={18} />
               </button>
             </div>
 

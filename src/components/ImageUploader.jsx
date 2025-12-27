@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { useState, useRef, useEffect } from 'preact/hooks';
 import { useAuth } from '../contexts/AuthContext';
-import { UploadCloud, RefreshCw, CheckCircle, AlertCircle, Info, HelpCircle } from 'lucide-preact';
+import Icon from './Icon';
 
 // Helper function to generate SEO-friendly filename from text
 const generateSeoFilename = (text) => {
@@ -226,13 +226,13 @@ export default function ImageUploader({ pageSlug, onComplete }) {
   const renderStatusIcon = () => {
     switch (status) {
       case 'uploading':
-        return <RefreshCw size={20} className="animate-spin" />;
+        return <Icon name="RefreshCw" size={20} className="animate-spin" />;
       case 'success':
-        return <CheckCircle size={20} className="text-yellow-green" />;
+        return <Icon name="CheckCircle" size={20} className="text-yellow-green" />;
       case 'error':
-        return <AlertCircle size={20} className="text-scarlet" />;
+        return <Icon name="AlertCircle" size={20} className="text-scarlet" />;
       default:
-        return <UploadCloud size={20} />;
+        return <Icon name="UploadCloud" size={20} />;
     }
   };
 
@@ -267,7 +267,7 @@ export default function ImageUploader({ pageSlug, onComplete }) {
           </div>
         ) : (
           <div class="text-gray-400">
-            <UploadCloud size={40} class="mx-auto mb-2" />
+            <Icon name="UploadCloud" size={40} class="mx-auto mb-2" />
             <p>Click to browse or drag & drop</p>
             <p class="text-xs">PNG, JPG, GIF, WEBP</p>
           </div>
@@ -297,7 +297,7 @@ export default function ImageUploader({ pageSlug, onComplete }) {
         <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
           Alt Text (Required)
           <Tooltip text="Describes the image for screen readers and SEO. Keep it descriptive but concise.">
-            <HelpCircle size={14} class="text-gray-500 cursor-help" />
+            <Icon name="HelpCircle" size={14} class="text-gray-500 cursor-help" />
           </Tooltip>
         </label>
         <input
@@ -321,7 +321,7 @@ export default function ImageUploader({ pageSlug, onComplete }) {
         <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
           Filename
           <Tooltip text="Auto-generated from alt text. Edit if needed. Extension is preserved automatically.">
-            <HelpCircle size={14} class="text-gray-500 cursor-help" />
+            <Icon name="HelpCircle" size={14} class="text-gray-500 cursor-help" />
           </Tooltip>
         </label>
         <input
@@ -355,7 +355,7 @@ export default function ImageUploader({ pageSlug, onComplete }) {
             <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
               Image Title (Optional)
               <Tooltip text="Appears as tooltip on hover. Adds extra context for users and search engines.">
-                <HelpCircle size={14} class="text-gray-500 cursor-help" />
+                <Icon name="HelpCircle" size={14} class="text-gray-500 cursor-help" />
               </Tooltip>
             </label>
             <input
@@ -372,7 +372,7 @@ export default function ImageUploader({ pageSlug, onComplete }) {
             <label class="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
               Description (Optional)
               <Tooltip text="Additional context about the image. Useful for captions and detailed descriptions.">
-                <HelpCircle size={14} class="text-gray-500 cursor-help" />
+                <Icon name="HelpCircle" size={14} class="text-gray-500 cursor-help" />
               </Tooltip>
             </label>
             <textarea
@@ -420,7 +420,7 @@ export default function ImageUploader({ pageSlug, onComplete }) {
             </label>
             <div class="bg-blue-900/20 border border-blue-700/50 rounded-lg p-3 mb-3">
               <div class="flex items-start gap-2">
-                <Info size={16} class="text-blue-400 mt-0.5 flex-shrink-0" />
+                <Icon name="Info" size={16} class="text-blue-400 mt-0.5 flex-shrink-0" />
                 <p class="text-xs text-blue-300">
                   Recommended: 1200px max width for hero images, 800px for content images. Aspect ratio is always preserved.
                 </p>
@@ -453,7 +453,7 @@ export default function ImageUploader({ pageSlug, onComplete }) {
           {/* Astro Optimization Note */}
           <div class="bg-purple-900/20 border border-purple-700/50 rounded-lg p-3">
             <div class="flex items-start gap-2">
-              <Info size={16} class="text-purple-400 mt-0.5 flex-shrink-0" />
+              <Icon name="Info" size={16} class="text-purple-400 mt-0.5 flex-shrink-0" />
               <p class="text-xs text-purple-300">
                 Astro will automatically optimize this image for web delivery, including format conversion (WebP, AVIF) and responsive sizing.
               </p>
@@ -493,7 +493,7 @@ export default function ImageUploader({ pageSlug, onComplete }) {
       {file && file.size > 2 * 1024 * 1024 && !maxWidth && !maxHeight && (
         <div class="bg-orange-900/20 border border-orange-700/50 rounded-lg p-3">
           <div class="flex items-start gap-2">
-            <AlertCircle size={16} class="text-orange-400 mt-0.5 flex-shrink-0" />
+            <Icon name="AlertCircle" size={16} class="text-orange-400 mt-0.5 flex-shrink-0" />
             <p class="text-xs text-orange-300">
               Large file detected ({formatFileSize(file.size)}). Consider resizing to improve page speed.
             </p>

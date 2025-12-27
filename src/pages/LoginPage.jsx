@@ -1,5 +1,5 @@
-// Import the new icons from lucide-preact
-import { Handshake, FilePenLine, Eye } from 'lucide-preact';
+// Import the Icon component
+import Icon from '../components/Icon';
 
 export function LoginPage() {
   const handleLogin = () => {
@@ -26,15 +26,15 @@ export function LoginPage() {
 
           <ul className="space-y-4 text-left mb-8 md:mb-10 bg-white/5 p-6 rounded-lg border border-white/10">
             <li className="flex items-center gap-4">
-              <Handshake className="text-accent-lime w-6 h-6 flex-shrink-0" />
+              <Icon name="Handshake" className="text-accent-lime w-6 h-6 flex-shrink-0" />
               <span>Personalized guidance to rank higher</span>
             </li>
             <li className="flex items-center gap-4">
-              <FilePenLine className="text-accent-lime w-6 h-6 flex-shrink-0" />
+              <Icon name="FilePenLine" className="text-accent-lime w-6 h-6 flex-shrink-0" />
               <span>Simple to update anytime</span>
             </li>
             <li className="flex items-center gap-4">
-              <Eye className="text-accent-lime w-6 h-6 flex-shrink-0" />
+              <Icon name="Eye" className="text-accent-lime w-6 h-6 flex-shrink-0" />
               <span>Easy SEO (search everywhere optimized)</span>
             </li>
           </ul>
