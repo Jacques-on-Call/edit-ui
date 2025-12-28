@@ -11,6 +11,7 @@ import ReadmeDisplay from './ReadmeDisplay';
 import { CreateModal } from './CreateModal';
 import { FileContextMenu } from './FileContextMenu';
 import { MoveModal } from './MoveModal';
+import { RenameModal } from './RenameModal';
 import { SearchResultItem } from './SearchResultItem';
 import { useSearch } from '../hooks/useSearch';
 import { useFileManifest } from '../hooks/useFileManifest';
@@ -31,6 +32,7 @@ const [isReadmeLoading, setReadmeLoading] = useState(false);
 const [isReadmeVisible, setReadmeVisible] = useState(true);
 const [contextMenu, setContextMenu] = useState(null);
 const [moveFile, setMoveFile] = useState(null);
+const [renameItem, setRenameItem] = useState(null);
 const { searchResults, performSearch, isSearching } = useSearch(repo, fileManifest);
 
 // Notify parent of path changes
@@ -61,6 +63,9 @@ const handleContextMenuAction = (action, file) => {
       break;
     case 'move':
       setMoveFile(file);
+      break;
+    case 'rename':
+      setRenameItem(file);
       break;
     default:
       console.warn(`Unknown context menu action: ${action}`);
@@ -292,6 +297,42 @@ const handleMove = async (file, destinationPath) => {
   }
 };
 
+const handleRename = async (item, newName) => {
+  try {
+    const body = {
+      repo: repo,
+      path: item.path,
+      newFilename: newName,
+      sha: item.sha,
+    };
+
+    await fetchJson('/api/files/rename', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    // Optimistically update the UI
+    setFiles(prevFiles => prevFiles.map(f => {
+      if (item.type === 'dir' && f.path.startsWith(item.path + '/')) {
+        return { ...f, path: f.path.replace(item.path, item.path.substring(0, item.path.lastIndexOf('/')) + '/' + newName) };
+      }
+      if (f.sha === item.sha) {
+        const dir = f.path.substring(0, f.path.lastIndexOf('/'));
+        const newPath = `${dir}/${newName}`;
+        return { ...f, name: newName, path: newPath };
+      }
+      return f;
+    }));
+    setRenameItem(null);
+
+  } catch (err) {
+    console.error(`Failed to rename item:`, err);
+    setError(`Failed to rename ${item.name}: ${err.message}.`);
+    setRenameItem(null); // Close modal on error
+  }
+};
+
 const handleOpen = (fileToOpen) => {
   const file = fileToOpen || selectedFile;
   if (!file) return;
@@ -427,6 +468,13 @@ return (
           repo={repo}
           onClose={() => setMoveFile(null)}
           onMove={handleMove}
+        />
+      )}
+      {renameItem && (
+        <RenameModal
+          item={renameItem}
+          onClose={() => setRenameItem(null)}
+          onRename={handleRename}
         />
       )}
 </div>

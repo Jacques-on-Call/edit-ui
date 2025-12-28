@@ -41,6 +41,10 @@ export function FileContextMenu({ x, y, file, onClose, onAction }) {
             <span>Duplicate</span>
           </div>
         )}
+        <div onClick={() => handleAction('rename')} className={MENU_ITEM_CLASS}>
+          <Icon name="Pencil" className="w-4 h-4 mr-3" />
+          <span>Rename</span>
+        </div>
         <div onClick={() => handleAction('move')} className={MENU_ITEM_CLASS}>
           <Icon name="Move" className="w-4 h-4 mr-3" />
           <span>Move</span>
