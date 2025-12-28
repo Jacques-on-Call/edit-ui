@@ -6,8 +6,8 @@ NB: Follow Agents.md instructions
 ---
 
 ## Snag List
-after last commit search finds nothing! work done was cache 10min was introduced to reduce api calls. 
-Search did work like this, and term is highlighted. But “let’s” returns nothing.  EDITING_GUIDE.md should be EDITING_GUIDE and Get/README
+ 
+Search currently works like this, and term is highlighted. But “let’s” returns nothing.  EDITING_GUIDE.md should be EDITING_GUIDE and Get/README
 
 🔍 Let
 Search Results
@@ -17,15 +17,6 @@ README.md
 Get/README.md
 ...ges where users can sign up for a newsletter, a trial, or an account.
 
-To revise: “””### 2.2 Implement Search Results UI
-
-*   **Goal:** Build the frontend UI to display search results from the existing `/api/search` endpoint.
-*   **Steps:**
-    1.  **Create `SearchResults.jsx` Component:** Create a new file `easy-seo/src/components/FileExplorer/SearchResults.jsx`. This component will receive search results as a prop and render them in a list.
-    2.  **Create `SearchResultTile.jsx` Component:** Create a new file `easy-seo/src/components/FileExplorer/SearchResultTile.jsx`. This component will display a single search result, including the friendly file name and the highlighted content snippet. The snippet should be rendered using `dangerouslySetInnerHTML`.
-    3.  **Integrate into `FileExplorerPage.jsx`:** In `easy-seo/src/pages/FileExplorerPage.jsx`, add state for `searchResults`. When search results are returned from the API, update this state. Conditionally render the `<SearchResults>` component if there are results.
-*   **Acceptance Criteria:** A search performed in the File Explorer now renders a list of results, each displaying the file name and a highlighted snippet of the content.””
-*   ”
 
 
 ## Context Menu: Rename & Move
