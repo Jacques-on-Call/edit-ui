@@ -77,6 +77,7 @@ export default function SelectionStatePlugin({ onSelectionChange }) {
         isStrikethrough: selection.hasFormat('strikethrough'),
         isCode: selection.hasFormat('code'),
         isHighlight: selection.hasFormat('highlight'),
+        isCollapsed: selection.isCollapsed(),
         hasH1InDocument,
         textColor,
         highlightColor,

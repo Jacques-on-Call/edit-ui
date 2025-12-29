@@ -72,7 +72,7 @@ Get/README.md
 ## Content Editor Toolbar
 
 *   **Problem:** The experimental floating toolbar is unreliable and difficult to use.
-*   **Agreed Solution:** Shelve the floating toolbar. Implement a new "Side Panel" toolbar that slides out from the left app edge when text is selected. This panel will contain the full set of styling options and will slide *over* the content.
+*   **Agreed Solution:** [DONE - 2025-12-29] Shelve the floating toolbar. Implement a new "Side Panel" toolbar that slides out from the left app edge when text is selected. This panel will contain the full set of styling options and will slide *over* the content.
 
 #### Technical Implementation Plan
 

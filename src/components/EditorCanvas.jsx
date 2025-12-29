@@ -2,6 +2,7 @@ import { h } from 'preact';
 import { useState, useContext, useEffect, useMemo } from 'preact/hooks';
 import FloatingToolbar from './FloatingToolbar';
 import SlideoutToolbar from './SlideoutToolbar';
+import SidePanelToolbar from './SidePanelToolbar';
 import BottomActionBar from './BottomActionBar';
 import AddSectionModal from './AddSectionModal';
 import { EditorContext } from '../contexts/EditorContext';
@@ -17,7 +18,7 @@ export default function EditorCanvas(props) {
     console.log('[EditorCanvas] Editor is ready, rendering toolbar.');
     setIsEditorReady(true);
   };
-  
+
   // Memoize offset object to prevent re-renders
   const toolbarOffset = useMemo(() => ({ x: 0, y: 10 }), []);
 
@@ -43,6 +44,7 @@ export default function EditorCanvas(props) {
 
   return (
     <div class="flex flex-col h-full bg-transparent text-white relative">
+      {/* 
       {isEditorReady && (
         <FloatingToolbar
           editorRootSelector=".editor-input"
@@ -50,7 +52,9 @@ export default function EditorCanvas(props) {
           cooldownMs={200}
         />
       )}
+      */}
       <SlideoutToolbar />
+      <SidePanelToolbar />
       <main
         class="flex-grow relative overflow-y-auto"
         style={{
