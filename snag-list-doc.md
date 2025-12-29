@@ -1,4 +1,4 @@
-# Snag List & Technical Jargon
+# Snag List 
 
 This document outlines a list of known issues ("snags") and their agreed-upon solutions, including a detailed technical plan for each. It also serves as a glossary for technical terms used during development.
 
