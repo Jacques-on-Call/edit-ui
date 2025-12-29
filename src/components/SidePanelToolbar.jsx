@@ -1,5 +1,6 @@
 import { h } from 'preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
+import { createPortal } from 'preact/compat';
 import {
     Bold, Italic, Underline, Strikethrough, Code,
     Type, Palette, Highlighter, Eraser, Link, X,
@@ -26,10 +27,6 @@ export default function SidePanelToolbar() {
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (isOpen && panelRef.current && !panelRef.current.contains(e.target)) {
-                // Only close if it's not a click that might be starting a new selection
-                // or clicking on the editor itself in a way that should keep the panel open.
-                // For simplicity, we'll let the selection state handle most cases,
-                // but this allows a manual "dismiss" by clicking elsewhere.
                 setIsManualClose(true);
             }
         };
@@ -43,12 +40,11 @@ export default function SidePanelToolbar() {
     const onAction = (action, payload) => {
         if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
         handleAction(action, payload);
-        // We don't necessarily close on action for styling, 
-        // as user might want to apply multiple styles.
     };
 
     const handleHeadingCycle = (e) => {
         e.preventDefault();
+        if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
         const sequence = ['paragraph', 'h2', 'h3', 'h4'];
         const currentIndex = sequence.indexOf(selectionState.blockType);
         const nextType = sequence[(currentIndex + 1) % sequence.length];
@@ -57,6 +53,7 @@ export default function SidePanelToolbar() {
 
     const handleListCycle = (e) => {
         e.preventDefault();
+        if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
         if (selectionState.blockType === 'ul') {
             onAction('list', 'ol');
         } else if (selectionState.blockType === 'ol') {
@@ -66,13 +63,10 @@ export default function SidePanelToolbar() {
         }
     };
 
-    return (
+    return createPortal(
         <div
             ref={panelRef}
             className={`side-panel-toolbar ${isOpen ? 'is-open' : ''}`}
-            onPointerEnter={() => {
-                if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
-            }}
             onPointerDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -85,6 +79,7 @@ export default function SidePanelToolbar() {
                     className="side-panel-close-btn"
                     onPointerDown={(e) => {
                         e.preventDefault();
+                        if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
                         setIsManualClose(true);
                     }}
                     aria-label="Close styling panel"
@@ -187,6 +182,7 @@ export default function SidePanelToolbar() {
                     <span>Clear</span>
                 </button>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

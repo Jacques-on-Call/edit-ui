@@ -9,12 +9,14 @@ export default function LexicalField({ value, onChange, placeholder, className, 
   const { setActiveEditor, setSelectionState, isToolbarInteractionRef } = useEditor();
 
   const handleFocus = () => {
-    // If a blur timeout is pending, cancel it. This prevents the editor from being cleared
-    // when focus moves rapidly between editor fields.
+    // If a blur timeout is pending, cancel it.
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current);
       blurTimeoutRef.current = null;
     }
+
+    // Reset toolbar interaction flag on focus
+    if (isToolbarInteractionRef) isToolbarInteractionRef.current = false;
 
     console.log('[LexicalField] handleFocus: A content-editable field has received focus. Cancelling any pending blur and setting this instance as the active editor.');
     if (editorApiRef.current) {
@@ -28,11 +30,8 @@ export default function LexicalField({ value, onChange, placeholder, className, 
 
     blurTimeoutRef.current = setTimeout(() => {
       // Before clearing, check if the user is interacting with the toolbar.
-      // If they are, we abort the clear and let the toolbar handle things.
       if (isToolbarInteractionRef?.current) {
         console.log('[LexicalField] Aborting clear: Toolbar interaction detected.');
-        // Reset the flag after checking it.
-        isToolbarInteractionRef.current = false;
         return;
       }
       console.log('[LexicalField] handleBlur Timeout: Delay complete and no toolbar interaction detected. Clearing active editor.');

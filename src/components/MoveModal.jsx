@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'preact/compat';
 import { fetchJson } from '../lib/fetchJson';
 import Icon from './Icon';
 
-function FolderTree({ repo, onSelectPath, currentPath, initialExpandedPaths }) {
+function FolderTree({ repo, onSelectPath, currentPath, initialExpandedPaths, rootPath = 'src/pages' }) {
   const [tree, setTree] = useState(null);
   const [expandedPaths, setExpandedPaths] = useState(new Set(initialExpandedPaths));
   const [isLoading, setIsLoading] = useState(true);
@@ -11,17 +11,17 @@ function FolderTree({ repo, onSelectPath, currentPath, initialExpandedPaths }) {
     const fetchTree = async () => {
       setIsLoading(true);
       try {
-        const treeData = await fetchJson(`/api/files/tree?repo=${repo}&path=src/pages`);
+        const treeData = await fetchJson(`/api/files/tree?repo=${repo}&path=${encodeURIComponent(rootPath)}`);
         setTree(treeData);
       } catch (error) {
         console.error("Failed to fetch folder tree:", error);
-        setTree(null); // Set to null on error
+        setTree(null);
       } finally {
         setIsLoading(false);
       }
     };
     fetchTree();
-  }, [repo]);
+  }, [repo, rootPath]);
 
   const toggleExpand = (path) => {
     setExpandedPaths(prev => {
@@ -48,7 +48,7 @@ function FolderTree({ repo, onSelectPath, currentPath, initialExpandedPaths }) {
           {node.children && node.children.length > 0 && (
             <Icon name={isExpanded ? "ChevronDown" : "ChevronRight"} className="w-4 h-4 mr-2 flex-shrink-0" onClick={(e) => { e.stopPropagation(); toggleExpand(node.path); }} />
           )}
-          <Icon name="Folder" className="w-5 h-5 mr-2 flex-shrink-0" style={{ marginLeft: (!node.children || node.children.length === 0) ? '1.5rem': '' }}/>
+          <Icon name="Folder" className="w-5 h-5 mr-2 flex-shrink-0" style={{ marginLeft: (!node.children || node.children.length === 0) ? '1.5rem' : '' }} />
           <span className="truncate">{node.name}</span>
         </div>
         {isExpanded && node.children && (
@@ -56,7 +56,7 @@ function FolderTree({ repo, onSelectPath, currentPath, initialExpandedPaths }) {
             {node.children.length > 0 ? (
               node.children.map(child => renderTree(child))
             ) : (
-               <div className="text-gray-500 text-sm italic ml-10">No sub-folders</div>
+              <div className="text-gray-500 text-sm italic ml-10">No sub-folders</div>
             )}
           </div>
         )}
@@ -89,6 +89,7 @@ export function MoveModal({ file, repo, onClose, onMove }) {
     return paths;
   };
 
+  const rootPath = file.path.startsWith('content/pages') ? 'content/pages' : 'src/pages';
   const initialExpandedPaths = getInitialExpandedPaths(initialPath);
 
   return (
@@ -103,6 +104,7 @@ export function MoveModal({ file, repo, onClose, onMove }) {
             onSelectPath={setDestinationPath}
             currentPath={destinationPath}
             initialExpandedPaths={initialExpandedPaths}
+            rootPath={rootPath}
           />
         </div>
 
