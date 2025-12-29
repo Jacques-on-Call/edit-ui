@@ -242,3 +242,14 @@ I noticed when I move a file the file moves to where I select but the paths with
 ## debug feature modal
 looks good so far but when i click submit nothing happens modal stays on screen none of the buttons do anything and I cant copy logs, that said I hope last lines of console can be included in bug submits as Im sure that would be very helpful. as I can see the new modal also has no log calls. also it only is in the content editor why not in all sections/ pages as it can be a very useful tool to commision agents to tackle isues as the appear.
 
+## style toolbar
+the newly addded easy-seo/src/components/SidePanelToolbar.jsx shows up on computer but is absent on mobile phone ! 
+
+the styles when tested on computer did not apply change on text in the content editor. good idea look at how  easy-seo/src/components/SlideoutToolbar.jsx is able to apply changes
+
+## content editor text selection
+i notice on computer the selection of text is not visible like it is on mobile phones. 
+
+## user text experience
+so there seems to be a worse effect on computers but in general the typing of text is delayed and not as as it feels in other apps or in a word processors. 
+
