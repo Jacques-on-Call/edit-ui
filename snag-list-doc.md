@@ -248,4 +248,5 @@ when i renamed a file i noticed that the new file with the new name was a new fi
 I noticed when I move a file the file moves to where I select but the paths within the the file dont update causing the file in the new location to become an invalid file that cant be opened in the editor.
 
 ## debug feature modal
-looks good so far but when i click submit nothing happens modal stays on screen none of the buttons do anything and I cant copy logs, that said I hope last lines of console can be included in bug submits as Im sure that would be very helpful. as I can see the new modal also has no log calls 
+looks good so far but when i click submit nothing happens modal stays on screen none of the buttons do anything and I cant copy logs, that said I hope last lines of console can be included in bug submits as Im sure that would be very helpful. as I can see the new modal also has no log calls. also it only is in the content editor why not in all sections/ pages as it can be a very useful tool to commision agents to tackle isues as the appear.
+
