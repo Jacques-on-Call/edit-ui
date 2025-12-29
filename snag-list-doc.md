@@ -253,3 +253,6 @@ i notice on computer the selection of text is not visible like it is on mobile p
 ## user text experience
 so there seems to be a worse effect on computers but in general the typing of text is delayed and not as as it feels in other apps or in a word processors. 
 
+## file explorer bottom action bar
+at the moment the back and home buttons dont work in src/pages folders. very strange as its create button does. and i think it stoped working recently during snag fixes
+
