@@ -149,3 +149,12 @@ This phase adds a crucial quality gate to the publishing process.
     2.  **Add Validation Check:** Before triggering the build, check the page's frontmatter for the presence and non-empty values of `title`, `description`, and `slug`.
     3.  **Show Suggested Modal:** If any of the required fields are missing, show a `<Modal>` with a user-friendly suggestions message, listing the missing fields and explaining why they are important. Maybe allow them to fill in the same time to simplify the process.
 *   **Acceptance Criteria:** Clicking the "Publish" button on a page with a missing title or description displays a modal with a c
+
+
+## repport bug request feature 
+
+*   **Goal:** Add a feature to report bugs and request features. like a button in the bootom toolbar small out of the way iether a bug or spanner icon
+*   **Steps:**
+    1.  **Create `ReportBug.jsx`:** Create a new component that will serve as the container for the settings.
+    2.  **Render Controls Based on Selection:** The panel will receive the ID of the selected component as a prop. It will then look up the component's schema (from a future `component-schemas.json`) and dynamically render the appropriate controls (e.g., a text input for a `title` property, a color picker for a `backgroundColor` property).
+    3.  **Implement Real-Time Updates:** When a control in the panel is changed, update the central state and send a `postMessage` event to the iframe with the new style information. The preview will listen for this and apply the change in real-time. this would idealy update the snag file or technical execution file by appnding to the end, the detail can include page name, componenet name and anything helpful for agents to know enough to fix the issue or make the improvments. 

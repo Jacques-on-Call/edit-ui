@@ -239,3 +239,11 @@ Get/README.md
 
 
 If Strategy Content uses a slightly different structure, share its exact path layout and we’ll add it to the whitelist so it’s recognized without weakening the rule.
+
+
+## File rename 
+when i renamed a file i noticed that the new file with the new name was a new file and not a copy of the old file. so blank new file with empty componenets. 
+
+## move file
+I noticed when I move a file the file moves to where I select but the paths within the the file dont update causing the file in the new location to become an invalid file that cant be opened in the editor.
+

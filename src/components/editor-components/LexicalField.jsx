@@ -36,7 +36,7 @@ export default function LexicalField({ value, onChange, placeholder, className, 
       }
       console.log('[LexicalField] handleBlur Timeout: Delay complete and no toolbar interaction detected. Clearing active editor.');
       setActiveEditor(null);
-    }, 50);
+    }, 200);
   };
 
   return (

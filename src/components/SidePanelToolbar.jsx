@@ -9,7 +9,7 @@ import { useEditor } from '../contexts/EditorContext';
 import './SidePanelToolbar.css';
 
 export default function SidePanelToolbar() {
-    const { selectionState, handleAction } = useEditor();
+    const { selectionState, handleAction, isToolbarInteractionRef } = useEditor();
     const [isManualClose, setIsManualClose] = useState(false);
     const panelRef = useRef(null);
 
@@ -41,19 +41,22 @@ export default function SidePanelToolbar() {
     }, [isOpen]);
 
     const onAction = (action, payload) => {
+        if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
         handleAction(action, payload);
         // We don't necessarily close on action for styling, 
         // as user might want to apply multiple styles.
     };
 
-    const handleHeadingCycle = () => {
+    const handleHeadingCycle = (e) => {
+        e.preventDefault();
         const sequence = ['paragraph', 'h2', 'h3', 'h4'];
         const currentIndex = sequence.indexOf(selectionState.blockType);
         const nextType = sequence[(currentIndex + 1) % sequence.length];
         onAction('heading', nextType === 'paragraph' ? null : nextType);
     };
 
-    const handleListCycle = () => {
+    const handleListCycle = (e) => {
+        e.preventDefault();
         if (selectionState.blockType === 'ul') {
             onAction('list', 'ol');
         } else if (selectionState.blockType === 'ol') {
@@ -67,12 +70,20 @@ export default function SidePanelToolbar() {
         <div
             ref={panelRef}
             className={`side-panel-toolbar ${isOpen ? 'is-open' : ''}`}
+            onPointerDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
+            }}
         >
             <div className="side-panel-toolbar-header">
                 <h4>Styling</h4>
                 <button
                     className="side-panel-close-btn"
-                    onClick={() => setIsManualClose(true)}
+                    onPointerDown={(e) => {
+                        e.preventDefault();
+                        setIsManualClose(true);
+                    }}
                     aria-label="Close styling panel"
                 >
                     <X size={14} />
@@ -82,7 +93,10 @@ export default function SidePanelToolbar() {
             <div className="side-panel-toolbar-group">
                 <button
                     className={`side-panel-btn ${selectionState.isBold ? 'active' : ''}`}
-                    onClick={() => onAction('bold')}
+                    onPointerDown={(e) => {
+                        e.preventDefault();
+                        onAction('bold');
+                    }}
                     title="Bold"
                 >
                     <Bold size={18} className="side-panel-btn-icon" />
@@ -90,7 +104,10 @@ export default function SidePanelToolbar() {
                 </button>
                 <button
                     className={`side-panel-btn ${selectionState.isItalic ? 'active' : ''}`}
-                    onClick={() => onAction('italic')}
+                    onPointerDown={(e) => {
+                        e.preventDefault();
+                        onAction('italic');
+                    }}
                     title="Italic"
                 >
                     <Italic size={18} className="side-panel-btn-icon" />
@@ -98,7 +115,10 @@ export default function SidePanelToolbar() {
                 </button>
                 <button
                     className={`side-panel-btn ${selectionState.isUnderline ? 'active' : ''}`}
-                    onClick={() => onAction('underline')}
+                    onPointerDown={(e) => {
+                        e.preventDefault();
+                        onAction('underline');
+                    }}
                     title="Underline"
                 >
                     <Underline size={18} className="side-panel-btn-icon" />
@@ -106,7 +126,10 @@ export default function SidePanelToolbar() {
                 </button>
                 <button
                     className={`side-panel-btn ${selectionState.isStrikethrough ? 'active' : ''}`}
-                    onClick={() => onAction('strikethrough')}
+                    onPointerDown={(e) => {
+                        e.preventDefault();
+                        onAction('strikethrough');
+                    }}
                     title="Strikethrough"
                 >
                     <Strikethrough size={18} className="side-panel-btn-icon" />
@@ -119,7 +142,7 @@ export default function SidePanelToolbar() {
             <div className="side-panel-toolbar-group">
                 <button
                     className={`side-panel-btn ${selectionState.blockType?.startsWith('h') ? 'active' : ''}`}
-                    onClick={handleHeadingCycle}
+                    onPointerDown={handleHeadingCycle}
                     title="Cycle Heading (H2-H4)"
                 >
                     <Type size={18} className="side-panel-btn-icon" />
@@ -127,7 +150,7 @@ export default function SidePanelToolbar() {
                 </button>
                 <button
                     className={`side-panel-btn ${selectionState.blockType === 'ul' || selectionState.blockType === 'ol' ? 'active' : ''}`}
-                    onClick={handleListCycle}
+                    onPointerDown={handleListCycle}
                     title="Cycle List (UL/OL/Off)"
                 >
                     <List size={18} className="side-panel-btn-icon" />
@@ -140,7 +163,10 @@ export default function SidePanelToolbar() {
             <div className="side-panel-toolbar-group">
                 <button
                     className={`side-panel-btn ${selectionState.isLink ? 'active' : ''}`}
-                    onClick={() => onAction('link')}
+                    onPointerDown={(e) => {
+                        e.preventDefault();
+                        onAction('link');
+                    }}
                     title="Insert Link"
                 >
                     <Link size={18} className="side-panel-btn-icon" />
@@ -148,7 +174,10 @@ export default function SidePanelToolbar() {
                 </button>
                 <button
                     className="side-panel-btn"
-                    onClick={() => onAction('clearFormatting')}
+                    onPointerDown={(e) => {
+                        e.preventDefault();
+                        onAction('clearFormatting');
+                    }}
                     title="Clear formatting"
                 >
                     <Eraser size={18} className="side-panel-btn-icon" />
