@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { memo } from 'preact/compat';
 import { route } from 'preact-router';
-import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil } from 'lucide-preact';
+import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil, LifeBuoy } from 'lucide-preact';
 import './BottomActionBar.css';
 import { getPageScoreColor } from '../lib/pageScoring';
 
@@ -16,6 +16,7 @@ const BottomActionBar = memo((props) => {
     onAdd,
     onPreview,
     onRefreshPreview,
+    onReport,
     needsDeployment
   } = props;
   const getStatusColor = () => {
@@ -60,6 +61,10 @@ const BottomActionBar = memo((props) => {
     <footer className="bottom-action-bar" role="toolbar" aria-label="Editor actions">
       <button type="button" onClick={() => route('/explorer')} className="bar-btn" aria-label="Home">
         <Home size={28} />
+      </button>
+
+      <button type="button" onClick={onReport} className="bar-btn" aria-label="Report Issue" title="Report Bug / Request Feature">
+        <LifeBuoy size={28} className="text-gray-400 hover:text-white transition-colors" />
       </button>
 
       <button type="button" onClick={onAdd} className="bar-btn bar-add" aria-label="Add Section">

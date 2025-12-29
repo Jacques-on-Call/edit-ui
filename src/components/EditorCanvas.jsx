@@ -5,6 +5,7 @@ import SlideoutToolbar from './SlideoutToolbar';
 import SidePanelToolbar from './SidePanelToolbar';
 import BottomActionBar from './BottomActionBar';
 import AddSectionModal from './AddSectionModal';
+import ReportIssueModal from './ReportIssueModal';
 import { EditorContext } from '../contexts/EditorContext';
 import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 
@@ -12,6 +13,7 @@ import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
 export default function EditorCanvas(props) {
   const { selectionState, handleAction } = useContext(EditorContext);
   const [isEditorReady, setIsEditorReady] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // Callback for child to signal readiness
   const handleEditorReady = () => {
@@ -73,6 +75,19 @@ export default function EditorCanvas(props) {
         onPreview={editorMode === 'json' ? handlePreview : null}
         onSync={editorMode === 'json' ? handleSync : null}
         onRefreshPreview={handleRefreshPreview}
+        onReport={() => setIsReportModalOpen(true)}
+      />
+      <ReportIssueModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        context={{
+          pageId,
+          viewMode,
+          editorMode,
+          saveStatus,
+          syncStatus,
+          selectionState
+        }}
       />
       <AddSectionModal
         pageSlug={pageId}
