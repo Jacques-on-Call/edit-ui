@@ -42,15 +42,15 @@ onPathChange(path);
 }
 }, [path, onPathChange]);
 
-const handleLongPress = (file, event) => {
-event.preventDefault();
-const x = event.touches ? event.touches[0].pageX : event.pageX;
-const y = event.touches ? event.touches[0].pageY : event.pageY;
-setContextMenu({ x, y, file });
-};
+const handleLongPress = useCallback((file, event) => {
+  event.preventDefault();
+  const x = event.touches ? event.touches[0].pageX : event.pageX;
+  const y = event.touches ? event.touches[0].pageY : event.pageY;
+  setContextMenu({ x, y, file });
+}, []); // setContextMenu is stable
 
 const handleCloseContextMenu = useCallback(() => {
-setContextMenu(null);
+  setContextMenu(null);
 }, []);
 
 const handleContextMenuAction = (action, file) => {
@@ -333,7 +333,7 @@ const handleRename = async (item, newName) => {
   }
 };
 
-const handleOpen = (fileToOpen) => {
+const handleOpen = useCallback((fileToOpen) => {
   const file = fileToOpen || selectedFile;
   if (!file) return;
 
@@ -373,7 +373,7 @@ const handleOpen = (fileToOpen) => {
       console.log('[FileExplorer] route() appears to have succeeded (location updated).');
     }
   }
-};
+}, [selectedFile]);
 
 const handleGoHome = () => setPath('src/pages');
 
