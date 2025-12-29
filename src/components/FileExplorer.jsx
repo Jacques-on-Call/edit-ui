@@ -310,7 +310,11 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
 
     } catch (err) {
       console.error(`Failed to move file:`, err);
-      setError(`Failed to move ${file.name}: ${err.message}.`);
+      if (err.response && err.response.status === 409) {
+        setError(`Failed to move ${file.name}: A file with that name already exists in the destination folder.`);
+      } else {
+        setError(`Failed to move ${file.name}: ${err.message}.`);
+      }
       setMoveFile(null); // Close modal on error
     }
   };
