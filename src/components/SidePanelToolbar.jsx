@@ -70,6 +70,9 @@ export default function SidePanelToolbar() {
         <div
             ref={panelRef}
             className={`side-panel-toolbar ${isOpen ? 'is-open' : ''}`}
+            onPointerEnter={() => {
+                if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
+            }}
             onPointerDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

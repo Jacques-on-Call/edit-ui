@@ -41,6 +41,9 @@ export function EditorProvider({ children }) {
       return;
     }
 
+    // Ensure editor is focused before applying action to preserve selection
+    activeEditor.focus?.();
+
     switch (action) {
       case 'bold':
         activeEditor.toggleBold?.();
