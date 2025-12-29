@@ -13,10 +13,13 @@ export default function SectionsEditor({ sections = [], onChange, onEdit, onRead
     }
   }, [onReady]);
 
-  // This effect synchronizes the internal state with the parent's prop.
-  // This is crucial to prevent stale state if the parent re-renders.
+  // This effect synchronizes the internal state with the parent's prop only when it actually changes from the outside.
   useEffect(() => {
-    setLocal(JSON.parse(JSON.stringify(sections)));
+    // We only update local if the JSON representation changed, to avoid loops
+    const sectionsJson = JSON.stringify(sections);
+    if (sectionsJson !== JSON.stringify(local)) {
+      setLocal(JSON.parse(sectionsJson));
+    }
   }, [sections]);
 
   const updateSectionProp = (index, propPath, value) => {

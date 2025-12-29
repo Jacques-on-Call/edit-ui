@@ -15,10 +15,10 @@ export default function LexicalField({ value, onChange, placeholder, className, 
       blurTimeoutRef.current = null;
     }
 
-    // Reset toolbar interaction flag on focus
-    if (isToolbarInteractionRef) isToolbarInteractionRef.current = false;
+    // Reset toolbar interaction flag on focus - BUT ONLY if focus came from outside the toolbar
+    // Actually, let's keep it simple: just log for now
+    console.log(`[LexicalField] handleFocus: A field has received focus. Interaction flag: ${isToolbarInteractionRef?.current}`);
 
-    console.log('[LexicalField] handleFocus: A content-editable field has received focus. Cancelling any pending blur and setting this instance as the active editor.');
     if (editorApiRef.current) {
       setActiveEditor(editorApiRef.current);
     }
