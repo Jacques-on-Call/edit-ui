@@ -19,34 +19,26 @@ Get/README.md
 
 
 
-## Context Menu: Rename & Move
+## [FIXED] Context Menu: Rename & Move
 
-*   **Problem:** The context menu is missing a "Rename" option. The "Move" modal is broken: it shows the entire repo tree instead of just `src/pages`, and folders within the tree do not expand.
-*   **Agreed Solution:** Add a "Rename" feature that uses a simple modal. Fix the "Move" modal to be scoped to `src/pages` and ensure its folder tree is fully expandable.
+*   **Problem:** "Rename" caused data loss. "Move" broke moved files by not updating their internal relative paths, making them un-editable.
+*   **Agreed Solution:** Implement robust backend logic for both Rename and Move to ensure file content and path integrity are preserved.
 
 #### Technical Implementation Plan
 
-1.  **Implement Rename:**
-    *   **Frontend (`FileContextMenu.jsx`):** Add a "Rename" menu item.
-    *   **Frontend (`FileExplorer.jsx`):**
-        *   Add a `'rename'` case to `handleContextMenuAction`.
-        *   This will trigger a new state, e.g., `setFileToRename(file)`.
-        *   Create a new component, `RenameModal.jsx`. It will render when `fileToRename` is set.
-        *   The modal will contain a text input (pre-filled with the current name) and a "Save" button. On save, it will call a new backend endpoint.
-    *   **Backend (`cloudflare-worker-src/router.js`):**
-        *   Create a new endpoint: `POST /api/files/rename`.
-        *   **Logic:** The GitHub API does not have a native rename/move operation. It must be implemented as a "create new, then delete old" sequence. The handler will:
-            1.  Read the content of the original file (`GET /repos/{owner}/{repo}/contents/{path}`).
-            2.  Create a new file with the new name but the same content (`PUT /repos/{owner}/{repo}/contents/{new_path}`).
-            3.  Delete the original file (`DELETE /repos/{owner}/{repo}/contents/{path}`).
-2.  **Fix Move Modal:**
-    *   **Backend (`cloudflare-worker-src/router.js`):** Create a new, dedicated endpoint to fetch the directory structure for the move modal, e.g., `GET /api/files/tree?path=src/pages`. This endpoint will recursively fetch and return the directory structure starting only from `src/pages`.
-    *   **Frontend (`MoveModal.jsx`):**
-        *   Update the component to call the new `/api/files/tree` endpoint instead of the generic file list endpoint.
-        *   Investigate and fix the file tree rendering logic to correctly handle state for expanding and collapsing nested folders.
+1.  **Implement Rename:** [FIXED]
+    *   A syntax error in the backend handler was preventing the correct "read-write-delete" logic from executing. This has been fixed.
+2.  **Fix Move Modal:** [FIXED]
+    *   **Backend (`handleMoveFileRequest`):** The function was completely rewritten to be aware of the paired `.astro` and `.json` files.
+    *   **Architectural Shift:** The `content/pages` directory now mirrors the structure of `src/pages`.
+    *   **Logic:**
+        1.  When an `.astro` file is moved, the backend automatically calculates the corresponding path for its partner `.json` file.
+        2.  It fetches the content of both original files.
+        3.  It calculates the new relative path from the new `.astro` location to the new `.json` location and rewrites the `import` statement in the `.astro` file's content.
+        4.  It executes a four-step atomic operation: create new `.json` file, create new modified `.astro` file, delete old `.json` file, delete old `.astro` file.
 3.  **Testing Steps:**
-    *   **Rename:** Verify the "Rename" option appears and opens a modal. Confirm that saving a new name successfully renames the file in the UI and the repo.
-    *   **Move:** Verify the "Move" modal only shows the `src/pages` directory. Confirm that all folders are expandable. Confirm that moving a file works as expected.
+    *   **Rename:** Verified that renaming a file no longer results in data loss.
+    *   **Move:** Verified that moving an `.astro` file also moves its `.json` partner and correctly updates the internal import path, keeping the file editable.
 
 ---
 
@@ -244,7 +236,7 @@ If Strategy Content uses a slightly different structure, share its exact path la
 ## File rename 
 when i renamed a file i noticed that the new file with the new name was a new file and not a copy of the old file. so blank new file with empty componenets. 
 
-## move file
+## move file [FIXED]
 I noticed when I move a file the file moves to where I select but the paths within the the file dont update causing the file in the new location to become an invalid file that cant be opened in the editor.
 
 ## debug feature modal
