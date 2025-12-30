@@ -1,0 +1,741 @@
+Run echo "--- Git Status ---"
+--- Git Status ---
+On branch snag-squad
+Your branch is up to date with 'origin/snag-squad'.
+
+nothing to commit, working tree clean
+--- Git Branches ---
+* snag-squad
+  remotes/origin/240726-Jules-#71-UX-improvements
+  remotes/origin/240726-Jules-92-debug-layout-editor-canvas
+  remotes/origin/240726-Jules98-fix-layout-dehydration
+  remotes/origin/240915-implement-secure-github-oauth
+  remotes/origin/241005-Jules-#68-Getting-Editor-working
+  remotes/origin/241005-Jules-65-debug-astro-editor-v1.0
+  remotes/origin/241006-Jules-#72-debugging-preview
+  remotes/origin/241006-Jules-#73-UX-Refinements
+  remotes/origin/241007-Jules-74-fix-preview-build
+  remotes/origin/241007-Jules-75-fix-preview-build-process
+  remotes/origin/241008-Jules-79-fix-layout-editor-crash
+  remotes/origin/241009-Jules-#83-architectural-map
+  remotes/origin/241009-Jules-81-fix-layout-editor-crash
+  remotes/origin/241010-Jules-#86-layout-interpreter-phase1
+  remotes/origin/241010-Jules-#91-fix-layout-editor-debugger
+  remotes/origin/241010-Jules-84-fix-editor-crash
+  remotes/origin/241010-Jules-87-visual-render-engine
+  remotes/origin/241010-Jules-88-fix-astro-parser-initialization
+  remotes/origin/241010-Jules-89-fix-astro-compiler-init
+  remotes/origin/241010-Jules-90-fix-debugger-display
+  remotes/origin/241011-Jules-#93-fix-layout-deserialization
+  remotes/origin/241012-Jules-94-add-oauth-debugger
+  remotes/origin/241012-Jules-95-fix-worker-build
+  remotes/origin/241013-Jules97-fix-build-and-lint-errors
+  remotes/origin/241014-Jules-98-layout-dehydration-fix
+  remotes/origin/241015-Jules101-fix-login-flow
+  remotes/origin/241015-Jules102-fix-login-popup
+  remotes/origin/241015-Jules98-m1-canvas-poc
+  remotes/origin/241016-Jules104-replace-craftjs-editor
+  remotes/origin/241016-Jules105-anonymous-gsc-flow
+  remotes/origin/241016-Jules99-gsc-connect
+  remotes/origin/241017-Jules106-preview-backend-and-build
+  remotes/origin/241017-Jules107-editor-workflow-integration
+  remotes/origin/241018-Jules-define-priority-engine-strategy
+  remotes/origin/241018-Jules108-fix-gsc-flow-and-report-resilience
+  remotes/origin/241018-Jules108-fix-priority-engine-bugs
+  remotes/origin/241018-Jules109-fix-report-injection
+  remotes/origin/241019-Jules110-fix-gsc-auth-blank-screen
+  remotes/origin/241019-Jules111-pe-phase1-foundation
+  remotes/origin/250905-Jules-#68-Getting-Editor-Working
+  remotes/origin/250915-add-sync-workflow
+  remotes/origin/250916-fix-github-login-flow
+  remotes/origin/250916-pwa-file-explorer
+  remotes/origin/250917-fix-react-login-flow
+  remotes/origin/250917-fix-react-login-flow-2
+  remotes/origin/250917-fix-worker-deployment
+  remotes/origin/250918-mobile-file-explorer-ux
+  remotes/origin/250918-ux-improvements
+  remotes/origin/250919-ui-redesign
+  remotes/origin/250921-tinymce-init-fix
+  remotes/origin/250924-editor-ux-fixes
+  remotes/origin/250930-Astro-reinstall
+  remotes/origin/251001-Jules#55-readme-questions
+  remotes/origin/251001-Jules#56-fix-ui-regressions
+  remotes/origin/251004-Jules#64-astro-editor-v1.0
+  remotes/origin/251004-Jules-65-astro-editor-v1.0
+  remotes/origin/251007-Jules-1-layout-editor-shell
+  remotes/origin/251007-Jules-76-dual-preview-system
+  remotes/origin/251008-Jules-77-fix-layout-api-404
+  remotes/origin/251008-Jules-80-layout-editor-fixes
+  remotes/origin/251009-Jules-82-fix-layout-editor
+  remotes/origin/251010-Jules-#85-implement-layout-debug-patches
+  remotes/origin/251013-Jules#98-fix-layout-editor-loading
+  remotes/origin/251013-Jules96-fix-build-and-layout-bugs
+  remotes/origin/251015-Jules-fix-login-flow
+  remotes/origin/251015-Jules98-fix-login-flow
+  remotes/origin/251015-Jules98-fix-login-flow-1
+  remotes/origin/251019-Jules112-onboarding-ux-email-refinement
+  remotes/origin/251020-Jules112-improve-email-report
+  remotes/origin/251020-Jules113-strategy-doc
+  remotes/origin/251020-Jules114-fix-long-press
+  remotes/origin/Cloudfare
+  remotes/origin/HEAD -> origin/main
+  remotes/origin/Jules-1-chore/add-debug-logging
+  remotes/origin/Jules-1-fix/json-preview-and-worker-deploy
+  remotes/origin/Jules-1-fix/json-preview-and-worker-deploy-final
+  remotes/origin/Jules-1-fix/json-preview-and-worker-deploy-v2
+  remotes/origin/Jules-1-fix/json-preview-and-worker-deploy-v3
+  remotes/origin/Jules-1-fix/worker-stability-and-preview-final
+  remotes/origin/Jules-1-fix/worker-stability-and-preview-final-v2
+  remotes/origin/Jules-1-priority-engine-ui-test-fix
+  remotes/origin/Jules-114-wire-up-editor-toolbars-5847569324541163209
+  remotes/origin/Jules-117
+  remotes/origin/Jules-124-visual-editor-ux-polish
+  remotes/origin/Jules-125-phase-0-preconditions
+  remotes/origin/Jules-126-debug-explorer
+  remotes/origin/Jules-128-modularize-worker
+  remotes/origin/Jules-147-file-explorer-fix
+  remotes/origin/Jules-147-search-fix
+  remotes/origin/Jules-164-sprint-1-final-patch
+  remotes/origin/Jules-165-fix-autosave-loop
+  remotes/origin/Jules-170-feature/editor-handle-index-astro-1
+  remotes/origin/Jules-170-fix-editor-path-resilience-1
+  remotes/origin/Jules-170-fix/editor-path-resilience-1
+  remotes/origin/Jules-171-bugfix/sync-button-not-firing
+  remotes/origin/Jules-171-chore/handover
+  remotes/origin/Jules-171-feature/backend-json-roundtrip-1
+  remotes/origin/Jules-171-feature/editor-json-contract-1
+  remotes/origin/Jules-171-feature/editor-ui-refactor
+  remotes/origin/Jules-172-bugfix/preview-alert-diagnostic
+  remotes/origin/Jules-172-bugfix/preview-button-debug
+  remotes/origin/Jules-172-bugfix/preview-button-fix
+  remotes/origin/Jules-172-bugfix/preview-button-type
+  remotes/origin/Jules-172-bugfix/preview-event-propagation
+  remotes/origin/Jules-172-bugfix/preview-prevent-default
+  remotes/origin/Jules-172-bugfix/preview-url-fix
+  remotes/origin/Jules-172-feature/phase-1-complete
+  remotes/origin/Jules-172-feature/phase-2-json-rendering
+  remotes/origin/Jules-173-feat/instrument-build-pipeline
+  remotes/origin/Jules-173-fix/astro-build-error
+  remotes/origin/Jules-174-feature/manual-preview-refresh
+  remotes/origin/Jules-174-fix/rework-preview-workflow
+  remotes/origin/Jules-175-feature/visual-editor-registry
+  remotes/origin/Jules-175-fix/verify-save-logic
+  remotes/origin/Jules-176-feature/in-app-preview
+  remotes/origin/Jules-176-fix/editor-404-and-ux
+  remotes/origin/Jules-177-feature/automate-build-cycle
+  remotes/origin/Jules-177-fix/editor-toolbar-and-registry
+  remotes/origin/Jules-178-fix/editor-loading-robustness
+  remotes/origin/Jules-178-fix/preview-404-and-workflow
+  remotes/origin/Jules-179-fix/editor-core-ux
+  remotes/origin/Jules-180-fix/preview-url
+  remotes/origin/Jules-181-bugfix/editor-polish
+  remotes/origin/Jules-181-docs/update-changelog
+  remotes/origin/Jules-181-feature/extend-document-editor
+  remotes/origin/Jules-181-feature/ghost-editor-and-preview-fix
+  remotes/origin/Jules-181-feature/mobile-first-editor
+  remotes/origin/Jules-182-debug/instrument-sync-and-preview
+  remotes/origin/Jules-182-fix/content-editor-preview-final
+  remotes/origin/Jules-183-fix/re-render-loop
+  remotes/origin/Jules-184-debug/log-build-status-error
+  remotes/origin/Jules-184-feature/auto-refresh-polling
+  remotes/origin/Jules-184-feature/build-status-endpoint
+  remotes/origin/Jules-184-fix/resolve-stale-deployment
+  remotes/origin/Jules-185-feat/integrate-richtext-toolbar
+  remotes/origin/Jules-185-fix/richtext-update-bug
+  remotes/origin/Jules-186-feat/scrolling-toolbar-with-alignment
+  remotes/origin/Jules-186-feat/stateful-cycling-toolbar
+  remotes/origin/Jules-186-fix/richtext-toolbar-focus
+  remotes/origin/Jules-187-chore/force-redeploy
+  remotes/origin/Jules-187-debug/keyboard-telemetry
+  remotes/origin/Jules-187-debug/keyboard-telemetry-v2
+  remotes/origin/Jules-187-feat/editor-debugging-tools
+  remotes/origin/Jules-187-feat/refine-editor-ux
+  remotes/origin/Jules-187-feat/refine-hero-ux
+  remotes/origin/Jules-187-fix/enable-vconsole-on-prod
+  remotes/origin/Jules-187-fix/keyboard-aware-toolbar
+  remotes/origin/Jules-187-fix/unblock-deployment
+  remotes/origin/Jules-187-fix/vconsole-init-order
+  remotes/origin/Jules-187-revert/vconsole-integration
+  remotes/origin/Jules-188-fix/editor-header-overlap
+  remotes/origin/Jules-188-refactor/editor-spacing
+  remotes/origin/Jules-188-refactor/editor-spacing-polish
+  remotes/origin/Jules-188-refactor/editor-spacing-v2
+  remotes/origin/Jules-189-fix/correct-editor-layout
+  remotes/origin/Jules-189-fix/editor-and-deploy-final
+  remotes/origin/Jules-189-fix/stabilize-editor
+  remotes/origin/Jules-189-fix/stabilize-editor-final
+  remotes/origin/Jules-190-feat/add-section-modal
+  remotes/origin/Jules-191-fix/button-color
+  remotes/origin/Jules-192-debug/image-upload-instrumentation
+  remotes/origin/Jules-192-feat/image-upload-logic
+  remotes/origin/Jules-193-fix/vite-proxy-auth
+  remotes/origin/Jules-194-fix/image-build-and-styling
+  remotes/origin/Jules-195-fix/body-section-styles
+  remotes/origin/Jules-195-refactor/unify-editor-styles
+  remotes/origin/Jules-196-fix/correct-editor-layout-final
+  remotes/origin/Jules-196-fix/editor-padding
+  remotes/origin/Jules-196-fix/editor-padding-final
+  remotes/origin/Jules-196-fix/editor-spacing
+  remotes/origin/Jules-196-fix/editor-text-padding
+  remotes/origin/Jules-198-debug/image-preview-flow
+  remotes/origin/Jules-198-debug/redeploy-backend-logger
+  remotes/origin/Jules-198-diagnose-header-v2
+  remotes/origin/Jules-198-editor-ui-fixes
+  remotes/origin/Jules-198-feat/floating-editor-sections
+  remotes/origin/Jules-198-fix-floating-toolbar-loop
+  remotes/origin/Jules-198-fix-header-css-final
+  remotes/origin/Jules-198-fix-header-positioning
+  remotes/origin/Jules-198-fix-scrolling-container
+  remotes/origin/Jules-198-fix-scrolling-regression
+  remotes/origin/Jules-198-fix-stacking-context
+  remotes/origin/Jules-198-fix/editor-spacing-and-placeholders
+  remotes/origin/Jules-198-fix/image-upload-stack-overflow
+  remotes/origin/Jules-198-fix/transparent-editor-background
+  remotes/origin/Jules-198-heading-and-footer-fixes-13714965244312700187
+  remotes/origin/Jules-198-snag-list-doc-5938660748422321566
+  remotes/origin/Jules-199-diag-borders
+  remotes/origin/Jules-199-feat/image-build-pipeline
+  remotes/origin/Jules-199-fix-cloudflare-build-error-1445435037815961600
+  remotes/origin/Jules-199-fix-preview-height
+  remotes/origin/Jules-199-stale-preview-fix
+  remotes/origin/Jules-2-fix/preview-redirect-routing
+  remotes/origin/Jules-2.1-feature/implement-static-preview
+  remotes/origin/Jules-2.1-feature/implement-static-preview-fix
+  remotes/origin/Jules-200-fix-editor-data-loss-and-preview-workflow
+  remotes/origin/Jules-200-fix-editor-dysfunction
+  remotes/origin/Jules-200-fix/image-uploader-slug
+  remotes/origin/Jules-201-debug-container-resize
+  remotes/origin/Jules-201-debug/force-redeploy
+  remotes/origin/Jules-201-debug/image-uploader-loop
+  remotes/origin/Jules-201-editor-fixes
+  remotes/origin/Jules-201-feature-image-seo-editing
+  remotes/origin/Jules-201-fix-body-section-title-visibility
+  remotes/origin/Jules-201-fix-editor-toolbar
+  remotes/origin/Jules-201-fix-gear-icon-modal
+  remotes/origin/Jules-201-fix-sticky-header
+  remotes/origin/Jules-201-new-user-flow-15630273035625082879
+  remotes/origin/Jules-202-debug/backend-image-loop
+  remotes/origin/Jules-202-fix-h2-rendering
+  remotes/origin/Jules-202-n8n-workflow-fix-1296611469145202503
+  remotes/origin/Jules-203-fix-hero-slogan-color
+  remotes/origin/Jules-203-fix/empty-file-explorer
+  remotes/origin/Jules-203-move-modal-relative-tree-2155632390394451274
+  remotes/origin/Jules-204-fix-editor-and-rendering-bugs
+  remotes/origin/Jules-205-fix-preview-data-loss-and-rendering-bugs
+  remotes/origin/Jules-211-Floating-Toolbar-fix-13106719407241909723
+  remotes/origin/Jules-215-editor-ux-improvements
+  remotes/origin/Jules-215-fix-toolbar-focus-539605118068697271
+  remotes/origin/Jules-215-image-and-preview-fixes
+  remotes/origin/Jules-216-fix-floating-toolbar-positioning-800772074505635793
+  remotes/origin/Jules-216-fix-toolbar-positioning-2057139960351230919
+  remotes/origin/Jules-217-fix-create-file-14938797912166252954
+  remotes/origin/Jules-217-fix-toolbar-alignment-6328019316935402677
+  remotes/origin/Jules-218-fix-build-error-13140840990736970458
+  remotes/origin/Jules-218-fix-toolbar-focus-5835260453186633969
+  remotes/origin/Jules-244-create-json-modal-7120310308764705971
+  remotes/origin/Jules-244-fix-n8n-auth-4608828853938237971
+  remotes/origin/Jules-251-new-user-repo-scaffolding-214165932081292465
+  remotes/origin/Jules-3-chore/instrument-asset-fetch
+  remotes/origin/Jules-4-chore/enable-worker-logging
+  remotes/origin/Jules-5-fix/worker-preview-routing
+  remotes/origin/Jules-6-chore/re-instrument-asset-fetch
+  remotes/origin/Jules-7-fix/content-aware-preview-check
+  remotes/origin/Jules-consolidate-docs-17661119435624895897
+  remotes/origin/Jules-debug/instrument-editor-page
+  remotes/origin/Jules-diag/worker-logging
+  remotes/origin/Jules-docs-cleanup-1
+  remotes/origin/Jules-feature/deploy-hook-preview
+  remotes/origin/Jules-final-fix/preview-feature-and-deploy-config
+  remotes/origin/Jules-fix-gsc-connection-error-18109431167639353466
+  remotes/origin/Jules-fix-homepage-rendering-and-styles-15269285196103361971
+  remotes/origin/Jules-fix/cloudflare-gap
+  remotes/origin/Jules-fix/editor-silent-crash
+  remotes/origin/Jules-fix/preview-nesting-issue
+  remotes/origin/Jules-fix/preview-pipeline-commit
+  remotes/origin/Jules-fix/preview-pipeline-target
+  remotes/origin/Jules-fix/preview-rendering-route
+  remotes/origin/Jules-fix/preview-workflow-debuggability
+  remotes/origin/Jules-fix/trigger-build-endpoint
+  remotes/origin/Jules-fix/unblock-worker-deployment
+  remotes/origin/Jules-fix/workflow-nesting-v2
+  remotes/origin/Jules-hotfix/fix-deploy-workflow
+  remotes/origin/Jules-hotfix/wrangler-deploy-config
+  remotes/origin/Jules-snag-repo-validation-7366603963659998552
+  remotes/origin/Jules/fix-bottom-toolbar
+  remotes/origin/Jules/fix-sticky-header
+  remotes/origin/Jules54-tailwind-refactor
+  remotes/origin/Snag-Resolved-Repository-Selection-Snag-12972085297863907431
+  remotes/origin/add-cpanel-config
+  remotes/origin/add-dynamic-components-and-noscript
+  remotes/origin/add-login-debugging-tools
+  remotes/origin/add-package-json-to-docs
+  remotes/origin/add-readme
+  remotes/origin/add-special-offers-link
+  remotes/origin/add-wrangler-config
+  remotes/origin/align/index-to-liquid-glass
+  remotes/origin/apple-ui-revamp
+  remotes/origin/astro-config-and-links
+  remotes/origin/backup-main
+  remotes/origin/bofu-benefits
+  remotes/origin/bolt-batch-file-details-7502788435194480217
+  remotes/origin/bolt/lazy-load-file-metadata-2217577682012065102
+  remotes/origin/bolt/memoize-file-tile-9861449528630285418
+  remotes/origin/bolt/stabilize-file-explorer-callbacks-13917590336258779648
+  remotes/origin/chore/comment-out-debug-panel
+  remotes/origin/chore/remove-redundant-dirs
+  remotes/origin/cloudfare
+  remotes/origin/copilot/add-debug-logging-preview-route
+  remotes/origin/copilot/add-debug-logging-preview-route-again
+  remotes/origin/copilot/add-missing-toolbar-options
+  remotes/origin/copilot/build-id-score-logic
+  remotes/origin/copilot/convert-index-page-to-json
+  remotes/origin/copilot/create-login-page-design
+  remotes/origin/copilot/create-login-page-design-again
+  remotes/origin/copilot/debug-api-errors
+  remotes/origin/copilot/debug-create-modal-issue
+  remotes/origin/copilot/debug-easy-seo-context-menu
+  remotes/origin/copilot/easy-seo-improvements
+  remotes/origin/copilot/fix-96379a53-5f98-45ce-96e7-3297bc826787
+  remotes/origin/copilot/fix-astro-preview-pipeline
+  remotes/origin/copilot/fix-back-home-button-navigation
+  remotes/origin/copilot/fix-bbd20c0e-6b13-43eb-918c-fc0a58a7b2da
+  remotes/origin/copilot/fix-broken-image-paths
+  remotes/origin/copilot/fix-broken-image-paths-again
+  remotes/origin/copilot/fix-content-editor-header-padding
+  remotes/origin/copilot/fix-critical-bugs-phase-2
+  remotes/origin/copilot/fix-data-loss-in-sync-preview
+  remotes/origin/copilot/fix-dropdown-options-visibility
+  remotes/origin/copilot/fix-easy-seo-preview-styling
+  remotes/origin/copilot/fix-editor-image-url-resolution
+  remotes/origin/copilot/fix-editor-toolbar-styles
+  remotes/origin/copilot/fix-file-tree-structure
+  remotes/origin/copilot/fix-floating-toolbar-issue
+  remotes/origin/copilot/fix-floating-toolbar-issues
+  remotes/origin/copilot/fix-floating-toolbar-issues-again
+  remotes/origin/copilot/fix-floating-toolbar-visibility
+  remotes/origin/copilot/fix-gh-session-token-issues
+  remotes/origin/copilot/fix-git-pull-rebase-issues
+  remotes/origin/copilot/fix-github-action-workflow
+  remotes/origin/copilot/fix-heroeditor-background-text-color
+  remotes/origin/copilot/fix-image-display-in-editor
+  remotes/origin/copilot/fix-image-display-issue
+  remotes/origin/copilot/fix-image-path-issue
+  remotes/origin/copilot/fix-image-paths-regression
+  remotes/origin/copilot/fix-image-upload-issue
+  remotes/origin/copilot/fix-infinite-render-loop
+  remotes/origin/copilot/fix-json-mode-draft-saving
+  remotes/origin/copilot/fix-login-page-error
+  remotes/origin/copilot/fix-malformed-build-output
+  remotes/origin/copilot/fix-missing-toolbar-buttons
+  remotes/origin/copilot/fix-mobile-color-picker-issues
+  remotes/origin/copilot/fix-paragraph-editing-issues
+  remotes/origin/copilot/fix-preview-content-workflow
+  remotes/origin/copilot/fix-preview-iframe-sizing
+  remotes/origin/copilot/fix-preview-json-imports
+  remotes/origin/copilot/fix-slug-parsing-and-layout
+  remotes/origin/copilot/fix-text-selection-issue
+  remotes/origin/copilot/fix-toolbar-visibility-issues
+  remotes/origin/copilot/implement-final-ui-changes
+  remotes/origin/copilot/implement-final-ui-changes-again
+  remotes/origin/copilot/implement-lexical-toolbar-features
+  remotes/origin/copilot/implement-ui-changes-easy-seo
+  remotes/origin/copilot/implement-visual-viewport-api
+  remotes/origin/copilot/refine-content-editor-preview
+  remotes/origin/copilot/refine-create-button-toolbar
+  remotes/origin/copilot/remove-nested-preview-folder
+  remotes/origin/copilot/remove-preview-assets-easy-seo
+  remotes/origin/copilot/remove-preview-site-assets
+  remotes/origin/copilot/remove-public-and-seo-directories
+  remotes/origin/copilot/replace-color-switch-modal
+  remotes/origin/copilot/replace-editor-header-toolbar
+  remotes/origin/copilot/replace-editor-header-toolbar-again
+  remotes/origin/copilot/replace-editor-toolbar-components
+  remotes/origin/copilot/replace-editorheader-toolbar
+  remotes/origin/copilot/restore-bottom-toolbar-functionality
+  remotes/origin/copilot/setup-copilot-instructions
+  remotes/origin/copilot/setup-n8n-on-oracle-free-tier
+  remotes/origin/copilot/stabilise-workflow-fix
+  remotes/origin/copilot/sub-pr-1526
+  remotes/origin/copilot/sub-pr-255
+  remotes/origin/copilot/update-add-section-modal
+  remotes/origin/copilot/update-github-workflows-triggers
+  remotes/origin/copilot/update-toolbar-ui-and-fixes
+  remotes/origin/copilot/verify-implementation-phase-2
+  remotes/origin/cpanel-deploy
+  remotes/origin/css-tweaks
+  remotes/origin/debug-rollback-934c5a0
+  remotes/origin/debug/add-editor-logging-250921
+  remotes/origin/decap-cms-setup
+  remotes/origin/decap-cms-setup-1
+  remotes/origin/doc-n8n-workflow-fix-18350163950601422810
+  remotes/origin/docs-add-priority-engine-roadmaps
+  remotes/origin/docs-update-readme-details
+  remotes/origin/docs/changelog-for-routing-fix-1
+  remotes/origin/docs/consolidate-roadmap-2243798001087843156
+  remotes/origin/docs/editor-refactor-proposal
+  remotes/origin/docs/update-changelog-and-recovery-nov-16
+  remotes/origin/feat-Jules-140-login-page-redesign
+  remotes/origin/feat-jules-121-onboarding-validation-ui
+  remotes/origin/feat-jules-151-orbs-header-footer
+  remotes/origin/feat-jules-mobile-editor
+  remotes/origin/feat-redesign-login-page-jules-137
+  remotes/origin/feat/add-debug-log-button
+  remotes/origin/feat/astro-idiomatic-layout
+  remotes/origin/feat/brand-story-assessment-react
+  remotes/origin/feat/breadcrumb-reposition
+  remotes/origin/feat/change-site-font-to-quicksand
+  remotes/origin/feat/configure-database
+  remotes/origin/feat/create-easy-seo-editor
+  remotes/origin/feat/create-overnight-report-script-2000693610267792927
+  remotes/origin/feat/decap-cms-setup
+  remotes/origin/feat/editor-screen-architecture
+  remotes/origin/feat/editor-ui-refactor
+  remotes/origin/feat/enhanced-compass-blueprint
+  remotes/origin/feat/file-explorer-visual-redesign
+  remotes/origin/feat/file-state-badges
+  remotes/origin/feat/fix-context-menu
+  remotes/origin/feat/gsc-integration
+  remotes/origin/feat/leadgen-mvp-setup
+  remotes/origin/feat/live-preview-system
+  remotes/origin/feat/migrate-homepage-and-restructure
+  remotes/origin/feat/preact-migration-sprint-2-1
+  remotes/origin/feat/react-login-page
+  remotes/origin/feat/readme-display
+  remotes/origin/feat/refactor-astro-js-frontmatter
+  remotes/origin/feat/setup-npm-workspaces
+  remotes/origin/feat/signup-wizard-foundation
+  remotes/origin/feat/stabilize-build-and-refactor-ui
+  remotes/origin/feat/tinymce-editor-migration
+  remotes/origin/feat/tiptap-editor
+  remotes/origin/feat/ux-editor-tweaks
+  remotes/origin/feat/workflow-driven-preview
+  remotes/origin/feature/add-architect-analysis-to-readme
+  remotes/origin/feature/add-draft-state-and-template
+  remotes/origin/feature/add-quick-content-boost-offer
+  remotes/origin/feature/apple-ui-redesign
+  remotes/origin/feature/astro-wysiwyg-editor
+  remotes/origin/feature/autosave-editor-1
+  remotes/origin/feature/cleanup-easy-seo
+  remotes/origin/feature/content-funnel
+  remotes/origin/feature/content-funnels
+  remotes/origin/feature/editor-architecture
+  remotes/origin/feature/editor-autosave-astro-export-1
+  remotes/origin/feature/editor-draft-sync-1
+  remotes/origin/feature/editor-fixes-1
+  remotes/origin/feature/editor-hotfix
+  remotes/origin/feature/editor-hotfix-and-toolbar-1
+  remotes/origin/feature/editor-initial-content-fix-1
+  remotes/origin/feature/editor-lexical-1
+  remotes/origin/feature/editor-lexical-fix-1
+  remotes/origin/feature/editor-path-fix
+  remotes/origin/feature/editor-publish-1
+  remotes/origin/feature/editor-real-content-1
+  remotes/origin/feature/editor-route-filepath-1
+  remotes/origin/feature/editor-sections-frontmatter-1
+  remotes/origin/feature/editor-toolbar-1
+  remotes/origin/feature/editor-toolbar-final-fix
+  remotes/origin/feature/editor-toolbar-fix
+  remotes/origin/feature/editor-ui-redesign
+  remotes/origin/feature/editor-workspace-1
+  remotes/origin/feature/editor-workspace-only-final-1
+  remotes/origin/feature/explorer-create-as-draft
+  remotes/origin/feature/file-explorer-ui-refinement
+  remotes/origin/feature/fix-file-explorer-ui
+  remotes/origin/feature/fix-selection-and-update-ui
+  remotes/origin/feature/fixed-editor-toolbars
+  remotes/origin/feature/frontmatter-sections-editor-1
+  remotes/origin/feature/github-actions-preview
+  remotes/origin/feature/in-app-debug-panel
+  remotes/origin/feature/jules-169-fix-routing-1
+  remotes/origin/feature/live-currency-prices
+  remotes/origin/feature/live-preview
+  remotes/origin/feature/preview-page-modal
+  remotes/origin/feature/preview-page-overhaul
+  remotes/origin/feature/priority-engine
+  remotes/origin/feature/publish-parity-1
+  remotes/origin/feature/publish-to-localstorage-1
+  remotes/origin/feature/reliable-initial-content
+  remotes/origin/feature/tailwind-refactor
+  remotes/origin/feature/ui-tweaks-modals
+  remotes/origin/feature/ux-enhancements
+  remotes/origin/feature/video-offer
+  remotes/origin/featured/content-funnels
+  remotes/origin/fix-api-not-found-error
+  remotes/origin/fix-canonical-tag
+  remotes/origin/fix-cors-headers-jules
+  remotes/origin/fix-decap-config
+  remotes/origin/fix-file-explorer-ui
+  remotes/origin/fix-file-viewer-bug
+  remotes/origin/fix-github-login-credentials
+  remotes/origin/fix-github-oauth-flow
+  remotes/origin/fix-hero-text-color
+  remotes/origin/fix-internal-broken-links
+  remotes/origin/fix-intro-offer-links
+  remotes/origin/fix-jules-130-worker-and-explorer-bugs
+  remotes/origin/fix-jules-131-stabilize-app
+  remotes/origin/fix-jules-132-empty-file-explorer
+  remotes/origin/fix-jules-134-file-explorer-path
+  remotes/origin/fix-jules-135-missing-lucide-dependency
+  remotes/origin/fix-jules-142-login-button
+  remotes/origin/fix-jules-144-auth-context-fix
+  remotes/origin/fix-jules-cs-500-errors-file-explorer
+  remotes/origin/fix-layout-editor-crash
+  remotes/origin/fix-lets-talk-page
+  remotes/origin/fix-login-2025-09-17
+  remotes/origin/fix-offers-page-links-and-text
+  remotes/origin/fix-preview-rendering
+  remotes/origin/fix-search-functionality
+  remotes/origin/fix-search-state-propagation-jules
+  remotes/origin/fix-stabilize-file-explorer-jules-150
+  remotes/origin/fix-tailwind-styling
+  remotes/origin/fix-worker-build
+  remotes/origin/fix-worker-routing-context-Jules
+  remotes/origin/fix/app-routing-and-preview
+  remotes/origin/fix/astro-build-error-3-1
+  remotes/origin/fix/astro-cloudflare-routing
+  remotes/origin/fix/astro-dev-server-download
+  remotes/origin/fix/astro-rendering-issue
+  remotes/origin/fix/auth-error-diagnostics
+  remotes/origin/fix/autosave-final-pass-1
+  remotes/origin/fix/autosave-last-saved-guard
+  remotes/origin/fix/autosave-refinements-1
+  remotes/origin/fix/autosave-robust-fix
+  remotes/origin/fix/autosave-robust-fix-3
+  remotes/origin/fix/autosave-robust-fix-final
+  remotes/origin/fix/build-error-bottom-action-bar-11164800653954796176
+  remotes/origin/fix/build-process-simplification
+  remotes/origin/fix/cloudflare-build-error
+  remotes/origin/fix/daily-report-workflow-8210242293927470877
+  remotes/origin/fix/draft-duplication-bug
+  remotes/origin/fix/duplicate-json-ids-8949513012282856053
+  remotes/origin/fix/easy-seo-ux-issues
+  remotes/origin/fix/ftp-deploy-workflow
+  remotes/origin/fix/initial-content-logic
+  remotes/origin/fix/preview-routing-conflict
+  remotes/origin/fix/priority-engine-path
+  remotes/origin/fix/readme-height-adjustment
+  remotes/origin/fix/remove-vconsole
+  remotes/origin/fix/restore-global-header-1
+  remotes/origin/fix/search-and-create-modal-bugs
+  remotes/origin/fix/security-and-deployment-prep
+  remotes/origin/fix/server-startup-and-rendering
+  remotes/origin/fix/style-dependencies
+  remotes/origin/fix/styling-and-runtime-errors
+  remotes/origin/fix/tailwind-refactoring
+  remotes/origin/fix/tinymce-editor-init
+  remotes/origin/fix/vite-deps
+  remotes/origin/fix/vite-postcss-config
+  remotes/origin/hotfix/fix-publish-state-1
+  remotes/origin/jules-116-fix-layout-editor-encoding
+  remotes/origin/jules-118-sprint-5b
+  remotes/origin/jules-119-visual-layout-sprint-1
+  remotes/origin/jules-120-fix-editor-routing
+  remotes/origin/jules-122-preview-refactor
+  remotes/origin/jules-127-sprint-1-foundational-stability
+  remotes/origin/jules-129-visual-editor-plan
+  remotes/origin/jules-133-debug-instrumentation
+  remotes/origin/jules-136-auth-fix
+  remotes/origin/jules-136-global-shell
+  remotes/origin/jules-139-file-explorer-replication
+  remotes/origin/jules-141-login-page-fixes
+  remotes/origin/jules-141-login-page-fixes-1
+  remotes/origin/jules-145-liquid-glass-background
+  remotes/origin/jules-146-file-explorer-ui
+  remotes/origin/jules-147-search-fix
+  remotes/origin/jules-147-search-fix-1
+  remotes/origin/jules-147-search-fix-2
+  remotes/origin/jules-148-favicon-and-button
+  remotes/origin/jules-149-glass-button
+  remotes/origin/jules-150-astro-refactor
+  remotes/origin/jules-160-backend-auth-fix
+  remotes/origin/jules-163-build-fix
+  remotes/origin/jules-163-editor-sprint1
+  remotes/origin/jules-163-editor-sprint1-final
+  remotes/origin/jules-163-file-explorer-refinements
+  remotes/origin/jules-163-final-fixes
+  remotes/origin/jules-163-final-fixes-2
+  remotes/origin/jules-163-final-mobile-fixes
+  remotes/origin/jules-163-mobile-styling-fix
+  remotes/origin/jules-164-editor-sprint-1
+  remotes/origin/jules-164-editor-sprint-1-1
+  remotes/origin/jules-164-fix-vite-proxy
+  remotes/origin/jules-164-mobile-editor-final
+  remotes/origin/jules-164-mobile-editor-fix
+  remotes/origin/jules-164-mobile-perf-final
+  remotes/origin/jules-188-lexical-dropdown-fix
+  remotes/origin/jules-188-lexical-dropdown-robust-fix
+  remotes/origin/jules-202-floating-toolbar
+  remotes/origin/jules-2531350001452442759-8c57bfe3
+  remotes/origin/jules-astro-build-fix
+  remotes/origin/jules-feat-iteration-velocity-scaffold
+  remotes/origin/jules-fix-auth-and-ui-bugs
+  remotes/origin/jules-fix-n8n-workflow-9399240270497758889
+  remotes/origin/jules-login-page-redesign
+  remotes/origin/jules-performance-plan
+  remotes/origin/jules-polish-sprint-125
+  remotes/origin/jules-revert-monolithic-worker
+  remotes/origin/jules-sprint-1-astro-editor-core
+  remotes/origin/jules/add-ux-questions
+  remotes/origin/jules/document-business-model
+  remotes/origin/jules/fix-preview-404
+  remotes/origin/jules/fix-preview-architecture
+  remotes/origin/jules/fix-preview-architecture-final
+  remotes/origin/jules/fix-preview-button-404
+  remotes/origin/jules/frontmatter-refactor-wip
+  remotes/origin/jules/readme-questions
+  remotes/origin/login-recovery
+  remotes/origin/main
+  remotes/origin/optimize-workflow-triggers
+  remotes/origin/prune/easy-seo-to-readme
+  remotes/origin/refactor-css
+  remotes/origin/refactor-css-modules
+  remotes/origin/refactor-for-decap-cms
+  remotes/origin/refactor-tailwind-styling
+  remotes/origin/rename/easy-seo-to-seo-quarentine
+  remotes/origin/seo-fixes-phase-1
+  remotes/origin/snag-squad
+  remotes/origin/snag-squad-17506008583069379479
+  remotes/origin/snag-squad-3467860894317431978
+  remotes/origin/snag-squad-5087614585981492383
+  remotes/origin/snag-squad-7164817656551987231
+  remotes/origin/snag-squad-8710529886819715909
+  remotes/origin/snag/fix-search-caching-and-special-characters-2923978890646045509
+  remotes/origin/stabilize-and-fix-ui
+  remotes/origin/update-index-html
+  remotes/origin/ux-improvements
+  remotes/origin/v0.9.0-pre-refactor
+  remotes/origin/yymmdd-apple-ui-tailwind
+--- Git Log ---
+* 109a8604 (origin/main, origin/HEAD) Remove unnecessary blank lines in PDF generation
+* d2d05794 Update create_overnight_report.py
+* fbc3acb1 Change daily report schedule time
+* b73ba47a Update daily_report.yml
+*   e166f130 Merge pull request #1786 from Jacques-on-Call/snag-squad
+|\  
+| *   92d70ae5 (HEAD -> snag-squad, origin/snag-squad) Merge pull request #1785 from Jacques-on-Call/main
+| |\  
+| |/  
+|/|   
+* |   0353ea74 Merge pull request #1784 from Jacques-on-Call/snag-squad
+|\ \  
+| | * a9bc7034 Delete easy-seo/snag-list.md
+| | * 6f926b0b Update snag-list-doc.md
+| |/  
+| *   47c99958 Merge pull request #1783 from Jacques-on-Call/main
+| |\  
+| |/  
+|/|   
+* | 3555c003 Update daily_report.yml
+* |   b4245ff8 Merge pull request #1782 from Jacques-on-Call/snag-squad
+|\ \  
+| | * 3093fc41 chore: generate daily reports for 2025-12-30
+| |/  
+| *   4b4fe8cb Merge branch 'main' into snag-squad
+| |\  
+| |/  
+|/|   
+* | 2be41817 Update daily_report.yml
+* | fa44815c Change daily report schedule to 11:15 AM UTC
+* | ec89bf0f Update daily_report.yml
+* | 4a23874d Update daily_report.yml
+* | 4666d606 Fix git push command in daily_report.yml
+* |   97f7573d Merge pull request #1781 from Jacques-on-Call/fix/daily-report-workflow-8210242293927470877
+|\ \  
+* \ \   5d54fd77 Merge pull request #1780 from Jacques-on-Call/fix/daily-report-workflow-8210242293927470877
+|\ \ \  
+| | | * 934f92f2 Create a PDF snapshot of source code files
+| | | * f4b24212 Change overnight report to generate PDF format
+| | | * a0071eec Add fpdf2 to requirements
+| | | * 12c10299 Update daily_report.yml
+| | | | * 3a4cec96 (origin/fix/daily-report-workflow-8210242293927470877) feat: Convert reports to PDF and fix daily workflow
+| | | |/  
+| | |/|   
+| | * | 087788ba chore: add debug step to daily report workflow
+| |/ /  
+| * |   bb7f9489 Merge branch 'main' into fix/daily-report-workflow-8210242293927470877
+| |\ \  
+| |/ /  
+|/| |   
+* | | 8cdb4c2d Add directive for using specific branch names
+* | | e0c48904 Change daily report schedule to 12 PM UTC
+* | |   fe4d1054 Merge pull request #1779 from Jacques-on-Call/fix/daily-report-workflow-8210242293927470877
+|\ \ \  
+| | * | ee95b4fb feat: generate reports as PDF files
+| |/ /  
+| * / 94a1793f fix: correct daily report workflow and script
+|/ /  
+* | 457d9503 Update snag list document with new mandates and revisions
+* | 5dc70b26 Update snag-list-doc.md
+* | 1a8af78d Update cron schedule for daily report workflow
+* | 183f4651 Update create_overnight_report.py
+* | 353dd818 Update cron schedule for daily report workflow
+* | 123ed981 Fetch all branches in daily report workflow
+* | bfd8c4bf Update cron schedule for daily report workflow
+* | 8825d07f Update daily_report.yml
+* | de80fe97 Update daily_report.yml
+* |   d12a0e17 Merge pull request #1778 from Jacques-on-Call/feat/create-overnight-report-script-2000693610267792927
+|\ \  
+| * | f2b06a47 (origin/feat/create-overnight-report-script-2000693610267792927) feat: Add source code snapshot to daily report workflow
+* | |   261239ee Merge pull request #1777 from Jacques-on-Call/snag-squad
+|\ \ \  
+| | |/  
+| |/|   
+| * |   b13f3036 Merge pull request #1771 from Jacques-on-Call/snag-squad-6734636667781956868
+| |\ \  
+| | * \   f5c62dcb Merge branch 'snag-squad' into snag-squad-6734636667781956868
+| | |\ \  
+| | |/ /  
+| |/| |   
+| * | |   f9afd57f Merge pull request #1770 from Jacques-on-Call/snag-squad-12700980400605608404
+| |\ \ \  
+| | * | | 6a17e78a 🛠️ Snag: Resolved Creating New Files
+| |/ / /  
+| | * / 62ebb577 🛠️ Snag 1: Resolved Creating New Files
+| |/ /  
+--- Git Rev-list (24 hours) ---
+usage: git rev-list [<options>] <commit>... [--] [<path>...]
+
+  limiting output:
+    --max-count=<n>
+    --max-age=<epoch>
+    --min-age=<epoch>
+    --sparse
+    --no-merges
+    --min-parents=<n>
+    --no-min-parents
+    --max-parents=<n>
+    --no-max-parents
+    --remove-empty
+    --all
+    --branches
+    --tags
+    --remotes
+    --stdin
+    --exclude-hidden=[fetch|receive|uploadpack]
+    --quiet
+  ordering output:
+    --topo-order
+    --date-order
+    --reverse
+  formatting output:
+    --parents
+    --children
+    --objects | --objects-edge
+    --disk-usage[=human]
+    --unpacked
+    --header | --pretty
+    --[no-]object-names
+    --abbrev=<n> | --no-abbrev
+    --abbrev-commit
+    --left-right
+    --count
+    -z
+  special purpose:
+    --bisect
+    --bisect-vars
+    --bisect-all
+Error: Process completed with exit code 129.
+0s
+0s
+0s
+0s
