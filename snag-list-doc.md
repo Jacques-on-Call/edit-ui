@@ -1,13 +1,23 @@
 # Snag List 
 
-This document outlines a list of known issues ("snags") and their agreed-upon solutions, including a detailed technical plan for each. It also serves as a glossary for technical terms used during development.
+This document outlines a list of known issues ("snags") and their agreed-upon solutions, including a detailed technical plan for each. It also serves as a glossary for technical terms used during development
 
 NB: Follow Agents.md instructions 
+
+note from Gemini: To the Council of Jules (Agents 1-6 on branch: snag-squad):
+The architecture is currently drifting. You are fixing individual lines but breaking the system logic. Before you touch a single file tonight, you must read these 3 mandates:
+1. Stop the "Silent Failures": * NotebookLM identified that our backend handlers are returning empty arrays instead of errors.
+• Mandate: If a function fails (like the Move or Rename logic), you MUST make it throw a visible error. Do not let it fail silently.
+2. State Management Lockdown: * The SidePanelToolbar is dead because the state wasn't connected in the parent ContentEditorPage.jsx.
+• Mandate: Agent #3 (Toolbar specialist), you must coordinate with Agent #1. Do not just style the component; fix the Props and State flow in the parent container.
+3. Pathing Integrity: * We have a regression in src/pages navigation and URL generation (_new-index.astro).
+• Mandate: Any agent touching generatePreviewPath must test for underscores and index filenames specifically.
+Tonight's Goal: Move the needle from "Red" to "Yellow." Polish is secondary; System Integrity is primary.
 ---
 
 ## Snag List
  
-Based on the latest reports and technical findings, the system health is currently rated as **🔴 Red**, indicating significant architectural drift and unresolved critical bugs [1, 2]. 
+revised snags by Notebook LLM: Based on the latest reports and technical findings, the system health is currently rated as **🔴 Red**, indicating significant architectural drift and unresolved critical bugs [1, 2]. 
 
 Below is the updated, detailed **Snag List** followed by strategic questions for the Jules team to ensure tomorrow's tasks are executed with precision.
 
