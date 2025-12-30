@@ -1,3 +1,55 @@
+Current runner version: '2.330.0'
+Runner Image Provisioner
+Operating System
+Runner Image
+GITHUB_TOKEN Permissions
+Secret source: Actions
+Prepare workflow directory
+Prepare all required actions
+Getting action download info
+Download action repository 'actions/checkout@v3' (SHA:f43a0e5ff2bd294095638e18286ca9a3d1956744)
+Download action repository 'actions/setup-python@v4' (SHA:7f4fc3e22c37d6ff65e88745f38bd3157c663f7c)
+Complete job name: generate-report
+6s
+Run actions/checkout@v3
+Syncing repository: Jacques-on-Call/StrategyContent
+Getting Git version info
+Temporarily overriding HOME='/home/runner/work/_temp/9c9c2d6c-f85e-455f-a1e6-faba3aa09010' before making global git config changes
+Adding repository directory to the temporary git global config as a safe directory
+/usr/bin/git config --global --add safe.directory /home/runner/work/StrategyContent/StrategyContent
+Deleting the contents of '/home/runner/work/StrategyContent/StrategyContent'
+Initializing the repository
+Disabling automatic garbage collection
+Setting up auth
+Fetching the repository
+Determining the checkout info
+Checking out the ref
+/usr/bin/git log -1 --format='%H'
+'92d70ae5b424f1b65d9c813eaf718f797565e94a'
+0s
+Run git fetch --all
+1s
+Run actions/setup-python@v4
+Installed versions
+4s
+Run pip install -r requirements.txt
+Collecting fpdf2 (from -r requirements.txt (line 1))
+  Downloading fpdf2-2.8.5-py3-none-any.whl.metadata (76 kB)
+Collecting defusedxml (from fpdf2->-r requirements.txt (line 1))
+  Downloading defusedxml-0.7.1-py2.py3-none-any.whl.metadata (32 kB)
+Collecting Pillow!=9.2.*,>=8.3.2 (from fpdf2->-r requirements.txt (line 1))
+  Downloading pillow-12.0.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (8.8 kB)
+Collecting fonttools>=4.34.0 (from fpdf2->-r requirements.txt (line 1))
+  Downloading fonttools-4.61.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (114 kB)
+Downloading fpdf2-2.8.5-py3-none-any.whl (301 kB)
+Downloading fonttools-4.61.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.9/4.9 MB 70.6 MB/s  0:00:00
+Downloading pillow-12.0.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (7.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.0/7.0 MB 158.3 MB/s  0:00:00
+Downloading defusedxml-0.7.1-py2.py3-none-any.whl (25 kB)
+Installing collected packages: Pillow, fonttools, defusedxml, fpdf2
+
+Successfully installed Pillow-12.0.0 defusedxml-0.7.1 fonttools-4.61.1 fpdf2-2.8.5
 Run echo "--- Git Status ---"
 --- Git Status ---
 On branch snag-squad
