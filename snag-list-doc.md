@@ -42,7 +42,7 @@ Get/README.md
 
 ---
 
-## Creating New Files
+## [FIXED] Creating New Files
 
 *   **Problem:** The "Create" menu creates files in a hardcoded location, not the user's current directory.
 *   **Agreed Solution:** New files and folders should be created within the directory the user is currently viewing in the File Explorer.

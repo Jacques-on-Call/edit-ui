@@ -15,7 +15,7 @@ export function FileExplorerPage() {
   const { searchQuery, setSearchQuery } = useHeader();
   const { isCreateOpen, setCreateOpen } = useUI();
 
-  const [currentPath, setCurrentPath] = useState('content/pages');
+  const [currentPath, setCurrentPath] = useState('src/pages');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Clear the search query when the component unmounts
@@ -67,14 +67,23 @@ export function FileExplorerPage() {
       }
 
       // 1. Prepare file names and paths
-      const fileName = name.endsWith('.json') ? name.replace(/\.json$/, '') : name;
+      const fileName = name.replace(/\.(astro|json)$/, '');
       const slug = fileName;
 
-      // Mirror the path from `content/pages` to `src/pages`
-      const relativePath = currentPath.startsWith('content/pages') ? currentPath.substring('content/pages'.length) : '';
+      // Determine the relative path from either `src/pages` or `content/pages`
+      let relativePath = '';
+      if (currentPath.startsWith('src/pages')) {
+        relativePath = currentPath.substring('src/pages'.length);
+      } else if (currentPath.startsWith('content/pages')) {
+        relativePath = currentPath.substring('content/pages'.length);
+      }
 
-      const jsonPath = `${currentPath}/_${slug}.json`;
-      const astroPath = `src/pages${relativePath}/_${slug}.astro`;
+      // Ensure relativePath is consistent (e.g., starts with '/' or is empty)
+      const pathSuffix = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+      const cleanSuffix = pathSuffix === '/' ? '' : pathSuffix.replace(/\/$/, ''); // handle root and remove trailing slash
+
+      const jsonPath = `content/pages${cleanSuffix}/_${slug}.json`;
+      const astroPath = `src/pages${cleanSuffix}/_${slug}.astro`;
 
       // 2. Create the JSON content payload
       const pageData = {
@@ -84,30 +93,31 @@ export function FileExplorerPage() {
           {
             id: `section-${Date.now()}`,
             type: 'hero',
-            props: {
-              title: '',
-              subtitle: '',
-              body: '',
-            },
+            props: { title: '', subtitle: '', body: '' },
           },
         ],
       };
 
       // 3. Call the backend to create the .json file
-      const jsonResponse = await fetchJson('/api/page-json/update', {
+      const jsonContent = JSON.stringify(pageData, null, 2);
+      const jsonResponse = await fetchJson('/api/file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repo: repoName, pageData }),
+        body: JSON.stringify({
+          repo: repoName,
+          path: jsonPath,
+          content: jsonContent,
+          message: `feat: create new data file for ${slug}`
+        }),
       });
 
       if (!jsonResponse) {
          throw new Error('Failed to create JSON file on the server.');
       }
-      console.log('Successfully created JSON file:', jsonResponse);
-
 
       // 4. Create the Astro file content with robust relative paths
-      const astroDirDepth = astroPath.split('/').length - 2; // e.g., src/pages/foo -> 3 parts, depth 1
+      const astroDir = astroPath.substring(0, astroPath.lastIndexOf('/'));
+      const astroDirDepth = astroDir.split('/').length;
       const dataPath = '../'.repeat(astroDirDepth) + jsonPath;
 
       const astroContent = `---
@@ -135,8 +145,6 @@ import pageData from '${dataPath}';
       if (!astroResponse) {
           throw new Error('Failed to create Astro file on the server.');
       }
-      console.log('Successfully created Astro file:', astroResponse);
-
 
       // 6. Success: close modal, trigger refresh, and navigate
       setCreateOpen(false);
