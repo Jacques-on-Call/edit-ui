@@ -70,3 +70,24 @@ To ensure we move from **"Silent Failure"** to **"Visible Success,"** please add
 
 **Analogy for Today's Stand-up:**
 Implementing these fixes without answering these questions is like **trying to fix a car engine while the hood is locked**. The Auditor's report has given us the "Check Engine" light (The Snag List); now we need the Jules team to provide the **mechanic's manual** (The Technical Details) so we can actually reach in and fix the parts that are broken.
+
+**Jules NB.** this is the report of all six jules who did not commit to snag-squad branch last night: daily report: Overnight Report
+Overnight Report for 2025-12-30
+This report summarizes the state of the `snag-squad*` branch, the work performed by the
+'Council of Jules' agents, and recent code changes to assist with debugging and review.
+Page 1
+Overnight Report
+1. Jules Session Logs (The 'Hand-Off' Notes)
+Jules Session Log - Automatically created
+Page 2
+Overnight Report
+2. Snag List
+Snag List
+Page 3
+Overnight Report
+3. Changed Files Summary (Last 24 Hours)
+No changes detected in the last 24 hours.
+Page 4
+Overnight Report
+4. Full Diffs (Last 24 Hours)
+Page 5
