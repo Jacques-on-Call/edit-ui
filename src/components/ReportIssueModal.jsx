@@ -1,13 +1,16 @@
 import { h } from 'preact';
 import { useState } from 'preact/hooks';
-import { X, Bug, Lightbulb, Send, CheckCircle2 } from 'lucide-preact';
+import { X, Bug, Lightbulb, Send, CheckCircle2, RefreshCw } from 'lucide-preact';
 import { fetchJson } from '../lib/fetchJson';
 import { useAuth } from '../contexts/AuthContext';
+import { useLogs } from '../contexts/LogContext';
 
 export default function ReportIssueModal({ isOpen, onClose, context = {} }) {
     const { selectedRepo } = useAuth();
+    const { logs, copyLogs } = useLogs();
     const [type, setType] = useState('bug');
     const [description, setDescription] = useState('');
+    const [includeLogs, setIncludeLogs] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState(null);
@@ -30,7 +33,8 @@ export default function ReportIssueModal({ isOpen, onClose, context = {} }) {
                     description,
                     pageName: context.pageId || 'Unknown',
                     componentName: context.activeComponent || 'Editor',
-                    context
+                    context,
+                    logs: includeLogs ? logs : undefined,
                 })
             });
             setIsSuccess(true);
@@ -75,7 +79,7 @@ export default function ReportIssueModal({ isOpen, onClose, context = {} }) {
                             <p className="text-gray-400">Your report has been added to the snag list.</p>
                         </div>
                     ) : (
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form onSubmit={handleSubmit} className="space-y-4">
                             {/* Type Switcher */}
                             <div className="flex p-1 bg-gray-800 rounded-lg">
                                 <button
@@ -112,10 +116,32 @@ export default function ReportIssueModal({ isOpen, onClose, context = {} }) {
                                     value={description}
                                     onInput={(e) => setDescription(e.target.value)}
                                     placeholder={type === 'bug' ? "Describe the issue..." : "What would you like to see?"}
-                                    className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 h-32 resize-none"
+                                    className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none"
                                     disabled={isSubmitting}
                                 />
                             </div>
+
+                             {/* Logs Section */}
+                            {type === 'bug' && logs.length > 0 && (
+                                <div>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={includeLogs}
+                                            onChange={() => setIncludeLogs(!includeLogs)}
+                                            className="w-4 h-4 bg-gray-700 border-gray-600 rounded text-blue-500 focus:ring-blue-500"
+                                        />
+                                        <span className="text-sm text-gray-300">Attach console logs</span>
+                                    </label>
+                                    {includeLogs && (
+                                        <div className="mt-2 p-2 bg-gray-800/50 border border-gray-700 rounded-lg h-24 overflow-y-auto">
+                                            <pre className="text-xs text-gray-400 whitespace-pre-wrap font-mono">
+                                                {logs.join('\n')}
+                                            </pre>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Page Info (Hidden/Static) */}
                             <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-800">
@@ -131,7 +157,7 @@ export default function ReportIssueModal({ isOpen, onClose, context = {} }) {
                                 </div>
                             )}
 
-                            <div className="flex gap-4">
+                            <div className="flex gap-4 pt-2">
                                 <button
                                     type="button"
                                     onClick={onClose}

@@ -55,8 +55,12 @@ export default function EditorCanvas(props) {
         />
       )}
       */}
-      <SlideoutToolbar />
-      <SidePanelToolbar />
+      {viewMode !== 'livePreview' && (
+        <>
+          <SlideoutToolbar />
+          <SidePanelToolbar />
+        </>
+      )}
       <main
         class="flex-grow relative overflow-y-auto"
         style={{

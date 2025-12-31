@@ -101,13 +101,16 @@ const AppContent = () => {
 };
 
 import { UIProvider } from './contexts/UIContext';
+import { LogProvider } from './contexts/LogContext';
 
 export function App() {
   return (
     <AuthProvider>
       <HeaderProvider>
         <UIProvider>
-          <AppContent />
+          <LogProvider>
+            <AppContent />
+          </LogProvider>
         </UIProvider>
       </HeaderProvider>
     </AuthProvider>

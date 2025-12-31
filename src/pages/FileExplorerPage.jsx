@@ -7,7 +7,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { theme } from '../themes/theme';
 import { AlertTriangle } from 'lucide-preact';
 import FileExplorer from '../components/FileExplorer';
-import { CreateModal } from '../components/CreateModal';
+import CreatePageModal from '../components/CreatePageModal';
 import { fetchJson } from '../lib/fetchJson';
 
 export function FileExplorerPage() {
@@ -58,16 +58,12 @@ export function FileExplorerPage() {
     );
   }
 
-  const handleCreate = async (name, type) => {
+  const handleCreate = async (pageName, designType) => {
+    // For now, designType is ignored as per Milestone 3.1.
+    // It will be used in Milestone 3.2 for smart folder suggestions.
     try {
-      if (type === 'folder') {
-        console.log(`[FileExplorer] Folder creation not implemented.`);
-        alert('Folder creation is not supported in this version.');
-        return;
-      }
-
-      // 1. Prepare file names and paths
-      const fileName = name.replace(/\.(astro|json)$/, '');
+      // 1. Prepare file names and paths from pageName
+      const fileName = pageName.replace(/\s+/g, '-').toLowerCase();
       const slug = fileName;
 
       // Determine the relative path from either `src/pages` or `content/pages`
@@ -88,7 +84,7 @@ export function FileExplorerPage() {
       // 2. Create the JSON content payload
       const pageData = {
         slug,
-        meta: { title: slug },
+        meta: { title: pageName }, // Use the original pageName for the title
         sections: [
           {
             id: `section-${Date.now()}`,
@@ -166,10 +162,8 @@ import pageData from '${dataPath}';
         refreshTrigger={refreshTrigger}
       />
 
-      <CreateModal
+      <CreatePageModal
         isOpen={isCreateOpen}
-        repo={repoName}
-        path={currentPath}
         onClose={() => setCreateOpen(false)}
         onCreate={handleCreate}
       />

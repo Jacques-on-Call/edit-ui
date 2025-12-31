@@ -1,99 +1,52 @@
-import { useState, useEffect } from 'preact/hooks';
+import { h } from 'preact';
+import { useLogs } from '../contexts/LogContext';
+import { useState } from 'preact/hooks';
+import { Copy, Trash2, ChevronUp, Check } from 'lucide-preact';
 
 export function FloatingLogButton() {
-  const [logs, setLogs] = useState([]);
+  const { logs, copyLogs } = useLogs();
   const [showLogs, setShowLogs] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    const originalLog = console.log;
-    console.log = (...args) => {
-      originalLog(...args);
-      setLogs(prev => [...prev.slice(-99), args.join(' ')]); // Keep last 100 logs
-    };
+  if (logs.length === 0) return null;
 
-    return () => { console.log = originalLog; };
-  }, []);
-
-  const copyLogs = async () => {
-    try {
-      await navigator.clipboard.writeText(logs.join('\n'));
-      alert('Logs copied!');
-    } catch (err) {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = logs.join('\n');
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      alert('Logs copied!');
+  const handleCopy = async () => {
+    const success = await copyLogs();
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
   return (
     <>
-      <div style={{
-        position: 'fixed',
-        bottom: '20px',
-        right: '20px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        zIndex: 10001
-      }}>
-        {logs.length > 0 && (
-          <button
-            onClick={copyLogs}
-            style={{
-              padding: '10px 16px',
-              background: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '20px',
-              fontSize: '12px',
-              cursor: 'pointer'
-            }}
-          >
-            Copy {logs.length} Logs
-          </button>
+      <div className="fixed bottom-5 right-5 z-[10001] flex flex-col items-end gap-2">
+        {showLogs && (
+          <div className="w-80 h-48 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-3 flex flex-col">
+            <div className="flex-grow overflow-y-auto text-xs text-gray-300 font-mono">
+              {logs.map((log, i) => (
+                <div key={i} className={`whitespace-pre-wrap ${log.startsWith('[ERROR]') ? 'text-red-400' : ''}`}>{log}</div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-gray-800">
+                <span className="text-xs text-gray-500">{logs.length} entries</span>
+                <button
+                    onClick={handleCopy}
+                    className="flex items-center gap-2 px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded"
+                >
+                    {copied ? <Check size={14} /> : <Copy size={14} />}
+                    {copied ? 'Copied!' : 'Copy'}
+                </button>
+            </div>
+          </div>
         )}
-
         <button
           onClick={() => setShowLogs(!showLogs)}
-          style={{
-            padding: '12px',
-            background: '#007acc',
-            color: 'white',
-            border: 'none',
-            borderRadius: '50%',
-            cursor: 'pointer',
-            width: '50px',
-            height: '50px'
-          }}
+          className="w-14 h-14 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-110"
         >
-          📋
+          <ChevronUp size={24} className={`transition-transform ${showLogs ? 'rotate-180' : ''}`} />
         </button>
       </div>
-
-      {showLogs && (
-        <div style={{
-          position: 'fixed',
-          bottom: '80px',
-          right: '20px',
-          background: 'black',
-          color: 'white',
-          padding: '10px',
-          borderRadius: '5px',
-          maxHeight: '200px',
-          overflow: 'auto',
-          fontSize: '12px',
-          zIndex: 10001
-        }}>
-          {logs.slice(-10).map((log, i) => (
-            <div key={i}>{log}</div>
-          ))}
-        </div>
-      )}
     </>
   );
 }

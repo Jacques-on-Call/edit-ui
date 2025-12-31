@@ -711,7 +711,7 @@ export default function ContentEditorPage(props) {
         result = result.slice(0, -'.astro'.length);
       }
 
-      if (result.endsWith('index')) {
+      if (result.endsWith('/index') || result === 'index') {
         result = result.slice(0, -'index'.length);
       }
 
@@ -792,8 +792,20 @@ export default function ContentEditorPage(props) {
     );
   };
 
+  const editorContextValue = useMemo(() => ({
+    // This is a placeholder. The actual editor instance will be set by a child component.
+    activeEditor: null,
+    setActiveEditor: () => {}, // Placeholder function
+    // Pass down the state needed by the toolbar
+    sections: sections,
+    // Pass down the handlers
+    onAddSection: handleAddSection,
+    onEditSection: handleEditSection,
+    onUpdateSection: handleUpdateSection,
+  }), [sections, handleAddSection, handleEditSection, handleUpdateSection]);
+
   return (
-    <EditorProvider>
+    <EditorProvider value={editorContextValue}>
       <EditorCanvas
         viewMode={viewMode}
         pageId={pageId}
