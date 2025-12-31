@@ -446,17 +446,6 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
 
   return (
     <div className="flex flex-col h-full" onClick={handleCloseContextMenu}>
-      <header className="flex-shrink-0 bg-gray-800 p-2 border-b border-gray-700 flex items-center justify-between">
-        <div className="flex items-center">
-          <button onClick={handleGoHome} disabled={path === 'src/pages'} className="p-2 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
-            <Icon name="Home" />
-          </button>
-          <button onClick={handleGoBack} disabled={path === 'src/pages'} className="p-2 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed ml-2">
-            <Icon name="ArrowLeft" />
-          </button>
-          <span className="ml-4 text-gray-400">{path}</span>
-        </div>
-      </header>
       <main className="flex-grow overflow-y-auto p-4 pb-24">
         {showSearchResults ? (
           <div>
