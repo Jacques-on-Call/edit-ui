@@ -15,79 +15,61 @@ The architecture is currently drifting. You are fixing individual lines but brea
 Tonight's Goal: Move the needle from "Red" to "Yellow." Polish is secondary; System Integrity is primary.
 ---
 
-## Snag List
+## Snags
  
-revised snags by Notebook LLM: Based on the latest reports and technical findings, the system health is currently rated as **🔴 Red**, indicating significant architectural drift and unresolved critical bugs [1, 2]. 
-
-Below is the updated, detailed **Snag List** followed by strategic questions for the Jules team to ensure tomorrow's tasks are executed with precision.
-
-### **Updated Detailed Snag List**
-
-#### **1. Non-Functional SidePanelToolbar (Critical UI Regression)** [FIXED - 2024-07-12]
-*   **Problem:** The recently added "Side Panel" toolbar is completely non-functional [2].
-*   **Location:** `easy-seo/src/pages/ContentEditorPage.jsx`, `easy-seo/src/components/EditorCanvas.jsx`, and `SidePanelToolbar.jsx` [2, 3].
-*   **Analysis:** The issue stems from **missing state management logic** in the main `ContentEditorPage.jsx` shell, preventing the toolbar from interacting with the editor's active state [1, 2].
-*   **Requirement:** Compare implementation details across these files to reconcile state flow [3].
-
-#### **2. UI Overlap in Preview Mode** [FIXED - 2024-07-23]
-*   **Problem:** Editor-specific UI elements (like the hamburger icon) remain visible on top of the preview `<iframe>` [4].
-*   **Location:** `easy-seo/src/components/EditorCanvas.jsx` [1, 4].
-*   **Analysis:** `EditorCanvas.jsx` lacks the **conditional rendering logic** needed to hide the editor interface when `viewMode` is set to `livePreview` [1, 5].
-
-#### **3. Incorrect Preview URL Generation** [FIXED - 2025-12-31]
-*   **Problem:** The preview loads the main index page instead of the specific page being edited, particularly for files like `_new-index.astro` [6].
-*   **Location:** `generatePreviewPath` function in `ContentEditorPage.jsx` [6, 7].
-*   **Analysis:** The logic `result.endsWith('index')` is too aggressive and **insufficient to handle all filenames**, especially those starting with underscores [3, 7].
-
-#### **4. File Explorer Navigation Regression** [FIXED - 2024-07-24]
-*   **Problem:** The "Back" and "Home" buttons in the file explorer bottom action bar have stopped working specifically for `src/pages` folders [8].
-*   **Location:** `easy-seo/src/components/BottomActionBar.jsx` or parent navigation logic [8].
-*   **Analysis:** This is a suspected regression introduced during recent snag fixes [8].
-
-#### **5. Debug Modal and Log Copy Failure** [FIXED - 2024-05-22]
-*   **Problem:** Clicking "Submit" does nothing; the modal remains on screen. Additionally, logs cannot be copied, and the modal lacks log calls [9].
-*   **Requirement:** Integrate the last lines of the console in bug submissions and ensure functionality across all app sections, not just the content editor [9].
-
-#### **6. File Rename Data Loss** [FIXED - 2025-12-30]
-*   **Problem:** Renaming a file creates a blank new file with empty components instead of duplicating the original file's content [10].
-*   **Requirement:** Ensure the backend uses a "read-write-delete" atomic sequence to maintain content integrity [11, 12].
-
-#### **7. Search Logic Failure (Apostrophes)**
-*   **Problem:** Searching for terms containing apostrophes (e.g., "let’s") returns zero results despite the term existing in files [13].
-*   **Location:** Search utility/backend search handler [13].
-
----
-
-### **Questions for the Jules Team**
-
-To ensure we move from **"Silent Failure"** to **"Visible Success,"** please address the following technical queries:
-
-1.  **Path Logic:** Regarding the `handleCreate` function in `FileExplorerPage.jsx`, how is the path constructed when `currentPath` is highly nested? Is there a risk of double-slashes or incorrect relative paths? [3]
-2.  **State Reconcilliation:** Why was the state management logic required for the `SidePanelToolbar` omitted from `ContentEditorPage.jsx` during the last implementation phase? [2, 3]
-3.  **Worker Documentation:** The introduction of the Cloudflare worker and new authentication flow happened in a single commit without documentation. Can you provide the **logic map** for `cloudflare-worker-src/router.js` to help identify suspected regressions? [2, 14]
-4.  **Performance Bottlenecks:** Users are reporting a typing delay on computers that isn't present in standard word processors. Is this caused by the **autosave debounce** or excessive re-renders in `LexicalField`? [8, 15]
-5.  **Visibility Strategy:** To avoid future "Red" health ratings, how can we modify the backend handlers to **fail visibly** (forwarding actual error messages) rather than returning empty arrays? [16, 17]
-
-**Analogy for Today's Stand-up:**
-Implementing these fixes without answering these questions is like **trying to fix a car engine while the hood is locked**. The Auditor's report has given us the "Check Engine" light (The Snag List); now we need the Jules team to provide the **mechanic's manual** (The Technical Details) so we can actually reach in and fix the parts that are broken.
-
-**Jules NB.** this is the report of all six jules who did not commit to snag-squad branch last night: daily report: Overnight Report
-Overnight Report for 2025-12-30
-This report summarizes the state of the `snag-squad*` branch, the work performed by the
-'Council of Jules' agents, and recent code changes to assist with debugging and review.
-Page 1
-Overnight Report
-1. Jules Session Logs (The 'Hand-Off' Notes)
-Jules Session Log - Automatically created
-Page 2
-Overnight Report
-2. Snag List
-Snag List
-Page 3
-Overnight Report
-3. Changed Files Summary (Last 24 Hours)
-No changes detected in the last 24 hours.
-Page 4
-Overnight Report
-4. Full Diffs (Last 24 Hours)
-Page 5
+This is excellent news that the "Grey Header" is gone. That means the "Grid Demolition" is over, and we can focus entirely on repairing functionality.
+Since Agent 1 is now free, I have re-balanced the workload. We will combine the two "Preview" issues into one task for Agent 1, ensuring every agent has a specific, separate domain to fix.
+📋 The Council of Jules: Revised Mission Plan (2025-12-31)
+Protocol: Sequential Relay on snag-squad.
+Status: 🔴 RED (Functional Regressions).
+## 👓 AGENT 1: The Preview Specialist (Re-assigned)
+ * Targets: easy-seo/src/pages/ContentEditorPage.jsx & EditorCanvas.jsx
+ * The Problems:
+   * URL Logic: _Test files are loading the index page because the regex strips underscores or fails to match them.
+   * UI Clutter: The Editor Header remains visible in "Live Preview," taking up valuable screen space.
+ * Action:
+   * Fix URL: Update generatePreviewPath regex to explicitly allow filenames starting with _ (underscore).
+   * Fix UI: In EditorCanvas.jsx, wrap the <Header /> component in a conditional check: {viewMode !== 'livePreview' && <Header />}.
+ * Verification: Open _Test-4-loss-2.astro in Preview. The URL must be correct, and the top header must be gone.
+## 🧭 AGENT 2: The State Navigator
+ * Targets: easy-seo/src/pages/FileExplorerPage.jsx (Delete Handler)
+ * The Problem: The "Back" and "Home" buttons die after a file is deleted. This happens because the delete action updates the list but likely wipes the currentPath or history state, leaving the buttons pointing to undefined.
+ * Action:
+   * In the handleDelete function, ensure that after the await deleteFile(...) call, you explicitly re-set the currentPath state to the current folder (or parent).
+   * Verify UIContext is not being reset to null.
+ * Verification: Delete a test file inside a folder. Immediately click "Back." It should take you up one level, not do nothing.
+## 📱 AGENT 3: The Mobile Mechanic
+ * Targets: easy-seo/src/components/SidePanelToolbar.jsx
+ * The Problem: The toolbar is not opening on mobile devices.
+ * Action:
+   * Event Listeners: Check if the "Touch" event is triggering the same toggle function as the "Click" event.
+   * CSS Visibility: Ensure the toolbar has a Z-Index higher than the mobile navigation bar (suggest z-50) and isn't being pushed off-screen by a transform: translateX error.
+ * Verification: Switch browser to Mobile View. Tap the toolbar toggle. It must slide out over the content.
+## ⚙️ AGENT 4: The Backend Engineer (Move Logic)
+ * Targets: cloudflare-worker-src/router.js (Move Handler)
+ * The Problem: HTTP 500 when moving _Test-4-loss.astro.
+ * Analysis: The backend likely fails to handle the underscore _ or the hyphen - in the filename during the rename operation, or it's losing the file extension.
+ * Action:
+   * Log the exact incoming source and destination paths in the worker.
+   * Ensure the file move logic treats the filename as a raw string and does not try to split/parse it (which breaks on special chars).
+ * Verification: Move _Test-4-loss.astro to a new folder. It must return 200 OK.
+## 🔍 AGENT 5: The Query Specialist (Search)
+ * Targets: easy-seo/src/components/FileExplorer.jsx (Search Filter)
+ * The Problem: Search finds "let" but fails on "let’s" (smart quote vs straight quote mismatch).
+ * Action:
+   * Normalize Strings: In the search filter function, normalize both the filename and the search term.
+   * Replace smart quotes (’) and straight quotes (') with a unified placeholder or just strip them for comparison.
+   * const normalize = (str) => str.toLowerCase().replace(/['’]/g, '');
+ * Verification: Search for "lets" or "let's". It should find the file "let’s-do-this.md".
+## 📝 AGENT 6: The Archivist (Debug Fix)
+ * Targets: easy-seo/src/utils/debugLogger.js OR Backend PUT Handler
+ * The Problem: Submitting a log deletes the entire history (Overwrites snag-list-doc.md).
+ * Action:
+   * Read-Modify-Write: The backend MUST read the existing file content first.
+   * Append: Concatenate New Log + \n\n + Existing Content.
+   * Write: Save the combined string. Never just save the new log alone.
+ * Verification: Submit a log. Check the file. The old snags must still be there.
+## 🛡️ Anti-Blinker Mandates (Updated)
+ * Agent 1 & 4 Warning: Special characters (_, -) are causing pathing failures. Do not use generic regex [a-z]*. You must support [a-zA-Z0-9-_]*.
+ * Agent 2 Warning: "State" is fragile. Do not assume the component re-renders correctly after a delete. Force the state update.
+ * Strict Branching: Work ONLY on snag-squad.
