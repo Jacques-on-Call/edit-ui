@@ -76,3 +76,12 @@ This document lists all significant files in the `easy-seo` project, along with 
 
 -   **`/src/pages/_test/home.astro`**: A test file in the root repository to verify navigation to the editor.
 -   **`public/preview/mock-preview.html`**: A static HTML file that acts as the target for the editor's preview iframe.
+
+### **Playwright E2E Tests**
+
+-   **`playwright.config.cjs`**: Playwright test configuration with browser setup, timeouts, retries, and dev server integration.
+-   **`tests/navigation.spec.js`**: End-to-end tests for page navigation, routing, browser history, and UI elements.
+-   **`tests/preview.spec.js`**: Tests for editor/preview mode switching, iframe rendering, and content display.
+-   **`tests/editor.spec.js`**: Tests for rich-text editor features including FloatingToolbar, VerticalToolbox, text formatting, color picker, and undo/redo.
+-   **`tests/test-utils.js`**: Helper functions and utilities for writing E2E tests.
+-   **`tests/README.md`**: Comprehensive guide for running, debugging, and writing Playwright tests.

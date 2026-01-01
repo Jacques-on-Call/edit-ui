@@ -4,6 +4,67 @@ This document serves as a debug diary for the `easy-seo` project. It records com
 
 ---
 
+## **Using Playwright Tests for Debugging**
+
+**Date:** 2026-01-01
+**Agent:** GitHub Copilot
+
+### **Overview:**
+
+Playwright E2E tests are now available to help verify fixes and detect regressions. While AGENTS.md notes that the dev environment is unstable, these tests are designed with resilience patterns to still provide value.
+
+### **When to Use Tests:**
+
+1. **After fixing a bug** - Run relevant tests to verify the fix works
+2. **Before completing a task** - Run full suite to catch any regressions
+3. **When developing new features** - Write new tests to document expected behavior
+4. **For debugging** - Use headed or debug mode to see what's happening
+
+### **Quick Commands:**
+
+```bash
+cd easy-seo
+
+# Run all tests
+npm run test:e2e
+
+# Run with visible browser (see what's happening)
+npm run test:e2e:headed
+
+# Debug mode with Playwright Inspector
+npm run test:e2e:debug
+
+# Run specific test file
+npx playwright test navigation.spec.js
+npx playwright test editor.spec.js
+```
+
+### **Interpreting Test Results:**
+
+- **Tests pass** ✅ - Feature is working as expected
+- **Tests fail consistently** ❌ - Real issue to investigate
+- **Tests flaky (pass/fail randomly)** ⚠️ - Check dev server stability, increase timeouts in playwright.config.cjs
+- **Tests can't find elements** 🔍 - UI structure may have changed, update selectors in test
+
+### **Debug Strategies:**
+
+1. **Check screenshots** - Failed tests save screenshots in `test-results/`
+2. **Watch videos** - Failed tests save videos showing what happened
+3. **Use headed mode** - See browser window and observe behavior
+4. **Add breakpoints** - Use `await page.pause()` in tests to stop and inspect
+5. **Console logs** - Tests capture browser console output
+
+### **Common Issues:**
+
+- **Timeout errors** - Increase timeout in playwright.config.cjs or specific test
+- **Element not found** - Use defensive pattern: check element exists before interaction
+- **Dev server not starting** - Check port 5173 is available, or change port in config
+- **Flaky selection tests** - FloatingToolbar tests may be affected by selection timing
+
+See `tests/README.md` for comprehensive testing guide.
+
+---
+
 ## **Bug: FloatingToolbar Selection Loop and Never Appearing**
 
 **Date:** 2025-12-08
