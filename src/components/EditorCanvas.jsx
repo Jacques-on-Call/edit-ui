@@ -8,6 +8,7 @@ import AddSectionModal from './AddSectionModal';
 import ReportIssueModal from './ReportIssueModal';
 import { EditorContext } from '../contexts/EditorContext';
 import { Home, Plus, UploadCloud, RefreshCw } from 'lucide-preact';
+import EditorHeader from './EditorHeader';
 
 
 export default function EditorCanvas(props) {
@@ -46,6 +47,7 @@ export default function EditorCanvas(props) {
 
   return (
     <div class="flex flex-col h-full bg-transparent text-white relative">
+      {viewMode !== 'livePreview' && <EditorHeader />}
       {/* 
       {isEditorReady && (
         <FloatingToolbar

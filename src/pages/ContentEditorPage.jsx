@@ -711,8 +711,12 @@ export default function ContentEditorPage(props) {
         result = result.slice(0, -'.astro'.length);
       }
 
-      if (result.endsWith('/index') || result === 'index') {
-        result = result.slice(0, -'index'.length);
+      // Handles both /index.astro and /_index.astro at any level, preserving a leading slash.
+      const indexRegex = /_?index$/;
+      if (result.endsWith('/index') || result.endsWith('/_index')) {
+         result = result.replace(indexRegex, '');
+      } else if (result === 'index' || result === '_index') {
+        result = '';
       }
 
       if (result.length > 0 && !result.endsWith('/')) {

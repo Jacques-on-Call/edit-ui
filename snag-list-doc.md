@@ -15,7 +15,44 @@ The architecture is currently drifting. You are fixing individual lines but brea
 Tonight's Goal: Move the needle from "Red" to "Yellow." Polish is secondary; System Integrity is primary.
 ---
 
-## Snags
+🚫 The Anti-Patterns (What NOT to do tonight)
+1. SidePanelToolbar (Mobile Fail)
+ * The Fail: Agent focused on the React onClick event logic.
+ * The Anti-Pattern: Assuming the button is "broken" logically.
+ * The Reality: The button works, but on mobile, it is likely covered by the main canvas or has a lower z-index than the mobile header. Do not touch the logic; fix the CSS z-index.
+2. Preview Mode Header (UI Clutter)
+ * The Fail: Agent likely tried to delete the header or CSS-hide it globally.
+ * The Anti-Pattern: Modifying the Header.jsx component itself.
+ * The Reality: The EditorCanvas controls the view. Do not edit the Header; wrap the usage in EditorCanvas with {viewMode !== 'livePreview' && <Header />}.
+3. Incorrect Preview URL (_Test files)
+ * The Fail: Agent used a generic Regex like /[^a-z]/g to sanitize the URL.
+ * The Anti-Pattern: Stripping "special characters" to be safe.
+ * The Reality: Filenames start with underscores in your system. Do not strip non-alphanumeric characters blindly.
+4. File Explorer Nav (Buttons Die after Delete)
+ * The Fail: Agent assumed the component would "know" to refresh.
+ * The Anti-Pattern: Relying on passive state updates after a destructive action.
+ * The Reality: When a file is deleted, the currentPath is still pointing to the deleted context. Do not leave state hanging; force a setCurrentPath update.
+5. Debug Modal (The Overwrite)
+ * The Fail: Agent used the standard "Save File" function.
+ * The Anti-Pattern: Using "Write Mode" (w) for logs.
+ * The Reality: Logs are a history. Do not use writeFile; use appendFile or a Read-Combine-Write pattern.
+6. Move File (500 Error)
+ * The Fail: Agent likely tried to parse the path with a library that doesn't exist in Cloudflare Workers (like path module) or split the string incorrectly.
+ * The Anti-Pattern: Assuming Node.js built-ins work in the Cloudflare Worker.
+ * The Reality: Worker paths are strings. Do not use path.join if you haven't polyfilled it. Use template literals: ${dir}/${file}.
+7. Search Logic (Apostrophes)
+ * The Fail: Agent filtered by exact string match.
+ * The Anti-Pattern: Assuming a quote is a quote.
+ * The Reality: Users type "let's" (straight quote), but content has "let’s" (smart quote). Do not compare raw strings; normalize them first.
+🧠 The File: snag-memory.md
+Create this file in your root directory. This is the "Black Box" recorder.
+# 🧠 SNAG MEMORY (The Graveyard of Failed Fixes) easy-seo/snag-memory.md
+
+> **⚠️ WARNING TO JULES:** > Before attempting a fix, SEARCH this file for your Snag ID. 
+> If your proposed solution is listed below as a "FAILED ATTEMPT," you are FORBIDDEN from trying it. 
+> You must attempt a DIFFERENT approach.
+> 
+## 25-12-31 Snags
  
 This is excellent news that the "Grey Header" is gone. That means the "Grid Demolition" is over, and we can focus entirely on repairing functionality.
 Since Agent 1 is now free, I have re-balanced the workload. We will combine the two "Preview" issues into one task for Agent 1, ensuring every agent has a specific, separate domain to fix.
@@ -30,7 +67,7 @@ Status: 🔴 RED (Functional Regressions).
  * Action:
    * Fix URL: Update generatePreviewPath regex to explicitly allow filenames starting with _ (underscore).
    * Fix UI: In EditorCanvas.jsx, wrap the <Header /> component in a conditional check: {viewMode !== 'livePreview' && <Header />}.
- * Verification: Open _Test-4-loss-2.astro in Preview. The URL must be correct, and the top header must be gone.
+ * Verification: Open _Test-4-loss-2.astro in Preview. The URL must be correct, and the top header must be gone. [FIXED]
 ## 🧭 AGENT 2: The State Navigator
  * Targets: easy-seo/src/pages/FileExplorerPage.jsx (Delete Handler)
  * The Problem: The "Back" and "Home" buttons die after a file is deleted. This happens because the delete action updates the list but likely wipes the currentPath or history state, leaving the buttons pointing to undefined.
@@ -52,7 +89,7 @@ Status: 🔴 RED (Functional Regressions).
  * Action:
    * Log the exact incoming source and destination paths in the worker.
    * Ensure the file move logic treats the filename as a raw string and does not try to split/parse it (which breaks on special chars).
- * Verification: Move _Test-4-loss.astro to a new folder. It must return 200 OK.
+ * Verification: Move _Test-4-loss.astro to a new folder. It must return 200 OK. [FIXED]
 ## 🔍 AGENT 5: The Query Specialist (Search)
  * Targets: easy-seo/src/components/FileExplorer.jsx (Search Filter)
  * The Problem: Search finds "let" but fails on "let’s" (smart quote vs straight quote mismatch).
@@ -60,7 +97,7 @@ Status: 🔴 RED (Functional Regressions).
    * Normalize Strings: In the search filter function, normalize both the filename and the search term.
    * Replace smart quotes (’) and straight quotes (') with a unified placeholder or just strip them for comparison.
    * const normalize = (str) => str.toLowerCase().replace(/['’]/g, '');
- * Verification: Search for "lets" or "let's". It should find the file "let’s-do-this.md".
+ * Verification: Search for "lets" or "let's". It should find the file "let’s-do-this.md". [DONE - 2024-10-27]
 ## 📝 AGENT 6: The Archivist (Debug Fix)
  * Targets: easy-seo/src/utils/debugLogger.js OR Backend PUT Handler
  * The Problem: Submitting a log deletes the entire history (Overwrites snag-list-doc.md).
@@ -68,7 +105,7 @@ Status: 🔴 RED (Functional Regressions).
    * Read-Modify-Write: The backend MUST read the existing file content first.
    * Append: Concatenate New Log + \n\n + Existing Content.
    * Write: Save the combined string. Never just save the new log alone.
- * Verification: Submit a log. Check the file. The old snags must still be there.
+ * Verification: Submit a log. Check the file. The old snags must still be there. [DONE - 2024-10-27]
 ## 🛡️ Anti-Blinker Mandates (Updated)
  * Agent 1 & 4 Warning: Special characters (_, -) are causing pathing failures. Do not use generic regex [a-z]*. You must support [a-zA-Z0-9-_]*.
  * Agent 2 Warning: "State" is fragile. Do not assume the component re-renders correctly after a delete. Force the state update.
