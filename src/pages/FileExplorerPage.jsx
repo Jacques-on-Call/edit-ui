@@ -157,6 +157,7 @@ import pageData from '${dataPath}';
       <FileExplorer 
         repo={repoName}
         searchQuery={searchQuery} // Pass the searchQuery from the context
+        currentPath={currentPath} // Pass currentPath from UIContext
         onPathChange={setCurrentPath}
         refreshTrigger={refreshTrigger}
       />

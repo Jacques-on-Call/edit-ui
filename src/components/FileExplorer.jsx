@@ -17,11 +17,12 @@ import { useFileManifest } from '../hooks/useFileManifest';
 import { fetchJson } from '/src/lib/fetchJson.js';
 import './LiquidGlassButton.css';
 
-function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTrigger }) {
+function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTrigger, currentPath }) {
   console.log(`[FileExplorer.jsx] searchQuery prop: "${searchQuery}"`);
   const { fileManifest } = useFileManifest(repo);
   const [files, setFiles] = useState([]);
-  const [path, setPath] = useState('src/pages');
+  // Use currentPath from props (UIContext) instead of local state
+  const path = currentPath || 'src/pages';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -33,13 +34,6 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
   const [moveFile, setMoveFile] = useState(null);
   const [renameItem, setRenameItem] = useState(null);
   const { searchResults, performSearch, isSearching } = useSearch(repo, fileManifest);
-
-  // Notify parent of path changes
-  useEffect(() => {
-    if (onPathChange) {
-      onPathChange(path);
-    }
-  }, [path, onPathChange]);
 
   const handleLongPress = useCallback((file, event) => {
     event.preventDefault();
@@ -378,7 +372,9 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
     if (!file) return;
 
     if (file.type === 'dir') {
-      setPath(file.path);
+      if (onPathChange) {
+        onPathChange(file.path);
+      }
     } else {
       const slug = (file.name || file.path || '').replace(/\.[^/.]+$/, '');
       const target = `/editor/${encodeURIComponent(file.path)}`;
@@ -413,13 +409,19 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
         console.log('[FileExplorer] route() appears to have succeeded (location updated).');
       }
     }
-  }, [selectedFile]);
+  }, [selectedFile, onPathChange]);
 
-  const handleGoHome = () => setPath('src/pages');
+  const handleGoHome = () => {
+    if (onPathChange) {
+      onPathChange('src/pages');
+    }
+  };
 
   const handleGoBack = () => {
     const parentPath = path.split('/').slice(0, -1).join('/');
-    setPath(parentPath || 'src/pages'); // Default to root if empty
+    if (onPathChange) {
+      onPathChange(parentPath || 'src/pages'); // Default to root if empty
+    }
   };
 
   const handleToggleReadme = () => setReadmeVisible(prev => !prev);
