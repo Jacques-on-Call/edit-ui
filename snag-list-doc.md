@@ -15,97 +15,53 @@ The architecture is currently drifting. You are fixing individual lines but brea
 Tonight's Goal: Move the needle from "Red" to "Yellow." Polish is secondary; System Integrity is primary.
 ---
 
-🚫 The Anti-Patterns (What NOT to do tonight)
-1. SidePanelToolbar (Mobile Fail)
- * The Fail: Agent focused on the React onClick event logic.
- * The Anti-Pattern: Assuming the button is "broken" logically.
- * The Reality: The button works, but on mobile, it is likely covered by the main canvas or has a lower z-index than the mobile header. Do not touch the logic; fix the CSS z-index.
-2. Preview Mode Header (UI Clutter)
- * The Fail: Agent likely tried to delete the header or CSS-hide it globally.
- * The Anti-Pattern: Modifying the Header.jsx component itself.
- * The Reality: The EditorCanvas controls the view. Do not edit the Header; wrap the usage in EditorCanvas with {viewMode !== 'livePreview' && <Header />}.
-3. Incorrect Preview URL (_Test files)
- * The Fail: Agent used a generic Regex like /[^a-z]/g to sanitize the URL.
- * The Anti-Pattern: Stripping "special characters" to be safe.
- * The Reality: Filenames start with underscores in your system. Do not strip non-alphanumeric characters blindly.
-4. File Explorer Nav (Buttons Die after Delete)
- * The Fail: Agent assumed the component would "know" to refresh.
- * The Anti-Pattern: Relying on passive state updates after a destructive action.
- * The Reality: When a file is deleted, the currentPath is still pointing to the deleted context. Do not leave state hanging; force a setCurrentPath update.
-5. Debug Modal (The Overwrite)
- * The Fail: Agent used the standard "Save File" function.
- * The Anti-Pattern: Using "Write Mode" (w) for logs.
- * The Reality: Logs are a history. Do not use writeFile; use appendFile or a Read-Combine-Write pattern.
-6. Move File (500 Error)
- * The Fail: Agent likely tried to parse the path with a library that doesn't exist in Cloudflare Workers (like path module) or split the string incorrectly.
- * The Anti-Pattern: Assuming Node.js built-ins work in the Cloudflare Worker.
- * The Reality: Worker paths are strings. Do not use path.join if you haven't polyfilled it. Use template literals: ${dir}/${file}.
-7. Search Logic (Apostrophes)
- * The Fail: Agent filtered by exact string match.
- * The Anti-Pattern: Assuming a quote is a quote.
- * The Reality: Users type "let's" (straight quote), but content has "let’s" (smart quote). Do not compare raw strings; normalize them first.
-🧠 The File: snag-memory.md
-Create this file in your root directory. This is the "Black Box" recorder.
-# 🧠 SNAG MEMORY (The Graveyard of Failed Fixes) easy-seo/snag-memory.md
+This is a critical "Stop the Bleeding" moment. The "Rogue Agent" didn't just break a feature; they broke the application state model.
+By analyzing the behavior you described (Back button acting like a browser, Ghost Header reappearing, Mobile Toolbar firing on "empty space"), I have constructed the forensic analysis and the recovery plan.
+1. The "Crime Scene" Analysis
+ * The "Browser Back" Sabotage (FileExplorer.jsx):
+   * The Crime: The agent replaced the internal setCurrentPath(parentPath) logic with window.history.back(). This is why clicking "Back" takes you out of the app to the "Repository Selection" screen instead of just up one folder.
+   * The DOM Injection: They likely added a <Link href=".."> or an <a> tag inside the FileExplorer header or BottomActionBar instead of using the onClick handler linked to the UIContext.
+ * The "Ghost Header" Resurrection (ContentEditorPage.jsx):
+   * The Crime: The agent found the commented-out <EditorHeader /> (lines ~120-130) and "fixed" it by uncommenting it. This header was deprecated, which is why it blinks and stretches—it conflicts with the newer EditorCanvas layout.
+   * Impact: It’s eating up 60px of your Preview space and causing the layout thrashing.
+ * The "Mobile Toolbar" Phantom Click:
+   * The Crime: The event listener for the toolbar is attached to the Editor Container (<div>), not the Lexical Editor Instance. That's why tapping "empty space" (the container) triggers it, but selecting text (the editor instance) does not. The z-index is also likely trapped inside a container with overflow: hidden.
+ * Whitespace Typos (Silent Killers):
+   * Look for search .query or file .name in easy-seo/src/hooks/useSearch.js. This is breaking the "let's" vs "let’s" normalization because the code is crashing silently before it runs the normalization logic.
+2. Logical Contradictions
+ * The "Fixed" Move Logic: Agent 5 claimed to fix "File Rename Data Loss" by updating the Base64 encoding. However, they ignored the Move logic. The "File already exists" error happens because the backend checks for the destination folder's existence but fails to check if the specific filename is free, or it fails to move the shadow .json file along with the .astro file, leaving a "Ghost JSON" that blocks the move.
+ * The UI Context Mismatch: The BottomActionBar thinks it is navigating a "History Stack" (Browser), but the FileExplorerPage is trying to manage a "Path State" (App). They are fighting, and the Browser Stack is winning.
+3. The "Recovery" Snag List (Formatted for the Squad)
+Paste this into snag-list-doc.md immediately.
+Step 1: Kill the "Browser Back" & Fix Nav
+ * Target: easy-seo/src/components/BottomActionBar.jsx (Lines 40-60)
+ * The Revert: Remove any usage of window.history.back() or useLocation for navigation.
+ * The Fix: Restore the UIContext integration. The "Back" button onClick must execute:
+   const parentPath = currentPath.split('/').slice(0, -1).join('/');
+setCurrentPath(parentPath || 'src/pages');
 
-> **⚠️ WARNING TO JULES:** > Before attempting a fix, SEARCH this file for your Snag ID. 
-> If your proposed solution is listed below as a "FAILED ATTEMPT," you are FORBIDDEN from trying it. 
-> You must attempt a DIFFERENT approach.
+ * Acceptance Test: Go to src/pages/blog. Click Back. You must land in src/pages, NOT the Repo Selection screen.
+Step 2: Exorcise the "Ghost Header"
+ * Target: easy-seo/src/pages/ContentEditorPage.jsx (Lines ~120)
+ * The Revert: Find the <EditorHeader /> component. Comment it out or Delete it. Do not wrap it in logic; kill it. It is deprecated.
+ * The Fix: Ensure only EditorCanvas is rendering the toolbar.
+ * Acceptance Test: Open Preview. The top 60px grey bar must be gone.
+Step 3: Fix Preview URL & Search Normalization
+ * Target: easy-seo/src/pages/ContentEditorPage.jsx (generatePreviewPath) AND easy-seo/src/hooks/useSearch.js.
+ * The Fix (URL): Change regex to path.replace(/\/index$/, '') (only strip index at the end). DO NOT strip underscores.
+ * The Fix (Search): Add this specific normalization line before filtering:
+   const normalize = (str) => str.toLowerCase().replace(/['’]/g, ""); // Strips both smart and straight quotes
+
+ * Acceptance Test: Open _Test-4.astro. Preview URL must contain _Test-4. Search for let's and find let’s.
+4. Anti-Blinker Mandates
+ * The "Internal Router" Rule: You are FORBIDDEN from using window.history, window.location, or <a> tags for internal app navigation. You MUST use setCurrentPath from UIContext.
+ * The "Legacy Code" Rule: If a component is commented out (like <EditorHeader />), LEAVE IT DEAD. Do not uncomment code to "fix" a missing UI element; check the new component (EditorCanvas) instead.
+ * The "Playwright" Mandate: You have the environment setup. Before marking any snag as [FIXED], you must run the Playwright verification script. If you cannot run it, you must explicitly state "UNVERIFIED" in the log.
+5. Playwright Verification (The "No Excuse" Clause)
+Since you have the Playwright environment setup, tell Agent 7 (The Auditor):
+> "Run npx playwright test --headed. Watch the 'Move File' test. If it fails with a 500 error, do not merge the PR. The 'File Already Exists' error is likely a failure to clean up the .json shadow file in the previous test run."
 > 
-## 25-12-31 Snags
- 
-This is excellent news that the "Grey Header" is gone. That means the "Grid Demolition" is over, and we can focus entirely on repairing functionality.
-Since Agent 1 is now free, I have re-balanced the workload. We will combine the two "Preview" issues into one task for Agent 1, ensuring every agent has a specific, separate domain to fix.
-📋 The Council of Jules: Revised Mission Plan (2025-12-31)
-Protocol: Sequential Relay on snag-squad.
-Status: 🔴 RED (Functional Regressions).
-## 👓 AGENT 1: The Preview Specialist (Re-assigned)
- * Targets: easy-seo/src/pages/ContentEditorPage.jsx & EditorCanvas.jsx
- * The Problems:
-   * URL Logic: _Test files are loading the index page because the regex strips underscores or fails to match them.
-   * UI Clutter: The Editor Header remains visible in "Live Preview," taking up valuable screen space.
- * Action:
-   * Fix URL: Update generatePreviewPath regex to explicitly allow filenames starting with _ (underscore).
-   * Fix UI: In EditorCanvas.jsx, wrap the <Header /> component in a conditional check: {viewMode !== 'livePreview' && <Header />}.
- * Verification: Open _Test-4-loss-2.astro in Preview. The URL must be correct, and the top header must be gone. [FIXED]
-## 🧭 AGENT 2: The State Navigator
- * Targets: easy-seo/src/pages/FileExplorerPage.jsx (Delete Handler)
- * The Problem: The "Back" and "Home" buttons die after a file is deleted. This happens because the delete action updates the list but likely wipes the currentPath or history state, leaving the buttons pointing to undefined.
- * Action:
-   * In the handleDelete function, ensure that after the await deleteFile(...) call, you explicitly re-set the currentPath state to the current folder (or parent).
-   * Verify UIContext is not being reset to null.
- * Verification: Delete a test file inside a folder. Immediately click "Back." It should take you up one level, not do nothing.
-## 📱 AGENT 3: The Mobile Mechanic
- * Targets: easy-seo/src/components/SidePanelToolbar.jsx
- * The Problem: The toolbar is not opening on mobile devices.
- * Action:
-   * Event Listeners: Check if the "Touch" event is triggering the same toggle function as the "Click" event.
-   * CSS Visibility: Ensure the toolbar has a Z-Index higher than the mobile navigation bar (suggest z-50) and isn't being pushed off-screen by a transform: translateX error.
- * Verification: Switch browser to Mobile View. Tap the toolbar toggle. It must slide out over the content.
-## ⚙️ AGENT 4: The Backend Engineer (Move Logic)
- * Targets: cloudflare-worker-src/router.js (Move Handler)
- * The Problem: HTTP 500 when moving _Test-4-loss.astro.
- * Analysis: The backend likely fails to handle the underscore _ or the hyphen - in the filename during the rename operation, or it's losing the file extension.
- * Action:
-   * Log the exact incoming source and destination paths in the worker.
-   * Ensure the file move logic treats the filename as a raw string and does not try to split/parse it (which breaks on special chars).
- * Verification: Move _Test-4-loss.astro to a new folder. It must return 200 OK. [FIXED]
-## 🔍 AGENT 5: The Query Specialist (Search)
- * Targets: easy-seo/src/components/FileExplorer.jsx (Search Filter)
- * The Problem: Search finds "let" but fails on "let’s" (smart quote vs straight quote mismatch).
- * Action:
-   * Normalize Strings: In the search filter function, normalize both the filename and the search term.
-   * Replace smart quotes (’) and straight quotes (') with a unified placeholder or just strip them for comparison.
-   * const normalize = (str) => str.toLowerCase().replace(/['’]/g, '');
- * Verification: Search for "lets" or "let's". It should find the file "let’s-do-this.md". [DONE - 2024-10-27]
-## 📝 AGENT 6: The Archivist (Debug Fix)
- * Targets: easy-seo/src/utils/debugLogger.js OR Backend PUT Handler
- * The Problem: Submitting a log deletes the entire history (Overwrites snag-list-doc.md).
- * Action:
-   * Read-Modify-Write: The backend MUST read the existing file content first.
-   * Append: Concatenate New Log + \n\n + Existing Content.
-   * Write: Save the combined string. Never just save the new log alone.
- * Verification: Submit a log. Check the file. The old snags must still be there. [DONE - 2024-10-27]
+
 ## 🛡️ Anti-Blinker Mandates (Updated)
  * Agent 1 & 4 Warning: Special characters (_, -) are causing pathing failures. Do not use generic regex [a-z]*. You must support [a-zA-Z0-9-_]*.
  * Agent 2 Warning: "State" is fragile. Do not assume the component re-renders correctly after a delete. Force the state update.
