@@ -418,10 +418,8 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
   const handleGoHome = () => setPath('src/pages');
 
   const handleGoBack = () => {
-    const parentPath = path.substring(0, path.lastIndexOf('/'));
-    if (parentPath) {
-      setPath(parentPath);
-    }
+    const parentPath = path.split('/').slice(0, -1).join('/');
+    setPath(parentPath || 'src/pages'); // Default to root if empty
   };
 
   const handleToggleReadme = () => setReadmeVisible(prev => !prev);

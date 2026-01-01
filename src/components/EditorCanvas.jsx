@@ -47,7 +47,6 @@ export default function EditorCanvas(props) {
 
   return (
     <div class="flex flex-col h-full bg-transparent text-white relative">
-      {viewMode !== 'livePreview' && <EditorHeader />}
       {/* 
       {isEditorReady && (
         <FloatingToolbar

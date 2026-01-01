@@ -33,22 +33,22 @@ By analyzing the behavior you described (Back button acting like a browser, Ghos
  * The UI Context Mismatch: The BottomActionBar thinks it is navigating a "History Stack" (Browser), but the FileExplorerPage is trying to manage a "Path State" (App). They are fighting, and the Browser Stack is winning.
 3. The "Recovery" Snag List (Formatted for the Squad)
 Paste this into snag-list-doc.md immediately.
-Step 1: Kill the "Browser Back" & Fix Nav
- * Target: easy-seo/src/components/BottomActionBar.jsx (Lines 40-60)
+[FIXED - 2026-01-01] Step 1: Kill the "Browser Back" & Fix Nav
+ * Target: easy-seo/src/components/FileExplorer.jsx (handleGoBack function)
  * The Revert: Remove any usage of window.history.back() or useLocation for navigation.
  * The Fix: Restore the UIContext integration. The "Back" button onClick must execute:
    const parentPath = currentPath.split('/').slice(0, -1).join('/');
 setCurrentPath(parentPath || 'src/pages');
 
  * Acceptance Test: Go to src/pages/blog. Click Back. You must land in src/pages, NOT the Repo Selection screen.
-Step 2: Exorcise the "Ghost Header"
+[FIXED - 2026-01-01] Step 2: Exorcise the "Ghost Header"
  * Target: easy-seo/src/pages/ContentEditorPage.jsx (Lines ~120)
  * The Revert: Find the <EditorHeader /> component. Comment it out or Delete it. Do not wrap it in logic; kill it. It is deprecated.
  * The Fix: Ensure only EditorCanvas is rendering the toolbar.
  * Acceptance Test: Open Preview. The top 60px grey bar must be gone.
 Step 3: Fix Preview URL & Search Normalization
  * Target: easy-seo/src/pages/ContentEditorPage.jsx (generatePreviewPath) AND easy-seo/src/hooks/useSearch.js.
- * The Fix (URL): Change regex to path.replace(/\/index$/, '') (only strip index at the end). DO NOT strip underscores.
+ * [FIXED - 2026-01-01] The Fix (URL): Change regex to path.replace(/\/index$/, '') (only strip index at the end). DO NOT strip underscores.
  * The Fix (Search): Add this specific normalization line before filtering:
    const normalize = (str) => str.toLowerCase().replace(/['’]/g, ""); // Strips both smart and straight quotes
 

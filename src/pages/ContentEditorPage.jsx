@@ -711,16 +711,13 @@ export default function ContentEditorPage(props) {
         result = result.slice(0, -'.astro'.length);
       }
 
-      // Handles both /index.astro and /_index.astro at any level, preserving a leading slash.
-      const indexRegex = /_?index$/;
-      if (result.endsWith('/index') || result.endsWith('/_index')) {
-         result = result.replace(indexRegex, '');
-      } else if (result === 'index' || result === '_index') {
-        result = '';
+      // The Rule: Keep the underscore. Only strip the file extension (.astro)
+      // and the word index if it appears at the very end of a path.
+      if (result.endsWith('/index') || result === 'index') {
+          result = result.substring(0, result.lastIndexOf('index'));
       }
-
-      if (result.length > 0 && !result.endsWith('/')) {
-        result += '/';
+      if (result.endsWith('/_index')) {
+        result = result.substring(0, result.lastIndexOf('_index'));
       }
 
       return result;
