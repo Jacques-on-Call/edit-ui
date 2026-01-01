@@ -4,7 +4,12 @@ import LiquidGlassButton from './LiquidGlassButton';
 import { useUI } from '../contexts/UIContext';
 
 export function BottomToolbar() {
-  const { setCreateOpen } = useUI();
+  const { setCreateOpen, currentPath, setCurrentPath } = useUI();
+
+  const handleGoBack = () => {
+    const parentPath = currentPath.split('/').slice(0, -1).join('/');
+    setCurrentPath(parentPath || 'src/pages');
+  };
 
   return (
     <footer
@@ -29,7 +34,7 @@ export function BottomToolbar() {
         </LiquidGlassButton>
 
         <button
-          onClick={() => window.history.back()}
+          onClick={handleGoBack}
           className="p-3 text-white transition-transform duration-150 ease-in-out rounded-full hover:bg-white/10 active:scale-90"
           aria-label="Back"
         >

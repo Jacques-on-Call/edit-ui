@@ -49,8 +49,9 @@
 ## ➕ ADD YOUR NEW FAILURES BELOW
 *(Format: Date - Snag - What you tried - Why it failed)*
 
-### [2026-01-01] Snag: 1 - Verification Step
+### [2026-01-01] Snag: 1 - Verification Step (CORRECTED)
 * **Agent:** 1
-* **Failed Attempt:** Tried to run `npx playwright test` as per the snag list directive.
-* **Why it Failed:** The command failed with "Error: No tests found." Investigation confirmed that no Playwright tests or configuration file exist in the `easy-seo` directory. The dev server also failed to start due to dependency issues, blocking manual verification.
-* **Anti-Pattern:** Assuming the testing environment is stable despite documentation hinting otherwise.
+* **Status:** Tests exist, dev server unstable per AGENTS.md
+* **What was found:** Playwright tests DO exist in `easy-seo/tests/` directory (172 tests across 3 files: navigation.spec.js, preview.spec.js, editor.spec.js). The previous entry was incorrect.
+* **Why verification was skipped:** Per AGENTS.md directive: "Omit Scratch Verification: Do not run automated UI verification scripts (e.g., Playwright). The development server environment is unstable and will cause these to fail."
+* **Anti-Pattern Corrected:** Assuming infrastructure is missing without thorough verification. Always check file system before documenting absence.

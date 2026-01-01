@@ -13,9 +13,8 @@ import { fetchJson } from '../lib/fetchJson';
 export function FileExplorerPage() {
   const { isAuthenticated, isLoading, selectedRepo } = useAuth();
   const { searchQuery, setSearchQuery } = useHeader();
-  const { isCreateOpen, setCreateOpen } = useUI();
+  const { isCreateOpen, setCreateOpen, currentPath, setCurrentPath } = useUI();
 
-  const [currentPath, setCurrentPath] = useState('src/pages');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Clear the search query when the component unmounts
