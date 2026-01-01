@@ -33,7 +33,9 @@ By analyzing the behavior you described (Back button acting like a browser, Ghos
  * The UI Context Mismatch: The BottomActionBar thinks it is navigating a "History Stack" (Browser), but the FileExplorerPage is trying to manage a "Path State" (App). They are fighting, and the Browser Stack is winning.
 3. The "Recovery" Snag List (Formatted for the Squad)
 Paste this into snag-list-doc.md immediately.
-[FIXED - 2026-01-01] Step 1: Kill the "Browser Back" & Fix Nav
+[CODE COMPLETE - VISUAL VERIFICATION BLOCKED - 2026-01-01] Step 1: Kill the "Browser Back" & Fix Nav
+ * Status: Code implementation verified correct, but CANNOT TEST without authentication
+ * See: easy-seo/SNAG-ASSESSMENT-2026-01-01.md for full details
  * Target: easy-seo/src/components/FileExplorer.jsx (handleGoBack function)
  * The Revert: Remove any usage of window.history.back() or useLocation for navigation.
  * The Fix: Restore the UIContext integration. The "Back" button onClick must execute:
@@ -41,11 +43,15 @@ Paste this into snag-list-doc.md immediately.
 setCurrentPath(parentPath || 'src/pages');
 
  * Acceptance Test: Go to src/pages/blog. Click Back. You must land in src/pages, NOT the Repo Selection screen.
-[FIXED - 2026-01-01] Step 2: Exorcise the "Ghost Header"
+ * ⚠️ CRITICAL: Requires authentication setup to visually verify this actually works
+[CODE COMPLETE - VISUAL VERIFICATION BLOCKED - 2026-01-01] Step 2: Exorcise the "Ghost Header"
+ * Status: Code implementation verified correct, but CANNOT TEST without authentication
+ * See: easy-seo/SNAG-ASSESSMENT-2026-01-01.md for full details
  * Target: easy-seo/src/pages/ContentEditorPage.jsx (Lines ~120)
  * The Revert: Find the <EditorHeader /> component. Comment it out or Delete it. Do not wrap it in logic; kill it. It is deprecated.
  * The Fix: Ensure only EditorCanvas is rendering the toolbar.
  * Acceptance Test: Open Preview. The top 60px grey bar must be gone.
+ * ⚠️ CRITICAL: Requires authentication setup to visually verify this actually works
 Step 3: Fix Preview URL & Search Normalization
  * Target: easy-seo/src/pages/ContentEditorPage.jsx (generatePreviewPath) AND easy-seo/src/hooks/useSearch.js.
  * [FIXED - 2026-01-01] The Fix (URL): Change regex to path.replace(/\/index$/, '') (only strip index at the end). DO NOT strip underscores.
@@ -66,3 +72,27 @@ Since you have the Playwright environment setup, tell Agent 7 (The Auditor):
  * Agent 1 & 4 Warning: Special characters (_, -) are causing pathing failures. Do not use generic regex [a-z]*. You must support [a-zA-Z0-9-_]*.
  * Agent 2 Warning: "State" is fragile. Do not assume the component re-renders correctly after a delete. Force the state update.
  * Strict Branching: Work ONLY on snag-squad.
+
+---
+
+## 2026-01-01 Critical Assessment Update
+
+**⚠️ WARNING: Previous "FIXED" Status Was Premature ⚠️**
+
+All three snags have been re-assessed and found to be **CODE COMPLETE but VISUALLY UNVERIFIED**.
+
+- Step 1 (Browser Back): Code looks correct, but NOT TESTED
+- Step 2 (Ghost Header): Code looks correct, but NOT TESTED  
+- Step 3 (Preview URL & Search): Code looks correct, but NOT TESTED
+
+**Why Claims of "FIXED" Were Wrong:**
+Previous agents marked these as FIXED without visual proof. Per AGENTS.md rule #4, verification using Playwright is MANDATORY. All test attempts were blocked by authentication requirements.
+
+**See Full Details:** `easy-seo/SNAG-ASSESSMENT-2026-01-01.md`
+
+**Next Agent Must:**
+1. Set up test authentication or mock
+2. Run `npx playwright test snag-visual-verification.spec.js`
+3. Provide screenshots proving fixes actually work
+4. ONLY THEN can these be marked as FIXED
+
