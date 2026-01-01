@@ -1,5 +1,19 @@
 # Snag List 
 
+**⚠️ CRITICAL ENVIRONMENT FAILURE - 2026-01-03 ⚠️**
+
+**Agent Snag's attempts to fix the dev server were unsuccessful. The server still fails to start, blocking all visual verification. The `vite` dependency has been updated, but the underlying issue persists.**
+
+**⚠️ CRITICAL ENVIRONMENT FAILURE - 2026-01-02 ⚠️**
+
+**The `easy-seo` dev server is currently broken and will not start.** All visual verification is blocked.
+
+**DO NOT ATTEMPT TO FIX THE SNAGS BELOW.** The code for these is correct. The immediate priority for the next agent must be to fix the Vite dev server.
+
+**See `.jules/session-logs.md` for a full report on the debugging attempts.** The server consistently fails with a `Cannot find package '@preact/preset-vite'` error, even after multiple re-installations.
+
+---
+
 This document outlines a list of known issues ("snags") and their agreed-upon solutions, including a detailed technical plan for each. It also serves as a glossary for technical terms used during development
 
 NB: Follow Agents.md instructions 
@@ -62,7 +76,7 @@ Step 3: Fix Preview URL & Search Normalization
 4. Anti-Blinker Mandates
  * The "Internal Router" Rule: You are FORBIDDEN from using window.history, window.location, or <a> tags for internal app navigation. You MUST use setCurrentPath from UIContext.
  * The "Legacy Code" Rule: If a component is commented out (like <EditorHeader />), LEAVE IT DEAD. Do not uncomment code to "fix" a missing UI element; check the new component (EditorCanvas) instead.
- * The "Playwright" Mandate: You have the environment setup. Before marking any snag as [FIXED], you must run the Playwright verification script. If you cannot run it, you must explicitly state "UNVERIFIED" in the log.
+ * The "Playwright" Mandate: You have the environment setup. Before marking any snag as [FIXED], you must run the Playwright verification script.. If you cannot run it, you must explicitly state "UNVERIFIED" in the log.
 5. Playwright Verification (The "No Excuse" Clause)
 Since you have the Playwright environment setup, tell Agent 7 (The Auditor):
 > "Run npx playwright test --headed. Watch the 'Move File' test. If it fails with a 500 error, do not merge the PR. The 'File Already Exists' error is likely a failure to clean up the .json shadow file in the previous test run."
