@@ -1,5 +1,8 @@
 # Project Change Log
 
+jules got vite sorted 2026-01-02
+This change fixes a persistent Vite build failure in the easy-seo project. The root cause was an unstable npm environment that failed to install devDependencies correctly, leading to a Cannot find module 'tailwindcss' error. The solution involves moving the build-critical dependencies (tailwindcss, postcss, autoprefixer) to the dependencies section of package.json and pinning them to their latest v3-compatible versions. This ensures that the build tools are always installed, regardless of the environment, and prevents npm from installing the incompatible v4.
+
 Snag Squad (verification): Verification of Previously Completed Snag Fixes
 Date: 2026-01-01
 Summary:
