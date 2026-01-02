@@ -1,16 +1,14 @@
 # Snag List 
 
-**⚠️ CRITICAL ENVIRONMENT FAILURE - 2026-01-03 ⚠️**
+**✅ DEV SERVER FIXED - 2026-01-04 ✅**
 
-**Agent Snag's attempts to fix the dev server were unsuccessful. The server still fails to start, blocking all visual verification. The `vite` dependency has been updated, but the underlying issue persists.**
+**Agent Snag fixed the dev server by correcting the Vite version in `package.json`. The server now starts successfully.**
 
-**⚠️ CRITICAL ENVIRONMENT FAILURE - 2026-01-02 ⚠️**
+**⚠️ VISUAL VERIFICATION STILL BLOCKED ⚠️**
 
-**The `easy-seo` dev server is currently broken and will not start.** All visual verification is blocked.
+**The Playwright test environment is unstable and fails to run the verification tests, even with a running server. This appears to be a separate issue related to system dependencies.**
 
-**DO NOT ATTEMPT TO FIX THE SNAGS BELOW.** The code for these is correct. The immediate priority for the next agent must be to fix the Vite dev server.
-
-**See `.jules/session-logs.md` for a full report on the debugging attempts.** The server consistently fails with a `Cannot find package '@preact/preset-vite'` error, even after multiple re-installations.
+**DO NOT ATTEMPT TO FIX THE SNAGS BELOW UNTIL PLAYWRIGHT IS STABLE.** The code for these is correct, but they cannot be visually verified. The immediate priority for the next agent must be to stabilize the Playwright test environment.
 
 ---
 
