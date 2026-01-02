@@ -76,7 +76,7 @@ The "Data Sanctity" Rule: You are forbidden from using fs.writeFile with an empt
 ——-
 
 ## [BUG-004] Mobile Toolbar & Selection Focus
-• Status: [NEW]
+• Status: [FIXED - 2026-01-02]
 • The Issue: Toolbar only appears after losing focus. Triple-tap works, but double-tap (one word) doesn't.
 • What was Tried & Failed: Standard onSelect event handlers. These fail on mobile because mobile selection triggers different OS-level menus that conflict with our Preact toolbar.
 • Gap Analysis: We are fighting the mobile native "Copy/Paste" popup.

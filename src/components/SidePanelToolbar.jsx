@@ -9,19 +9,37 @@ import {
 import { useEditor } from '../contexts/EditorContext';
 import './SidePanelToolbar.css';
 
+const SELECTION_DEBOUNCE_MS = 200;
+
 export default function SidePanelToolbar() {
     const { selectionState, handleAction, isToolbarInteractionRef } = useEditor();
     const [isManualClose, setIsManualClose] = useState(false);
+    const [isSelectionActive, setIsSelectionActive] = useState(false);
     const panelRef = useRef(null);
 
-    const isOpen = !selectionState.isCollapsed && !isManualClose;
+    const isOpen = isSelectionActive && !isManualClose;
 
-    // Reset manual close when selection collapses
+    // Debounced selection change handler
     useEffect(() => {
-        if (selectionState.isCollapsed) {
-            setIsManualClose(false);
-        }
-    }, [selectionState.isCollapsed]);
+        let debounceTimeout;
+        const handleSelectionChange = () => {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                const selection = window.getSelection();
+                const isActive = selection && !selection.isCollapsed && selection.toString().trim() !== '';
+                setIsSelectionActive(isActive);
+                if (!isActive) {
+                    setIsManualClose(false); // Reset manual close when selection is lost
+                }
+            }, SELECTION_DEBOUNCE_MS);
+        };
+
+        document.addEventListener('selectionchange', handleSelectionChange);
+        return () => {
+            clearTimeout(debounceTimeout);
+            document.removeEventListener('selectionchange', handleSelectionChange);
+        };
+    }, []);
 
     // Click outside to close
     useEffect(() => {
