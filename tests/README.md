@@ -193,6 +193,8 @@ When updating tests:
 
 ## Related Documentation
 
+- **easy-seo/docs/BUG_FIXING_WORKFLOW.md** - **[IMPORTANT]** The official step-by-step process for fixing bugs. All agents must follow this workflow.
+- **easy-seo/docs/TESTING_GUIDE.md** - **[IMPORTANT]** A detailed guide on the project's testing philosophy and how to write effective, isolated E2E tests using API mocking.
 - **AGENTS.md** - Overall development guidelines
 - **easy-seo/CHANGELOG.md** - Recent changes and features
 - **easy-seo/FILES.md** - File structure and components
