@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'preact/compat';
 import { fetchJson } from '../lib/fetchJson';
-import { normalize } from '../../../src/utils/text'; // Import the new normalize function
+import { normalize } from '../utils/text';
 
 export function useSearch(repo) {
   const [searchResults, setSearchResults] = useState([]);

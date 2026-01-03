@@ -18,7 +18,7 @@ BUG-001-251230
 2025-12-30
 P2: High
 easy-seo/src/hooks/useSearch.js
-[FIXED - MANUAL VERIFICATION]
+[FIXED - 2026-01-03]
 BUG-004-260101
 2026-01-01
 P2: High
@@ -76,7 +76,7 @@ The failure stems from treating a "Move" as a single file operation when it is a
 ### BUG-001-251230 (Search Apostrophes): Searching for terms with smart quotes (e.g., "let’s") fails if the source uses standard quotes. A recent refactor to the GitHub Search API may have actually regressed this by removing our control over normalization.
 🔍 [BUG-001] Search Apostrophe Logic
 Issue: Searching for terms like "let's" fails if the content uses smart quotes ("let’s"), or vice versa.
-Status: [RECURRING FAILURE]
+Status: [FIXED - 2026-01-03]
 | Date | Agent | Attempted Solution | Why it Failed |
 |---|---|---|---|
 | 2025-12-30 | Agent 5 | Used path.replace(/[^a-z0-9]/g, '') regex. | Over-Aggressive Sanitization: Stripped underscores (_) from filenames, breaking file retrieval. |

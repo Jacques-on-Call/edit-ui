@@ -1,45 +1,88 @@
-# File & Module Registry
+# File Registry
 
-This document serves as a central registry for the key files and modules in this repository. It is intended to help developers (human or AI) quickly understand the purpose and context of each major component.
-
----
-
-## 📂 Root Directory
-
-| File / Directory | Purpose | Notes |
-| :--- | :--- | :--- |
-| **`AGENTS.md`** | **Primary Instruction Manual:** Contains core directives, architectural principles, and protocols for AI agents. | **MUST READ.** This is the source of truth for agent behavior. |
-| **`ARCHITECTURE.md`** | **System Overview:** Describes the high-level architecture of the project. | Provides context on how the Astro app, `easy-seo` editor, and Cloudflare Worker interact. |
-| **`CHANGELOG.md`** | **Project-Wide Changes:** Records major changes, decisions, and bug fixes that affect the entire system. | Review before starting work. |
-| **`ONBOARDING.md`** | **"First 30 Minutes" Guide:** Provides a step-by-step checklist for new contributors to get set up and oriented. | Start here. |
-| **`FILES.md`** | **This File:** A central registry of key files and their purposes. | |
-| **`RECOVERY.md`** | **Debug Diary:** A living log of common failure modes, known bugs, and their resolutions. | Consult this first when troubleshooting. |
-| **`SCHEMAS.md`** | **Data Contracts:** The single source of truth for API schemas and component prop shapes. | Essential for preventing data-related bugs. |
-| **`cloudflare-worker-code.js`** | **Backend API Server:** The monolithic Cloudflare Worker that handles all API requests. | All backend logic lives here. Currently being refactored to a modular architecture. |
-| **`wrangler.toml`** | **Worker Configuration:** The configuration file for the Cloudflare Worker. | Defines the entry point, environment variables, and deployment settings. |
-| **`easy-seo/`** | **Editor Application:** The main Preact-based application for content and layout editing. | This is where the majority of frontend development occurs. |
+This document lists all significant files in the `easy-seo` project, along with their purpose.
 
 ---
 
-## 🚀 `easy-seo/` Application
+### **Core Application Logic**
 
-| File / Directory | Purpose | Notes |
-| :--- | :--- | :--- |
-| **`easy-seo/CHANGELOG.md`** | **Editor-Specific Changes:** Records changes and learnings specific to the `easy-seo` application. | |
-| **`easy-seo/src/main.jsx`** | **Application Entry Point:** Initializes the Preact application and sets up the router. | |
-| **`easy-seo/src/App.jsx`** | **Root Component & Router:** Defines the application's URL structure and page components. | **Architectural Note:** This file now contains the global `AuthDebugMonitor` and wraps all routes. |
-| **`easy-seo/src/pages/`** | **Page Components:** Contains the top-level components for each major view (e.g., `LoginPage.jsx`, `ExplorerPage.jsx`). | |
-| **`easy-seo/src/contexts/`** | **Global State Management:** Contains Preact Contexts for managing application-wide state. | |
-| **`easy-seo/src/contexts/AuthContext.jsx`** | **Authentication State:** Manages the global authentication state (`isAuthenticated`, `user`, `isLoading`) and provides a `checkAuthStatus` function to re-validate the session. | The `AuthProvider` component in this file must wrap the entire application. |
-| **`easy-seo/src/components/ProtectedRoute.jsx`** | **Route Guard:** A component that wraps authenticated routes. It checks the `AuthContext` and redirects unauthenticated users to the login page. | This is the primary mechanism for securing pages. |
-| **`easy-seo/src/components/AuthDebugMonitor.jsx`** | **Global Debugger:** An on-screen monitor for real-time logging of API calls, auth flows, and state changes. | Exposes the `window.authDebug` object for global use. |
-| **`easy-seo/src/components/`** | **Reusable UI Components:** Contains all shared components used throughout the application (e.g., `FileExplorer.jsx`, `RepoSelector.jsx`). | |
-| **`easy-seo/src/components/FloatingToolbar.jsx`** | **Icon-Only Contextual Formatting Toolbar:** Appears above text selection with compact 40x40px icon-only buttons and liquid glass theme. Includes selection deduplication, 200ms cooldown anti-loop protection, and runtime debug mode via `window.__EASY_SEO_TOOLBAR_DEBUG__`. When debug mode is enabled, shows a pulsing red indicator dot and logs detailed selection/positioning info. | Provides inline formatting (bold, italic, etc.), block formats, alignment, lists, links, colors. Updated 2025-12-08 with larger touch targets and visual debug instrumentation. |
-| **`easy-seo/src/components/FloatingToolbar.css`** | **FloatingToolbar Styles:** Liquid glass theme styling with backdrop-filter blur, gradients, and refined shadows. Icon-only 40x40px button layout. Includes `.floating-toolbar-debug-dot` style for runtime debug indicator. | Located in components/ directory (moved from styles/). Updated 2025-12-08 with larger button size and debug dot styles. |
-| **`easy-seo/src/components/SlideoutToolbar.jsx`** | **Icon-Only Slideout Insert Toolbar:** Replaces VerticalToolbox. Two states: collapsed icon-rail (56px) and expanded slideout (260px). Floating hamburger trigger in top-left. | Provides insert actions for headings, lists, structure (HR, table), media (image), layout (columns, collapsible), utility (date), and history (undo/redo). Auto-closes after selection. |
-| **`easy-seo/src/components/SlideoutToolbar.css`** | **SlideoutToolbar Styles:** Liquid glass theme for hamburger trigger, collapsed rail, expanded slideout, and all toolbar items. | Matches FloatingToolbar visual aesthetic. |
-| **`easy-seo/src/components/VerticalToolbox.jsx`** | **[DEPRECATED]** Old slide-out left sidebar for insert actions. | Replaced by `SlideoutToolbar.jsx` with improved icon-only design and liquid glass theme. Component still exists for reference but not used in EditorCanvas. |
-| **`easy-seo/src/components/EditorHeader.jsx`** | **[REMOVED]** The old fixed header for the editor. | This component has been removed and replaced by the `FloatingToolbar`. |
-| **`easy-seo/src/lib/imageScoring.js`** | **ID Score Engine:** Provides comprehensive SEO scoring for images based on topic word usage, filename structure, alt text quality, and more. | See Scoring for Growth Strategy doc. Exports `calculateImageScore()`, `extractTopicWords()`, `calculatePageImageScore()`. |
-| **`easy-seo/src/lib/pageScoring.js`** | **Page Score (PS) Engine:** Calculates comprehensive Page Score (0-100) based on headers, content quality, images, links, and metadata. | Integrates with imageScoring.js. Exports `calculatePageScore()`, `getPageScoreColor()`. |
-| **`easy-seo/src/lib/imageHelpers.js`** | **Image URL Helpers:** Constructs URLs for images including proxy URLs and GitHub raw URL fallbacks. | Exports `getPreviewImageUrl()`, `getGitHubRawUrl()`. |
+-   **`src/app.jsx`**: The main application component. Handles routing and global layout.
+-   **`src/pages/LoginPage.jsx`**: The user login page.
+-   **`src/pages/RepoSelectPage.jsx`**: The repository selection page.
+-   **`src/pages/FileExplorerPage.jsx`**: The main file explorer page. Handles the file creation logic (now client-side drafts) and passes data down to the `FileExplorer` component.
+-   **`src/pages/ContentEditorPage.jsx`**: The main shell for the content editor. Responsible for loading and saving full draft payloads to `localStorage` and providing the `EditorContext`. Supports two view modes: editor and livePreview.
+
+### **Contexts**
+-   **`src/contexts/AuthContext.jsx`**: Manages global authentication state.
+-   **`src/contexts/EditorContext.jsx`**: Manages the currently active editor instance, selection state, and handleAction function. Provides central routing for all toolbar actions (formatting, insert) to the active Lexical editor API. Critical for dual toolbar system.
+-   **`src/contexts/UIContext.jsx`**: Manages the state of global UI elements, such as modals.
+
+### **Styling**
+
+-   **`src/pages/ContentEditorPage.css`**: Contains the responsive styles for the content editor page, including the mobile-first grid layout and drawer animations.
+-   **`src/components/EditorHeader.css`**: DEPRECATED - Previously contained toolbar styles. Merged into editor.css.
+-   **`src/styles/editor.css`**: Comprehensive editor styling including VerticalToolbox, HamburgerTrigger, collapsible category groups, and animations. Includes proper z-index layering and responsive styles.
+-   **`src/styles/FloatingToolbar.css`**: Dedicated stylesheet for FloatingToolbar component. Includes toolbar container, buttons, dropdowns (block format, alignment), color pickers (text and highlight), toolbar dividers, and fade-in animations. High z-index (10000 for toolbar, 10001 for dropdowns) ensures proper layering above content.
+-   **`src/components/BottomActionBar.css`**: Styles specific to the `BottomActionBar` component.
+
+### **Utilities**
+
+-   **`src/lib/fetchJson.js`**: A robust, centralized utility for making `fetch` requests to the backend API.
+-   **`src/lib/mockApi.js`**: A mock API for the content editor, used for fetching and saving page data to `localStorage`.
+-   **`src/lib/imageHelpers.js`**: Helper functions for transforming repository image paths to GitHub raw URLs for editor preview.
+-   **`src/utils/text.js`**: Shared text utility functions, including a `normalize` function for consistent search behavior.
+
+### **Components**
+
+-   **`src/components/FileExplorer.jsx`**: The core file explorer component. Fetches repository files and merges them with client-side drafts from `localStorage` to create a unified file list.
+-   **`src/components/FileTile.jsx`**: Renders a single file or folder tile. Now displays "Draft" and "Live" badges based on the file's status.
+-   **`src/components/ReadmeDisplay.jsx`**: Renders the README.md file.
+-   **`src/components/Icon.jsx`**: A wrapper for the lucide-preact icon library.
+-   **`src/components/ContextMenu.jsx`**: Renders a right-click/long-press context menu.
+-   **`src/components/CreateModal.jsx`**: Renders a modal for creating new files and folders.
+-   **`src/components/AddSectionModal.jsx`**: Renders a modal for selecting and configuring new content sections before adding them to a page. Supports image upload for both Hero and Text sections. In edit mode, shows ImageEditor for existing images.
+-   **`src/components/ImageUploader.jsx`**: Component for uploading new images to the repository. Shows upload status (idle, uploading, success, error). Includes SEO score, alt text, filename, title, description, and resize options.
+-   **`src/components/ImageEditor.jsx`**: Component for editing existing images in sections. Shows image preview, allows editing filename (SEO-friendly), alt text, title, description, and loading strategy. Includes SEO score and option to replace the image.
+-   **`src/components/SearchBar.jsx`**: A debounced search input component.
+-   **`src/components/EditorHeader.jsx`**: DEPRECATED - Previously contained the fixed header toolbar. Replaced by FloatingToolbar and VerticalToolbox in December 2025.
+-   **`src/components/FloatingToolbar.jsx`**: Comprehensive context-aware formatting toolbar that appears above text selection. Features include: text formatting (bold, italic, underline, strikethrough, code), block format dropdown (Normal, H1-H6), alignment dropdown (left/center/right/justify), lists (bullet/numbered), link insertion, text/highlight color pickers with predefined palettes, and clear formatting. **Mobile optimizations:** Only shows when selection text is non-empty (`selection.toString().trim().length > 0`) to prevent keyboard loops. Selection deduplication using unique key tracking. Rate limiting with requestAnimationFrame cancellation. Includes debugMode for detailed console logging with explicit hide reasons. Uses window.visualViewport for accurate mobile positioning during pinch-zoom. Validates selection is within editorRootSelector before showing. Optional caretMode prop (default: false) to show on collapsed selection. Renders via portal to document.body with proper z-index layering. Auto-positions and follows scroll/resize. Imports FloatingToolbar.css.
+-   **`src/components/VerticalToolbox.jsx`**: Comprehensive slide-out left sidebar for cursor-position insert actions. **Collapsible category groups (accordion pattern):** Click group header to expand/collapse, reduces height on mobile. History group (Undo/Redo) at top, expanded by default. Organized by categories: History (undo/redo - only in vertical toolbar, NOT in floating toolbar), Headings (H2-H6, duplicates from FloatingToolbar), Lists (bullet/numbered), Structure (horizontal rule, page break, table), Media (image), Layout (columns, collapsible), Utility (date). Accessed via HamburgerTrigger. Features smooth expand/collapse animations with chevron rotation. Backdrop overlay, keyboard navigation (Escape to close), click-outside-to-close, and auto-close after action selection. Proper ARIA attributes for accessibility.
+-   **`src/components/HamburgerTrigger.jsx`**: Floating hamburger button in top-left corner that opens/closes the VerticalToolbox. Fixed positioning with hover and active states.
+-   **`src/components/BlockTree.jsx`**: The component for displaying the block structure of a page.
+-   **`src/components/BottomActionBar.jsx`**: The bottom action bar for the content editor. Supports editor and preview view modes with appropriate icons.
+-   **`src/components/SectionsEditor.jsx`**: The main component for rendering and managing the different sections of a page.
+-   **`src/components/LexicalEditor.jsx`**: The core rich-text editor component, built on Lexical.
+-   **`src/components/ColorPicker.jsx`**: A cross-platform color picker component for text and highlight colors. Features:
+    - Preset color swatches with touch-optimized selection
+    - Hex input for custom colors
+    - Native HTML5 color input fallback (works on iOS Safari and all browsers)
+    - EyeDropper API support (Chrome/Edge only)
+    - Portal-based rendering for reliable mobile/keyboard handling
+-   **`src/components/Dropdown.jsx`**: A reusable dropdown component for toolbar menus. Uses a portal pattern for reliable mobile rendering.
+
+#### **Editor Components (`src/components/editor-components`)**
+-   **`registry.js`**: Maps section type strings (e.g., 'hero', 'bodySection') to their corresponding editor components.
+-   **`BodySectionEditor.jsx`**: The editor component for a standard block of text with a title and a body. Includes error handling for images.
+-   **`HeroEditor.jsx`**: The editor component for the hero section. Supports feature images and background images with error handling.
+-   **`FooterEditor.jsx`**: The editor component for the footer section.
+-   **`LexicalField.jsx`**: A self-contained, reusable rich-text field powered by Lexical.
+
+### **Hooks**
+
+-   **`src/hooks/useFileManifest.js`**: Custom hook for fetching the file manifest of a repository.
+-   **`src/hooks/useSearch.js`**: Custom hook for performing debounced searches. Normalizes search queries (e.g., converts smart quotes to standard quotes) before sending them to the backend API.
+-   **`src/hooks/useAutosave.js`**: A debounced autosave hook for the content editor that also exposes an `isSaving` state.
+
+### **Test & Verification Files**
+
+-   **`/src/pages/_test/home.astro`**: A test file in the root repository to verify navigation to the editor.
+-   **`public/preview/mock-preview.html`**: A static HTML file that acts as the target for the editor's preview iframe.
+
+### **Playwright E2E Tests**
+
+-   **`playwright.config.cjs`**: Playwright test configuration with browser setup, timeouts, retries, and dev server integration.
+-   **`tests/navigation.spec.js`**: End-to-end tests for page navigation, routing, browser history, and UI elements.
+-   **`tests/preview.spec.js`**: Tests for editor/preview mode switching, iframe rendering, and content display.
+-   **`tests/editor.spec.js`**: Tests for rich-text editor features including FloatingToolbar, VerticalToolbox, text formatting, color picker, and undo/redo.
+-   **`tests/test-utils.js`**: Helper functions and utilities for writing E2E tests.
+-   **`tests/README.md`**: Comprehensive guide for running, debugging, and writing Playwright tests.

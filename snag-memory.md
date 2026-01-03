@@ -23,7 +23,7 @@
 ### [2025-12-30] Snag: Preview Header
 * **Agent:** 1
 * **Failed Attempt:** Added `className="hidden"` to the Header component.
-* **Why it Failed:** It hid the header in *Edit* mode too, or didn't apply because `EditorCanvas` overrides layout.
+* **Why it Failed:** It hid the header in *Edit* mode too, or not applied because `EditorCanvas` overrides layout.
 * **Anti-Pattern:** CSS hacking instead of Conditional Rendering in JSX.
 
 ### [2025-12-30] Snag: Preview URL Generation
@@ -55,3 +55,9 @@
 * **What was found:** Playwright tests DO exist in `easy-seo/tests/` directory (172 tests across 3 files: navigation.spec.js, preview.spec.js, editor.spec.js). The previous entry was incorrect.
 * **Why verification was skipped:** Per AGENTS.md directive: "Omit Scratch Verification: Do not run automated UI verification scripts (e.g., Playwright). The development server environment is unstable and will cause these to fail."
 * **Anti-Pattern Corrected:** Assuming infrastructure is missing without thorough verification. Always check file system before documenting absence.
+
+### [2026-01-03] Snag: 1 - Search Apostrophe Logic (SUCCESS)
+* **Agent:** Snag 🛠️
+* **Successful Solution:** Implemented a robust `normalize` function in a new `easy-seo/src/utils/text.js` file. This function handles a wide range of special characters, converting them to spaces to ensure consistent search behavior. The function was then applied to both the frontend search query and the backend file content.
+* **Why it Succeeded:** The previous attempts were too narrow, only targeting apostrophes. By expanding the normalization to include a wider range of punctuation, the search became much more resilient to variations in user input and content.
+* **Verification:** While the Playwright environment was unstable, the frontend normalization was verified using a temporary debug element. The backend logic was also updated to use the new `normalize` function.
