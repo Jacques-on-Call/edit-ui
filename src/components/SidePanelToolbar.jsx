@@ -9,51 +9,34 @@ import {
 import { useEditor } from '../contexts/EditorContext';
 import './SidePanelToolbar.css';
 
-const SELECTION_DEBOUNCE_MS = 200;
-
 export default function SidePanelToolbar() {
     const { selectionState, handleAction, isToolbarInteractionRef } = useEditor();
-    const [isManualClose, setIsManualClose] = useState(false);
-    const [isSelectionActive, setIsSelectionActive] = useState(false);
+    const [showToolbar, setShowToolbar] = useState(false);
     const panelRef = useRef(null);
 
-    const isOpen = isSelectionActive && !isManualClose;
-
-    // Debounced selection change handler
     useEffect(() => {
-        let debounceTimeout;
-        const handleSelectionChange = () => {
-            clearTimeout(debounceTimeout);
-            debounceTimeout = setTimeout(() => {
-                const selection = window.getSelection();
-                const isActive = selection && !selection.isCollapsed && selection.toString().trim() !== '';
-                setIsSelectionActive(isActive);
-                if (!isActive) {
-                    setIsManualClose(false); // Reset manual close when selection is lost
-                }
-            }, SELECTION_DEBOUNCE_MS);
+        const handleSelection = () => {
+            const text = window.getSelection().toString();
+            setShowToolbar(text.length > 0);
         };
-
-        document.addEventListener('selectionchange', handleSelectionChange);
-        return () => {
-            clearTimeout(debounceTimeout);
-            document.removeEventListener('selectionchange', handleSelectionChange);
-        };
+        document.addEventListener('selectionchange', handleSelection);
+        return () => document.removeEventListener('selectionchange', handleSelection);
     }, []);
 
     // Click outside to close
     useEffect(() => {
         const handleClickOutside = (e) => {
-            if (isOpen && panelRef.current && !panelRef.current.contains(e.target)) {
-                setIsManualClose(true);
+            if (showToolbar && panelRef.current && !panelRef.current.contains(e.target)) {
+                setShowToolbar(false);
             }
         };
 
-        if (isOpen) {
+        if (showToolbar) {
             document.addEventListener('mousedown', handleClickOutside);
         }
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [isOpen]);
+    }, [showToolbar]);
+
 
     const onAction = (action, payload) => {
         if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
@@ -84,7 +67,7 @@ export default function SidePanelToolbar() {
     return createPortal(
         <div
             ref={panelRef}
-            className={`side-panel-toolbar ${isOpen ? 'is-open' : ''}`}
+            className={`side-panel-toolbar ${showToolbar ? 'is-open' : ''} z-50`}
             onPointerDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -98,7 +81,7 @@ export default function SidePanelToolbar() {
                     onPointerDown={(e) => {
                         e.preventDefault();
                         if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
-                        setIsManualClose(true);
+                        setShowToolbar(false);
                     }}
                     aria-label="Close styling panel"
                 >

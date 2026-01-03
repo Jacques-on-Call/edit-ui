@@ -2526,4 +2526,6 @@ Note for Developers: This is a monrovia. When working within a specific applicat
 
 ## [Unreleased] - 2026-01-02
 ### Fixed
+- **UI (BUG-004):** Resolved the mobile toolbar visibility bug by simplifying event listeners to use `document.selectionchange` and ensuring the correct z-index (`z-50`) is applied, preventing it from rendering behind other elements.
+- **Search Normalization (BUG-001):** Fixed a recurring bug where searching for terms with smart quotes (e.g., “let’s”) would fail to match content using standard quotes (e.g., "let's"). A shared `normalize` utility was created and applied to both the frontend search input and the backend search logic to ensure consistent, reliable search results.
 - **Search Bar:** Added a clear button to the search bar to improve user experience. The button appears when text is entered and clears the search input when clicked.

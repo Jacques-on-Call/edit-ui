@@ -30,6 +30,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/lib/fetchJson.js`**: A robust, centralized utility for making `fetch` requests to the backend API.
 -   **`src/lib/mockApi.js`**: A mock API for the content editor, used for fetching and saving page data to `localStorage`.
 -   **`src/lib/imageHelpers.js`**: Helper functions for transforming repository image paths to GitHub raw URLs for editor preview.
+-   **`src/utils/text.js`**: Shared text utility functions, including a `normalize` function for consistent search behavior.
 
 ### **Components**
 
@@ -69,7 +70,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 ### **Hooks**
 
 -   **`src/hooks/useFileManifest.js`**: Custom hook for fetching the file manifest of a repository.
--   **`src/hooks/useSearch.js`**: Custom hook for performing client-side search.
+-   **`src/hooks/useSearch.js`**: Custom hook for performing debounced searches. Normalizes search queries (e.g., converts smart quotes to standard quotes) before sending them to the backend API.
 -   **`src/hooks/useAutosave.js`**: A debounced autosave hook for the content editor that also exposes an `isSaving` state.
 
 ### **Test & Verification Files**

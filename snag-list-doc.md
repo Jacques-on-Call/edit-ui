@@ -1,179 +1,127 @@
-# Snag List 
-This is a critical update. We are seeing Partial Fixes mixed with Critical 
-## Regressions (Data Loss on Rename). The "Move" logic is acting like a "Copy & Crash," and the Mobile experience is fighting the browser's native behaviors.
-Here is the 
+# Snag List (Bugs & Regressions)
+Bug ID
+Date Reported
+Priority
+Target Module
+Status
+BUG-003-251230
+2025-12-30
+P1: Critical
+cloudflare-worker-src/routes/content.js
+[FIXED - RE-AUDIT REQ]
+BUG-002-251230
+2025-12-30
+P1: Critical
+cloudflare-worker-src/routes/content.js
+[RECURRING FAIL]
+BUG-001-251230
+2025-12-30
+P2: High
+easy-seo/src/hooks/useSearch.js
+[FIXED - MANUAL VERIFICATION]
+BUG-004-260101
+2026-01-01
+P2: High
+easy-seo/src/components/SidePanelToolbar.jsx
+[FIXED - 2026-01-02]
+BUG-005-260102
+2026-01-02
+P3: Medium
+easy-seo/src/components/FileExplorer.jsx
+[NEW REGRESSION]
+BUG-006-260102
+2026-01-02
+P4: Low
+easy-seo/src/contexts/LogContext.jsx
+[POTENTIAL LEAK]
 
-# Gap Analysis and Recovery Plan for the Council, updated for January 2, 2026.
-
-
-## [BUG-002] Move File "Zombie Copy" (500 Error)
-• Status: [FIXED - 2026-01-02]
-### user reports: Tried to move a file: 
-An Error Occurred
-Failed to move _Test-4-loss.astro: HTTP error! status: 500.
-Even though error pops on screen it appears in GitHub as copy:
-content/pages
-    Consider/
-       _Test-4-loss.json
- _Test-4-loss.json
- home-from-json.json
- index.json
-But as you can see the logic failed to delete from source when it lands in destination.
-Tried to rename a file and the issue that I had before is aging back. Rename results in a blank new file so data is lost.
-
-• The Issue: File appears in destination but remains in source. Error 500 triggered.
-• What was Tried & Failed: A standard mv or rename command. This failed because the logic likely didn't account for the .json sidecar file or file system permissions on the Cloudflare/Server environment.
-• Gap Analysis: The operation is not "Atomic." If the second half of the move (the delete) fails, the first half (the copy) stays, creating duplicates.
-• Recovery Plan:
-• Target: server/api/move.js
-• Instruction: Implement a try-catch-rollback. If the delete from source fails, the agent must delete the copy from the destination to prevent "Zombie files." Move the .astro and .json as a single unit.
-
-
-The "Zombie Copy" (Move Error 500):
-
-
-   * The Crime: The moveFile API endpoint is failing to execute the "Atomic Move." It performs fs.copyFile successfully (hence the file appears in the new folder) but crashes on fs.unlink (delete source) or fs.rename.
-   * The Evidence: "HTTP error! status: 500" + Duplicate files exist.
-   * Suspect: The backend likely tries to move the .astro file and the .json sidecar separately. If the first succeeds and the second fails, the whole operation 500s, leaving the file system in a "half-moved" state.
- * The "Amnesiac Rename" (Data Loss):
-   * The Crime: Renaming a file deletes the content.
-   * The Cause: The API is treating rename as create new file with name Y. It is not reading the content of file X before creating file Y.
-   * Severity: CRITICAL. This destroys user work.
-The "Recovery" Snag List (Action Plan)
-Priority A: Stop Data Loss (Rename & Move)
-Step 1: Fix the "Amnesiac" Rename
- * Target: server/api/files.js (or wherever the Node fs logic lives).
- * The Fix: The rename function MUST use fs.renameSync (which keeps content) OR it must explicitly:
-   * Read Content of Old Path.
-   * Write Content to New Path.
-   * Only then Delete Old Path.
- * Acceptance Test: Create test.astro with text "Hello World". Rename to renamed.astro. Open renamed.astro. Text "Hello World" must be present.
-
-Fix the "Zombie" Move (Error 500)
- * Target: server/api/move.js.
- * The Fix: Wrap the move operation in a try/catch block that handles the .json sidecar file gracefully.
-   // Logic must check:
-// 1. Does destination exist? If yes, ABORT (don't overwrite).
-// 2. Move .astro file.
-// 3. Check for .json file. If exists, move it too.
-// 4. If .json move fails, LOG it but do not fail the whole request.
-
- * Acceptance Test: Move _Test-4-loss.astro to a folder. The file disappears from source and appears in destination. No 500 Error.
-Priority B: UI/UX Cleanup
-
-The "Data Sanctity" Rule: You are forbidden from using fs.writeFile with an empty string during a Rename operation. You must verify content exists in the new file before unlinking the old one.
-
-## [BUG-003] Rename File "Data Wipe"
-• Status: [FIXED - 2026-01-02]
-• The Issue: Renaming results in a blank file. Original data is lost.
-• What was Tried & Failed: Using a createNewFile function with the new name and then deleting the old one. This failed because the agent didn't "Handshake" the data—it deleted the old file before the new one actually wrote the content to disk.
-• Gap Analysis: The agent is treating a "Rename" as a "Create New" instead of a "Move."
-• Recovery Plan: * Target: FileExplorer.jsx / api/rename
-• Instruction: Use fs.renameSync which is a native OS-level rename that preserves the file's inode/content. Never "create and delete" for a rename.
+## Detailed Bug Insights:
+### BUG-003-251230 (Rename Data Wipe): Renaming a file previously resulted in 0-byte destination files. While marked as fixed via a "read-write-delete" sequence, the Auditor warns that any file operation logic remains highly sensitive and needs regression testing.
+[BUG-003] Rename File "Data Wipe"
+Issue: Renaming a file results in a blank file (0 bytes) at the destination.
+Status: [DATA LOSS RISK]
+| Date | Agent | Attempted Solution | Why it Failed |
+|---|---|---|---|
+| 2025-12-30 | Agent 6 | Used fs.writeFile with new name. | Race Condition: Created the new file before reading the old content, effectively writing an empty string. |
+| 2026-01-02 | Snag Squad | Refactored handleRenameFileRequest to use base64ToString. | Partial Fix: Solved encoding issues but ignored the "Safe Write" protocol. Unverified. |
+🏗️ Architect's Solution
+ * Location: cloudflare-worker-src/routes/content.js
+ * Logic: Read-Before-Write.
+   const content = await github.getFile(oldPath); // MUST succeed first
+if (!content) throw new Error("Source file empty");
+await github.createFile(newPath, content);
+await github.deleteFile(oldPath);
 
 
-
-——-
-
-## [BUG-004] Mobile Toolbar & Selection Focus
-• Status: [FIXED - 2026-01-02]
-• The Issue: Toolbar only appears after losing focus. Triple-tap works, but double-tap (one word) doesn't.
-• What was Tried & Failed: Standard onSelect event handlers. These fail on mobile because mobile selection triggers different OS-level menus that conflict with our Preact toolbar.
-• Gap Analysis: We are fighting the mobile native "Copy/Paste" popup.
-• Recovery Plan: * Target: SidePanelToolbar.jsx
-• Instruction: Shift from onSelect to selectionchange listener on the document level. Add a 200ms debounce to wait for the mobile selection handles to stabilize before showing the toolbar.
-
-
-The "Phantom Bullet" (Slide-out Toolbar):
-### user reports: Add slide-out toolbar did a strange thing when I tried to bullet a line 
-it added a huge amount of space not sure if lines or what because I can’t select or place curser. Tap and backspace eventually after many attempts removed it almost like it’s a bock as the space shrunk and the line of content jumps back into position.
-
-SidePanelToolbar still not opening on mobile. I select text and no style editing options appear. But oddly the moment content looses select focus sidePanelToolbar appears so still can’t apply styles to text. Okay finally seeing the trigger- tripple tap selects whole line and style is applied to whole line so kinda working but one word is double tap select so that needs fixing.
-
-   * The Crime: Adding a bullet point creates unselectable whitespace.
-   * The Cause: CSS Layout Collision. The <ul> or <li> tag likely has a flex or grid property conflicting with the editor's text container, or a rogue min-height that forces the content block down.
-
-Target: src/components/SidePanelToolbar.jsx.
- * The Fix: The toolbar is firing on blur (loss of focus) instead of selectionchange.
-   * Remove onBlur triggers for the toolbar.
-   * Bind the toolbar visibility strictly to window.getSelection().toString().length > 0.
-   * Note: Mobile requires listening to selectionchange on the document, not just the element.
-
-The "CSS Containment" Rule: When fixing the "Phantom Bullet" (Slide-out toolbar), check the CSS display property. If the bullet logic adds a <ul>, ensure it has margin: 0; padding-left: 1.5rem; overflow: hidden;. It is likely inheriting a global style that blows up the height.
+### BUG-002-251230 (Move File 500 Error): A recurring 500 error occurs during file moves when the companion .json file is missing. The "Atomic Transaction" solution (Copy-Verify-Delete) is required to prevent "Zombie" files.
+🧟 [BUG-002] Move File "Zombie Copy" (Error 500)
+Issue: Moving a file creates a copy in the new location but fails to delete the original, throwing a 500 error.
+Status: [CRITICAL REGRESSION]
+| Date | Agent | Attempted Solution | Why it Failed |
+|---|---|---|---|
+| 2025-12-30 | Agent 4 | Basic fs.rename logic. | Atomicity Failure: Failed to account for the sidecar .json file. Moved .astro but crashed on .json, leaving a "Zombie". |
+| 2026-01-02 | Agent 4 | Added try...catch with rollback logic. | Silent Failure: If the rollback fails, the user is never notified. Logic was unverified due to build errors. |
+🏗️ Architect's Solution
+The failure stems from treating a "Move" as a single file operation when it is actually a Multi-File Transaction (.astro + .json).
+ * Location: cloudflare-worker-src/routes/content.js -> handleMoveFileRequest
+ * Logic: Atomic Transaction Block.
+   * Check: Does destination exist? If yes, throw explicit "File Exists" error.
+   * Read & Hold: Read content of both Source .astro and Source .json into memory.
+   * Write: Write both files to Destination.
+   * Verify: Check fs.stat on Destination files.
+   * Delete: Only after verification, delete Source files.
+ * Mandate: Do not use fs.rename. Use Copy-Verify-Delete.
 
 
-———
-## [BUG-001] Search Apostrophe Logic
-• Status: [FIXED]
-The "Smart Quote" Blind Spot (Search):
-### user reports: Search logic works for let but still not let’s
-Nice to add if the search bar could have a little x on the right hand inside to clear search request and return to file explorer 
-• The Issue: Search works for "let" but fails for "let’s" (smart quotes). Search bar lacks a clear button.
-• What was Tried & Failed: Simple string .includes() matching. It failed because the browser and keyboards often swap ' (straight) for ’ (curly/smart), which are different character codes.
-• Gap Analysis: The logic is currently "Char-Code Blind." It requires a normalization layer to flatten all punctuation before comparison.
-• Recovery Plan: * Target: useSearch.js
-• Instruction: Inject a regex filter replace(/[\u2018\u2019]/g, "'") on both the query and the file content.
-• Feature Add: Add an <XIcon /> to the Search Input that clears the searchTerm state.
+### BUG-001-251230 (Search Apostrophes): Searching for terms with smart quotes (e.g., "let’s") fails if the source uses standard quotes. A recent refactor to the GitHub Search API may have actually regressed this by removing our control over normalization.
+🔍 [BUG-001] Search Apostrophe Logic
+Issue: Searching for terms like "let's" fails if the content uses smart quotes ("let’s"), or vice versa.
+Status: [RECURRING FAILURE]
+| Date | Agent | Attempted Solution | Why it Failed |
+|---|---|---|---|
+| 2025-12-30 | Agent 5 | Used path.replace(/[^a-z0-9]/g, '') regex. | Over-Aggressive Sanitization: Stripped underscores (_) from filenames, breaking file retrieval. |
+| 2026-01-01 | Snag Squad | Implemented normalization str.replace(/['’]/g, "") in cloudflare-worker-src. | Verification Blocked: Code looks correct, but Playwright tests failed due to "Unstable Environment". |
+| 2026-01-02 | Snag Lead | Refactored to use GitHub Search API. | Regression: The API usage deviated from the plan, removing our control over string normalization. High latency risk. |
+🏗️ Architect's Solution
+Do not rely on the GitHub Search API for content matching; it is too slow for "live" typing.
+ * Location: easy-seo/src/hooks/useSearch.js (Frontend) & cloudflare-worker-src/routes/content.js (Backend).
+ * Logic: Implement a Shared Normalizer.
+   // utils/text.js
+export const normalize = (text) => text.toLowerCase()
+  .replace(/[\u2018\u2019]/g, "'") // Smart single quotes to straight
+  .replace(/[\u201C\u201D]/g, '"'); // Smart double quotes to straight
+
+ * Action: Apply this normalization to both the search query and the file content target before comparison. But think about what else the user may have in a search term ie -/:;()$&@“.,?!’[]{}#%^*+=_\|~<>€£¥•.,?!’
 
 
-   * The Crime: Search finds let but misses let’s.
-   * The Cause: String mismatch. The file contains a typographer's apostrophe (’ - U+2019), but the search bar sends a typewriter apostrophe (' - U+0027).
-
-Smart Search & The "X" Button
- * Target: src/components/SearchBar.jsx & src/hooks/useSearch.js.
- * The Fix (Logic): Normalize both the search query and the file content before comparing.
-   const normalize = (str) => str.toLowerCase().replace(/[\u2018\u2019]/g, "'"); // Converts ’ to '
-// usage: if (normalize(fileContent).includes(normalize(query))) ...
-
- * The Fix (UI): Add a conditional "Clear" button inside the input wrapper.
-   {searchTerm && (
-  <button onClick={() => { setSearchTerm(''); setResults([]); }}>✕</button>
-)}
-
-———
-
-## [BUG-005] Preview Routing (Index Page Loop)
-• Status: [STALLED]
-• The Issue: Preview shows the index.json instead of the actual file (e.g., _Test-4-loss).
-• What was Tried & Failed: Passing the filename as a URL param. It failed because the Astro build doesn't recognize the new underscore file as a valid route dynamically.
-• Gap Analysis: The Preview environment is looking at the deployed routes, not the local editor state.
-• Recovery Plan: * Target: PreviewMode.jsx
-• Instruction: Bypass the URL-based route for previews. Inject the current JSON content directly into the Iframe via postMessage. This is 100x faster than a rebuild.
-
-User reports:
-The header space in content editor if I scroll up I see it . This is app shell and is meant to collapse if not in use ie with tools but since we can’t keep it visible on mobile it’s not useful to tools.
-And
-Preview Mode the unnecessary header is not collapsed so taking up preview screen space. 
-And 
-And still not showing the content/pages file in preview.
-edit.strategycontent.agency/editor/src%2Fpages%2F_Test-4-loss-2.astro looks like index page still  Incorrect Preview 
-If I look in root/src/ I don’t see the preview folder which I believe is meant to be for each page that user previews which in my mind means quicker opening of preview when user looks again it’s the page the viewed before and the build preview trigger can update it when deployed page refreshes to show updates.
-That said we need to speed this up somehow ?
+### BUG-004-260101 (Mobile Toolbar Visibility): Presumed outstanding as no session logs or code changes were found for the agents assigned to this UI state.
+📱 [BUG-004] Mobile Toolbar Visibility
+Issue: Toolbar doesn't appear on mobile, or appears only when tripple clicking
+Status: [UI REGRESSION]
+| Date | Agent | Attempted Solution | Why it Failed |
+|---|---|---|---|
+| 2025-12-30 | Agent 3 | Changed onClick to onTouchStart. | CSS Stacking Context: The toolbar rendered behind the mobile header due to missing z-index. |
+| 2026-01-02 | Agent 3 | Added selectionchange listener with debounce. | Event Target Mismatch: Attached listener to the container div instead of the document. "Triple tap" works, but "Double tap" (word select) fails. |
+🏗️ Architect's Solution
+ * Location: easy-seo/src/components/SidePanelToolbar.jsx
+ * Logic:
+   * Z-Index War: Set z-index: 50 explicitly in Tailwind (z-50).
+   * Event Strategy: Do not use onClick or onTouch. Use a global effect:
+     useEffect(() => {
+  const handleSelection = () => {
+     const text = window.getSelection().toString();
+     setShowToolbar(text.length > 0);
+  };
+  document.addEventListener('selectionchange', handleSelection);
+  return () => document.removeEventListener('selectionchange', handleSelection);
+}, []);
 
 
-: Mobile Toolbar & "Ghost Header"
- * 
+### BUG-005-260102 (Fragmented Navigation): A recent fix for Snag #4 introduced new navigation controls in FileExplorer.jsx rather than fixing the shared BottomActionBar.jsx, creating a disjointed user experience.
 
-Priority C: The Preview Engine
-Step 5: Fix Preview URL & Caching
- * Target: src/pages/PreviewPage.jsx.
- * The Fix: The user sees the Index page because the Router cannot match the new filename (_Test-4-loss-2) to a route.
- * Proposed Logic (The "User's Cache Idea"):
-   * When "Preview" is clicked:
-     * Copy the current content to a fixed file: src/pages/preview/_temp_preview.astro.
-     * Redirect the iframe to /preview/_temp_preview.
-   * Why? This keeps the URL constant. The browser caches the path, but we force a reload. We don't need to wait for a full build of a new dynamic route.
-
-## Debug Feature Modal 
-User reports: 
-Debug Modal and Log works now BUG] - 1/1/2026, 6:23:21 AM
-Description: Build Error The live preview build took too long. Please try refreshing the preview manually
-Page: _Test-4-loss
-Component: Editor
-Context: {"pageId":"_Test-4-loss","viewMode":"livePreview","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
-Status: [NEW]
-Just needs to be in file explorer bottom action bar too, ei on every page and out of the way like in a corner.
-
-
- * The "Global Log" Rule: The User requested the Debug Log be accessible from the File Explorer Bottom Bar. Do not just leave it in the Editor. Add the warning icon/trigger to the BottomActionBar.jsx component so it is visible on every screen.
-
+## 🚀 Feature Requests & Architectural Improvements
+These items focus on system health and future capabilities rather than immediate break-fixes.
+### Visibility Strategy (Fail Visibly): Modify all backend handlers to forward actual JSON error messages instead of returning silent empty arrays.
+### Consolidated Helper Registry: Perform a code quality check on cloudflare-worker-src/routes/content.js to merge redundant helper functions, specifically for Base64 encoding.
+### Worker Logic Mapping: Create a comprehensive logic map for cloudflare-worker-src/router.js to document the introduction of the new authentication flow.
+### Performance Optimization (Lexical): Investigate if typing delays are caused by the autosave debounce or excessive re-renders in the LexicalField component.
