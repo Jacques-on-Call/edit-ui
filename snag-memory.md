@@ -1,4 +1,4 @@
-# 🧠 SNAG MEMORY (The Graveyard of Failed Fixes)
+# 🧠 SNAG MEMORY (The History of  Fixes)
 
 > **⚠️ WARNING TO JULES:** > Before attempting a fix, SEARCH this file for your Snag ID.
 > If your proposed solution is listed below as a "FAILED ATTEMPT," you are FORBIDDEN from trying it.
