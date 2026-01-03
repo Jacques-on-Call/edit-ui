@@ -32,6 +32,14 @@ const SearchBar = ({ onSearch }) => {
     debouncedSearch(newQuery);
   };
 
+  const handleClear = () => {
+    if (debouncedSearch && debouncedSearch.cancel) {
+      debouncedSearch.cancel();
+    }
+    setQuery('');
+    onSearch('');
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       if (debouncedSearch && debouncedSearch.cancel) debouncedSearch.cancel();
@@ -55,8 +63,19 @@ const SearchBar = ({ onSearch }) => {
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         placeholder="Find content or files..."
-        className="w-full bg-transparent text-white/80 placeholder-white/40 border-none rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-accent-lime/50"
+        className="w-full bg-transparent text-white/80 placeholder-white/40 border-none rounded-xl py-3 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-accent-lime/50"
       />
+      {query && (
+        <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+          <button
+            onClick={handleClear}
+            className="text-white/40 hover:text-white focus:outline-none"
+            aria-label="Clear search"
+          >
+            <Icon name="X" className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

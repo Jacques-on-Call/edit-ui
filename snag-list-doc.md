@@ -104,7 +104,7 @@ The "CSS Containment" Rule: When fixing the "Phantom Bullet" (Slide-out toolbar)
 
 ———
 ## [BUG-001] Search Apostrophe Logic
-• Status: [PARTIAL]
+• Status: [FIXED]
 The "Smart Quote" Blind Spot (Search):
 ### user reports: Search logic works for let but still not let’s
 Nice to add if the search bar could have a little x on the right hand inside to clear search request and return to file explorer 

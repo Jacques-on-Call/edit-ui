@@ -2523,3 +2523,7 @@ This document records significant changes, architectural decisions, and critical
 Note for Developers: This is a monrovia. When working within a specific application directory (e.g., easy-seo/,priority-engine/), please consult the documentation within that directory (e.g., easy-seo/docs/) for the most detailed and relevant information.
 
 **Jules #160, Security Virtuoso:** Started v0.1 on 2025-11-10. Changes: 1) I will fix the cookie domain in the OAuth callback to ensure it's shared across subdomains. 2) I will refactor the `validateAuth` function to return a result object instead of throwing a `Response` object. 3) I will update the `withAuth` middleware to handle the new return signature of `validateAuth`. 4) I will add a temporary debug endpoint to help verify that the browser is sending the `gh_session` cookie with requests.
+
+## [Unreleased] - 2026-01-02
+### Fixed
+- **Search Bar:** Added a clear button to the search bar to improve user experience. The button appears when text is entered and clears the search input when clicked.

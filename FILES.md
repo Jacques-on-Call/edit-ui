@@ -85,3 +85,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`tests/editor.spec.js`**: Tests for rich-text editor features including FloatingToolbar, VerticalToolbox, text formatting, color picker, and undo/redo.
 -   **`tests/test-utils.js`**: Helper functions and utilities for writing E2E tests.
 -   **`tests/README.md`**: Comprehensive guide for running, debugging, and writing Playwright tests.
+
+### `easy-seo/src/components/SearchBar.jsx`
+- **Change:** Added a clear button to the search input.
+- **Reason:** To improve the user experience of the search functionality, as requested in `[BUG-001]`.
