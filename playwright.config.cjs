@@ -112,7 +112,8 @@ module.exports = defineConfig({
 
   // Run your local dev server before starting the tests
   webServer: {
-    command: 'npm run dev',
+    // By using a specific test config, we can run a proxy-less server for stable API mocking.
+    command: 'vite --config vite.config.test.js',
     port: 5173,
     reuseExistingServer: !process.env.CI,
     timeout: 120000, // 2 minutes to start (dev server can be slow)
