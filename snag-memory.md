@@ -67,3 +67,23 @@
 * **Successful Solution:** The fragmented navigation was resolved by centralizing the navigation logic. The `handleGoBack` and `handleGoHome` functions were moved from `FileExplorer.jsx` to the parent container, `FileExplorerPage.jsx`. The shared `BottomActionBar.jsx` was then enhanced with new props (`showFileNav`, `onGoBack`, `onGoHome`) to conditionally render the navigation controls, which are now driven by the centralized logic in `FileExplorerPage`.
 * **Why it Succeeded:** This was a classic architectural issue. The fix succeeded because it addressed the root cause of the UI inconsistency—decentralized state management. By lifting the state and logic up to the container component, the navigation controls became a shared, consistent feature of the UI.
 * **Verification:** The Playwright test environment was completely non-functional, failing with a `Cannot find module '@playwright/test'` error. This is a known, persistent environmental issue. The fix was reviewed for logical correctness, but automated verification was not possible.
+
+---
+
+## Phase 1: Preview Infrastructure
+
+### [2026-01-04] Snag: Hybrid Preview System Foundation
+* **Agent:** Snag 🛠️
+* **Successful Implementation:** Created a new utility `easy-seo/src/utils/lexicalToHtml.js` to convert Lexical JSON editor state into clean HTML.
+* **Why it Succeeded:** This utility establishes the core transformation logic required for the on-demand preview system. It was built with a dedicated, minimalist test script (`lexicalToHtml.test.js`) to ensure stability and correctness before integration.
+* **Integrated Bug Fix:** As part of this implementation, a high-priority bug, **BUG-001-251230**, was resolved. The utility includes logic to normalize smart quotes (‘’“”) into standard straight quotes ('"), ensuring consistent text rendering.
+
+---
+
+## Phase 2: Unified Sight
+
+### [2026-01-04] Snag: BUG-005-260104 - Unified File Visibility (SUCCESS)
+*   **Agent:** Snag 🛠️
+*   **Successful Solution:** Implemented the "Unified Sight" feature by refactoring the `FileExplorer.jsx` component. The data fetching logic was updated to perform a "double fetch" from both `src/pages` (for live `.astro` files) and `content/pages` (for draft `.json` files) using `Promise.allSettled` for resilience. A `Map` was used to merge and deduplicate the results into a single, page-centric view, with each file entity tracking its `hasLive` and `hasDraft` status. The `FileTile.jsx` component was updated to display the corresponding "📝 Draft" and "🌐 Live" badges.
+*   **Why it Succeeded:** The implementation directly followed the detailed architectural directives from the Senior Architect. It correctly creates a unified data model that represents the page-centric view and uses this model to drive a clear and informative UI, including the specified status badges. The logic is robust and handles potential API failures gracefully.
+*   **Verification:** **BLOCKED**. The feature is logically complete but could not be verified in a live browser environment. The sandbox has a critical environmental issue where `npm install` fails to correctly install dependencies, making it impossible to start the Vite development server. The mandatory `./verify-bridge.sh` script was also missing. A Playwright test was created as instructed, but could not be run.
