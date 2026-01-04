@@ -1,5 +1,12 @@
 # Snag List (Bugs & Regressions)
-Bug ID
+##logic fix: 01/01/2026
+
+the snag / feature modal works and sends the below to root/snag-list-doc.md branch main but the snag squad are watching root/easy-seo/snag-list-doc.md branch:snag-squad so surley thes should go to the snag squad for attention!
+
+also would be better included a button like in content editor in file explorer action bar bottom tool bar
+
+
+## Bug ID
 Date Reported
 Priority
 Target Module
