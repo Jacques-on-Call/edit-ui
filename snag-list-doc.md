@@ -132,3 +132,257 @@ These items focus on system health and future capabilities rather than immediate
 ### Consolidated Helper Registry: Perform a code quality check on cloudflare-worker-src/routes/content.js to merge redundant helper functions, specifically for Base64 encoding.
 ### Worker Logic Mapping: Create a comprehensive logic map for cloudflare-worker-src/router.js to document the introduction of the new authentication flow.
 ### Performance Optimization (Lexical): Investigate if typing delays are caused by the autosave debounce or excessive re-renders in the LexicalField component.
+
+## moved from root/snag-list-doc to here for visibility
+
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/1/2026, 6:23:21 AM
+- **Description:** Build Error
+The live preview build took too long. Please try refreshing the preview manually
+- **Page:** _Test-4-loss
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-loss","viewMode":"livePreview","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/1/2026, 9:13:42 AM
+- **Description:** The style tool bar comes out when I tripple tap and seems to appear just as the selected text looses selection. Ideal for this menu to appear when content is selected as that’s where user wants to apply the changes.
+- **Page:** _Test-4-loss
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":false,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/1/2026, 9:17:31 AM
+- **Description:** Header area still at top of screen in preview preventing full screen iframe for user to see there live site preview.
+- **Page:** _Test-4-loss
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-loss","viewMode":"livePreview","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":false,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/1/2026, 1:36:09 PM
+- **Description:** An Error Occurred
+
+Failed to move _Test-4-loss.astro: A file with that name already exists in the destination folder.
+
+Try Again 
+This was moved from Get to root then to Discover it’s only visible in root with this error pointing to the logic not matching both directories src/pages and content/psges
+- **Page:** _Test-4-loss
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/1/2026, 1:37:29 PM
+- **Description:** There is a header in content editor and preview both are empty and should be collapsed and not visible 
+- **Page:** _Test-4-loss
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/1/2026, 2:21:21 PM
+- **Description:** Let’s is still not findable in file explorer search only let works which means ‘ is still an issue ’ ‘ ` - / : ; ( ) ! ? @ & $ all need to work in search as content can include any number of variables 
+- **Page:** _Test-4-loss
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 12/31/2025, 12:42:03 PM
+- **Description:** Testing if this sends new bug feature to GitHub 
+- **Page:** _Test-4-loss-2
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-loss-2","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/1/2026, 6:23:21 AM
+- **Description:** Build Error
+The live preview build took too long. Please try refreshing the preview manually
+- **Page:** _Test-4-loss
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-loss","viewMode":"livePreview","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/1/2026, 9:13:42 AM
+- **Description:** The style tool bar comes out when I tripple tap and seems to appear just as the selected text looses selection. Ideal for this menu to appear when content is selected as that’s where user wants to apply the changes.
+- **Page:** _Test-4-loss
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":false,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/1/2026, 9:17:31 AM
+- **Description:** Header area still at top of screen in preview preventing full screen iframe for user to see there live site preview.
+- **Page:** _Test-4-loss
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-loss","viewMode":"livePreview","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":false,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/1/2026, 1:36:09 PM
+- **Description:** An Error Occurred
+
+Failed to move _Test-4-loss.astro: A file with that name already exists in the destination folder.
+
+Try Again 
+This was moved from Get to root then to Discover it’s only visible in root with this error pointing to the logic not matching both directories src/pages and content/psges
+- **Page:** _Test-4-loss
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/1/2026, 1:37:29 PM
+- **Description:** There is a header in content editor and preview both are empty and should be collapsed and not visible 
+- **Page:** _Test-4-loss
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/1/2026, 2:21:21 PM
+- **Description:** Let’s is still not findable in file explorer search only let works which means ‘ is still an issue ’ ‘ ` - / : ; ( ) ! ? @ & $ all need to work in search as content can include any number of variables 
+- **Page:** _Test-4-loss
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/3/2026, 1:52:37 PM
+- **Description:** Okay sidetoolbar styles are now not being applied . But appears on double tap effectively solving the prior bug of not allowing selection. Before we had it only working and applying style on triple tap.
+- **Page:** _Test-4-rename-
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-rename-","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":false,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/3/2026, 1:57:44 PM
+- **Description:** In content editor and preview we still have a header. It’s unnecessary and should be hidden/collapsed and not visible and it waste mobile screen space.
+- **Page:** _Test-4-rename-
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-rename-","viewMode":"livePreview","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [BUG] - 1/3/2026, 2:00:07 PM
+- **Description:** Move still gives a error popup: 
+[FileExplorer.jsx] searchQuery prop: ""
+[FileExplorer] fileState -> slug: Consider, draft: false, published: false
+[FileExplorer] fileState -> slug: Discover, draft: false, published: false
+[FileExplorer] fileState -> slug: Get, draft: false, published: false
+[FileExplorer] fileState -> slug: _Test-4-rename-, draft: true, published: false
+[FileExplorer] fileState -> slug: about, draft: false, published: false
+[FileExplorer] fileState -> slug: EDITING_GUIDE, draft: false, published: false
+[FileExplorer] fileState -> slug: index, draft: false, published: false
+[FileExplorer] fileState -> slug: n8n-privacy, draft: false, published: false
+[FileExplorer] fileState -> slug: test-500, draft: false, published: false
+[FileExplorer] navigate attempt -> src/pages/_Test-4-rename-.astro -> slug: _Test-4-rename- -> target: /editor/src%2Fpages%2F_Test-4-rename-.astro
+[FileExplorer] trying preact-router route()
+[FileExplorer] route() appears to have succeeded (location updated).
+[CEP] Component Init [object Object]
+[CEP] Derived State: mode=json slug=_Test-4-rename- path=src/pages/_Test-4-rename-.astro
+[CEP Viewport] Attaching viewport listeners.
+[CEP Viewport] Viewport changed: [object Object]
+[CEP-useEffect] Main effect hook started.
+[CEP-useEffect] Resolved file path: src/pages/_Test-4-rename-.astro
+[CEP-useEffect] Checking for draft in localStorage. Key: easy-seo-draft:_Test-4-rename-
+[CEP-useEffect] Local draft found. Attempting to parse and validate.
+[CEP-useEffect] Draft is valid. Loading sections from local draft.
+[CEP] Component Init [object Object]
+[CEP] Derived State: mode=json slug=_Test-4-rename- path=src/pages/_Test-4-rename-.astro
+[CEP] Component Init [object Object]
+[CEP] Derived State: mode=json slug=_Test-4-rename- path=src/pages/_Test-4-rename-.astro
+[BodySectionEditor] Component rendering.
+[EditorCanvas] Editor is ready, rendering toolbar.
+[LexicalField] handleFocus: A field has received focus. Interaction flag: false
+[EditorContext] Active editor is SET.
+[LexicalField] handleBlur: A content-editable field has lost focus. Scheduling a delayed clear of the active editor.
+[LexicalField] handleBlur: Current isToolbarInteractionRef: false
+[LexicalField] handleFocus: A field has received focus. Interaction flag: false
+[EditorContext] Active editor is SET.
+[LexicalField] handleBlur: A content-editable field has lost focus. Scheduling a delayed clear of the active editor.
+[LexicalField] handleBlur: Current isToolbarInteractionRef: false
+[LexicalField] handleFocus: A field has received focus. Interaction flag: false
+[EditorContext] Active editor is SET.
+[LexicalField] handleBlur: A content-editable field has lost focus. Scheduling a delayed clear of the active editor.
+[LexicalField] handleBlur: Current isToolbarInteractionRef: false
+[LexicalField] handleFocus: A field has received focus. Interaction flag: false
+[EditorContext] Active editor is SET.
+[LexicalField] handleBlur: A content-editable field has lost focus. Scheduling a delayed clear of the active editor.
+[LexicalField] handleBlur: Current isToolbarInteractionRef: false
+[LexicalField] handleFocus: A field has received focus. Interaction flag: false
+[EditorContext] Active editor is SET.
+[BodySectionEditor] Component rendering.
+[EditorCanvas] Editor is ready, rendering toolbar.
+[BodySectionEditor] Component rendering.
+[EditorCanvas] Editor is ready, rendering toolbar.
+[LexicalField] handleBlur Timeout: Delay complete and no toolbar interaction detected. Clearing active editor.
+[EditorContext] Active editor is CLEARED.
+[BodySectionEditor] Component rendering.
+[LexicalField] handleBlur Timeout: Delay complete and no toolbar interaction detected. Clearing active editor.
+[EditorContext] Active editor is CLEARED.
+[LexicalField] handleBlur Timeout: Delay complete and no toolbar interaction detected. Clearing active editor.
+[EditorContext] Active editor is CLEARED.
+[LexicalField] handleBlur Timeout: Delay complete and no toolbar interaction detected. Clearing active editor.
+[EditorContext] Active editor is CLEARED.
+[EditorCanvas] Editor is ready, rendering toolbar.
+[CEP Viewport] Removing viewport listeners.
+[FileExplorer.jsx] searchQuery prop: ""
+[FileExplorer.jsx] searchQuery prop: ""
+[FileExplorer.jsx] searchQuery prop: ""
+[FileExplorer.jsx] searchQuery prop: ""
+[FileExplorer.jsx] searchQuery prop: ""
+[FileExplorer.jsx] searchQuery prop: ""
+[FileExplorer.jsx] searchQuery prop: ""
+[FileExplorer] fileState -> slug: Consider, draft: false, published: false
+[FileExplorer] fileState -> slug: Discover, draft: false, published: false
+[FileExplorer] fileState -> slug: Get, draft: false, published: false
+[FileExplorer] fileState -> slug: _Test-4-rename-, draft: true, published: false
+[FileExplorer] fileState -> slug: about, draft: false, published: false
+[FileExplorer] fileState -> slug: EDITING_GUIDE, draft: false, published: false
+[FileExplorer] fileState -> slug: index, draft: false, published: false
+[FileExplorer] fileState -> slug: n8n-privacy, draft: false, published: false
+[FileExplorer] fileState -> slug: test-500, draft: false, published: false
+[FileExplorer.jsx] searchQuery prop: ""
+[FileExplorer] fileState -> slug: Consider, draft: false, published: false
+[FileExplorer] fileState -> slug: Discover, draft: false, published: false
+[FileExplorer] fileState -> slug: Get, draft: false, published: false
+[FileExplorer] fileState -> slug: _Test-4-rename-, draft: true, published: false
+[FileExplorer] fileState -> slug: about, draft: false, published: false
+[FileExplorer] fileState -> slug: EDITING_GUIDE, draft: false, published: false
+[FileExplorer] fileState -> slug: index, draft: false, published: false
+[FileExplorer] fileState -> slug: n8n-privacy, draft: false, published: false
+[FileExplorer] fileState -> slug: test-500, draft: false, published: false
+[FileExplorer.jsx] searchQuery prop: ""
+[FileExplorer] fileState -> slug: Consider, draft: false, published: false
+[FileExplorer] fileState -> slug: Discover, draft: false, published: false
+[FileExplorer] fileState -> slug: Get, draft: false, published: false
+[FileExplorer] fileState -> slug: _Test-4-rename-, draft: true, published: false
+[FileExplorer] fileState -> slug: about, draft: false, published: false
+[FileExplorer] fileState -> slug: EDITING_GUIDE, draft: false, published: false
+[FileExplorer] fileState -> slug: index, draft: false, published: false
+[FileExplorer] fileState -> slug: n8n-privacy, draft: false, published: false
+[FileExplorer] fileState -> slug: test-500, draft: false, published: false
+[ERROR] [fetchJson] Full error details: [object Object]
+[ERROR] Failed to move file: HTTPError: HTTP error! status: 500
+[FileExplorer.jsx] searchQuery prop: ""
+- **Page:** _Test-4-rename-
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-rename-","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
+## [FEATURE] - 1/3/2026, 2:03:45 PM
+- **Description:** The bug feature modal needs to be in file explorer it’s so useful. And would  a screenshot be a possibility to include as the more detailed these come from the app the easier it is for you to solve.
+- **Page:** _Test-4-rename-2
+- **Component:** Editor
+- **Context:** {"pageId":"_Test-4-rename-2","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
+- **Status:** [NEW]
+---
+
