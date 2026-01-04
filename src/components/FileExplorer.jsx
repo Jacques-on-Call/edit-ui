@@ -18,10 +18,15 @@ import { fetchJson } from '/src/lib/fetchJson.js';
 import './LiquidGlassButton.css';
 
 function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTrigger, currentPath }) {
+  // JULES' ANNOTATIONS - STEP 2
+  // This component is the heart of the file explorer UI.
+  // It's responsible for fetching the list of files from a specific directory,
+  // merging it with local drafts, and rendering the grid of files and folders.
+
   console.log(`[FileExplorer.jsx] searchQuery prop: "${searchQuery}"`);
   const { fileManifest } = useFileManifest(repo);
   const [files, setFiles] = useState([]);
-  // Use currentPath from props (UIContext) instead of local state
+  // The 'currentPath' is passed down from UIContext, representing the directory being viewed.
   const path = currentPath || 'src/pages';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -91,6 +96,9 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
     performSearch(searchQuery);
   }, [searchQuery, performSearch]);
 
+  // JULES' ANNOTATIONS - STEP 2
+  // This constant defines which file types are considered "content" files.
+  // It's used later to decide whether to attempt parsing frontmatter from a file.
   const RELEVANT_EXTENSIONS = ['.md', '.mdx', '.astro'];
 
   const fetchFiles = useCallback(async () => {
@@ -98,10 +106,17 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
     setError(null);
 
     try {
-      // Step 1: Fetch the initial file list
+      // JULES' ANNOTATIONS - STEP 2
+      // STEP 1: FETCH a list of files from the backend API.
+      // The endpoint is `/api/files`. It takes the repository name and the current `path` as query parameters.
+      // This is the primary source of truth for what exists in the GitHub repository.
       let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`);
 
-      // Merge with drafts from localStorage
+      // JULES' ANNOTATIONS - STEP 2
+      // STEP 2: MERGE with local drafts.
+      // The code iterates through everything in localStorage to find items with keys
+      // starting with 'easy-seo-draft:'. This is how the application finds content
+      // that has been edited locally but not yet saved back to the repository.
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key.startsWith('easy-seo-draft:')) {
@@ -109,11 +124,12 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
           const draftPath = draftData.path || '';
           const draftDir = draftPath.substring(0, draftPath.lastIndexOf('/'));
 
+          // It checks if the draft belongs to the currently viewed directory.
           if (draftDir === path) {
             const slug = key.replace('easy-seo-draft:', '');
             const filename = draftPath.substring(draftPath.lastIndexOf('/') + 1);
 
-            // Avoid duplicates
+            // It adds the draft to the list of files to be displayed, avoiding duplicates.
             if (!data.some(file => file.path === draftPath)) {
               data.push({
                 name: filename,
@@ -127,6 +143,9 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
         }
       }
 
+      // JULES' ANNOTATIONS - STEP 2
+      // STEP 3: SORT the combined list.
+      // Directories are always shown first, then files are sorted alphabetically.
       const sortedData = data.sort((a, b) => {
         if (a.type === 'dir' && b.type !== 'dir') return -1;
         if (a.type !== 'dir' && b.type === 'dir') return 1;
@@ -134,7 +153,10 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
       });
       setFiles(sortedData);
 
-      // ⚡ Bolt: Batch fetch details for all files in a single network request.
+      // JULES' ANNOTATIONS - STEP 2
+      // STEP 4: FETCH METADATA for the files.
+      // This is an optimization. It batches requests for file details (like last author and frontmatter)
+      // into a single API call to `/api/files/details`.
       const pathsToFetch = sortedData
         .filter(file => file.type === 'file' && !file.isDraft)
         .map(file => file.path);
@@ -161,6 +183,7 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
                 metadata.lastModified = lastCommit.commit?.author?.date;
               }
 
+              // Here, it uses RELEVANT_EXTENSIONS to decide if it should look for frontmatter.
               const fileExtension = file.name.substring(file.name.lastIndexOf('.'));
               if (RELEVANT_EXTENSIONS.includes(fileExtension) && typeof details.content === 'string') {
                 try {
@@ -180,7 +203,10 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
         setMetadataCache(prev => ({ ...prev, ...newMetadata }));
       }
 
-      // Fetch README content
+      // JULES' ANNOTATIONS - STEP 2
+      // STEP 5: HANDLE README.
+      // It specifically finds a README.md file and fetches its content separately
+      // to display it at the bottom of the file explorer.
       const readmeFile = data.find(file => file.name.toLowerCase() === 'readme.md');
       if (readmeFile) {
         setReadmeLoading(true);
@@ -220,6 +246,8 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
     }
   }, [refreshTrigger, fetchFiles]);
 
+  // JULES' ANNOTATIONS - STEP 2
+  // This logic determines whether to show the search results or the file grid.
   const showSearchResults = searchQuery.trim().length > 0;
 
   const handleFileClick = (file) => {
@@ -376,6 +404,9 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
         onPathChange(file.path);
       }
     } else {
+      // JULES' ANNOTATIONS - STEP 2
+      // This is the logic that opens a file in the editor.
+      // It constructs a URL like `/editor/path/to/file.astro` and uses the router to navigate.
       const slug = (file.name || file.path || '').replace(/\.[^/.]+$/, '');
       const target = `/editor/${encodeURIComponent(file.path)}`;
       console.log(`[FileExplorer] navigate attempt -> ${file.path} -> slug: ${slug} -> target: ${target}`);
@@ -450,6 +481,9 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {/* JULES' ANNOTATIONS - STEP 2 */}
+              {/* FINAL FILTERING: Before rendering, it filters out any files that start with a '.' (hidden files)
+                  and the README.md file (which is handled separately). */}
               {Array.isArray(filesToDisplay) && filesToDisplay
                 .filter(file => !file.name.startsWith('.') && file.name.toLowerCase() !== 'readme.md')
                 .map(file => {
