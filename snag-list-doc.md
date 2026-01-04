@@ -28,7 +28,7 @@ BUG-005-260102
 2026-01-02
 P3: Medium
 easy-seo/src/components/FileExplorer.jsx
-[NEW REGRESSION]
+[FIXED - 2026-01-03]
 BUG-006-260102
 2026-01-02
 P4: Low

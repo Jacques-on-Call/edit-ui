@@ -8,6 +8,7 @@ import { theme } from '../themes/theme';
 import { AlertTriangle } from 'lucide-preact';
 import FileExplorer from '../components/FileExplorer';
 import CreatePageModal from '../components/CreatePageModal';
+import BottomActionBar from '../components/BottomActionBar';
 import { fetchJson } from '../lib/fetchJson';
 
 export function FileExplorerPage() {
@@ -152,6 +153,15 @@ import pageData from '${dataPath}';
     }
   };
 
+  const handleGoHome = () => {
+    setCurrentPath('src/pages');
+  };
+
+  const handleGoBack = () => {
+    const parentPath = currentPath.split('/').slice(0, -1).join('/');
+    setCurrentPath(parentPath || 'src/pages');
+  };
+
   return (
     <div className="h-full">
       <FileExplorer 
@@ -166,6 +176,14 @@ import pageData from '${dataPath}';
         isOpen={isCreateOpen}
         onClose={() => setCreateOpen(false)}
         onCreate={handleCreate}
+      />
+
+      <BottomActionBar
+        showFileNav={true}
+        currentPath={currentPath}
+        onGoBack={handleGoBack}
+        onGoHome={handleGoHome}
+        onAdd={() => setCreateOpen(true)}
       />
     </div>
   );

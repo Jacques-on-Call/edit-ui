@@ -61,3 +61,9 @@
 * **Successful Solution:** Implemented a robust `normalize` function in a new `easy-seo/src/utils/text.js` file. This function handles a wide range of special characters, converting them to spaces to ensure consistent search behavior. The function was then applied to both the frontend search query and the backend file content.
 * **Why it Succeeded:** The previous attempts were too narrow, only targeting apostrophes. By expanding the normalization to include a wider range of punctuation, the search became much more resilient to variations in user input and content.
 * **Verification:** While the Playwright environment was unstable, the frontend normalization was verified using a temporary debug element. The backend logic was also updated to use the new `normalize` function.
+
+### [2026-01-03] Snag: 5 - Fragmented Navigation (SUCCESS)
+* **Agent:** Snag 🛠️
+* **Successful Solution:** The fragmented navigation was resolved by centralizing the navigation logic. The `handleGoBack` and `handleGoHome` functions were moved from `FileExplorer.jsx` to the parent container, `FileExplorerPage.jsx`. The shared `BottomActionBar.jsx` was then enhanced with new props (`showFileNav`, `onGoBack`, `onGoHome`) to conditionally render the navigation controls, which are now driven by the centralized logic in `FileExplorerPage`.
+* **Why it Succeeded:** This was a classic architectural issue. The fix succeeded because it addressed the root cause of the UI inconsistency—decentralized state management. By lifting the state and logic up to the container component, the navigation controls became a shared, consistent feature of the UI.
+* **Verification:** The Playwright test environment was completely non-functional, failing with a `Cannot find module '@playwright/test'` error. This is a known, persistent environmental issue. The fix was reviewed for logical correctness, but automated verification was not possible.

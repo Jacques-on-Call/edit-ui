@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { memo } from 'preact/compat';
 import { route } from 'preact-router';
-import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil, LifeBuoy } from 'lucide-preact';
+import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil, LifeBuoy, ArrowLeft } from 'lucide-preact';
 import './BottomActionBar.css';
 import { getPageScoreColor } from '../lib/pageScoring';
 
@@ -17,7 +17,12 @@ const BottomActionBar = memo((props) => {
     onPreview,
     onRefreshPreview,
     onReport,
-    needsDeployment
+    needsDeployment,
+    // New props for file navigation
+    onGoBack,
+    onGoHome,
+    showFileNav,
+    currentPath
   } = props;
   const getStatusColor = () => {
     if (saveStatus === 'saved') return 'bg-yellow-green';
@@ -59,9 +64,22 @@ const BottomActionBar = memo((props) => {
 
   return (
     <footer className="bottom-action-bar" role="toolbar" aria-label="Editor actions">
-      <button type="button" onClick={() => route('/explorer')} className="bar-btn" aria-label="Home">
-        <Home size={28} />
-      </button>
+      {showFileNav ? (
+        <>
+          <button type="button" onClick={onGoHome} className="bar-btn" aria-label="Home">
+            <Home size={28} />
+          </button>
+          {currentPath && currentPath !== 'src/pages' && (
+            <button type="button" onClick={onGoBack} className="bar-btn" aria-label="Go Back">
+              <ArrowLeft size={28} />
+            </button>
+          )}
+        </>
+      ) : (
+        <button type="button" onClick={() => route('/explorer')} className="bar-btn" aria-label="Home">
+          <Home size={28} />
+        </button>
+      )}
 
       <button type="button" onClick={onReport} className="bar-btn" aria-label="Report Issue" title="Report Bug / Request Feature">
         <LifeBuoy size={28} className="text-gray-400 hover:text-white transition-colors" />

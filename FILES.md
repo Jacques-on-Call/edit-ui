@@ -9,7 +9,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/app.jsx`**: The main application component. Handles routing and global layout.
 -   **`src/pages/LoginPage.jsx`**: The user login page.
 -   **`src/pages/RepoSelectPage.jsx`**: The repository selection page.
--   **`src/pages/FileExplorerPage.jsx`**: The main file explorer page. Handles the file creation logic (now client-side drafts) and passes data down to the `FileExplorer` component.
+-   **`src/pages/FileExplorerPage.jsx`**: The main file explorer page. This is a container component that manages the `currentPath` state for the file explorer and provides the navigation logic (`handleGoBack`, `handleGoHome`) to the `BottomActionBar`.
 -   **`src/pages/ContentEditorPage.jsx`**: The main shell for the content editor. Responsible for loading and saving full draft payloads to `localStorage` and providing the `EditorContext`. Supports two view modes: editor and livePreview.
 
 ### **Contexts**
@@ -34,7 +34,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 
 ### **Components**
 
--   **`src/components/FileExplorer.jsx`**: The core file explorer component. Fetches repository files and merges them with client-side drafts from `localStorage` to create a unified file list.
+-   **`src/components/FileExplorer.jsx`**: The core file explorer component. Fetches repository files and merges them with client-side drafts from `localStorage` to create a unified file list. It receives its `currentPath` and `onPathChange` handlers from `FileExplorerPage`.
 -   **`src/components/FileTile.jsx`**: Renders a single file or folder tile. Now displays "Draft" and "Live" badges based on the file's status.
 -   **`src/components/ReadmeDisplay.jsx`**: Renders the README.md file.
 -   **`src/components/Icon.jsx`**: A wrapper for the lucide-preact icon library.
@@ -49,7 +49,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/components/VerticalToolbox.jsx`**: Comprehensive slide-out left sidebar for cursor-position insert actions. **Collapsible category groups (accordion pattern):** Click group header to expand/collapse, reduces height on mobile. History group (Undo/Redo) at top, expanded by default. Organized by categories: History (undo/redo - only in vertical toolbar, NOT in floating toolbar), Headings (H2-H6, duplicates from FloatingToolbar), Lists (bullet/numbered), Structure (horizontal rule, page break, table), Media (image), Layout (columns, collapsible), Utility (date). Accessed via HamburgerTrigger. Features smooth expand/collapse animations with chevron rotation. Backdrop overlay, keyboard navigation (Escape to close), click-outside-to-close, and auto-close after action selection. Proper ARIA attributes for accessibility.
 -   **`src/components/HamburgerTrigger.jsx`**: Floating hamburger button in top-left corner that opens/closes the VerticalToolbox. Fixed positioning with hover and active states.
 -   **`src/components/BlockTree.jsx`**: The component for displaying the block structure of a page.
--   **`src/components/BottomActionBar.jsx`**: The bottom action bar for the content editor. Supports editor and preview view modes with appropriate icons.
+-   **`src/components/BottomActionBar.jsx`**: The bottom action bar for the content editor. It now also supports a file navigation mode, which is activated by the `showFileNav` prop. In this mode, it displays "Go Back" and "Go Home" buttons.
 -   **`src/components/SectionsEditor.jsx`**: The main component for rendering and managing the different sections of a page.
 -   **`src/components/LexicalEditor.jsx`**: The core rich-text editor component, built on Lexical.
 -   **`src/components/ColorPicker.jsx`**: A cross-platform color picker component for text and highlight colors. Features:
