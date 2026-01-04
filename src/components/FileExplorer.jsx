@@ -106,47 +106,76 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
     setError(null);
 
     try {
-      // JULES' ANNOTATIONS - STEP 2
-      // STEP 1: FETCH a list of files from the backend API.
-      // The endpoint is `/api/files`. It takes the repository name and the current `path` as query parameters.
-      // This is the primary source of truth for what exists in the GitHub repository.
-      let data = await fetchJson(`/api/files?repo=${repo}&path=${path}`);
+      const [liveFilesResult, draftsResult] = await Promise.allSettled([
+        fetchJson(`/api/files?repo=${repo}&path=src/pages`),
+        fetchJson(`/api/files?repo=${repo}&path=content/pages`)
+      ]);
 
-      // JULES' ANNOTATIONS - STEP 2
-      // STEP 2: MERGE with local drafts.
-      // The code iterates through everything in localStorage to find items with keys
-      // starting with 'easy-seo-draft:'. This is how the application finds content
-      // that has been edited locally but not yet saved back to the repository.
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('easy-seo-draft:')) {
-          const draftData = JSON.parse(localStorage.getItem(key));
-          const draftPath = draftData.path || '';
-          const draftDir = draftPath.substring(0, draftPath.lastIndexOf('/'));
+      let data = [];
+      let fetchError = null;
 
-          // It checks if the draft belongs to the currently viewed directory.
-          if (draftDir === path) {
-            const slug = key.replace('easy-seo-draft:', '');
-            const filename = draftPath.substring(draftPath.lastIndexOf('/') + 1);
-
-            // It adds the draft to the list of files to be displayed, avoiding duplicates.
-            if (!data.some(file => file.path === draftPath)) {
-              data.push({
-                name: filename,
-                path: draftPath,
-                sha: `draft-${slug}`,
-                type: 'file',
-                isDraft: true,
-              });
-            }
-          }
-        }
+      if (liveFilesResult.status === 'fulfilled') {
+        data = data.concat(liveFilesResult.value);
+      } else {
+        console.error("Failed to fetch live files:", liveFilesResult.reason);
+        fetchError = 'Could not load live pages.';
       }
+
+      if (draftsResult.status === 'fulfilled') {
+        data = data.concat(draftsResult.value);
+      } else {
+        console.error("Failed to fetch drafts:", draftsResult.reason);
+        fetchError = fetchError
+          ? 'Could not load live pages or drafts.'
+          : 'Could not load drafts.';
+      }
+
+      if (fetchError) {
+        // A toast/banner would be set here. For now, we'll use the main error state.
+        console.warn(`[Resilient Visibility] ${fetchError}`);
+        setError(`Note: ${fetchError} Displaying available files only.`);
+      }
+
+      const getSlug = (filename) => filename.replace(/\.(astro|json|md)$/, "");
+
+      const mergedFilesMap = new Map();
+
+      data.forEach(file => {
+        const slug = getSlug(file.name);
+        const entry = mergedFilesMap.get(slug) || {
+          name: slug,
+          type: file.type,
+          hasLive: false,
+          hasDraft: false,
+          liveFile: null,
+          draftFile: null,
+        };
+
+        if (file.name.endsWith('.astro')) {
+          entry.hasLive = true;
+          entry.liveFile = file;
+        } else if (file.name.endsWith('.json')) {
+          entry.hasDraft = true;
+          entry.draftFile = file;
+        } else {
+            // Handle non-astro/json files like directories
+            entry.liveFile = file;
+        }
+
+        // Prioritize draft path for navigation, then live, then original
+        entry.path = entry.draftFile?.path || entry.liveFile?.path || file.path;
+        entry.sha = entry.draftFile?.sha || entry.liveFile?.sha || file.sha;
+
+
+        mergedFilesMap.set(slug, entry);
+      });
+
+      const mergedData = Array.from(mergedFilesMap.values());
 
       // JULES' ANNOTATIONS - STEP 2
       // STEP 3: SORT the combined list.
       // Directories are always shown first, then files are sorted alphabetically.
-      const sortedData = data.sort((a, b) => {
+      const sortedData = mergedData.sort((a, b) => {
         if (a.type === 'dir' && b.type !== 'dir') return -1;
         if (a.type !== 'dir' && b.type === 'dir') return 1;
         return a.name.localeCompare(b.name);
@@ -486,25 +515,16 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
                   and the README.md file (which is handled separately). */}
               {Array.isArray(filesToDisplay) && filesToDisplay
                 .filter(file => !file.name.startsWith('.') && file.name.toLowerCase() !== 'readme.md')
-                .map(file => {
-                  const slug = (file.name || file.path || '').replace(/\.[^/.]+$/, '');
-                  const hasDraft = localStorage.getItem(`easy-seo-draft:${slug}`) !== null;
-                  const isPublished = localStorage.getItem(`easy-seo-published:${slug}`) !== null;
-                  console.log(`[FileExplorer] fileState -> slug: ${slug}, draft: ${hasDraft}, published: ${isPublished}`);
-
-                  return (
-                    <FileTile
-                      key={file.sha}
-                      file={file}
-                      metadata={metadataCache[file.sha]}
-                      isSelected={selectedFile && selectedFile.sha === file.sha}
-                      hasDraft={hasDraft}
-                      isPublished={isPublished}
-                      onOpen={handleOpen}
-                      onShowActions={handleLongPress}
-                    />
-                  );
-                })}
+                .map(file => (
+                  <FileTile
+                    key={file.sha}
+                    file={file}
+                    metadata={metadataCache[file.sha]}
+                    isSelected={selectedFile && selectedFile.sha === file.sha}
+                    onOpen={handleOpen}
+                    onShowActions={handleLongPress}
+                  />
+                ))}
             </div>
             {contextMenu && (
               <FileContextMenu

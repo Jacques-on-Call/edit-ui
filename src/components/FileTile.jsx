@@ -117,14 +117,16 @@ function FileTile({ file, isSelected, metadata, hasDraft, isPublished, onOpen, o
         onTouchCancel={handleTouchEnd}
         onContextMenu={handleContextMenu}
       >
-        <div className="absolute top-2 right-2 text-xs font-bold">
-          {isPublished && !hasDraft && <span className="text-green-400">Live</span>}
-          {hasDraft && !isPublished && <span className="text-orange-400">Draft</span>}
-          {isPublished && hasDraft && (
-            <div className="flex items-center space-x-1">
-              <span className="text-orange-400">Draft</span>
-              <span className="text-green-400">•</span>
-            </div>
+        <div className="absolute top-2 right-2 flex items-center space-x-1">
+          {file.hasDraft && (
+            <span className="bg-amber-500/20 text-amber-500 border border-amber-500/50 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+              📝 Draft
+            </span>
+          )}
+          {file.hasLive && (
+            <span className="bg-emerald-500/20 text-emerald-500 border border-emerald-500/50 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+              🌐 Live
+            </span>
           )}
         </div>
         <div className="flex-grow flex flex-col items-center justify-center text-center w-full">
