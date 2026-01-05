@@ -113,3 +113,9 @@
     3.  An interactive script (`scripts/setup-secrets.sh`) was created to automate and simplify the process of setting secrets.
 *   **Why it Succeeded**: The solution succeeded because it pivoted from a futile attempt to fix an intractable local environment to a surgical, production-focused diagnostic approach. The tools provided will allow the Senior Architect to instantly identify and resolve the missing secrets on the live server, fixing the root cause of the authentication failure.
 *   **Verification**: The change is purely diagnostic and does not alter existing application logic. It was verified for correctness by a code review. The next step is to deploy these tools and check the health endpoint.
+### [2026-01-05] SNAG-006-26-01-05: Critical Authentication Failure (UNRESOLVED - ENV BLOCKER)
+*   **Agent:** Snag 🛠️
+*   **Status:** [BLOCKED]
+*   **Goal:** Diagnose and fix the root cause of the 401 Unauthorized error.
+*   **Failed Attempt**: A multi-hour, exhaustive effort was made to stabilize the local development environment using `wrangler dev`, `vite`, and various proxy configurations. This involved debugging and correcting issues with outdated CLI flags, incorrect directory structures, broken entry points, and fundamental architectural mismatches between the "Service Worker" application and the "Cloudflare Pages" local runner.
+*   **Why it Failed**: The local development environment is intractably broken. Despite correcting numerous configuration and script issues, the `wrangler dev` server consistently fails to start, reporting a persistent "entry-point file not found" error even when the path is valid. This prevents any form of live testing or verification, making it impossible to diagnose the original `401` error. The "Zero-Option" directive was invoked. No code changes were submitted.

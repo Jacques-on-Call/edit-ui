@@ -43,17 +43,27 @@ export function FileExplorerPage() {
     return null;
   }
 
+  const { logout } = useAuth();
   if (!repoName) {
     return (
       <div className="flex flex-col items-center justify-center h-screen text-center">
         <AlertTriangle size={48} className="text-yellow-400 mb-4" />
         <h1 className="text-2xl font-bold mb-4">No Repository Selected</h1>
-        <button
-          onClick={() => window.location.href = '/repo-select'}
-          className="bg-accent-lime text-black px-6 py-3 rounded-lg font-bold"
-        >
-          Select a Repository
-        </button>
+        <p className="mb-4">Please select a repository to continue, or if you're stuck, try logging out.</p>
+        <div className="flex gap-4">
+          <button
+            onClick={() => window.location.href = '/repo-select'}
+            className="bg-accent-lime text-black px-6 py-3 rounded-lg font-bold"
+          >
+            Select a Repository
+          </button>
+          <button
+            onClick={logout}
+            className="bg-gray-600 text-white px-6 py-3 rounded-lg font-bold"
+          >
+            Logout
+          </button>
+        </div>
       </div>
     );
   }
