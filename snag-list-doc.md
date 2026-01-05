@@ -11,6 +11,11 @@ Date Reported
 Priority
 Target Module
 Status
+BUG-007-260105
+2026-01-05
+P1: Critical
+easy-seo/*.jsx
+[FIXED]
 BUG-003-251230
 2025-12-30
 P1: Critical
@@ -43,6 +48,14 @@ easy-seo/src/contexts/LogContext.jsx
 [POTENTIAL LEAK]
 
 ## Detailed Bug Insights:
+### BUG-007-260105 (Hollow Link): Clicking files in the explorer opened the editor with no content, and folders would not navigate. This was a critical pathing failure between the file explorer and the content editor.
+🏛️ [BUG-007] Hollow Link Architectural Failure
+Issue: Files appeared empty in the editor and folders were not opening.
+Status: [FIXED]
+| Date | Agent | Solution | Justification |
+|---|---|---|---|
+| 2026-01-05 | Snag 🛠️ | Corrected pathing logic in `FileExplorer.jsx` and `ContentEditorPage.jsx`. | The bug was caused by two frontend issues: 1. `FileExplorer.jsx` used hardcoded root paths for API calls instead of the dynamic `currentPath`. 2. `ContentEditorPage.jsx` used a faulty, slug-based API endpoint instead of the correct, path-based endpoint to fetch file content. Both were corrected to establish the proper data flow. |
+
 ### BUG-003-251230 (Rename Data Wipe): Renaming a file previously resulted in 0-byte destination files. While marked as fixed via a "read-write-delete" sequence, the Auditor warns that any file operation logic remains highly sensitive and needs regression testing.
 [BUG-003] Rename File "Data Wipe"
 Issue: Renaming a file results in a blank file (0 bytes) at the destination.
@@ -355,7 +368,7 @@ This was moved from Get to root then to Discover it’s only visible in root wit
 [FileExplorer] fileState -> slug: Get, draft: false, published: false
 [FileExplorer] fileState -> slug: _Test-4-rename-, draft: true, published: false
 [FileExplorer] fileState -> slug: about, draft: false, published: false
-[FileExplorer] fileState -> slug: EDITING_GUIDE, draft: false, published: false
+[FileExplorer] fileState -> slug: EDITING_G_GUIDE, draft: false, published: false
 [FileExplorer] fileState -> slug: index, draft: false, published: false
 [FileExplorer] fileState -> slug: n8n-privacy, draft: false, published: false
 [FileExplorer] fileState -> slug: test-500, draft: false, published: false

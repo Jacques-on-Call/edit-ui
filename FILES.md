@@ -10,7 +10,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/pages/LoginPage.jsx`**: The user login page.
 -   **`src/pages/RepoSelectPage.jsx`**: The repository selection page.
 -   **`src/pages/FileExplorerPage.jsx`**: The main file explorer page. This is a container component that manages the `currentPath` state for the file explorer and provides the navigation logic (`handleGoBack`, `handleGoHome`) to the `BottomActionBar`.
--   **`src/pages/ContentEditorPage.jsx`**: The main shell for the content editor. Responsible for loading and saving full draft payloads to `localStorage` and providing the `EditorContext`. Supports two view modes: editor and livePreview.
+-   **`src/pages/ContentEditorPage.jsx`**: The main shell for the content editor. Responsible for loading file content based on the full file path received from the explorer. It uses a path-based API endpoint (`/api/get-file-content`) to reliably fetch draft or live content. Manages local drafts in `localStorage` and provides the `EditorContext`. Supports two view modes: editor and livePreview.
 
 ### **Contexts**
 -   **`src/contexts/AuthContext.jsx`**: Manages global authentication state.
@@ -34,7 +34,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 
 ### **Components**
 
--   **`src/components/FileExplorer.jsx`**: The core file explorer component. Fetches repository files and merges them with client-side drafts from `localStorage` to create a unified file list. It receives its `currentPath` and `onPathChange` handlers from `FileExplorerPage`.
+-   **`src/components/FileExplorer.jsx`**: The core file explorer component. Fetches repository files for the current directory by using a dynamic `currentPath` prop in its API calls. It merges client-side drafts from `localStorage` to create a unified file list and handles folder navigation by updating the `currentPath` state via its parent, `FileExplorerPage`.
 -   **`src/components/FileTile.jsx`**: Renders a single file or folder tile. Now displays "Draft" and "Live" badges based on the file's status.
 -   **`src/components/ReadmeDisplay.jsx`**: Renders the README.md file.
 -   **`src/components/Icon.jsx`**: A wrapper for the lucide-preact icon library.

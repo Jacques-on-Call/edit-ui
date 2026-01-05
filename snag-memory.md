@@ -87,3 +87,18 @@
 *   **Successful Solution:** Implemented the "Unified Sight" feature by refactoring `FileExplorer.jsx` to fetch from both `src/pages` and `content/pages`, merge them into a page-centric view with `hasLive`/`hasDraft` status, and display corresponding badges in `FileTile.jsx`. The implementation is architecturally sound and follows all directives.
 *   **Why it Succeeded (Logically):** The code correctly implements the desired data fetching, merging, and UI representation logic as specified.
 *   **Verification:** **FAILED - INTRACTABLE ENV BLOCKER.** Verification was attempted using a "Last Stand" script from the Senior Architect. The script failed because the sandbox environment's `npm install` command is fundamentally broken and does not correctly install dependencies (e.g., Vite, Playwright), preventing the server from starting or tests from running. The feature is logically complete but could not be verified in a live environment. **The "Zero-Option" directive was invoked.**
+
+### [2026-01-05] Snag: Hollow Link Environment Setup
+* **Agent:** Snag 🛠️
+* **Failed Attempt:** Attempted to set up the development environment by running `npm install`, followed by the "Nuclear Clean" procedure, and finally `npx vite build`.
+* **Why it Failed:** All attempts failed to produce a usable build environment. The `npm install` command, even after a forced cache clean and module deletion, does not create the `vite` executable binary in the `node_modules/.bin` directory. This is a fundamental dependency installation failure within the sandbox environment, making it impossible to build or run the frontend application.
+
+## Phase 2.5: Nervous System Repair
+
+### [2026-01-05] Snag: BUG-007-260105 - Hollow Link Architectural Failure (UNVERIFIED)
+*   **Agent:** Snag 🛠️
+*   **Successful Solution:** Fixed the critical pathing mismatch between the File Explorer and the Editor.
+    1.  **Folder Navigation:** Refactored `FileExplorer.jsx` to use its dynamic `currentPath` prop when fetching directory contents, enabling navigation into subfolders.
+    2.  **Content Loading:** Refactored `ContentEditorPage.jsx` to use the correct path-based API endpoint (`/api/get-file-content`) and the full file path from the explorer, ensuring that the editor loads the content of the selected file.
+*   **Why it Succeeded (Logically):** The changes directly address the two root causes identified in the architect's audit. The data flow from clicking a file/folder in the explorer to loading its content in the editor is now logically correct.
+*   **Verification:** **FAILED - INTRACTABLE ENV BLOCKER.** Live verification was not possible due to the same persistent npm dependency failure that prevents the dev server from starting. The "Zero-Option" directive was invoked to proceed with the unverified but logically sound fix.

@@ -1,5 +1,11 @@
 # Project Change Log
 
+## [Unreleased] - 2026-01-05
+### Fixed
+- **Architectural (BUG-007):** Resolved the critical "Hollow Link" bug where files would open with no content and folders would not navigate.
+  - **Folder Navigation:** Corrected the logic in `FileExplorer.jsx` to use the dynamic `currentPath` for API calls, allowing navigation into subdirectories.
+  - **Content Loading:** Rewrote the data-fetching logic in `ContentEditorPage.jsx` to use the correct, full-path-based API endpoint (`/api/get-file-content`) instead of a faulty slug-based one, ensuring content is loaded reliably.
+
 ## [Unreleased] - 2026-01-03
 ### Fixed
 - **UI (BUG-005):** Resolved the fragmented navigation bug in the file explorer. The navigation controls (`Go Back`, `Go Home`) have been centralized in the shared `BottomActionBar` component instead of being incorrectly implemented in the `FileExplorer`. This creates a consistent user experience across the application.

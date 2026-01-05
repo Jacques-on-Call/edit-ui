@@ -106,9 +106,11 @@ function FileExplorer({ repo, searchQuery, onShowCreate, onPathChange, refreshTr
     setError(null);
 
     try {
+      // JULES' FIX - STEP 2.3: Use the dynamic 'path' variable instead of hardcoded root paths.
+      // This makes the component fetch content for the *currently viewed* directory.
       const [liveFilesResult, draftsResult] = await Promise.allSettled([
-        fetchJson(`/api/files?repo=${repo}&path=src/pages`),
-        fetchJson(`/api/files?repo=${repo}&path=content/pages`)
+        fetchJson(`/api/files?repo=${repo}&path=${path.replace('content/', 'src/')}`),
+        fetchJson(`/api/files?repo=${repo}&path=${path.replace('src/', 'content/')}`)
       ]);
 
       let data = [];

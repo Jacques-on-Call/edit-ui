@@ -91,9 +91,9 @@ export default function ContentEditorPage(props) {
 
   // --- 2. DERIVED STATE & CONSTANTS ---
   const pathIdentifier = props.filePath ?  decodeURIComponent(props.filePath) : (props.pageId || 'home');
-  const pageId = pathIdentifier.endsWith('/index.astro')
+  const pageId = (pathIdentifier.endsWith('/index.astro') || pathIdentifier.endsWith('/index.json'))
     ? (pathIdentifier.split('/').slice(-2, -1)[0] || 'home')
-    : pathIdentifier.split('/').pop().replace(/\.astro$/, '') || 'home';
+    : pathIdentifier.split('/').pop().replace(/\.(astro|json)$/, '') || 'home';
 
   const isJsonFile = pathIdentifier.endsWith('.json');
   const isTestFile = pathIdentifier.startsWith('src/pages/json-preview/') && pathIdentifier.endsWith('.astro');
@@ -590,22 +590,30 @@ export default function ContentEditorPage(props) {
         // This code now runs if:
         // 1. No local draft was found.
         // 2. A local draft was found but was empty, invalid, or corrupted.
-        console.log('[CEP-useEffect] No valid local draft. Fetching from repository...');
+        console.log('[CEP-useEffect] No valid local draft. Fetching from repository using full path...');
         const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
         try {
-          const url = `/api/page-json?repo=${encodeURIComponent(repo)}&slug=${encodeURIComponent(pageId)}`;
+          // JULES' FIX - STEP 2.4: Use the correct, path-based API endpoint, not the slug-based one.
+          // This ensures we are fetching the exact file clicked in the explorer.
+          const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(pathIdentifier)}`;
           console.log('[CEP-useEffect] Fetching from URL:', url);
-          const pageJson = await fetchJson(url);
-          console.log('[CEP-useEffect] Successfully fetched JSON data.');
+          const fileData = await fetchJson(url);
+          console.log('[CEP-useEffect] Successfully fetched file data.');
+
+          // The get-file-content endpoint returns base64 content, so we must decode it.
+          const binaryString = atob(fileData.content || '');
+          const decodedContent = decodeURIComponent(escape(binaryString));
+          const pageJson = JSON.parse(decodedContent);
+
           const fetchedSections = pageJson.sections || getDefaultSections();
           setSections(fetchedSections);
 
-          // Save fetched content as the initial draft so sync can find it
+          // Save fetched content as the initial draft
           const draftPayload = {
             slug: pageId,
             meta: pageJson.meta || { title: pageId },
             sections: fetchedSections,
-            path: filePathRef.current,
+            path: pathIdentifier, // Use the correct pathIdentifier
             savedAt: new Date().toISOString()
           };
           localStorage.setItem(draftKey, JSON.stringify(draftPayload));
