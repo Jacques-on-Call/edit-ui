@@ -11,6 +11,11 @@ Date Reported
 Priority
 Target Module
 Status
+BUG-008-260106
+2026-01-06
+P1: Critical
+cloudflare-worker-src/routes/auth.js
+[FIXED]
 BUG-007-260105
 2026-01-05
 P1: Critical
@@ -399,3 +404,10 @@ This was moved from Get to root then to Discover it’s only visible in root wit
 - **Status:** [NEW]
 ---
 
+### BUG-008-260106 (Worker Crash on Login): The worker was throwing a critical exception during the OAuth callback, preventing all users from logging in.
+💥 [BUG-008] Worker Crash on Login
+Issue: Worker throws `Cannot read properties of undefined (reading 'put')` during OAuth callback.
+Status: [FIXED]
+| Date | Agent | Solution | Justification |
+|---|---|---|---|
+| 2026-01-06 | Jules | Refactored the authentication flow to be a pure, cookie-only system. | The root cause was a missing `SESSIONS` KV namespace binding in `wrangler.toml`. Instead of adding the binding, the more robust solution was to remove the KV dependency entirely. The worker now sets the GitHub access token directly in the `gh_session` cookie, which is then validated by the `withAuth` middleware. This simplifies the architecture and removes a point of failure. |

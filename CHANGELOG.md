@@ -1,5 +1,10 @@
 # Project Change Log
 
+## [Unreleased] - 2026-01-06
+### Fixed
+- **Authentication (BUG-008):** Resolved a critical worker crash (`Cannot read properties of undefined (reading 'put')`) that occurred during the OAuth callback. The root cause was a missing `SESSIONS` KV namespace binding in `wrangler.toml`.
+  - **Solution:** The authentication flow was refactored to be a pure, cookie-only system. The worker now sets the GitHub access token directly in the `gh_session` cookie, removing the dependency on the KV store entirely and resolving the crash.
+
 ## [Unreleased] - 2026-01-05
 ### Fixed
 - **Architectural (BUG-007):** Resolved the critical "Hollow Link" bug where files would open with no content and folders would not navigate.
