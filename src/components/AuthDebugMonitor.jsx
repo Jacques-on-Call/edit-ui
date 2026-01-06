@@ -1,49 +1,72 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
-import { Terminal, Trash2, Download, Search, Pause, Play, Maximize2, Minimize2, Bug } from 'lucide-preact';
+import { Terminal, Trash2, Download, Search, Pause, Play, Maximize2, Minimize2, Bug, Globe, Cpu, Shield, Database, ChevronRight, ChevronDown, Settings } from 'lucide-preact';
 
 /**
- * # AuthDebugMonitor
+ * # AuthDebugMonitor (Enhanced)
  *
  * A draggable, persistent, on-screen debug monitor for tracking application state,
- * API calls, authentication flow, and more.
- *
- * ## How to Use
- *
- * This component, when rendered, exposes a global object: `window.authDebug`.
- * You can use this object anywhere in the application to log messages to the monitor.
- *
- * ### Logging Methods:
- *
- * - `window.authDebug.log(category, message, data)`: For general information.
- * - `window.authDebug.error(category, message, data)`: For errors.
- * - `window.authDebug.warn(category, message, data)`: For warnings.
- * - `window.authDebug.success(category, message, data)`: For success events.
- *
- * ### Specialized Logging Methods:
- *
- * - `window.authDebug.auth(step, data)`: Log an authentication step (e.g., 'GitHub Callback Received').
- * - `window.authDebug.api(method, url, status, data)`: Log an API call. Automatically hooked into `fetch`.
- * - `window.authDebug.storage(action, key, value)`: Log localStorage actions. Automatically hooked.
- * - `window.authDebug.worker(message, data)`: Log messages from a Web Worker context.
- * - `window.authDebug.route(from, to)`: Log a frontend route change.
- * - `window.authDebug.state(component, newState)`: Log a component state change.
- *
- * ## Automatic Interception
- *
- * - **Fetch API:** All `fetch` requests are automatically logged, including method, URL, status, and response body.
- * - **LocalStorage:** `setItem` and `removeItem` calls are automatically logged.
+ * API calls, authentication flow, and more. Now with deep tracing capabilities.
  */
 const AuthDebugMonitor = () => {
     const [logs, setLogs] = useState([]);
     const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
     const [isPaused, setIsPaused] = useState(false);
-    const [isMinimized, setIsMinimized] = useState(true); // Start minimized
+    const [isMinimized, setIsMinimized] = useState(true);
+    const [expandedLogIds, setExpandedLogIds] = useState(new Set());
+    const [showExportMenu, setShowExportMenu] = useState(false);
+    const [exportOptions, setExportOptions] = useState({
+        console: true,
+        network: true,
+        auth: true,
+        system: true,
+        resources: true
+    });
+
     const logEndRef = useRef(null);
 
-    // Effect for setting up global helpers and interceptors
+    // --- Helpers ---
+
+    const sanitizeHeaders = (headers) => {
+        const sanitized = {};
+        if (!headers) return sanitized;
+        
+        // Handle Headers object or plain object
+        const entries = headers.entries ? Array.from(headers.entries()) : Object.entries(headers);
+        
+        entries.forEach(([key, value]) => {
+            if (key.toLowerCase().includes('auth') || key.toLowerCase().includes('cookie') || key.toLowerCase().includes('token')) {
+                sanitized[key] = '[REDACTED]';
+            } else {
+                sanitized[key] = value;
+            }
+        });
+        return sanitized;
+    };
+
+    const getSystemInfo = () => {
+        return {
+            userAgent: navigator.userAgent,
+            viewport: `${window.innerWidth}x${window.innerHeight}`,
+            language: navigator.language,
+            cookies: document.cookie ? 'Present (Redacted)' : 'None',
+            time: new Date().toISOString(),
+            referrer: document.referrer
+        };
+    };
+
+    const toggleExpand = (id) => {
+        setExpandedLogIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    // Effect for setting up global helpers, interceptors, and system logging
     useEffect(() => {
-        // Load persisted logs from localStorage
+        // Load persisted logs
         const savedLogs = localStorage.getItem('auth_debug_logs');
         if (savedLogs) {
             try {
@@ -52,6 +75,28 @@ const AuthDebugMonitor = () => {
                 console.error('Failed to parse saved logs:', e);
             }
         }
+
+        const addLog = (level, category, message, data) => {
+            const newLog = {
+                id: Date.now() + Math.random(),
+                timestamp: new Date().toISOString(),
+                level,
+                category,
+                message,
+                data: data ? (typeof data === 'string' ? data : JSON.stringify(data, null, 2)) : null,
+                url: window.location.href
+            };
+
+            setLogs(prev => {
+                const updated = [...prev, newLog];
+                const trimmed = updated.slice(-1000); 
+                localStorage.setItem('auth_debug_logs', JSON.stringify(trimmed));
+                return trimmed;
+            });
+        };
+
+        // --- Log Initial System Info ---
+        addLog('info', 'SYSTEM', 'Monitor Initialized', getSystemInfo());
 
         // --- Global Debug Object ---
         window.authDebug = {
@@ -62,11 +107,13 @@ const AuthDebugMonitor = () => {
             warn: (category, message, data = null) => addLog('warn', category, message, data),
             success: (category, message, data = null) => addLog('success', category, message, data),
             auth: (step, data = null) => addLog('info', 'AUTH', step, data),
-            api: (method, url, status, data = null) => addLog(status >= 400 ? 'error' : 'info', 'API', `${method} ${url} [${status}]`, data),
+            api: (method, url, status, data = null, duration = 0) => 
+                addLog(status >= 400 ? 'error' : 'info', 'API', `${method} ${url} [${status}] ${duration}ms`, data),
             storage: (action, key, value = null) => addLog('info', 'STORAGE', `${action}: ${key}`, value),
             worker: (message, data = null) => addLog('info', 'WORKER', message, data),
             route: (from, to) => addLog('info', 'ROUTE', `${from} → ${to}`),
-            state: (component, newState) => addLog('info', 'STATE', component, newState)
+            state: (component, newState) => addLog('info', 'STATE', component, newState),
+            system: (info) => addLog('info', 'SYSTEM', 'System Info Snapshot', info)
         };
 
         // --- Interceptors ---
@@ -74,29 +121,68 @@ const AuthDebugMonitor = () => {
         window.fetch = async (...args) => {
             const [url, options] = args;
             const method = options?.method || 'GET';
+            const startTime = performance.now();
+            const reqHeaders = sanitizeHeaders(options?.headers || {});
 
-            if (!isPaused) window.authDebug.log('API', `→ ${method} ${url}`, options);
+            if (!isPaused) window.authDebug.log('API', `→ ${method} ${url}`, { headers: reqHeaders });
 
             try {
-                // The original implementation was missing the second argument `options`,
-                // which includes critical settings like `credentials: 'include'`.
                 const response = await originalFetch(...args);
-                const clonedResponse = response.clone();
-
-                try {
-                    const data = await clonedResponse.json();
-                    if (!isPaused) window.authDebug.api(method, url.toString(), response.status, data);
-                } catch {
-                    if (!isPaused) window.authDebug.api(method, url.toString(), response.status, 'Non-JSON response');
+                const duration = Math.round(performance.now() - startTime);
+                
+                // Check for specific Worker Debug Headers
+                const workerLogs = response.headers.get('X-Worker-Logs') || response.headers.get('X-Debug-Log');
+                if (workerLogs) {
+                    window.authDebug.worker('Log from Backend', workerLogs);
                 }
+
+                const clonedResponse = response.clone();
+                const resHeaders = sanitizeHeaders(clonedResponse.headers);
+
+                let data;
+                try {
+                    data = await clonedResponse.json();
+                } catch {
+                    data = await clonedResponse.text(); // Fallback to text if JSON fails
+                }
+
+                const logData = {
+                    requestHeaders: reqHeaders,
+                    responseHeaders: resHeaders,
+                    body: data
+                };
+
+                if (!isPaused) window.authDebug.api(method, url.toString(), response.status, logData, duration);
 
                 return response;
             } catch (error) {
-                if (!isPaused) window.authDebug.error('API', `✗ ${method} ${url}`, error.message);
+                const duration = Math.round(performance.now() - startTime);
+                if (!isPaused) window.authDebug.error('API', `✗ ${method} ${url} (Failed after ${duration}ms)`, error.message);
                 throw error;
             }
         };
 
+        // --- Resource Timing Observer ---
+        // Captures static resources like scripts, images, etc.
+        const observer = new PerformanceObserver((list) => {
+            if (isPaused) return;
+            list.getEntries().forEach((entry) => {
+                // Filter out fetch/xmlhttprequest as they are handled by the fetch interceptor
+                if (['fetch', 'xmlhttprequest'].includes(entry.initiatorType)) return;
+                
+                addLog('info', 'RESOURCE', `${entry.name.split('/').pop()}`, {
+                    type: entry.initiatorType,
+                    duration: `${Math.round(entry.duration)}ms`,
+                    size: entry.transferSize
+                });
+            });
+        });
+        
+        try {
+            observer.observe({ entryTypes: ['resource'] });
+        } catch (e) {
+            console.warn('PerformanceObserver not supported for resources');
+        }
 
         const originalSetItem = Storage.prototype.setItem;
         const originalRemoveItem = Storage.prototype.removeItem;
@@ -115,39 +201,22 @@ const AuthDebugMonitor = () => {
             return originalRemoveItem.call(this, key);
         };
 
-        // Cleanup function
+        // Cleanup
         return () => {
             window.fetch = originalFetch;
             Storage.prototype.setItem = originalSetItem;
             Storage.prototype.removeItem = originalRemoveItem;
+            observer.disconnect();
             delete window.authDebug;
         };
-    }, [isPaused]); // Rerun if isPaused changes to re-hook console logs
+    }, [isPaused]); 
 
-    const addLog = (level, category, message, data) => {
-        const newLog = {
-            id: Date.now() + Math.random(),
-            timestamp: new Date().toISOString(),
-            level,
-            category,
-            message,
-            data: data ? JSON.stringify(data, null, 2) : null,
-            url: window.location.href
-        };
-
-        setLogs(prev => {
-            const updated = [...prev, newLog];
-            const trimmed = updated.slice(-1000); // Keep last 1000 logs
-            localStorage.setItem('auth_debug_logs', JSON.stringify(trimmed));
-            return trimmed;
-        });
-    };
-
+    // Scroll to bottom
     useEffect(() => {
-        if (!isPaused) {
+        if (!isPaused && !expandedLogIds.size) { // Don't auto-scroll if user is inspecting details
             logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [logs, isPaused]);
+    }, [logs, isPaused, expandedLogIds]);
 
     const clearLogs = () => {
         setLogs([]);
@@ -155,14 +224,25 @@ const AuthDebugMonitor = () => {
     };
 
     const exportLogs = () => {
-        const dataStr = JSON.stringify(logs, null, 2);
+        // Filter based on checkboxes
+        const logsToExport = logs.filter(log => {
+            if (!exportOptions.console && log.level === 'info' && !['AUTH', 'API', 'SYSTEM', 'RESOURCE'].includes(log.category)) return false;
+            if (!exportOptions.network && log.category === 'API') return false;
+            if (!exportOptions.auth && log.category === 'AUTH') return false;
+            if (!exportOptions.system && log.category === 'SYSTEM') return false;
+            if (!exportOptions.resources && log.category === 'RESOURCE') return false;
+            return true;
+        });
+
+        const dataStr = JSON.stringify(logsToExport, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `auth-debug-${new Date().toISOString()}.json`;
+        link.download = `debug-trace-${new Date().toISOString()}.json`;
         link.click();
         URL.revokeObjectURL(url);
+        setShowExportMenu(false);
     };
 
     const filteredLogs = logs.filter(log => {
@@ -179,12 +259,14 @@ const AuthDebugMonitor = () => {
     };
 
     const categoryColors = {
-        AUTH: 'bg-purple-900',
-        API: 'bg-blue-900',
-        STORAGE: 'bg-orange-900',
-        WORKER: 'bg-teal-900',
-        ROUTE: 'bg-indigo-900',
-        STATE: 'bg-pink-900'
+        AUTH: 'bg-purple-900 text-purple-100',
+        API: 'bg-blue-900 text-blue-100',
+        STORAGE: 'bg-orange-900 text-orange-100',
+        WORKER: 'bg-teal-900 text-teal-100',
+        ROUTE: 'bg-indigo-900 text-indigo-100',
+        STATE: 'bg-pink-900 text-pink-100',
+        SYSTEM: 'bg-gray-700 text-gray-100',
+        RESOURCE: 'bg-cyan-900 text-cyan-100'
     };
 
     // Minimized state view
@@ -192,7 +274,7 @@ const AuthDebugMonitor = () => {
         return (
             <button
                 onClick={() => setIsMinimized(false)}
-                className="fixed bottom-5 right-5 bg-bark-blue text-white p-3 rounded-full shadow-lg hover:bg-opacity-90 transition-transform transform hover:scale-110 z-50"
+                className="fixed bottom-5 right-5 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-opacity-90 transition-transform transform hover:scale-110 z-50"
                 title="Open Debug Monitor"
             >
                 <Bug className="w-6 h-6" />
@@ -203,8 +285,8 @@ const AuthDebugMonitor = () => {
     // Expanded state view
     return (
         <div
-            className="fixed bottom-5 right-5 bg-gray-900 text-gray-100 rounded-lg shadow-2xl border border-gray-700 font-mono text-sm z-50 w-[600px] max-w-[90vw] flex flex-col"
-            style={{ maxHeight: '70vh' }}
+            className="fixed bottom-5 right-5 bg-gray-900 text-gray-100 rounded-lg shadow-2xl border border-gray-700 font-mono text-sm z-50 w-[800px] max-w-[95vw] flex flex-col"
+            style={{ height: '600px', maxHeight: '80vh' }}
         >
             {/* Header */}
             <div className="flex items-center justify-between p-3 bg-gray-800 rounded-t-lg border-b border-gray-700 flex-shrink-0">
@@ -214,6 +296,9 @@ const AuthDebugMonitor = () => {
                     <span className="text-xs text-gray-500">({filteredLogs.length} logs)</span>
                 </div>
                 <div className="flex gap-2">
+                     <button onClick={() => window.authDebug.system(getSystemInfo())} className="p-1 hover:bg-gray-700 rounded" title="Log System Info">
+                        <Cpu className="w-4 h-4" />
+                    </button>
                     <button onClick={() => setIsPaused(!isPaused)} className="p-1 hover:bg-gray-700 rounded" title={isPaused ? 'Resume' : 'Pause'}>
                         {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
                     </button>
@@ -239,12 +324,42 @@ const AuthDebugMonitor = () => {
                     <button onClick={clearLogs} className="px-3 py-1 bg-red-900 hover:bg-red-800 rounded flex items-center gap-1 text-xs" title="Clear logs">
                         <Trash2 className="w-3 h-3" /> Clear
                     </button>
-                    <button onClick={exportLogs} className="px-3 py-1 bg-green-900 hover:bg-green-800 rounded flex items-center gap-1 text-xs" title="Export logs">
-                        <Download className="w-3 h-3" /> Export
-                    </button>
+                    
+                    <div className="relative">
+                        <button 
+                            onClick={() => setShowExportMenu(!showExportMenu)} 
+                            className="px-3 py-1 bg-green-900 hover:bg-green-800 rounded flex items-center gap-1 text-xs" 
+                            title="Export options"
+                        >
+                            <Download className="w-3 h-3" /> Export
+                        </button>
+                        
+                        {showExportMenu && (
+                            <div className="absolute right-0 top-full mt-1 bg-gray-800 border border-gray-600 rounded shadow-xl p-2 w-48 z-50">
+                                <div className="text-xs font-bold mb-2 text-gray-400">Include in Export:</div>
+                                {Object.keys(exportOptions).map(opt => (
+                                    <label key={opt} className="flex items-center gap-2 text-xs mb-1 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={exportOptions[opt]} 
+                                            onChange={(e) => setExportOptions(p => ({...p, [opt]: e.target.checked}))}
+                                        />
+                                        <span className="capitalize">{opt}</span>
+                                    </label>
+                                ))}
+                                <button 
+                                    onClick={exportLogs}
+                                    className="mt-2 w-full bg-blue-600 hover:bg-blue-500 py-1 rounded text-xs"
+                                >
+                                    Download JSON
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
+                
                 <div className="flex gap-1 text-xs flex-wrap">
-                    {['all', 'info', 'error', 'warn', 'success', 'AUTH', 'API', 'STORAGE', 'WORKER', 'ROUTE', 'STATE'].map(f => (
+                    {['all', 'info', 'error', 'warn', 'success', 'AUTH', 'API', 'SYSTEM', 'RESOURCE'].map(f => (
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
@@ -257,22 +372,45 @@ const AuthDebugMonitor = () => {
             </div>
 
             {/* Logs */}
-            <div className="overflow-y-auto p-3 space-y-2 flex-grow">
+            <div className="overflow-y-auto p-3 space-y-2 flex-grow bg-black/20">
                 {filteredLogs.length === 0 ? (
                     <div className="text-gray-500 text-center py-8">
                         No logs yet. Use window.authDebug.log() to start logging.
                     </div>
                 ) : (
                     filteredLogs.map(log => (
-                        <div key={log.id} className="border-l-2 border-gray-700 pl-3 py-1 hover:bg-gray-800/50">
-                            <div className="flex items-start gap-2 text-xs">
-                                <span className="text-gray-500 whitespace-nowrap">{new Date(log.timestamp).toLocaleTimeString()}</span>
-                                <span className={`px-2 py-0.5 rounded text-xs text-white ${categoryColors[log.category] || 'bg-gray-700'}`}>{log.category}</span>
-                                <span className={levelColors[log.level]}>{log.level.toUpperCase()}</span>
+                        <div key={log.id} className="border-l-2 border-gray-700 pl-3 py-1 hover:bg-gray-800/50 group">
+                            <div className="flex items-center gap-2 text-xs cursor-pointer" onClick={() => toggleExpand(log.id)}>
+                                <span className="text-gray-500 whitespace-nowrap font-mono">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${categoryColors[log.category] || 'bg-gray-700'}`}>{log.category}</span>
+                                <span className={`flex-1 ${levelColors[log.level]} truncate`}>{log.message}</span>
+                                {log.data && (
+                                    <span className="text-gray-600 hover:text-white">
+                                        {expandedLogIds.has(log.id) ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                                    </span>
+                                )}
                             </div>
-                            <div className="mt-1 text-gray-300 break-words">{log.message}</div>
-                            {log.data && (
-                                <pre className="mt-1 p-2 bg-gray-950 rounded text-xs overflow-x-auto text-gray-400">{log.data}</pre>
+                            
+                            {/* Expanded Details */}
+                            {log.data && expandedLogIds.has(log.id) && (
+                                <div className="mt-2 ml-4">
+                                    <div className="bg-gray-950 p-2 rounded text-xs border border-gray-800 overflow-x-auto">
+                                        <pre className="text-gray-300 font-mono text-[10px] leading-tight">
+                                            {log.data}
+                                        </pre>
+                                    </div>
+                                    <div className="mt-1 flex gap-2">
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigator.clipboard.writeText(log.data);
+                                            }}
+                                            className="text-[10px] text-blue-400 hover:underline"
+                                        >
+                                            Copy JSON
+                                        </button>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     ))
