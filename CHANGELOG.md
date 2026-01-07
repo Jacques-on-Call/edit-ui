@@ -1,5 +1,14 @@
 # Project Change Log
 
+## [Unreleased] - 2026-01-07
+### Fixed
+- **Debugging (SNAG-009):** Enabled the `AuthDebugMonitor` component in all environments. Previously, it was conditionally rendered only in development mode (`import.meta.env.DEV`), which prevented critical debugging of authentication issues in production. The component now renders unconditionally but remains minimized by default to avoid impacting the user experience. This allows developers to access detailed network and auth logs in any environment.
+
+### Reflection
+- **What was the most challenging part of this task?** The main challenge was navigating the known instability of the Playwright test environment. Following the established project protocols for dependency installation (`npm install`, `npx playwright install`, `npx playwright install-deps`) was critical to getting a clean test run.
+- **What was a surprising discovery or key learning?** The project has a very mature and explicit set of instructions for agents in `AGENTS.md` and the various `README.md` files. Reading these documents thoroughly before starting work was essential and made the process much smoother.
+- **What advice would you give the next agent who works on this code?** Trust the documentation. If a step seems redundant, do it anyway. The protocols are in place because of lessons learned from past environmental issues. Also, when adding a verification test, creating a small, targeted `spec.js` file is much more efficient than trying to modify the existing, larger test suites.
+
 ## [Unreleased] - 2026-01-06
 ### Fixed
 - **Authentication (BUG-008):** Resolved a critical worker crash (`Cannot read properties of undefined (reading 'put')`) that occurred during the OAuth callback. The root cause was a missing `SESSIONS` KV namespace binding in `wrangler.toml`.
