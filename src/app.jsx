@@ -11,7 +11,6 @@ import { CallbackPage } from './pages/CallbackPage';
 import AuthDebugMonitor from './components/AuthDebugMonitor';
 import { BottomToolbar } from './components/BottomToolbar';
 import SearchBar from './components/SearchBar';
-import { FloatingLogButton } from './components/DebugLogButton.jsx';
 import { useEffect } from 'preact/hooks';
 
 const AppContent = () => {
@@ -94,9 +93,7 @@ const AppContent = () => {
       </div>
 
       {/* Debug tools are rendered at the root, outside the main layout wrapper */}
-      <FloatingLogButton />
-      {/* CRITICAL FIX: AuthDebugMonitor now renders in ALL environments, not just DEV */}
-      {/* It starts minimized by default, so it won't interfere with production UX */}
+      {/* FloatingLogButton removed - AuthDebugMonitor provides superior functionality */}
       <AuthDebugMonitor />
     </>
   );
