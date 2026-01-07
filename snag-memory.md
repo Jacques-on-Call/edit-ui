@@ -61,3 +61,11 @@
 *   **Successful Solution**: Modified `easy-seo/src/app.jsx` to unconditionally render the `<AuthDebugMonitor />` component, removing the `{import.meta.env.DEV}` check that previously restricted it to development mode.
 *   **Why it Succeeded**: The component is designed to be production-safe, starting in a minimized state by default. This change makes its powerful debugging capabilities (fetch interception, global logging) available in any environment without disrupting the user experience, directly addressing the need for better production diagnostics.
 *   **Verification**: **SUCCESS.** Despite previous environment instability, a full verification was performed. A new, targeted Playwright test (`tests/auth-debug-monitor.spec.js`) was created to assert that the monitor's trigger button was visible on the page. The test passed successfully, confirming the fix.
+
+### [2026-01-07] SNAG-010-27-01-07: Add Diagnostic Logging to Worker
+*   **Agent:** Snag 🛠️
+*   **Status:** [COMPLETED]
+*   **Goal:** Add detailed logging to the Cloudflare Worker to diagnose the root cause of "401 Bad credentials" errors when fetching file content.
+*   **Successful Solution**: Injected `console.log` statements into the `handleGetFileContentRequest` function in `cloudflare-worker-src/routes/content.js`. These logs will report whether the `env.GITHUB_TOKEN` is present and whether a user-specific token is being received from the authentication cookie.
+*   **Why it Succeeded**: This provides crucial, real-time visibility into the worker's environment. Combined with the user setting the secrets in the Cloudflare Pages environment, this will allow us to see exactly which token is being used (or not used) for GitHub API calls, pinpointing the source of the authentication failure.
+*   **Verification**: The change is a non-breaking addition of logging statements. The code was inspected for correctness. Final verification will come from observing the logs in the Cloudflare dashboard after deployment.
