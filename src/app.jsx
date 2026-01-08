@@ -1,4 +1,4 @@
-// easy-seo/src/app. jsx
+// easy-seo/src/app.jsx
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { HeaderProvider, useHeader } from './contexts/HeaderContext';
 import { theme } from './themes/theme';
@@ -23,7 +23,7 @@ const AppContent = () => {
 
   useEffect(() => {
     if (isEditorLayout || isExplorerLayout) {
-      document.body. classList.add('noscroll');
+      document.body.classList.add('noscroll');
     } else {
       document.body.classList.remove('noscroll');
     }
@@ -68,8 +68,8 @@ const AppContent = () => {
         }}
       >
         {! isEditorLayout && (
-          <header className={isExplorerLayout ? 'relative z-10 flex-shrink-0 p-6 md: p-10 flex justify-between items-center h-24' :  'flex justify-between items-center pb-8 h-16'}>
-            {isExplorerLayout ?  <SearchBar onSearch={setSearchQuery} /> :  headerContent}
+          <header className={isExplorerLayout ? 'relative z-10 flex-shrink-0 p-6 md:p-10 flex justify-between items-center h-24' : 'flex justify-between items-center pb-8 h-16'}>
+            {isExplorerLayout ?  <SearchBar onSearch={setSearchQuery} /> : headerContent}
           </header>
         )}
 

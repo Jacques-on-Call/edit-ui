@@ -130,31 +130,55 @@ const AuthDebugMonitor = () => {
                 const response = await originalFetch(...args);
                 const duration = Math.round(performance.now() - startTime);
                 
-                // Check for specific Worker Debug Headers
+                // 🔥 CRITICAL FIX: Clone IMMEDIATELY before any operations
+                const clonedResponse = response.clone();
+
+                // Check for specific Worker Debug Headers (read from ORIGINAL, doesn't consume body)
                 const workerLogs = response.headers.get('X-Worker-Logs') || response.headers.get('X-Debug-Log');
                 if (workerLogs) {
                     window.authDebug.worker('Log from Backend', workerLogs);
                 }
 
-                const clonedResponse = response.clone();
+                // Sanitize headers from clone (doesn't consume body)
                 const resHeaders = sanitizeHeaders(clonedResponse.headers);
 
-                let data;
-                try {
-                    data = await clonedResponse.json();
-                } catch {
-                    data = await clonedResponse.text(); // Fallback to text if JSON fails
+                // 🔥 CRITICAL:  Read body asynchronously in background, don't block return
+                if (!isPaused) {
+                    // Use setTimeout to avoid blocking the response return
+                    setTimeout(async () => {
+                        try {
+                            let data;
+                            try {
+                                // Clone again for this async operation to avoid conflicts
+                                const logClone = clonedResponse.clone();
+                                data = await logClone.json();
+                            } catch {
+                                const logClone = clonedResponse.clone();
+                                data = await logClone.text();
+                            }
+
+                            const logData = {
+                                requestHeaders: reqHeaders,
+                                responseHeaders: resHeaders,
+                                body: data
+                            };
+
+                            window.authDebug.api(method, url.toString(), response.status, logData, duration);
+                        } catch (err) {
+                            // If logging fails, don't crash the app
+                            console.warn('[AuthDebugMonitor] Failed to log response body:', err);
+                            window.authDebug.api(method, url.toString(), response.status, {
+                                requestHeaders: reqHeaders,
+                                responseHeaders: resHeaders,
+                                body: '[Body could not be read]'
+                            }, duration);
+                        }
+                    }, 0);
                 }
 
-                const logData = {
-                    requestHeaders: reqHeaders,
-                    responseHeaders: resHeaders,
-                    body: data
-                };
-
-                if (!isPaused) window.authDebug.api(method, url.toString(), response.status, logData, duration);
-
+                // 🔥 CRITICAL: Return response IMMEDIATELY, don't wait for logging
                 return response;
+
             } catch (error) {
                 const duration = Math.round(performance.now() - startTime);
                 if (!isPaused) window.authDebug.error('API', `✗ ${method} ${url} (Failed after ${duration}ms)`, error.message);

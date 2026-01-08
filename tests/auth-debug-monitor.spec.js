@@ -1,13 +1,16 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('AuthDebugMonitor', () => {
-  test('should be present in the DOM in production mode', async ({ page }) => {
-    // Navigate to the root of the app
-    await page.goto('/');
+test.describe('Auth Debug Monitor', () => {
+    test.beforeEach(async ({ page }) => {
+        // Navigate to the app (assuming root renders the monitor)
+        await page.goto('/');
+    });
 
-    // The AuthDebugMonitor, when minimized, should render a button
-    // with the title "Open Debug Monitor".
-    const monitorButton = page.getByTitle('Open Debug Monitor');
+    test('monitor is present and minimized by default', async ({ page }) => {
+        // Check for the minimized bug icon
+        const bugIcon = page.locator('button[title="Open Debug Monitor"]');
+        await expect(bugIcon).toBeVisible();
+    });
 
     test('can expand monitor and see logs', async ({ page }) => {
         // Click to expand
