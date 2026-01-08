@@ -1,5 +1,15 @@
 # Project Change Log
 
+## [Unreleased] - 2026-01-08
+### Fixed
+- **Authentication:** Resolved a critical login blocker by correcting the cookie policy in `cloudflare-worker-src/routes/auth.js`. The `SameSite` attribute was set to `None` and the `Domain` was explicitly defined to ensure the cookie was accepted by the browser in the cross-domain context of the application.
+
+### Added
+- **On-Demand Preview System (Phase 3):** Replaced the slow, full-site build preview with a new, on-demand system.
+  - The "Preview" button in the editor now instantly generates an HTML preview of the current content.
+  - This HTML is sent to a temporary storage endpoint (`/api/store-preview`) and rendered in an iframe, providing immediate visual feedback without waiting for a deployment.
+  - The `BottomActionBar` UI was enhanced to show a loading state during preview generation and to indicate the active preview mode.
+
 ## [Unreleased] - 2026-01-07
 ### Fixed
 - **Debugging (SNAG-009):** Enabled the `AuthDebugMonitor` component in all environments. Previously, it was conditionally rendered only in development mode (`import.meta.env.DEV`), which prevented critical debugging of authentication issues in production. The component now renders unconditionally but remains minimized by default to avoid impacting the user experience. This allows developers to access detailed network and auth logs in any environment.

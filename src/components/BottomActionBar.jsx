@@ -45,6 +45,10 @@ const BottomActionBar = memo((props) => {
 
   // Determine preview button icon based on current view mode
   const renderPreviewIcon = () => {
+    // If the preview is building, show a spinner.
+    if (previewState === 'building') {
+      return <RefreshCw size={28} className="animate-spin" />;
+    }
     if (viewMode === 'editor') {
       return <Eye size={28} className={needsDeployment ? 'text-orange-500' : ''} />;
     }
@@ -53,6 +57,9 @@ const BottomActionBar = memo((props) => {
 
   // Get accessible label for preview button
   const getPreviewLabel = () => {
+    if (previewState === 'building') {
+      return 'Generating Preview...';
+    }
     if (viewMode === 'editor') {
       return needsDeployment ? 'Setup Deployment' : 'Preview';
     }
@@ -97,8 +104,9 @@ const BottomActionBar = memo((props) => {
             e.stopPropagation();
             onPreview(e);
           }}
-          className="bar-btn relative"
+          className={`bar-btn relative ${isInPreviewMode ? 'bg-blue-600 text-white' : ''}`}
           aria-label={getPreviewLabel()}
+          disabled={previewState === 'building'}
         >
           {renderPreviewIcon()}
         </button>

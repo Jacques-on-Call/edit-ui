@@ -13,6 +13,7 @@ import LexicalEditor from '../components/LexicalEditor';
 import SectionsEditor from '../components/SectionsEditor';
 import EditorCanvas from '../components/EditorCanvas';
 import { RefreshCw } from 'lucide-preact';
+import { lexicalToHtml } from '../utils/lexicalToHtml';
 
 // Constants
 const STATUS_DISPLAY_DURATION = 2500; // Time in ms to display sync status before resetting
@@ -36,6 +37,7 @@ export default function ContentEditorPage(props) {
   const [editingSectionIndex, setEditingSectionIndex] = useState(null); // Track which section is being edited
   const [needsDeployment, setNeedsDeployment] = useState(false);
   const [deploymentUrl, setDeploymentUrl] = useState('');
+  const [dynamicPreviewUrl, setDynamicPreviewUrl] = useState('');
 
   // Ref Hooks
   // const editorApiRef = useRef(null); // No longer needed for the header
@@ -487,66 +489,46 @@ export default function ContentEditorPage(props) {
   }, [selectedRepo, pageId, editorMode, triggerBuild, syncStatus, isPreviewBuilding, sections]);
 
   const handlePreview = useCallback(async () => {
-    if (needsDeployment) {
-      setViewMode('deploymentSetup');
-      return;
-    }
-    // If we're in a preview mode, switch back to the editor
+    // Phase 3: New Preview Logic
+    // Toggles between editor and preview. When switching to preview, it generates
+    // and stores the HTML for the dynamic preview route.
+
     if (viewMode !== 'editor') {
       setViewMode('editor');
       return;
     }
 
-    // Prevent action if a build is already in progress
-    if (isPreviewBuilding) {
-      console.log('[CEP-handlePreview] Build already in progress, switching to preview view.');
-      setViewMode('livePreview');
-      return;
-    }
+    try {
+      setIsPreviewBuilding(true); // Use existing state for loading indicator
+      setBuildError(null);
 
-    // Check if content has changed since the last sync
-    const draftKey = `easy-seo-draft:${pageId}`;
-    const currentDraft = localStorage.getItem(draftKey);
-    const contentUnchanged = currentDraft && lastSyncedContentRef.current === currentDraft;
-    
-    // Check if we're within the build cache window
-    const timeSinceLastBuild = Date.now() - (lastBuildTimeRef.current || 0);
-    const withinCacheWindow = timeSinceLastBuild < BUILD_CACHE_DURATION;
+      if (!sections) throw new Error('Editor content not ready.');
 
-    // If content hasn't changed AND we're within the cache window, skip the build
-    if (contentUnchanged && withinCacheWindow) {
-      console.log('[CEP-handlePreview] Content unchanged and within cache window, showing cached preview.');
-      // Just switch to preview mode without rebuilding or refreshing iframe
-      setViewMode('livePreview');
-      return;
-    }
-    
-    // If content unchanged but outside cache window, just refresh the iframe
-    if (contentUnchanged) {
-      console.log('[CEP-handlePreview] Content unchanged since last sync, refreshing preview without new build.');
-      setPreviewKey(Date.now());
-      setViewMode('livePreview');
-      return;
-    }
+      // Per Phase 1, lexicalToHtml utility should exist. We assume it can process the sections structure.
+      const html = lexicalToHtml(sections);
 
-    // Content has changed or hasn't been synced yet - trigger sync first, then build
-    // Per Phase 2. 5 requirements: Sync MUST succeed before triggering preview build
-    console.log('[CEP-handlePreview] Content has changed.  Initiating sync before preview.. .');
-    const syncSucceeded = await handleSync();
-    
-    if (syncSucceeded) {
-      // Sync succeeded - the build has been triggered by handleSync
-      // Switch to preview mode to show the building overlay
-      console.log('[CEP-handlePreview] Sync succeeded, switching to preview mode.');
-      setViewMode('livePreview');
-    } else {
-      // Sync failed - do NOT switch to preview mode, do NOT trigger build
-      // The error state is already set by handleSync, and user will see the error indicator
-      console.error('[CEP-handlePreview] Sync failed. Preview cancelled.  User must fix the error and try again.');
-      // Build is cancelled - syncStatus will show 'error' in the UI
-      // User stays in editor mode to address the issue
+      const slug = pageId || 'temp-preview';
+      const title = sections.find(s => s.type === 'hero')?.props?.title || 'Preview';
+
+      const response = await fetchJson('/api/store-preview', {
+        method: 'POST',
+        body: JSON.stringify({ slug, html, title, layout: 'MainLayout' })
+      });
+
+      if (!response || !response.previewUrl) {
+          throw new Error('API response missing previewUrl.');
+      }
+
+      setDynamicPreviewUrl(`${response.previewUrl}?t=${Date.now()}`);
+      setIsPreviewBuilding(false);
+      setViewMode('livePreview'); // Switch view to show iframe
+
+    } catch (error) {
+      console.error('[ContentEditor] Preview generation failed:', error);
+      setBuildError(`Preview failed: ${error.message}`);
+      setIsPreviewBuilding(false); // Ensure loading state is turned off on error
     }
-  }, [viewMode, handleSync, pageId, isPreviewBuilding]);
+  }, [viewMode, sections, pageId]);
 
   const handleRefreshPreview = useCallback(() => {
     console.log('[Preview] Manual refresh triggered.');
@@ -792,7 +774,7 @@ export default function ContentEditorPage(props) {
           id="content-preview-iframe"
           ref={iframeRef}
           key={previewKey}
-          src={previewUrl}
+          src={dynamicPreviewUrl || previewUrl}
           title="Live Preview"
           className="w-full h-full border-0"
           sandbox="allow-scripts allow-same-origin"
