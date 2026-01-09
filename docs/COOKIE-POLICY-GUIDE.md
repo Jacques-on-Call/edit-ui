@@ -1,49 +1,48 @@
 # Cookie Policy Guide
 
-## Session Cookie (`gh_session`)
+## ⚠️ CRITICAL:  Do NOT Change These Without Understanding Why
 
-**Purpose:** Stores the GitHub access token so authenticated API requests can be made from the editor.
+### Session Cookie (`gh_session`)
 
-**Policy:**
+**Purpose**: Stores GitHub access token for authenticated API requests.
 
-```
-SameSite=None; Secure; HttpOnly; Domain=.strategycontent.agency; Path=/; Max-Age=86400
-```
-
-**Why:**
-- `SameSite=None` is required because the OAuth callback is a cross-site redirect from `github.com` to `edit.strategycontent.agency`.
-- `Secure` is mandatory when using `SameSite=None`.
-- `HttpOnly` prevents JavaScript from reading the token.
-- `Domain=.strategycontent.agency` makes the cookie available to the `edit` subdomain.
-- `Path=/` makes it available to all routes.
-- `Max-Age=86400` keeps the session for 24 hours.
-
-## CSRF State Cookie (`gh_oauth_state`)
-
-**Purpose:** Protects the OAuth flow from CSRF attacks by matching the state sent to GitHub with the state received on callback.
-
-**Policy:**
-
-```
-SameSite=None; Secure; HttpOnly; Path=/; Max-Age=600
+**Policy**:
+```javascript
+SameSite=None; Secure; HttpOnly; Domain=edit.strategycontent.agency; Path=/; Max-Age=86400
 ```
 
-**Why:**
-- `SameSite=None` keeps the state cookie available through the GitHub redirect.
-- `Secure` pairs with `SameSite=None`.
-- `HttpOnly` keeps the state value out of client JavaScript.
-- `Path=/` keeps it available to the callback route.
-- `Max-Age=600` expires the state after 10 minutes to limit replay risk.
+**Why Each Attribute**:
+- `SameSite=None`: **REQUIRED** because user is redirected from `github.com` → `edit.strategycontent.agency` (cross-site)
+- `Secure`: **REQUIRED** when using `SameSite=None` (browser policy)
+- `HttpOnly`: Prevents JavaScript access (security)
+- `Domain=edit.strategycontent.agency`: The cookie MUST be scoped to the exact subdomain the application is hosted on. Using a parent domain like `.strategycontent.agency` has been shown to fail.
+- `Path=/`: Available to all routes
+- `Max-Age=86400`: 24-hour expiration
 
-## Common Mistakes to Avoid
+### CSRF State Cookie (`oauth_state`)
 
-- ❌ Using `SameSite=Lax` or omitting the `Domain` for the session cookie — the browser will drop the cookie during the OAuth redirect.
-- ❌ Forgetting `Secure` when `SameSite=None` — modern browsers will reject the cookie.
-- ❌ Leaving the state cookie without an expiry — stale states can create false CSRF failures.
+**Purpose**: Prevents CSRF attacks during OAuth flow.
 
-## How to Test
+**Policy**:
+```javascript
+SameSite=None; Secure; Path=/; Max-Age=600
+```
 
-1. Run `npx playwright test auth-cookie-policy.spec.js`.
-2. After login in the browser, check DevTools → Application → Cookies:
-   - `gh_session` present with Domain `.strategycontent.agency`, SameSite `None`, Secure and HttpOnly flags.
-   - `gh_oauth_state` present during the OAuth redirect with SameSite `None`, Secure, and a short max age.
+**Why `SameSite=None`**:
+This cookie is set when user clicks "Sign in" and must survive the redirect to GitHub and back.  `SameSite=Lax` would block it.
+
+## Common Mistakes
+
+❌ **DO NOT** use `SameSite=Lax` for OAuth cookies.
+❌ **DO NOT** use a parent domain (e.g., `.strategycontent.agency`). The domain must be the exact subdomain (`edit.strategycontent.agency`).
+❌ **DO NOT** forget the `Secure` flag (required with `SameSite=None`).
+
+## Testing Cookie Changes
+
+If you MUST change cookie policy:
+
+1. Run `npx playwright test tests/auth-cookie-verification.spec.js`. This test uses a mocked OAuth flow to validate the cookie policy without needing real credentials.
+2. Make your change.
+3. Run the test again and ensure it passes.
+4. Deploy to production and manually verify in DevTools.
+5. Update this document with the new policy.
