@@ -94,7 +94,7 @@ const AppContent = () => {
 
       {/* Debug tools are rendered at the root, outside the main layout wrapper */}
       {/* FloatingLogButton removed - AuthDebugMonitor provides superior functionality */}
-      <AuthDebugMonitor />
+      {/* <AuthDebugMonitor /> */}
     </>
   );
 };
