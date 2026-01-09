@@ -1,5 +1,18 @@
 # Project Change Log
 
+## [Unreleased] - 2026-01-09
+### Fixed
+- **Authentication Cookie Policy:** Updated `cloudflare-worker-src/routes/auth.js` to set `gh_session` with `SameSite=None`, `Secure`, 24-hour max age, and a `.strategycontent.agency` domain when applicable. The OAuth state cookie now includes a 10-minute max age and shares the same cross-site attributes to survive the GitHub redirect. Logout deletion uses matching attributes and avoids KV dependency crashes.
+
+### Added
+- **Verification:** New Playwright test `tests/auth-cookie-policy.spec.js` to assert required cookie attributes for production hosts and to ensure localhost keeps a relaxed domain policy for development.
+- **Documentation:** Added `docs/COOKIE-POLICY-GUIDE.md` detailing mandatory cookie settings for session and state cookies and how to verify them.
+
+### Reflection
+- **What was the most challenging part of this task?** Reconciling conflicting prior fixes while ensuring the cookie policy worked for both production (cross-site OAuth) and local development without breaking either flow.
+- **What was a surprising discovery or key learning?** The worker code had quietly drifted back to `SameSite=Lax`; a small change in attributes can silently nullify OAuth in modern browsers. Guarding the domain attribute for localhost keeps dev flows intact.
+- **What advice would you give the next agent who works on this code?** Keep cookie attributes centralized and test them with the focused Playwright spec after any auth change. If domains change, update the domain guard first to avoid another silent authentication regression.
+
 ## [Unreleased] - 2026-01-08
 ### Fixed
 - **Authentication:** Resolved a critical login blocker by correcting the cookie policy in `cloudflare-worker-src/routes/auth.js`. The `SameSite` attribute was set to `None` and the `Domain` was explicitly defined to ensure the cookie was accepted by the browser in the cross-domain context of the application.

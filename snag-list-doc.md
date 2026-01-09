@@ -15,7 +15,7 @@ BUG-008-260106
 2026-01-06
 P1: Critical
 cloudflare-worker-src/routes/auth.js
-[FIXED]
+[FIXED - 2026-01-09 - VERIFIED]
 BUG-007-260105
 2026-01-05
 P1: Critical
@@ -53,6 +53,11 @@ easy-seo/src/contexts/LogContext.jsx
 [POTENTIAL LEAK]
 
 ## Detailed Bug Insights:
+### BUG-008-260106 (Authentication Cookie Not Persisting)
+**Status:** [FIXED - 2026-01-09 - VERIFIED]  
+**Fix:** Session cookies now use `SameSite=None`, `Secure`, 24-hour max age, and `.strategycontent.agency` where applicable; OAuth state cookies gain a 10-minute max age and the same cross-site attributes. Logout uses matching attributes to clear the cookie safely.  
+**Verification:** Playwright `tests/auth-cookie-policy.spec.js` asserts required cookie attributes for production hosts and confirms localhost omits the domain for dev.
+
 ### BUG-007-260105 (Hollow Link): Clicking files in the explorer opened the editor with no content, and folders would not navigate. This was a critical pathing failure between the file explorer and the content editor.
 🏛️ [BUG-007] Hollow Link Architectural Failure
 Issue: Files appeared empty in the editor and folders were not opening.

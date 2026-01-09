@@ -65,6 +65,22 @@ See `tests/README.md` for comprehensive testing guide.
 
 ---
 
+## **Bug: OAuth Cookie Dropped After GitHub Redirect**
+
+**Date:** 2026-01-09  
+**Agent:** Snag 🛠️  
+**Symptoms:** After GitHub OAuth, `/api/me` returned `No Cookie header present`; DevTools showed empty cookies and Network logs, and Cloudflare reported `[validateAuth] No Cookie header present`.  
+**Root Cause:** `gh_session` was set with `SameSite=Lax` and no domain, so the browser rejected it on the cross-site redirect. The `gh_oauth_state` cookie lacked an expiry, increasing CSRF mismatch risk.  
+**Fix:**  
+1. Added `getCookieDomain` helper to apply `.strategycontent.agency` only for non-localhost hosts.  
+2. Set `gh_session` to `SameSite=None; Secure; HttpOnly; Path=/; Max-Age=86400` with the domain when applicable.  
+3. Set `gh_oauth_state` to `SameSite=None; Secure; HttpOnly; Path=/; Max-Age=600` with the same domain guard.  
+4. Aligned logout cookie deletion with these attributes and guarded KV deletion to avoid missing-binding crashes.  
+**Verification:** `npx playwright test auth-cookie-policy.spec.js` validates cookie attributes for production hosts and confirms localhost omits the domain to keep dev flows working.  
+**Files:** `cloudflare-worker-src/routes/auth.js`, `easy-seo/tests/auth-cookie-policy.spec.js`, `easy-seo/docs/COOKIE-POLICY-GUIDE.md`.
+
+---
+
 ## **Bug: FloatingToolbar Selection Loop and Never Appearing**
 
 **Date:** 2025-12-08

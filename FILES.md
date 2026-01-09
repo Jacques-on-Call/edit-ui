@@ -31,6 +31,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/lib/mockApi.js`**: A mock API for the content editor, used for fetching and saving page data to `localStorage`.
 -   **`src/lib/imageHelpers.js`**: Helper functions for transforming repository image paths to GitHub raw URLs for editor preview.
 -   **`src/utils/text.js`**: Shared text utility functions, including a `normalize` function for consistent search behavior.
+-   **`docs/COOKIE-POLICY-GUIDE.md`**: Canonical guidance for required cookie attributes for OAuth (`gh_session`) and CSRF state (`gh_oauth_state`) cookies.
 
 ### **Components**
 
@@ -87,6 +88,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`tests/test-utils.js`**: Helper functions and utilities for writing E2E tests.
 -   **`tests/README.md`**: Comprehensive guide for running, debugging, and writing Playwright tests.
 - **`tests/phase3-preview.spec.js`**: A comprehensive Playwright test to verify the on-demand preview system. It runs on both desktop and mobile viewports and mocks all necessary API endpoints to isolate and validate the frontend logic.
+- **`tests/auth-cookie-policy.spec.js`**: Focused Playwright test validating OAuth cookies (`gh_oauth_state`, `gh_session`) for correct SameSite, Secure, Domain, and Max-Age attributes across production and localhost flows.
 
 ### `easy-seo/src/components/SearchBar.jsx`
 - **Change:** Added a clear button to the search input.
