@@ -19,6 +19,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 
 ### **Styling**
 
+-   **`src/components/SlideoutToolbar.css`**: The stylesheet for the **Unified Liquid Rail**. Contains all styling for the translucent "liquid glass" effect, the integrated hamburger menu, and the responsive layout for both compact (icon-only) and expanded states.
 -   **`src/pages/ContentEditorPage.css`**: Contains the responsive styles for the content editor page, including the mobile-first grid layout and drawer animations.
 -   **`src/components/EditorHeader.css`**: DEPRECATED - Previously contained toolbar styles. Merged into editor.css.
 -   **`src/styles/editor.css`**: Comprehensive editor styling including VerticalToolbox, HamburgerTrigger, collapsible category groups, and animations. Includes proper z-index layering and responsive styles.
@@ -91,7 +92,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`tests/README.md`**: Comprehensive guide for running, debugging, and writing Playwright tests.
 -   **`tests/phase3-preview.spec.js`**: A comprehensive Playwright test to verify the on-demand preview system. It runs on both desktop and mobile viewports and mocks all necessary API endpoints to isolate and validate the frontend logic.
 -   **`tests/auth-cookie-policy.spec.js`**: Focused Playwright test validating OAuth cookies (`gh_oauth_state`, `gh_session`) for correct SameSite, Secure, Domain, and Max-Age attributes across production and localhost flows.
--   **`tests/unified-toolbar.spec.js`**: Targeted Playwright test to verify the functionality of the "Unified Liquid Rail" (`SlideoutToolbar.jsx`). It tests both desktop and mobile viewports, and confirms that the toolbar appears correctly on both text selection and hamburger-click triggers.
+-   **`tests/liquid-rail.spec.js`**: Targeted Playwright test to verify the functionality of the "Unified Liquid Rail" (`SlideoutToolbar.jsx`). It tests core functionality and aesthetics, but has a known issue with reliably testing the `active` state of style buttons.
 -   **`easy-seo/src/components/SearchBar.jsx`**:
 - **Change:** Added a clear button to the search input.
 - **Reason:** To improve the user experience of the search functionality, as requested in `[BUG-001]`.

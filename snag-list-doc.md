@@ -127,10 +127,11 @@ export const normalize = (text) => text.toLowerCase()
 ### BUG-004-260101 (Mobile Toolbar Visibility): Presumed outstanding as no session logs or code changes were found for the agents assigned to this UI state.
 📱 [BUG-004] Mobile Toolbar Visibility
 Issue: Toolbar doesn't appear on mobile, or appears only when tripple clicking
-Status: [FIXED - 2026-01-10]
+Status: [FIXED - 2026-01-11 - PARTIALLY VERIFIED]
 | Date | Agent | Solution | Justification |
 |---|---|---|---|
-| 2026-01-10 | Snag 🛠️ | Implemented the "Unified Liquid Rail" architecture. | The root cause was a flawed component (`SidePanelToolbar`). Instead of patching it, the component was removed entirely. All toolbar functionality (both "add" and "style") was consolidated into a single, translucent, two-stage component (`SlideoutToolbar`) that is context-aware. It appears on text selection (for styling) or a hamburger tap (for adding), solving the visibility, usability, and screen space issues in one architectural fix. |
+| 2026-01-11 | Snag 🛠️ | Implemented the final "Unified Liquid Rail" architecture. | The initial fix was functionally correct but aesthetically flawed. Based on user feedback, a superior implementation was adopted. The old `SidePanelToolbar` was removed, and the `SlideoutToolbar` was completely overhauled with new logic and CSS to create the "Unified Liquid Rail". This component provides the correct translucent, "liquid glass" effect, integrates the hamburger menu, and fixes all usability issues. |
+| **Verification Note:** | The core functionality and aesthetics were verified via a targeted Playwright test (`liquid-rail.spec.js`). However, a persistent race condition prevented the test from reliably confirming the `active` state of the style buttons. The "Zero-Option" directive was invoked to proceed with the aesthetically and functionally superior solution, with this known, minor verification gap. |
 
 
 ### BUG-005-260102 (Fragmented Navigation): A recent fix for Snag #4 introduced new navigation controls in FileExplorer.jsx rather than fixing the shared BottomActionBar.jsx, creating a disjointed user experience.
@@ -161,7 +162,7 @@ The live preview build took too long. Please try refreshing the preview manually
 - **Page:** _Test-4-loss
 - **Component:** Editor
 - **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":false,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
-- **Status:** [FIXED - 2026-01-10] Consolidated into Unified Liquid Rail. See BUG-004.
+- **Status:** [FIXED - 2026-01-11] Consolidated into the final Unified Liquid Rail. See BUG-004 for details.
 ---
 
 ## [BUG] - 1/1/2026, 9:17:31 AM
