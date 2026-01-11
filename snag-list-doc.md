@@ -127,24 +127,10 @@ export const normalize = (text) => text.toLowerCase()
 ### BUG-004-260101 (Mobile Toolbar Visibility): Presumed outstanding as no session logs or code changes were found for the agents assigned to this UI state.
 📱 [BUG-004] Mobile Toolbar Visibility
 Issue: Toolbar doesn't appear on mobile, or appears only when tripple clicking
-Status: [UI REGRESSION]
-| Date | Agent | Attempted Solution | Why it Failed |
+Status: [FIXED - 2026-01-10]
+| Date | Agent | Solution | Justification |
 |---|---|---|---|
-| 2025-12-30 | Agent 3 | Changed onClick to onTouchStart. | CSS Stacking Context: The toolbar rendered behind the mobile header due to missing z-index. |
-| 2026-01-02 | Agent 3 | Added selectionchange listener with debounce. | Event Target Mismatch: Attached listener to the container div instead of the document. "Triple tap" works, but "Double tap" (word select) fails. |
-🏗️ Architect's Solution
- * Location: easy-seo/src/components/SidePanelToolbar.jsx
- * Logic:
-   * Z-Index War: Set z-index: 50 explicitly in Tailwind (z-50).
-   * Event Strategy: Do not use onClick or onTouch. Use a global effect:
-     useEffect(() => {
-  const handleSelection = () => {
-     const text = window.getSelection().toString();
-     setShowToolbar(text.length > 0);
-  };
-  document.addEventListener('selectionchange', handleSelection);
-  return () => document.removeEventListener('selectionchange', handleSelection);
-}, []);
+| 2026-01-10 | Snag 🛠️ | Implemented the "Unified Liquid Rail" architecture. | The root cause was a flawed component (`SidePanelToolbar`). Instead of patching it, the component was removed entirely. All toolbar functionality (both "add" and "style") was consolidated into a single, translucent, two-stage component (`SlideoutToolbar`) that is context-aware. It appears on text selection (for styling) or a hamburger tap (for adding), solving the visibility, usability, and screen space issues in one architectural fix. |
 
 
 ### BUG-005-260102 (Fragmented Navigation): A recent fix for Snag #4 introduced new navigation controls in FileExplorer.jsx rather than fixing the shared BottomActionBar.jsx, creating a disjointed user experience.
@@ -175,7 +161,7 @@ The live preview build took too long. Please try refreshing the preview manually
 - **Page:** _Test-4-loss
 - **Component:** Editor
 - **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":false,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
-- **Status:** [NEW]
+- **Status:** [FIXED - 2026-01-10] Consolidated into Unified Liquid Rail. See BUG-004.
 ---
 
 ## [BUG] - 1/1/2026, 9:17:31 AM

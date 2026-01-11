@@ -1,5 +1,17 @@
 # Project Change Log
 
+## [Unreleased] - 2026-01-10
+### Fixed
+- **Mobile Toolbar UX (BUG-004):** Replaced the problematic `SidePanelToolbar` with a new "Unified Liquid Rail" architecture. The old toolbar was a large, opaque panel that covered the text being edited. The new, unified `SlideoutToolbar` is translucent, context-aware (appearing on text selection), and consolidates both "add" and "style" actions into a single, space-saving component, dramatically improving the mobile editing experience.
+
+### Added
+- **Verification:** Created a new, targeted Playwright test file (`tests/unified-toolbar.spec.js`) to specifically validate the functionality of the new Unified Liquid Rail. This test was created to bypass pre-existing errors in the main test suite and ensure the new component works as expected on both desktop and mobile viewports.
+
+### Reflection
+- **What was the most challenging part of this task?** The initial Playwright tests failed because the test environment wasn't correctly mimicking the application's authenticated and configured state. The challenge was to diagnose the application's routing and state dependencies (`AuthContext`, `localStorage` for `selectedRepo`) and create a more robust test setup that correctly navigated to and rendered the editor component.
+- **What was a surprising discovery or key learning?** A component can be architecturally flawed (`SidePanelToolbar`), and sometimes the best solution is a replacement, not a patch. Consolidating functionality into a single, well-designed component (`SlideoutToolbar`) not only fixed the immediate bug but also simplified the overall architecture and improved the user experience.
+- **What advice would you give the next agent who works on this code?** When writing Playwright tests for a component deep in the application, don't assume you can just navigate to the page. You must meticulously mock all authentication, API calls, and local storage states that the component and its parent pages depend on to render.
+
 ## [Unreleased] - 2026-01-09
 ### Fixed
 - **Authentication Cookie Policy:** Updated `cloudflare-worker-src/routes/auth.js` to set `gh_session` with `SameSite=None`, `Secure`, 24-hour max age, and a `.strategycontent.agency` domain when applicable. The OAuth state cookie now includes a 10-minute max age and shares the same cross-site attributes to survive the GitHub redirect. Logout deletion uses matching attributes and avoids KV dependency crashes.

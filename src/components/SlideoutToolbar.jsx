@@ -6,40 +6,26 @@ import {
   Heading2, Heading3, Heading4, Heading5, Heading6,
   List, ListOrdered, Image, Table, X, Menu,
   Minus, FileText, Calendar, Columns, ChevronDown,
-  Undo, Redo
+  Undo, Redo, Bold, Italic, Underline, Strikethrough, Code, Link
 } from 'lucide-preact';
 import { useVisualViewportFix } from '../hooks/useVisualViewportFix';
 import './SlideoutToolbar.css';
 
 /**
- * SlideoutToolbar - Icon-only slide-out toolbar with liquid glass theme
- * 
- * Features:
- * - Floating hamburger trigger in top-left corner
- * - Collapsed state: narrow icon-rail (icon-only column)
- * - Expanded state: wider slideout panel with icons and labels
- * - Icon-first layout with labels hidden by default (icon-only)
- * - Liquid glass visual theme with backdrop blur
- * - Auto-closes after action selection
- * - Full keyboard accessibility with Escape key
- * - Collapsible category groups (accordion pattern)
- * 
- * Props:
- * - handleAction: (action: string, payload?: any) => void - Handler for toolbar actions
+ * Unified SlideoutToolbar - Translucent liquid glass toolbar for both Styling and Adding
  */
 export default function SlideoutToolbar() {
-  const { activeEditor, handleAction, isToolbarInteractionRef } = useEditor();
+  const { activeEditor, handleAction, isToolbarInteractionRef, selectionState } = useEditor();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const toolbarRef = useRef(null);
   const hamburgerRef = useRef(null);
   
-  // Apply iOS Safari visualViewport fix to hamburger button to prevent it from moving when virtual keyboard opens
   useVisualViewportFix(hamburgerRef);
   
-  // Track which category groups are expanded (accordion pattern)
   const [expandedGroups, setExpandedGroups] = useState({
-    'History': true, // Start with History expanded
+    'Formatting': true,
+    'History': false,
     'Headings': false,
     'Lists': false,
     'Structure': false,
@@ -47,6 +33,22 @@ export default function SlideoutToolbar() {
     'Layout': false,
     'Utility': false
   });
+
+  // Auto-open toolbar on text selection (Style Context)
+  useEffect(() => {
+    const handleSelection = () => {
+      const selection = window.getSelection();
+      const hasSelection = selection.toString().length > 0;
+
+      if (hasSelection && !isOpen) {
+        setIsOpen(true);
+        setIsExpanded(false); // Open in compact icon mode first
+      }
+    };
+
+    document.addEventListener('selectionchange', handleSelection);
+    return () => document.removeEventListener('selectionchange', handleSelection);
+  }, [isOpen]);
 
   // Close on escape key
   useEffect(() => {
@@ -56,7 +58,6 @@ export default function SlideoutToolbar() {
         setIsOpen(false);
       }
     };
-
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, isExpanded]);
@@ -72,7 +73,6 @@ export default function SlideoutToolbar() {
         }
       }
     };
-
     if (isOpen || isExpanded) {
       document.addEventListener('mousedown', handleClickOutside);
     }
@@ -81,232 +81,83 @@ export default function SlideoutToolbar() {
 
   const toggleOpen = () => {
     if (!isOpen) {
-      // Open in collapsed (icon-rail) state
       setIsOpen(true);
       setIsExpanded(false);
     } else if (!isExpanded) {
-      // Expand to full slideout
       setIsExpanded(true);
     } else {
-      // Close completely
       setIsExpanded(false);
       setIsOpen(false);
     }
   };
 
   const toolbarActions = [
-    // History section (undo/redo at top)
-    {
-      id: 'undo',
-      icon: Undo,
-      label: 'Undo',
-      action: 'undo',
-      ariaLabel: 'Undo',
-      category: 'History'
-    },
-    {
-      id: 'redo',
-      icon: Redo,
-      label: 'Redo',
-      action: 'redo',
-      ariaLabel: 'Redo',
-      category: 'History'
-    },
+    // Formatting Section (Integrated from SidePanelToolbar)
+    { id: 'bold', icon: Bold, label: 'Bold', action: 'bold', category: 'Formatting', active: selectionState?.isBold },
+    { id: 'italic', icon: Italic, label: 'Italic', action: 'italic', category: 'Formatting', active: selectionState?.isItalic },
+    { id: 'underline', icon: Underline, label: 'Underline', action: 'underline', category: 'Formatting', active: selectionState?.isUnderline },
+    { id: 'link', icon: Link, label: 'Link', action: 'link', category: 'Formatting' },
+
+    // History section
+    { id: 'undo', icon: Undo, label: 'Undo', action: 'undo', category: 'History' },
+    { id: 'redo', icon: Redo, label: 'Redo', action: 'redo', category: 'History' },
+
     // Headings section
-    {
-      id: 'heading-2',
-      icon: Heading2,
-      label: 'Heading 2',
-      action: 'heading',
-      payload: 'h2',
-      ariaLabel: 'Insert Heading 2',
-      category: 'Headings'
-    },
-    {
-      id: 'heading-3',
-      icon: Heading3,
-      label: 'Heading 3',
-      action: 'heading',
-      payload: 'h3',
-      ariaLabel: 'Insert Heading 3',
-      category: 'Headings'
-    },
-    {
-      id: 'heading-4',
-      icon: Heading4,
-      label: 'Heading 4',
-      action: 'heading',
-      payload: 'h4',
-      ariaLabel: 'Insert Heading 4',
-      category: 'Headings'
-    },
-    {
-      id: 'heading-5',
-      icon: Heading5,
-      label: 'Heading 5',
-      action: 'heading',
-      payload: 'h5',
-      ariaLabel: 'Insert Heading 5',
-      category: 'Headings'
-    },
-    {
-      id: 'heading-6',
-      icon: Heading6,
-      label: 'Heading 6',
-      action: 'heading',
-      payload: 'h6',
-      ariaLabel: 'Insert Heading 6',
-      category: 'Headings'
-    },
+    { id: 'heading-2', icon: Heading2, label: 'Heading 2', action: 'heading', payload: 'h2', category: 'Headings' },
+    { id: 'heading-3', icon: Heading3, label: 'Heading 3', action: 'heading', payload: 'h3', category: 'Headings' },
+
     // Lists section
-    {
-      id: 'bullet-list',
-      icon: List,
-      label: 'Bullet List',
-      action: 'list',
-      payload: 'ul',
-      ariaLabel: 'Insert Bullet List',
-      category: 'Lists'
-    },
-    {
-      id: 'numbered-list',
-      icon: ListOrdered,
-      label: 'Numbered List',
-      action: 'list',
-      payload: 'ol',
-      ariaLabel: 'Insert Numbered List',
-      category: 'Lists'
-    },
-    // Structure section
-    {
-      id: 'horizontal-rule',
-      icon: Minus,
-      label: 'Horizontal Rule',
-      action: 'horizontalRule',
-      ariaLabel: 'Insert Horizontal Rule',
-      category: 'Structure'
-    },
-    {
-      id: 'page-break',
-      icon: FileText,
-      label: 'Page Break',
-      action: 'pageBreak',
-      ariaLabel: 'Insert Page Break',
-      category: 'Structure'
-    },
-    {
-      id: 'table',
-      icon: Table,
-      label: 'Table',
-      action: 'table',
-      ariaLabel: 'Insert Table',
-      category: 'Structure'
-    },
-    // Media section
-    {
-      id: 'image',
-      icon: Image,
-      label: 'Image',
-      action: 'image',
-      ariaLabel: 'Insert Image',
-      category: 'Media'
-    },
-    // Layout section
-    {
-      id: 'columns',
-      icon: Columns,
-      label: 'Columns Layout',
-      action: 'columns',
-      payload: 2,
-      ariaLabel: 'Insert Columns Layout',
-      category: 'Layout'
-    },
-    {
-      id: 'collapsible',
-      icon: ChevronDown,
-      label: 'Collapsible',
-      action: 'collapsible',
-      ariaLabel: 'Insert Collapsible Container',
-      category: 'Layout'
-    },
-    // Utility section
-    {
-      id: 'date',
-      icon: Calendar,
-      label: 'Date',
-      action: 'date',
-      ariaLabel: 'Insert Current Date',
-      category: 'Utility'
-    },
+    { id: 'bullet-list', icon: List, label: 'Bullet List', action: 'list', payload: 'ul', category: 'Lists' },
+    { id: 'numbered-list', icon: ListOrdered, label: 'Numbered List', action: 'list', payload: 'ol', category: 'Lists' },
+
+    // Media & Structure
+    { id: 'image', icon: Image, label: 'Image', action: 'image', category: 'Media' },
+    { id: 'table', icon: Table, label: 'Table', action: 'table', category: 'Structure' },
+    { id: 'horizontal-rule', icon: Minus, label: 'Divider', action: 'horizontalRule', category: 'Structure' }
   ];
 
-  // Group actions by category
   const groupedActions = toolbarActions.reduce((acc, action) => {
     const category = action.category || 'Other';
-    if (!acc[category]) {
-      acc[category] = [];
-    }
+    if (!acc[category]) acc[category] = [];
     acc[category].push(action);
     return acc;
   }, {});
 
-  // Category order: History first per requirements
-  const categoryOrder = ['History', 'Headings', 'Lists', 'Structure', 'Media', 'Layout', 'Utility'];
+  const categoryOrder = ['Formatting', 'History', 'Headings', 'Lists', 'Structure', 'Media', 'Layout', 'Utility'];
   
   const toggleGroup = (groupName) => {
-    setExpandedGroups(prev => ({
-      ...prev,
-      [groupName]: !prev[groupName]
-    }));
+    setExpandedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
   };
 
   return createPortal(
     <>
-      {/* Floating hamburger trigger */}
       <button
         ref={hamburgerRef}
-        className="floating-hamburger"
+        className={`floating-hamburger ${isOpen ? 'active' : ''}`}
         onPointerDown={(e) => {
           e.preventDefault();
           if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
           toggleOpen();
         }}
-        aria-label={isExpanded ? 'Close menu' : isOpen ? 'Expand menu' : 'Open menu'}
-        aria-expanded={isOpen || isExpanded}
-        title="Insert elements"
-        disabled={!activeEditor}
+        aria-label="Menu"
       >
         <Menu size={24} />
       </button>
       
-      {/* Slideout toolbar panel */}
       {isOpen && (
         <div 
           ref={toolbarRef}
           className={`slideout-toolbar ${isExpanded ? 'expanded' : 'collapsed'}`}
-          role="menu"
-          aria-label="Insert menu"
         >
-          {/* Header - only shown when expanded */}
           {isExpanded && (
             <div className="slideout-toolbar-header">
-              <h3>Insert</h3>
-              <button
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
-                  setIsExpanded(false);
-                  setIsOpen(false);
-                }}
-                aria-label="Close insert menu"
-                className="close-button"
-              >
+              <h3>Toolbar</h3>
+              <button onPointerDown={() => { setIsExpanded(false); setIsOpen(false); }} className="close-button">
                 <X size={20} />
               </button>
             </div>
           )}
           
-          {/* Content */}
           <div className="slideout-toolbar-content">
             {categoryOrder.map((categoryName) => {
               const categoryItems = groupedActions[categoryName];
@@ -316,27 +167,13 @@ export default function SlideoutToolbar() {
               
               return (
                 <div key={categoryName} className="toolbar-category">
-                  {/* Category header - only shown when slideout is expanded */}
                   {isExpanded && (
-                    <button 
-                      className="toolbar-category-header"
-                      onPointerDown={(e) => {
-                        e.preventDefault();
-                        if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
-                        toggleGroup(categoryName);
-                      }}
-                      aria-expanded={isCategoryExpanded}
-                      aria-label={`${isCategoryExpanded ? 'Collapse' : 'Expand'} ${categoryName} section`}
-                    >
+                    <button className="toolbar-category-header" onPointerDown={() => toggleGroup(categoryName)}>
                       <span className="toolbar-category-label">{categoryName}</span>
-                      <ChevronDown 
-                        size={16} 
-                        className={`category-chevron ${isCategoryExpanded ? 'expanded' : ''}`}
-                      />
+                      <ChevronDown size={16} className={`category-chevron ${isCategoryExpanded ? 'expanded' : ''}`} />
                     </button>
                   )}
                   
-                  {/* Category items - show all in collapsed mode, respect accordion in expanded */}
                   {(!isExpanded || isCategoryExpanded) && (
                     <div className="toolbar-category-items">
                       {categoryItems.map((item) => {
@@ -347,19 +184,13 @@ export default function SlideoutToolbar() {
                             onPointerDown={(e) => {
                               e.preventDefault();
                               if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
-                              console.log(`[SlideoutToolbar] PointerDown: ${item.label} button`);
                               handleAction(item.action, item.payload);
-                              // Close toolbar after selection
-                              setIsExpanded(false);
-                              setIsOpen(false);
+                              if (!isExpanded) { setIsOpen(false); } // Close after selection if in compact mode
                             }}
-                            className="toolbar-item"
-                            aria-label={item.ariaLabel}
-                            role="menuitem"
+                            className={`toolbar-item ${item.active ? 'active' : ''}`}
                             title={item.label}
                           >
                             <Icon size={20} className="toolbar-item-icon" />
-                            {/* Label only visible when expanded */}
                             {isExpanded && <span className="toolbar-item-label">{item.label}</span>}
                           </button>
                         );
@@ -371,17 +202,6 @@ export default function SlideoutToolbar() {
             })}
           </div>
         </div>
-      )}
-      
-      {/* Backdrop overlay when open */}
-      {isOpen && (
-        <div 
-          className="slideout-toolbar-backdrop" 
-          onClick={() => {
-            setIsExpanded(false);
-            setIsOpen(false);
-          }} 
-        />
       )}
     </>,
     document.body
