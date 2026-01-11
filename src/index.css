@@ -209,9 +209,17 @@ button[type="button"] svg {
 .editor-input h5 { font-size: 1.125rem; font-weight: 700; margin: 0.5em 0; }
 .editor-input h6 { font-size: 1rem; font-weight: 700; margin: 0.5em 0; }
 .editor-input p { margin: 0.5em 0; }
-.editor-input ul { list-style-type: disc; margin-left: 1. 5em; padding: 0. 25em 0; }
-.editor-input ol { list-style-type: decimal; margin-left: 1.5em; padding: 0. 25em 0; }
-.editor-input li { margin: 0.25em 0; }
+.editor-input ul, .editor-input ol {
+  list-style-position: inside;
+  margin: 0;
+  padding: 0;
+  padding-left: 2rem; /* Explicit indentation */
+}
+.editor-input li {
+  margin: 0.25em 0;
+  line-height: 1.5;
+  padding-left: 0.5rem; /* Indent the text to align with the bullet */
+}
 .editor-input a { color: #60a5fa; text-decoration: underline; }
 .editor-input code { 
   background-color: rgba(55, 65, 81, 0. 5);
