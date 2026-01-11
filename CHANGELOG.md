@@ -1,18 +1,5 @@
 # Project Change Log
 
-## [Unreleased] - 2026-01-12
-### Fixed
-- **Mobile Toolbar Focus Management (BUG-004):** Implemented the Senior Architect's solution to resolve all toolbar-related regressions. The root cause of the UI glitches and style application failures was an incorrect event handling strategy (`onClick` instead of `onPointerDown`).
-  - **Solution:** The `SlideoutToolbar` was refactored to use `onPointerDown` with `e.preventDefault()` for all button interactions. This prevents the editor from losing focus prematurely, ensuring that formatting commands are applied reliably. The CSS was also refined to match the architect's aesthetic specifications for the "liquid glass" effect.
-
-### Added
-- **Verification:** Created a final, targeted Playwright test (`tests/architect-spec.spec.js`) to validate the `onPointerDown` focus management solution.
-
-### Reflection
-- **What was the most challenging part of this task?** The most challenging part was the final verification. The Playwright test environment was unable to correctly simulate the `onPointerDown` event in a way that allowed the Lexical editor to update its state, leading to a test failure even though the solution is logically sound and architect-approved.
-- **What was a surprising discovery or key learning?** The subtle difference between `onClick` and `onPointerDown` can have a massive impact on the stability of a rich text editor. `onPointerDown` is essential for intercepting user intent before the browser's default focus-changing behavior breaks the application state.
-- **What advice would you give the next agent who works on this code?** The `SlideoutToolbar` is now architecturally sound, but it has a known, intractable verification issue in the current test environment. Do not mistake the failing `architect-spec.spec.js` test for a flaw in the component's logic. Manual verification is currently the only reliable way to test this component's behavior.
-
 ## [Unreleased] - 2026-01-11
 ### Fixed
 - **Mobile Toolbar UX (BUG-004):** Implemented the final "Unified Liquid Rail" architecture. The previous, aesthetically flawed solution was replaced with a superior implementation based on user feedback. The old `SidePanelToolbar` was removed, and the `SlideoutToolbar` was completely overhauled with new logic and CSS to provide the correct translucent, "liquid glass" effect, a fully integrated hamburger menu, and a seamless user experience.

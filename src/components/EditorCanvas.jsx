@@ -2,6 +2,7 @@ import { h } from 'preact';
 import { useState, useContext, useEffect, useMemo } from 'preact/hooks';
 import FloatingToolbar from './FloatingToolbar';
 import SlideoutToolbar from './SlideoutToolbar';
+import SidePanelToolbar from './SidePanelToolbar';
 import BottomActionBar from './BottomActionBar';
 import AddSectionModal from './AddSectionModal';
 import ReportIssueModal from './ReportIssueModal';
@@ -55,7 +56,10 @@ export default function EditorCanvas(props) {
       )}
       */}
       {viewMode !== 'livePreview' && (
-        <SlideoutToolbar />
+        <>
+          <SlideoutToolbar />
+          <SidePanelToolbar />
+        </>
       )}
       <main
         class="flex-grow relative overflow-y-auto"
