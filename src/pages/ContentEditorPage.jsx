@@ -19,7 +19,6 @@ import { lexicalToHtml } from '../utils/lexicalToHtml';
 const STATUS_DISPLAY_DURATION = 2500; // Time in ms to display sync status before resetting
 
 export default function ContentEditorPage(props) {
-  console.log('[CEP] Component Init', { props });
   // --- 1.  HOOKS ---
   const { selectedRepo } = useAuth();
   const { openAddSectionModal } = useUI();
@@ -57,39 +56,6 @@ export default function ContentEditorPage(props) {
     selectedRepoRef.current = selectedRepo;
   }, [selectedRepo]);
 
-  // Temporary diagnostic logging for visual viewport
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.visualViewport) {
-      const vv = window.visualViewport;
-      const logViewport = () => {
-        console.log('[CEP Viewport] Viewport changed:', {
-          width: vv.width,
-          height: vv.height,
-          offsetLeft: vv.offsetLeft,
-          offsetTop: vv.offsetTop,
-          pageLeft: vv.pageLeft,
-          pageTop: vv.pageTop,
-          scale: vv.scale,
-        });
-      };
-
-      console.log('[CEP Viewport] Attaching viewport listeners.');
-      vv.addEventListener('resize', logViewport);
-      vv.addEventListener('scroll', logViewport);
-
-      // Log initial state
-      logViewport();
-
-      return () => {
-        console.log('[CEP Viewport] Removing viewport listeners.');
-        vv.removeEventListener('resize', logViewport);
-        vv.removeEventListener('scroll', logViewport);
-      };
-    }
-  }, []);
-
-  // Debug render only in development - commented out to reduce console spam
-  // console.log('[ContentEditorPage] RENDER - syncStatus:', syncStatus, 'isPreviewBuilding:', isPreviewBuilding);
 
   // --- 2. DERIVED STATE & CONSTANTS ---
   const pathIdentifier = props.filePath ?  decodeURIComponent(props.filePath) : (props.pageId || 'home');
@@ -101,9 +67,6 @@ export default function ContentEditorPage(props) {
   const isTestFile = pathIdentifier.startsWith('src/pages/json-preview/') && pathIdentifier.endsWith('.astro');
   const isDraftFile = pathIdentifier.split('/').pop().startsWith('_') && pathIdentifier.endsWith('.astro');
   const editorMode = isTestFile || isJsonFile || isDraftFile ? 'json' : 'astro';
-
-  // Debug mode logging - only log once per unique combination to reduce spam
-  console.log(`[CEP] Derived State: mode=${editorMode} slug=${pageId} path=${pathIdentifier}`);
 
   // --- 3. CALLBACKS & HANDLERS ---
   // getDefaultSections uses empty dependency array for stable reference
@@ -249,7 +212,6 @@ export default function ContentEditorPage(props) {
   }, [triggerSave]);
 
   const handleAddSection = useCallback((type, config) => {
-    console.log('[ContentEditorPage] handleAddSection called', { type, config });
     const newSection = {
       id: `section-${Date.now()}`,
       type: type,
@@ -278,13 +240,11 @@ export default function ContentEditorPage(props) {
   }, [sections, triggerSave]);
 
   const handleEditSection = useCallback((index) => {
-    console.log('[ContentEditorPage] handleEditSection called', { index });
     setEditingSectionIndex(index);
     openAddSectionModal();
   }, [openAddSectionModal]);
 
   const handleUpdateSection = useCallback(async (updatedSection) => {
-    console.log('[ContentEditorPage] handleUpdateSection called', { updatedSection });
     if (editingSectionIndex === null) return;
 
     // Helper function to get SHA for a specific image path
@@ -306,8 +266,6 @@ export default function ContentEditorPage(props) {
       if (!originalPath || ! newPath || originalPath === newPath) {
         return newPath;
       }
-      
-      console.log('[ContentEditorPage] Renaming image:', { originalPath, newPath });
       
       // Get the SHA for the original file
       const sha = await getImageSha(originalPath);
@@ -401,7 +359,6 @@ export default function ContentEditorPage(props) {
   }, [sections, editingSectionIndex, triggerSave]);
 
   const handleSync = useCallback(async () => {
-    console.log(`[CEP-handleSync] Sync process initiated. `);
     if (! selectedRepo) {
       console.error('[CEP-handleSync] Aborting: repository not selected.');
       setSyncStatus('error');
@@ -420,7 +377,6 @@ export default function ContentEditorPage(props) {
     // The autosave is debounced with a 1500ms delay, so localStorage may contain stale data
     // if the user clicks Sync immediately after making changes.
     // By using the current state, we ensure we're always syncing the latest data.
-    console.log('[CEP-handleSync] Status set to "syncing".  Using current sections state.. .');
     try {
       // Check that we have sections to sync (allow empty array for clearing content)
       if (editorMode !== 'json' || !sections) {
@@ -441,7 +397,6 @@ export default function ContentEditorPage(props) {
         savedAt: new Date().toISOString()
       };
       localStorage.setItem(draftKey, JSON.stringify(updatedDraft));
-      console.log('[CEP-handleSync] Saved current sections to localStorage before sync.');
 
       const savePayload = {
         repo: selectedRepo.full_name,
@@ -459,7 +414,6 @@ export default function ContentEditorPage(props) {
         sectionCount: savePayload.pageData.sections?.length || 0,
       });
       await fetchJson('/api/page-json/update', { method: 'POST', body: JSON.stringify(savePayload) });
-      console.log('[CEP-handleSync] API call successful. Content saved.');
 
       // Store the synced content to compare later (use the updated draft we saved)
       lastSyncedContentRef.current = JSON.stringify(updatedDraft);
@@ -468,9 +422,7 @@ export default function ContentEditorPage(props) {
       // Don't auto-switch to preview mode - let user decide when to view preview
       // setViewMode('preview'); // Removed: Clicking Sync should not force preview mode
 
-      console.log('[CEP-handleSync] Triggering site build...');
       triggerBuild();
-      console.log('[CEP-handleSync] Build triggered.');
 
       setSyncStatus('success');
       setTimeout(() => setSyncStatus('idle'), STATUS_DISPLAY_DURATION);
@@ -538,28 +490,22 @@ export default function ContentEditorPage(props) {
 
   // --- 4. SIDE EFFECTS (useEffect) ---
   useEffect(() => {
-    console.log('[CEP-useEffect] Main effect hook started.');
     try {
       filePathRef.current = pathIdentifier.startsWith('src/pages/') ? pathIdentifier : `src/pages/${pathIdentifier}`;
-      console.log('[CEP-useEffect] Resolved file path:', filePathRef.current);
 
       const loadJsonModeContent = async () => {
         const draftKey = `easy-seo-draft:${pageId}`;
         const savedDraft = localStorage.getItem(draftKey);
-        console.log(`[CEP-useEffect] Checking for draft in localStorage. Key: ${draftKey}`);
 
         if (savedDraft) {
-          console.log('[CEP-useEffect] Local draft found. Attempting to parse and validate.');
           try {
             const draft = JSON.parse(savedDraft);
             // A draft is valid if it has a `sections` array (even an empty one).
             if (Array.isArray(draft.sections)) {
-              console.log('[CEP-useEffect] Draft is valid. Loading sections from local draft.');
               setSections(draft.sections);
               // If the draft is valid, we stop here. We don't fetch from the repo.
               return;
             } else {
-              console.warn('[CEP-useEffect] Local draft found but is invalid (missing sections array). It will be ignored and removed.');
               localStorage.removeItem(draftKey);
             }
           } catch (e) {
@@ -572,15 +518,12 @@ export default function ContentEditorPage(props) {
         // This code now runs if:
         // 1. No local draft was found.
         // 2. A local draft was found but was empty, invalid, or corrupted.
-        console.log('[CEP-useEffect] No valid local draft. Fetching from repository using full path...');
         const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
         try {
           // JULES' FIX - STEP 2.4: Use the correct, path-based API endpoint, not the slug-based one.
           // This ensures we are fetching the exact file clicked in the explorer.
           const url = `/api/get-file-content?repo=${encodeURIComponent(repo)}&path=${encodeURIComponent(pathIdentifier)}`;
-          console.log('[CEP-useEffect] Fetching from URL:', url);
           const fileData = await fetchJson(url);
-          console.log('[CEP-useEffect] Successfully fetched file data.');
 
           // The get-file-content endpoint returns base64 content, so we must decode it.
           const binaryString = atob(fileData.content || '');
@@ -599,11 +542,9 @@ export default function ContentEditorPage(props) {
             savedAt: new Date().toISOString()
           };
           localStorage.setItem(draftKey, JSON.stringify(draftPayload));
-          console.log('[CEP-useEffect] Saved fetched content as initial draft.');
 
         } catch (error) {
           if (error.message.includes('404')) {
-            console.log('[CEP-useEffect] No remote file found (404). Initializing with default sections.');
           } else {
             console.error('[CEP-useEffect] Failed to fetch remote JSON. Falling back to default sections.', { error });
           }
@@ -619,7 +560,6 @@ export default function ContentEditorPage(props) {
             savedAt: new Date().toISOString()
           };
           localStorage.setItem(draftKey, JSON.stringify(draftPayload));
-          console.log('[ContentEditor-JSON] Default content saved as initial draft:', draftKey);
         }
       };
 
@@ -628,7 +568,6 @@ export default function ContentEditorPage(props) {
         const savedDraft = localStorage.getItem(draftKey);
 
         if (savedDraft) {
-          console.log('[ContentEditor-Astro] Found local draft. Loading from localStorage.');
           const draft = JSON.parse(savedDraft);
           if (draft.sections) {
             setSections(draft.sections);
@@ -638,7 +577,6 @@ export default function ContentEditorPage(props) {
           return;
         }
 
-        console.log('[ContentEditor-Astro] No local draft. Fetching file from repository...');
         const repo = selectedRepo?.full_name || 'Jacques-on-Call/StrategyContent';
         const path = filePathRef.current;
         try {

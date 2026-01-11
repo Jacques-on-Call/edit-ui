@@ -1,8 +1,7 @@
 import { h } from 'preact';
-import { useState, useContext, useEffect, useMemo } from 'preact/hooks';
+import { useState, useContext, useEffect, useMemo, useRef } from 'preact/hooks';
 import FloatingToolbar from './FloatingToolbar';
-import SlideoutToolbar from './SlideoutToolbar';
-import SidePanelToolbar from './SidePanelToolbar';
+import UnifiedLiquidRail from './UnifiedLiquidRail';
 import BottomActionBar from './BottomActionBar';
 import AddSectionModal from './AddSectionModal';
 import ReportIssueModal from './ReportIssueModal';
@@ -14,10 +13,22 @@ export default function EditorCanvas(props) {
   const { selectionState, handleAction } = useContext(EditorContext);
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [railWidth, setRailWidth] = useState(0); // State to hold the rail's width
+
+  // Callback for the rail to report its width
+  const handleRailWidthChange = (newWidth) => {
+    setRailWidth(newWidth);
+  };
+
+  // Dynamic padding style
+  const mainContentStyle = {
+    paddingBottom: 'var(--bottom-bar-height)',
+    transition: 'padding-left 300ms ease-in-out',
+    paddingLeft: `calc(${railWidth}px + 16px)`, // 16px is the base offset
+  };
 
   // Callback for child to signal readiness
   const handleEditorReady = () => {
-    console.log('[EditorCanvas] Editor is ready, rendering toolbar.');
     setIsEditorReady(true);
   };
 
@@ -56,16 +67,11 @@ export default function EditorCanvas(props) {
       )}
       */}
       {viewMode !== 'livePreview' && (
-        <>
-          <SlideoutToolbar />
-          <SidePanelToolbar />
-        </>
+        <UnifiedLiquidRail onWidthChange={handleRailWidthChange} />
       )}
       <main
         class="flex-grow relative overflow-y-auto"
-        style={{
-          paddingBottom: 'var(--bottom-bar-height)'
-        }}
+        style={mainContentStyle}
       >
         {renderContent({ onEditorReady: handleEditorReady })}
       </main>
