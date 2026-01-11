@@ -213,12 +213,11 @@ button[type="button"] svg {
   list-style-position: inside;
   margin: 0;
   padding: 0;
-  padding-left: 2rem; /* Explicit indentation */
+  padding-left: 20px; /* Fine-tuned indentation */
 }
 .editor-input li {
   margin: 0.25em 0;
   line-height: 1.5;
-  padding-left: 0.5rem; /* Indent the text to align with the bullet */
 }
 .editor-input a { color: #60a5fa; text-decoration: underline; }
 .editor-input code { 
