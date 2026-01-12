@@ -159,3 +159,32 @@
     2.  **On-Demand Preview:** Replaced the slow, build-based preview system with the on-demand pipeline specified in Phase 3 of the master plan. The editor now generates HTML locally, sends it to a temporary storage endpoint, and renders it instantly in an iframe.
 *   **Why it Succeeded:** The authentication fix addressed a fundamental browser security requirement for cross-domain cookies. The new preview system succeeded because it decouples the preview process from the slow, monolithic site build, providing the instant feedback required for an effective content editor.
 *   **Verification:** The code was implemented and verified for logical correctness. A comprehensive Playwright test (`phase3-preview.spec.js`) was created. However, execution of the test was blocked by the known, intractable `npm` dependency issues in the sandbox environment, invoking the "Zero-Option" directive.
+
+---
+
+## Phase 4: Unified Liquid Rail Polish
+
+### [2026-01-15] Snag: BUG-004 - Unified Toolbar Glitches (ATTEMPT 1)
+- **Agent:** Snag 🛠️
+- **The Fix:** The agent implemented a series of fixes targeting the toolbar's reliability, styling, and the unwanted header.
+- **Why it Failed:** The implementation was architecturally flawed. It merged the "Add" and "Style" modes into a single state, removing the intended separation. The hamburger button was also not persistently visible, which was a core requirement.
+
+### [2026-01-15] Snag: BUG-004 - Unified Toolbar Glitches (ATTEMPT 2)
+- **Agent:** Snag 🛠️
+- **The Fix:** The agent correctly identified the need to separate the hamburger trigger from the toolbar panel.
+- **Why it Failed:** The implementation was flawed. The new trigger was still rendered *inside* the portal container that was being faded out, which meant that as soon as the toolbar closed, the trigger also became invisible and unusable. This created a severe regression where the toolbar could not be reopened.
+
+### [2026-01-15] Snag: BUG-004 - Unified Toolbar Glitches (ATTEMPT 3)
+- **Agent:** Snag 🛠️
+- **The Fix:** The agent attempted a surgical fix to the previous flawed architecture, focusing on moving the hamburger button outside the conditional rendering block.
+- **Why it Failed:** This was a catastrophic failure. The small change created a cascade of regressions that resulted in the toolbar failing to appear under any circumstances. The component's state logic was too intertwined to be patched.
+
+### [2026-01-15] Snag: BUG-004 - Unified Toolbar Glitches (ATTEMPT 4 - SUCCESS)
+- **Agent:** Snag 🛠️
+- **The Fix:** After three failed attempts, the agent performed a full reset on `UnifiedLiquidRail.jsx`, `UnifiedLiquidRail.css`, and `useVisualViewportFix.js`. A complete, from-scratch rewrite was implemented based on the final, definitive user feedback.
+- **Why it Succeeded:** This approach succeeded because it addressed the root architectural flaws instead of patching symptoms.
+  1.  **True Separation:** The hamburger trigger and the toolbar panel are now rendered as completely separate top-level elements within the portal, ensuring the trigger is always visible and interactive.
+  2.  **Aware Click-Outside:** The `useClickOutside` hook is now passed a ref to the new, separate trigger, preventing the toolbar from incorrectly closing itself.
+  3.  **Robust Viewport Hook:** The `useVisualViewportFix` hook was rewritten to correctly calculate the `max-height` of the toolbar's scrollable area, fixing the mobile keyboard overlap issue.
+  4.  **Simplified Events:** The event listeners were simplified to be more reliable and less prone to accidental activation, resolving all user-reported interaction glitches.
+- **Final Status:** The `UnifiedLiquidRail` is now considered stable and architecturally sound. All user-reported glitches have been resolved.

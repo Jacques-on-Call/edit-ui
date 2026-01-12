@@ -1,52 +1,59 @@
 import { useEffect } from 'preact/hooks';
 
-// Constants
-const DEFAULT_TOP_POSITION = '0px';
-const DEBUG_MODE = false; // Set to true for debugging viewport issues
+// This hook is now designed to manage multiple fixed elements
+// in relation to the visual viewport.
 
-/**
- * Custom hook to adjust a fixed-position element (like a toolbar) to respect
- * the virtual keyboard on mobile devices.
- * 
- * It adjusts the `top` position of the main rail and, more importantly, sets the
- * `max-height` of the scrollable area to prevent it from being hidden by the keyboard.
- * 
- * @param {Object} railRef - React ref to the main toolbar container.
- * @param {Object} scrollAreaRef - React ref to the scrollable inner container.
- */
-export function useVisualViewportFix(railRef, scrollAreaRef) {
+export function useVisualViewportFix(refs) {
   useEffect(() => {
-    if (!window.visualViewport || !railRef.current || !scrollAreaRef.current) {
-      return;
-    }
+    if (!window.visualViewport) return;
 
-    const rail = railRef.current;
-    const scrollArea = scrollAreaRef.current;
-    
     const handleViewportChange = () => {
       const { offsetTop, height } = window.visualViewport;
 
-      // Pin the entire rail to the top of the *visual* viewport.
-      // We add the rail's original top offset to maintain its position.
-      const railInitialTop = parseInt(getComputedStyle(rail).top, 10);
-      rail.style.top = `${offsetTop + railInitialTop}px`;
+      refs.forEach(ref => {
+        if (!ref.current) return;
 
-      // Calculate the available height for the scroll area.
-      const availableHeight = height - (offsetTop + railInitialTop) - 80; // 80px for padding and controls
-      scrollArea.style.maxHeight = `${availableHeight}px`;
+        const element = ref.current;
+        const initialTop = parseFloat(element.dataset.initialTop || getComputedStyle(element).top);
+
+        if (isNaN(initialTop)) return;
+
+        // Store the initial top position on the element if not already there
+        if (!element.dataset.initialTop) {
+          element.dataset.initialTop = initialTop;
+        }
+
+        // Pin the element to the top of the visual viewport
+        element.style.top = `${offsetTop + initialTop}px`;
+
+        // If this is the scroll area, adjust its max-height
+        if (element.classList.contains('rail-scroll-area')) {
+          const railTop = parseFloat(element.parentElement.style.top);
+          const availableHeight = height - railTop - 20; // 20px buffer
+          element.style.maxHeight = `${availableHeight}px`;
+        }
+      });
     };
 
     window.visualViewport.addEventListener('resize', handleViewportChange);
     window.visualViewport.addEventListener('scroll', handleViewportChange);
-    
-    handleViewportChange(); // Initial call
+
+    // Initial call
+    handleViewportChange();
 
     return () => {
       window.visualViewport.removeEventListener('resize', handleViewportChange);
       window.visualViewport.removeEventListener('scroll', handleViewportChange);
+
       // Reset styles on cleanup
-      rail.style.top = '';
-      scrollArea.style.maxHeight = '';
+      refs.forEach(ref => {
+        if (ref.current) {
+          ref.current.style.top = '';
+          if (ref.current.classList.contains('rail-scroll-area')) {
+            ref.current.style.maxHeight = '';
+          }
+        }
+      });
     };
-  }, [railRef, scrollAreaRef]);
+  }, [refs]);
 }
