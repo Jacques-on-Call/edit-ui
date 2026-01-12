@@ -27,11 +27,12 @@ export function useVisualViewportFix(railRef, scrollAreaRef) {
       const { offsetTop, height } = window.visualViewport;
 
       // Pin the entire rail to the top of the *visual* viewport.
-      rail.style.top = `${offsetTop}px`;
+      // We add the rail's original top offset to maintain its position.
+      const railInitialTop = parseInt(getComputedStyle(rail).top, 10);
+      rail.style.top = `${offsetTop + railInitialTop}px`;
 
       // Calculate the available height for the scroll area.
-      // We subtract the rail's top position, some padding, and the hamburger button's height.
-      const availableHeight = height - rail.getBoundingClientRect().top - 80;
+      const availableHeight = height - (offsetTop + railInitialTop) - 80; // 80px for padding and controls
       scrollArea.style.maxHeight = `${availableHeight}px`;
     };
 
@@ -44,7 +45,7 @@ export function useVisualViewportFix(railRef, scrollAreaRef) {
       window.visualViewport.removeEventListener('resize', handleViewportChange);
       window.visualViewport.removeEventListener('scroll', handleViewportChange);
       // Reset styles on cleanup
-      rail.style.top = DEFAULT_TOP_POSITION;
+      rail.style.top = '';
       scrollArea.style.maxHeight = '';
     };
   }, [railRef, scrollAreaRef]);

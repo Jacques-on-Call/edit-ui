@@ -56,6 +56,7 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
 
   const railRef = useRef(null);
   const scrollAreaRef = useRef(null);
+  const hamburgerRef = useRef(null); // Ref for the new, separate hamburger button
   const lastTapRef = useRef(0);
   const isScrollingRef = useRef(false);
 
@@ -97,21 +98,21 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
     };
     document.addEventListener('selectionchange', onSelectionChange);
     return () => document.removeEventListener('selectionchange', onSelectionChange);
-  }, [mode, isExpanded, isToolbarInteractionRef]); // Dependencies are still important
+  }, [mode, isExpanded, isToolbarInteractionRef]);
 
-  // Global scroll handler to prevent toolbar pop-up while scrolling the page
-  useEffect(() => {
-    let scrollTimeout;
-    const onScroll = () => {
-      isScrollingRef.current = true;
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => { isScrollingRef.current = false; }, 150);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  // Scroll handler to prevent selectionchange loops
+    useEffect(() => {
+        let scrollTimeout;
+        const onScroll = () => {
+            isScrollingRef.current = true;
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => { isScrollingRef.current = false; }, 150);
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
 
-  // Smarter click/tap outside handler
+  // Smarter click/tap outside handler that is aware of the separate hamburger button
   useEffect(() => {
     const pointerStart = { x: 0, y: 0 };
     let isDragging = false;
@@ -126,15 +127,16 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
         if (isDragging) return;
         const deltaX = Math.abs(e.clientX - pointerStart.x);
         const deltaY = Math.abs(e.clientY - pointerStart.y);
-        // If the user moves more than a few pixels, consider it a drag/scroll, not a tap.
         if (deltaX > 5 || deltaY > 5) {
             isDragging = true;
         }
     };
 
     const handlePointerUp = (e) => {
-      // If it was a drag, or if the tap is inside the toolbar, do nothing.
-      if (isDragging || (railRef.current && railRef.current.contains(e.target))) {
+      // If it was a drag, or if the tap is inside the toolbar OR on the hamburger, do nothing.
+      if (isDragging ||
+          (railRef.current && railRef.current.contains(e.target)) ||
+          (hamburgerRef.current && hamburgerRef.current.contains(e.target))) {
         return;
       }
       // Otherwise, it's a clean tap outside, so close the toolbar.
@@ -143,7 +145,7 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
       setMode('idle');
     };
 
-     const handleEscape = (e) => {
+    const handleEscape = (e) => {
       if (e.key === 'Escape') {
         setOpen(false);
         setExpanded(false);
@@ -243,22 +245,26 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
 
   const railClassName = `unified-liquid-rail ${isOpen ? 'open' : 'closed'} ${isExpanded ? 'expanded' : 'compact'}`;
 
-  const railContent = (
-    <div ref={railRef} className={railClassName} role="toolbar">
-        <button
-            className="rail-hamburger"
-            onPointerDown={onHamburgerPointerDown}
-            onPointerUp={scheduleClearInteractionRef}
-            onPointerCancel={scheduleClearInteractionRef}
-            aria-label="Toggle toolbar"
-        >
-            <Menu size={24} />
-        </button>
+  return createPortal(
+    <>
+      <button
+        ref={hamburgerRef}
+        className="rail-hamburger-trigger"
+        onPointerDown={onHamburgerPointerDown}
+        onPointerUp={scheduleClearInteractionRef}
+        onPointerCancel={scheduleClearInteractionRef}
+        aria-label="Toggle toolbar"
+      >
+        <Menu size={24} />
+      </button>
 
-        <div className="rail-scroll-area">
-            {isOpen && mode === 'style' && renderActions(styleActions)}
-            {isOpen && mode === 'add' && renderActions(addActions)}
+      <div ref={railRef} className={railClassName} role="toolbar">
+        <div ref={scrollAreaRef} className="rail-scroll-area">
+          {isOpen && mode === 'style' && renderActions(styleActions)}
+          {isOpen && mode === 'add' && renderActions(addActions)}
         </div>
-    </div>
+      </div>
+    </>,
+    document.body
   );
 }
