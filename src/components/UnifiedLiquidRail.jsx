@@ -55,11 +55,12 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
   const [isExpanded, setExpanded] = useState(false);
 
   const railRef = useRef(null);
+  const scrollAreaRef = useRef(null);
   const lastTapRef = useRef(0);
   const isScrollingRef = useRef(false);
 
   // Custom hook to handle virtual keyboard on mobile
-  useVisualViewportFix(railRef);
+  useVisualViewportFix(railRef, scrollAreaRef);
 
   // Effect to report width changes to the parent
   useEffect(() => {
@@ -92,6 +93,7 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
           setMode('idle');
         }
       }
+      // REMOVED: The closing logic is now handled exclusively by click-outside and Escape key.
     };
     document.addEventListener('selectionchange', onSelectionChange);
     return () => document.removeEventListener('selectionchange', onSelectionChange);
@@ -163,7 +165,7 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
     };
   }, [isOpen]);
 
-  // Hamburger pointerdown handler with double-tap logic
+  // Universal hamburger handler
   const onHamburgerPointerDown = (e) => {
     e.preventDefault();
     if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
@@ -259,6 +261,4 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
         </div>
     </div>
   );
-
-  return createPortal(railContent, document.body);
 }

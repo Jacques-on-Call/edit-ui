@@ -3,7 +3,7 @@
   --rail-expanded-w: 240px;
   --rail-top: 16px;
   --rail-left: 12px;
-  --rail-bg: rgba(20,28,38,0.6);
+  --rail-bg: rgba(20,28,38,0.3);
   --rail-blur: 22px;
   --rail-sat: 160%;
   --rail-border: rgba(255,255,255,0.06);
@@ -39,26 +39,29 @@
 .unified-liquid-rail.expanded {
   width: var(--rail-expanded-w);
 }
-.rail-hamburger {
+.rail-hamburger-trigger {
+  position: fixed;
+  top: var(--rail-top);
+  left: var(--rail-left);
   width: 44px;
   height: 44px;
-  margin: 6px;
+  z-index: 10001; /* Above the rail */
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   transition: background 200ms ease;
 }
-.rail-hamburger:hover {
-  background: rgba(255,255,255,0.2);
+.rail-hamburger-trigger:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 .rail-scroll-area {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  max-height: calc(100vh - 120px);
-  padding: 0 8px 8px 8px;
+  padding: 8px;
+  /* max-height is now set dynamically by the useVisualViewportFix hook */
 }
 .rail-item {
   display:flex;

@@ -73,6 +73,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 -   **`src/hooks/useFileManifest.js`**: Custom hook for fetching the file manifest of a repository.
 -   **`src/hooks/useSearch.js`**: Custom hook for performing debounced searches. Normalizes search queries (e.g., converts smart quotes to standard quotes) before sending them to the backend API.
 -   **`src/hooks/useAutosave.js`**: A debounced autosave hook for the content editor that also exposes an `isSaving` state.
+-   **`src/hooks/useVisualViewportFix.js`**: **Modified in this task.** A custom hook that adjusts a fixed-position element to respect the virtual keyboard. It now accepts both a main `railRef` and a `scrollAreaRef` to dynamically calculate and set the `max-height` of the scrollable area, preventing it from being obscured by the keyboard.
 
 ### **Test & Verification Files**
 
