@@ -1,7 +1,7 @@
 import { h } from 'preact';
-import { useState, useEffect, useRef } from 'preact/hooks';
+import { useState, useEffect, useRef, useContext } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
-import { useEditor } from '../contexts/EditorContext';
+import { EditorContext } from '../contexts/EditorContext';
 import {
   Heading2, Heading3, Heading4,
   List, ListOrdered, Image, Table, X, Menu,
@@ -11,71 +11,123 @@ import {
 import { useVisualViewportFix } from '../hooks/useVisualViewportFix';
 import './UnifiedLiquidRail.css';
 
-/**
- * Unified Liquid Rail Component
- * Implements a "Smart Rail" state machine:
- * - 'closed': The rail is completely hidden.
- * - 'compact': Appears on text selection, showing only styling icons.
- * - 'expanded': Triggered by hamburger click, showing the full "Add" menu.
- */
-export default function UnifiedLiquidRail({ onWidthChange }) {
-  const { handleAction, isToolbarInteractionRef, selectionState } = useEditor();
+// Combined and categorized actions as per the specification
+const toolbarActions = [
+    // Formatting
+    { id: 'bold', icon: Bold, label: 'Bold', action: 'bold', category: 'Formatting' },
+    { id: 'italic', icon: Italic, label: 'Italic', action: 'italic', category: 'Formatting' },
+    { id: 'underline', icon: Underline, label: 'Underline', action: 'underline', category: 'Formatting' },
+    { id: 'strikethrough', icon: Strikethrough, label: 'Strike', action: 'strikethrough', category: 'Formatting' },
+    { id: 'code', icon: Code, label: 'Code', action: 'code', category: 'Formatting' },
+    { id: 'link', icon: Link, label: 'Link', action: 'link', category: 'Formatting' },
+    // Headings
+    { id: 'heading-2', icon: Heading2, label: 'H2', action: 'heading', payload: 'h2', category: 'Headings' },
+    { id: 'heading-3', icon: Heading3, label: 'H3', action: 'heading', payload: 'h3', category: 'Headings' },
+    { id: 'heading-4', icon: Heading4, label: 'H4', action: 'heading', payload: 'h4', category: 'Headings' },
+    // Lists
+    { id: 'bullet-list', icon: List, label: 'Bullet List', action: 'list', payload: 'ul', category: 'Lists' },
+    { id: 'numbered-list', icon: ListOrdered, label: 'Numbered List', action: 'list', payload: 'ol', category: 'Lists' },
+    // History
+    { id: 'undo', icon: Undo, label: 'Undo', action: 'undo', category: 'History' },
+    { id: 'redo', icon: Redo, label: 'Redo', action: 'redo', category: 'History' },
+    // Media
+    { id: 'image', icon: Image, label: 'Image', action: 'image', category: 'Media' },
+    // Structure
+    { id: 'table', icon: Table, label: 'Table', action: 'table', category: 'Structure' },
+    { id: 'horizontal-rule', icon: Minus, label: 'Divider', action: 'horizontalRule', category: 'Structure' },
+    // Layout
+    { id: 'columns', icon: Columns, label: 'Columns', action: 'columns', payload: 2, category: 'Layout' },
+];
 
-  // ** REFACTORED STATE MODEL **
-  // 'mode' controls WHICH tools are shown ('style' or 'add').
-  // 'isExpanded' controls HOW they are shown (icons-only or with labels).
-  const [mode, setMode] = useState('closed');
-  const [isExpanded, setIsExpanded] = useState(false);
+const styleCategories = ['Formatting', 'Headings', 'Lists'];
+const addCategories = ['History', 'Media', 'Structure', 'Layout'];
+
+const styleActions = toolbarActions.filter(a => styleCategories.includes(a.category));
+const addActions = toolbarActions.filter(a => addCategories.includes(a.category));
+
+
+export default function UnifiedLiquidRail({ onWidthChange }) {
+  const { handleAction, isToolbarInteractionRef, selectionState } = useContext(EditorContext);
+
+  // State machine as per the specification
+  const [mode, setMode] = useState('idle'); // 'idle', 'style', 'add'
+  const [isOpen, setOpen] = useState(false);
+  const [isExpanded, setExpanded] = useState(false);
 
   const railRef = useRef(null);
-  const clickTimeout = useRef(null);
-  const DOUBLE_CLICK_DELAY = 250;
+  const lastTapRef = useRef(0);
+  const isScrollingRef = useRef(false);
+  const lastSelectionTimeRef = useRef(0);
+  const COOLDOWN_MS = 200;
 
   useVisualViewportFix(railRef);
-
-  const [expandedGroups, setExpandedGroups] = useState({
-    'Formatting': true, 'History': true, 'Headings': true, 'Lists': true,
-    'Media': true, 'Structure': true, 'Layout': true,
-  });
 
   // Effect to report width changes to the parent
   useEffect(() => {
     let width = 0;
-    if (mode !== 'closed') {
-      width = isExpanded ? 240 : 56; // Corresponds to --rail-width-expanded and --rail-width-compact
+    if (isOpen) {
+      width = isExpanded ? 240 : 56;
     }
-    onWidthChange(width);
-  }, [mode, isExpanded, onWidthChange]);
+    if (onWidthChange) {
+      onWidthChange(width);
+    }
+  }, [isOpen, isExpanded, onWidthChange]);
 
-  // Effect to open the 'style' mode on text selection
+  // Debounced selection handler as per the specification
   useEffect(() => {
-    const handleSelection = () => {
-      if (isToolbarInteractionRef?.current) return;
-      const selection = window.getSelection();
-      const hasSelection = selection && !selection.isCollapsed && selection.toString().trim().length > 0;
+    const onSelectionChange = () => {
+      const now = Date.now();
+      if (now - lastSelectionTimeRef.current < COOLDOWN_MS) return;
+      lastSelectionTimeRef.current = now;
 
-      if (hasSelection && mode === 'closed') {
+      if (isScrollingRef.current || (isToolbarInteractionRef && isToolbarInteractionRef.current)) return;
+
+      const sel = window.getSelection();
+      if (sel && sel.toString().trim().length > 0) {
         setMode('style');
-        setIsExpanded(false); // Always start in compact (icons-only) view
+        setOpen(true);
+        setExpanded(false);
+      } else {
+        if (mode === 'style' && !isExpanded) {
+          setOpen(false);
+          setMode('idle');
+        }
       }
     };
+    document.addEventListener('selectionchange', onSelectionChange);
+    return () => document.removeEventListener('selectionchange', onSelectionChange);
+  }, [mode, isExpanded, isToolbarInteractionRef]);
 
-    document.addEventListener('selectionchange', handleSelection);
-    return () => document.removeEventListener('selectionchange', handleSelection);
-  }, [mode, isToolbarInteractionRef]);
+  // Scroll handler to prevent selectionchange loops
+    useEffect(() => {
+        let scrollTimeout;
+        const onScroll = () => {
+            isScrollingRef.current = true;
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => { isScrollingRef.current = false; }, 150);
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
 
-  // Effect to handle closing the rail (Escape key or click outside)
+  // Click outside and Escape key handler
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (railRef.current && !railRef.current.contains(event.target)) {
-        setMode('closed');
+        setOpen(false);
+        setExpanded(false);
+        setMode('idle');
       }
     };
     const handleEscape = (e) => {
-      if (e.key === 'Escape') setMode('closed');
+      if (e.key === 'Escape') {
+        setOpen(false);
+        setExpanded(false);
+        setMode('idle');
+      }
     };
 
-    if (mode !== 'closed') {
+    if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('keydown', handleEscape);
     }
@@ -84,194 +136,104 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [mode]);
+  }, [isOpen]);
 
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (clickTimeout.current) clearTimeout(clickTimeout.current);
-    };
-  }, []);
-
-  // ** REFACTORED INTERACTION LOGIC **
-  const handleTriggerClick = (e) => {
+  // Hamburger pointerdown handler with double-tap logic
+  const onHamburgerPointerDown = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
 
-    // Double-click always toggles expansion state
-    if (clickTimeout.current) {
-      clearTimeout(clickTimeout.current);
-      clickTimeout.current = null;
-      setIsExpanded(prev => !prev);
-      // If closed, a double-click should also open it (default to 'add' mode)
-      if (mode === 'closed') {
-        setMode('add');
-      }
-      return;
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) { // Double-tap
+      setExpanded(prev => !prev);
+    } else { // Single-tap
+        if (isOpen && mode === 'add') {
+            setOpen(false);
+            setMode('idle');
+        } else {
+            setMode('add');
+            setOpen(true);
+            setExpanded(false); // Ensure compact view on open
+        }
     }
-
-    // Single-click logic
-    clickTimeout.current = setTimeout(() => {
-      clickTimeout.current = null;
-      if (mode === 'closed') {
-        setMode('style'); // From closed, single-click opens style mode
-        setIsExpanded(false);
-      } else {
-        // If already open, single-click toggles between 'style' and 'add' modes
-        setMode(prev => prev === 'style' ? 'add' : 'style');
-      }
-    }, DOUBLE_CLICK_DELAY);
+    lastTapRef.current = now;
   };
 
-  const onAction = (e, action, payload) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
-    handleAction(action, payload);
-    // Action no longer closes the rail, giving user more control.
+  const scheduleClearInteractionRef = () => {
+      setTimeout(() => {
+          if (isToolbarInteractionRef) isToolbarInteractionRef.current = false;
+      }, 100);
   };
 
-  const toggleGroup = (e, groupName) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
-    setExpandedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
-  };
+  const isInsertAction = (action) => ['image', 'table', 'horizontalRule', 'columns'].includes(action);
 
-  // Define actions for different modes
-  const styleActions = [
-    { id: 'bold', icon: Bold, label: 'Bold', action: 'bold', category: 'Formatting', active: selectionState?.isBold },
-    { id: 'italic', icon: Italic, label: 'Italic', action: 'italic', category: 'Formatting', active: selectionState?.isItalic },
-    { id: 'underline', icon: Underline, label: 'Underline', action: 'underline', category: 'Formatting', active: selectionState?.isUnderline },
-    { id: 'strikethrough', icon: Strikethrough, label: 'Strike', action: 'strikethrough', category: 'Formatting', active: selectionState?.isStrikethrough },
-    { id: 'code', icon: Code, label: 'Code', action: 'code', category: 'Formatting', active: selectionState?.isCode },
-    { id: 'link', icon: Link, label: 'Link', action: 'link', category: 'Formatting' },
-    { id: 'heading-2', icon: Heading2, label: 'H2', action: 'heading', payload: 'h2', category: 'Headings', active: selectionState?.blockType === 'h2' },
-    { id: 'heading-3', icon: Heading3, label: 'H3', action: 'heading', payload: 'h3', category: 'Headings', active: selectionState?.blockType === 'h3' },
-    { id: 'heading-4', icon: Heading4, label: 'H4', action: 'heading', payload: 'h4', category: 'Headings', active: selectionState?.blockType === 'h4' },
-    { id: 'bullet-list', icon: List, label: 'Bullet List', action: 'list', payload: 'ul', category: 'Lists', active: selectionState?.blockType === 'ul' },
-    { id: 'numbered-list', icon: ListOrdered, label: 'Numbered List', action: 'list', payload: 'ol', category: 'Lists', active: selectionState?.blockType === 'ol' },
-  ];
-
-  const addActions = [
-    { id: 'undo', icon: Undo, label: 'Undo', action: 'undo', category: 'History' },
-    { id: 'redo', icon: Redo, label: 'Redo', action: 'redo', category: 'History' },
-    { id: 'image', icon: Image, label: 'Image', action: 'image', category: 'Media' },
-    { id: 'table', icon: Table, label: 'Table', action: 'table', category: 'Structure' },
-    { id: 'horizontal-rule', icon: Minus, label: 'Divider', action: 'horizontalRule', category: 'Structure' },
-    { id: 'columns', icon: Columns, label: 'Columns', action: 'columns', payload: 2, category: 'Layout' },
-  ];
-
-  const getGroupedActions = (actions) => actions.reduce((acc, action) => {
-    const cat = action.category || 'Other';
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(action);
-    return acc;
-  }, {});
-
-  const styleGroups = getGroupedActions(styleActions);
-  const addGroups = getGroupedActions(addActions);
-
-  const categoryOrder = ['Formatting', 'Headings', 'Lists', 'History', 'Media', 'Structure', 'Layout'];
-
-  const renderActions = (groupedItems, categoryName) => {
-    const categoryItems = groupedItems[categoryName];
-    if (!categoryItems) return null;
-
-    return categoryItems.map((item) => {
+  const renderActions = (actions) => {
+    return actions.map((item) => {
       const Icon = item.icon;
+      const isActive = (item.action === 'heading' && selectionState?.blockType === item.payload) ||
+                       (item.action === 'list' && selectionState?.blockType === item.payload) ||
+                       (item.action === 'bold' && selectionState?.isBold) ||
+                       (item.action === 'italic' && selectionState?.isItalic) ||
+                       (item.action === 'underline' && selectionState?.isUnderline) ||
+                       (item.action === 'strikethrough' && selectionState?.isStrikethrough) ||
+                       (item.action === 'code' && selectionState?.isCode);
       return (
         <button
           key={item.id}
-          onPointerDown={(e) => onAction(e, item.action, item.payload)}
-          className={`rail-item ${item.active ? 'active' : ''}`}
+          role="button"
+          aria-label={item.label}
           title={item.label}
+          tabindex="0"
+          className={`rail-item ${isActive ? 'active' : ''}`}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
+          }}
+          onPointerUp={scheduleClearInteractionRef}
+          onPointerCancel={scheduleClearInteractionRef}
+          onClick={(e) => {
+            e.preventDefault();
+            handleAction(item.action, item.payload);
+            if (isInsertAction(item.action)) {
+              setOpen(false);
+              setMode('idle');
+            }
+          }}
         >
           <Icon size={20} className="rail-item-icon" />
           {isExpanded && <span className="rail-item-label">{item.label}</span>}
         </button>
       );
     });
-  };
+  }
 
-  const railClassName = `unified-liquid-rail mode-${mode} ${isExpanded ? 'expanded' : 'compact'}`;
+  if (window.__EASY_SEO_TOOLBAR_DEBUG__) {
+    console.log({ mode, isOpen, isExpanded, isInteracting: isToolbarInteractionRef?.current });
+  }
 
-  // Always render within a portal to ensure consistent positioning
-  return createPortal(
-    <>
-      <div
-        ref={railRef}
-        className={railClassName}
-        onPointerDown={(e) => {
-          if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
-        }}
-      >
-        {/* The hamburger is now always inside the main container */}
+  const railClassName = `unified-liquid-rail ${isOpen ? 'open' : 'closed'} ${isExpanded ? 'expanded' : 'compact'}`;
+
+  const railContent = (
+    <div ref={railRef} className={railClassName} role="toolbar">
         <button
-          className={`rail-hamburger ${mode !== 'closed' ? 'active' : ''}`}
-          onPointerDown={handleTriggerClick}
-          aria-label="Toggle menu"
-          aria-expanded={mode !== 'closed'}
+            className="rail-hamburger"
+            onPointerDown={onHamburgerPointerDown}
+            onPointerUp={scheduleClearInteractionRef}
+            onPointerCancel={scheduleClearInteractionRef}
+            aria-label="Toggle toolbar"
         >
-          <Menu size={24} />
+            <Menu size={24} />
         </button>
 
-        {/* Only render content when not closed */}
-        {mode !== 'closed' && (
-          <div className="rail-content">
-            {isExpanded && (
-              <div className="rail-header">
-                <h3>{mode === 'style' ? 'Styling' : 'Add Content'}</h3>
-                <button onPointerDown={(e) => { e.preventDefault(); setMode('closed'); }} className="rail-close-btn" >
-                  <X size={20} />
-                </button>
-              </div>
-            )}
-
+        {isOpen && (
             <div className="rail-scroll-area">
-              {mode === 'style' && (
-                <div className="rail-items-grid">
-                  {renderActions(styleGroups, 'Formatting')}
-                  {renderActions(styleGroups, 'Headings')}
-                  {renderActions(styleGroups, 'Lists')}
-                </div>
-              )}
-
-              {mode === 'add' && !isExpanded && (
-                <div className="rail-items-grid">
-                  {categoryOrder.map(categoryName => renderActions(addGroups, categoryName))}
-                </div>
-              )}
-
-              {mode === 'add' && isExpanded && categoryOrder.map(categoryName => {
-                 const items = addGroups[categoryName];
-                 if (!items) return null;
-                 const isCategoryExpanded = expandedGroups[categoryName];
-
-                 return (
-                   <div key={categoryName} className="rail-category">
-                     <button className="rail-category-header" onPointerDown={(e) => toggleGroup(e, categoryName)}>
-                       <span className="rail-category-label">{categoryName}</span>
-                       <ChevronDown size={16} className={`rail-chevron ${isCategoryExpanded ? 'expanded' : ''}`} />
-                     </button>
-                     {isCategoryExpanded && (
-                       <div className="rail-items-grid">
-                          {renderActions(addGroups, categoryName)}
-                       </div>
-                     )}
-                   </div>
-                 );
-              })}
+                {mode === 'style' && renderActions(styleActions)}
+                {mode === 'add' && renderActions(addActions)}
             </div>
-          </div>
         )}
-      </div>
-
-      {isExpanded && mode !== 'closed' && (
-        <div className="rail-backdrop" onPointerDown={(e) => { e.preventDefault(); setMode('closed'); }} />
-      )}
-    </>,
-    document.body
+    </div>
   );
+
+  return createPortal(railContent, document.body);
 }

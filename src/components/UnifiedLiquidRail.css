@@ -1,51 +1,86 @@
-:root {
-  /* CHANGED: Made background more transparent (0.4 -> 0.2) to match original glass feel */
-  --rail-glass-bg: rgba(25, 35, 45, 0.2);
-  --rail-glass-tint: rgba(59, 130, 246, 0.08);
-  --rail-blur: 24px;
-  --rail-saturation: 180%;
-  --rail-border: rgba(255, 255, 255, 0.12);
-  --rail-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.5);
-  --rail-transition: 300ms cubic-bezier(0.16, 1, 0.3, 1);
-  --rail-width-compact: 56px;
-  --rail-width-expanded: 240px;
+:root{
+  --rail-compact-w: 56px;
+  --rail-expanded-w: 240px;
+  --rail-top: 16px;
+  --rail-left: 12px;
+  --rail-bg: rgba(20,28,38,0.6);
+  --rail-blur: 22px;
+  --rail-sat: 160%;
+  --rail-border: rgba(255,255,255,0.06);
 }
-
 .unified-liquid-rail {
   position: fixed;
-  top: 16px;
-  left: 16px;
-  z-index: 10000;
-  display: flex;
+  top: var(--rail-top);
+  left: var(--rail-left);
+  display:flex;
   flex-direction: column;
+  width: var(--rail-compact-w);
+  z-index: 10000;
   border-radius: 14px;
+  background: var(--rail-bg);
+  backdrop-filter: blur(var(--rail-blur)) saturate(var(--rail-sat));
+  -webkit-backdrop-filter: blur(var(--rail-blur)) saturate(var(--rail-sat));
   border: 1px solid var(--rail-border);
-  background: var(--rail-glass-bg);
-  /* Ensure backdrop filter works */
-  backdrop-filter: blur(var(--rail-blur)) saturate(var(--rail-saturation));
-  -webkit-backdrop-filter: blur(var(--rail-blur)) saturate(var(--rail-saturation));
-  box-shadow: var(--rail-shadow);
-  transition: width var(--rail-transition);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
   overflow: hidden;
-  max-height: calc(100vh - 32px);
-  user-select: none;
-  /* Ensure clicks pass through if needed, but for the toolbar we want to catch them */
+  transition: width 300ms cubic-bezier(0.2, 1, 0.3, 1),
+              height 300ms cubic-bezier(0.2, 1, 0.3, 1),
+              opacity 300ms ease;
+  opacity: 0;
+  height: 56px;
 }
-
-/* Inner glow for liquid effect */
-.unified-liquid-rail::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 13px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.05) 0%,
-    transparent 40%,
-    rgba(0, 0, 0, 0.1) 100%
-  );
-  pointer-events: none; /* CRITICAL: Ensures this overlay doesn't block your clicks */
-  z-index: 1;
+.unified-liquid-rail.open {
+  opacity: 1;
+  height: auto;
 }
-
-/* ... (Keep the rest of your CSS the same) */
+.unified-liquid-rail.expanded {
+  width: var(--rail-expanded-w);
+}
+.rail-hamburger {
+  width: 44px;
+  height: 44px;
+  margin: 6px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: rgba(255,255,255,0.1);
+  transition: background 200ms ease;
+}
+.rail-hamburger:hover {
+  background: rgba(255,255,255,0.2);
+}
+.rail-scroll-area {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: calc(100vh - 120px);
+  padding: 0 8px 8px 8px;
+}
+.rail-item {
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  color: #eee;
+  background: transparent;
+  width: 100%;
+  transition: background 200ms ease;
+  cursor: pointer;
+}
+.rail-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.rail-item.active {
+  background: rgba(80, 150, 255, 0.2);
+  color: #fff;
+}
+.rail-item-icon {
+  flex-shrink: 0;
+}
+.rail-item-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
