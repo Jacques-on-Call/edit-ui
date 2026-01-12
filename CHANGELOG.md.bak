@@ -118,7 +118,7 @@
 ## [Unreleased] - 2026-01-03
 ### Fixed
 - **UI (BUG-005):** Resolved the fragmented navigation bug in the file explorer. The navigation controls (`Go Back`, `Go Home`) have been centralized in the shared `BottomActionBar` component instead of being incorrectly implemented in the `FileExplorer`. This creates a consistent user experience across the application.
-- **Search Normalization (BUG-001):** Fixed a recurring bug where searching for terms with smart quotes (e.g., “let’s”) or other special characters would fail to match content using standard quotes (e.g., "let's"). A new, more robust shared `normalize` utility was created in `easy-seo/src/utils/text.js` and applied to both the frontend search input and the backend search logic to ensure consistent, reliable search results.
+- **Search Normalization (BUG-001):** Fixed a recurring bug where searching for terms with smart quotes (e.g., “let’s”) or other special characters would fail. A new, more robust shared `normalize` utility was created in `easy-seo/src/utils/text.js` and applied to both the frontend search input and the backend search logic to ensure consistent, reliable search results.
 
 jules got vite sorted 2026-01-02
 This change fixes a persistent Vite build failure in the easy-seo project. The root cause was an unstable npm environment that failed to install devDependencies correctly, leading to a Cannot find module 'tailwindcss' error. The solution involves moving the build-critical dependencies (tailwindcss, postcss, autoprefixer) to the dependencies section of package.json and pinning them to their latest v3-compatible versions. This ensures that the build tools are always installed, regardless of the environment, and prevents npm from installing the incompatible v4.

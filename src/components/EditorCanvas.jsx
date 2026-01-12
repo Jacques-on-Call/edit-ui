@@ -13,19 +13,6 @@ export default function EditorCanvas(props) {
   const { selectionState, handleAction } = useContext(EditorContext);
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [railWidth, setRailWidth] = useState(0); // State to hold the rail's width
-
-  // Callback for the rail to report its width
-  const handleRailWidthChange = (newWidth) => {
-    setRailWidth(newWidth);
-  };
-
-  // Dynamic padding style
-  const mainContentStyle = {
-    paddingBottom: 'var(--bottom-bar-height)',
-    transition: 'padding-left 300ms ease-in-out',
-    paddingLeft: `calc(${railWidth}px + 16px)`, // 16px is the base offset
-  };
 
   // Callback for child to signal readiness
   const handleEditorReady = () => {
@@ -67,11 +54,10 @@ export default function EditorCanvas(props) {
       )}
       */}
       {viewMode !== 'livePreview' && (
-        <UnifiedLiquidRail onWidthChange={handleRailWidthChange} />
+        <UnifiedLiquidRail />
       )}
       <main
         class="flex-grow relative overflow-y-auto"
-        style={mainContentStyle}
       >
         {renderContent({ onEditorReady: handleEditorReady })}
       </main>
