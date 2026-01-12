@@ -57,8 +57,6 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
   const railRef = useRef(null);
   const lastTapRef = useRef(0);
   const isScrollingRef = useRef(false);
-  const lastSelectionTimeRef = useRef(0);
-  const COOLDOWN_MS = 200;
 
   // Custom hook to handle virtual keyboard on mobile
   useVisualViewportFix(railRef);
@@ -74,21 +72,21 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
     }
   }, [isOpen, isExpanded, onWidthChange]);
 
-  // Debounced selection handler as per the specification
+  // Refined selection handler for reliability
   useEffect(() => {
     const onSelectionChange = () => {
-      const now = Date.now();
-      if (now - lastSelectionTimeRef.current < COOLDOWN_MS) return;
-      lastSelectionTimeRef.current = now;
-
+      // If the user is actively scrolling the main window or interacting with the toolbar, do nothing.
       if (isScrollingRef.current || (isToolbarInteractionRef && isToolbarInteractionRef.current)) return;
 
       const sel = window.getSelection();
+      // Show the toolbar if there's a meaningful text selection.
       if (sel && sel.toString().trim().length > 0) {
         setMode('style');
         setOpen(true);
         setExpanded(false);
       } else {
+        // Hide the toolbar if the selection is lost, but only if it's in 'style' mode
+        // and not manually expanded to show the 'add' tools.
         if (mode === 'style' && !isExpanded) {
           setOpen(false);
           setMode('idle');
@@ -97,30 +95,53 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
     };
     document.addEventListener('selectionchange', onSelectionChange);
     return () => document.removeEventListener('selectionchange', onSelectionChange);
-  }, [mode, isExpanded, isToolbarInteractionRef]);
+  }, [mode, isExpanded, isToolbarInteractionRef]); // Dependencies are still important
 
-  // Scroll handler to prevent selectionchange loops
-    useEffect(() => {
-        let scrollTimeout;
-        const onScroll = () => {
-            isScrollingRef.current = true;
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => { isScrollingRef.current = false; }, 150);
-        };
-        window.addEventListener('scroll', onScroll, { passive: true });
-        return () => window.removeEventListener('scroll', onScroll);
-    }, []);
-
-  // Click outside and Escape key handler
+  // Global scroll handler to prevent toolbar pop-up while scrolling the page
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (railRef.current && !railRef.current.contains(event.target)) {
-        setOpen(false);
-        setExpanded(false);
-        setMode('idle');
-      }
+    let scrollTimeout;
+    const onScroll = () => {
+      isScrollingRef.current = true;
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => { isScrollingRef.current = false; }, 150);
     };
-    const handleEscape = (e) => {
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Smarter click/tap outside handler
+  useEffect(() => {
+    const pointerStart = { x: 0, y: 0 };
+    let isDragging = false;
+
+    const handlePointerDown = (e) => {
+      pointerStart.x = e.clientX;
+      pointerStart.y = e.clientY;
+      isDragging = false;
+    };
+
+    const handlePointerMove = (e) => {
+        if (isDragging) return;
+        const deltaX = Math.abs(e.clientX - pointerStart.x);
+        const deltaY = Math.abs(e.clientY - pointerStart.y);
+        // If the user moves more than a few pixels, consider it a drag/scroll, not a tap.
+        if (deltaX > 5 || deltaY > 5) {
+            isDragging = true;
+        }
+    };
+
+    const handlePointerUp = (e) => {
+      // If it was a drag, or if the tap is inside the toolbar, do nothing.
+      if (isDragging || (railRef.current && railRef.current.contains(e.target))) {
+        return;
+      }
+      // Otherwise, it's a clean tap outside, so close the toolbar.
+      setOpen(false);
+      setExpanded(false);
+      setMode('idle');
+    };
+
+     const handleEscape = (e) => {
       if (e.key === 'Escape') {
         setOpen(false);
         setExpanded(false);
@@ -129,11 +150,15 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('pointerdown', handlePointerDown);
+      document.addEventListener('pointermove', handlePointerMove);
+      document.addEventListener('pointerup', handlePointerUp);
       document.addEventListener('keydown', handleEscape);
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
       document.removeEventListener('keydown', handleEscape);
     };
   }, [isOpen]);
@@ -144,17 +169,20 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
     if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
 
     const now = Date.now();
-    if (now - lastTapRef.current < 300) { // Double-tap
+    const isTextSelected = window.getSelection()?.toString().trim().length > 0;
+
+    if (now - lastTapRef.current < 300) { // Double-tap always toggles expand
       setExpanded(prev => !prev);
-    } else { // Single-tap
-        if (isOpen && mode === 'add') {
-            setOpen(false);
-            setMode('idle');
-        } else {
-            setMode('add');
-            setOpen(true);
-            setExpanded(false); // Ensure compact view on open
-        }
+    } else { // Single-tap logic
+      if (isTextSelected) {
+        // If text is selected, the hamburger's only job is to expand/collapse.
+        setExpanded(prev => !prev);
+      } else {
+        // If no text is selected, the hamburger opens the 'add' panel.
+        setMode('add');
+        setOpen(prev => !prev); // Toggle open state
+        setExpanded(false);     // Always start compact
+      }
     }
     lastTapRef.current = now;
   };
@@ -225,12 +253,10 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
             <Menu size={24} />
         </button>
 
-        {isOpen && (
-            <div className="rail-scroll-area">
-                {mode === 'style' && renderActions(styleActions)}
-                {mode === 'add' && renderActions(addActions)}
-            </div>
-        )}
+        <div className="rail-scroll-area">
+            {isOpen && mode === 'style' && renderActions(styleActions)}
+            {isOpen && mode === 'add' && renderActions(addActions)}
+        </div>
     </div>
   );
 

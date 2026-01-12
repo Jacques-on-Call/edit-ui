@@ -18,8 +18,9 @@ const AppContent = () => {
   const { headerContent, searchQuery, setSearchQuery } = useHeader();
   const [router] = useRouter();
 
-  const isEditorLayout = router.url.startsWith('/editor');
-  const isExplorerLayout = router.url.startsWith('/explorer');
+  const routerUrl = router.url || '';
+  const isEditorLayout = routerUrl.startsWith('/editor');
+  const isExplorerLayout = routerUrl.startsWith('/explorer');
 
   useEffect(() => {
     if (isEditorLayout || isExplorerLayout) {
@@ -67,9 +68,10 @@ const AppContent = () => {
           height: isEditorLayout ? '100dvh' : undefined
         }}
       >
-        {! isEditorLayout && (
+        {/* The header is now hidden if we are on ANY editor or preview route. */}
+        {!isEditorLayout && (
           <header className={isExplorerLayout ? 'relative z-10 flex-shrink-0 p-6 md:p-10 flex justify-between items-center h-24' : 'flex justify-between items-center pb-8 h-16'}>
-            {isExplorerLayout ?  <SearchBar onSearch={setSearchQuery} /> : headerContent}
+            {isExplorerLayout ? <SearchBar onSearch={setSearchQuery} /> : headerContent}
           </header>
         )}
 

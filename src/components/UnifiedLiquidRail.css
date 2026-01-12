@@ -24,14 +24,17 @@
   box-shadow: 0 10px 30px rgba(0,0,0,0.6);
   overflow: hidden;
   transition: width 300ms cubic-bezier(0.2, 1, 0.3, 1),
-              height 300ms cubic-bezier(0.2, 1, 0.3, 1),
-              opacity 300ms ease;
+              max-height 350ms cubic-bezier(0.2, 1, 0.3, 1),
+              opacity 200ms ease,
+              background-color 200ms ease;
   opacity: 0;
-  height: 56px;
+  max-height: 56px; /* Start collapsed */
+  background-color: transparent; /* Start transparent */
 }
 .unified-liquid-rail.open {
   opacity: 1;
-  height: auto;
+  max-height: 80vh; /* Animate to a max height */
+  background-color: var(--rail-bg); /* Fade in the background */
 }
 .unified-liquid-rail.expanded {
   width: var(--rail-expanded-w);
