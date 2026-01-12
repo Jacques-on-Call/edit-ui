@@ -20,55 +20,62 @@ import './UnifiedLiquidRail.css';
  */
 export default function UnifiedLiquidRail({ onWidthChange }) {
   const { handleAction, isToolbarInteractionRef, selectionState } = useEditor();
-  // The core state machine: 'closed', 'compact', or 'expanded'
-  const [railState, setRailState] = useState('closed');
+
+  // ** REFACTORED STATE MODEL **
+  // 'mode' controls WHICH tools are shown ('style' or 'add').
+  // 'isExpanded' controls HOW they are shown (icons-only or with labels).
+  const [mode, setMode] = useState('closed');
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const railRef = useRef(null);
+  const clickTimeout = useRef(null);
+  const DOUBLE_CLICK_DELAY = 250;
 
   useVisualViewportFix(railRef);
 
   const [expandedGroups, setExpandedGroups] = useState({
-    'Formatting': true,
-    'History': true,
-    'Headings': true,
-    'Lists': true,
+    'Formatting': true, 'History': true, 'Headings': true, 'Lists': true,
+    'Media': true, 'Structure': true, 'Layout': true,
   });
 
   // Effect to report width changes to the parent
   useEffect(() => {
     let width = 0;
-    if (railState === 'compact') width = 56; // from --rail-width-compact
-    if (railState === 'expanded') width = 240; // from --rail-width-expanded
+    if (mode !== 'closed') {
+      width = isExpanded ? 240 : 56; // Corresponds to --rail-width-expanded and --rail-width-compact
+    }
     onWidthChange(width);
-  }, [railState, onWidthChange]);
+  }, [mode, isExpanded, onWidthChange]);
 
-  // Effect to open the compact view on text selection
+  // Effect to open the 'style' mode on text selection
   useEffect(() => {
     const handleSelection = () => {
       if (isToolbarInteractionRef?.current) return;
       const selection = window.getSelection();
       const hasSelection = selection && !selection.isCollapsed && selection.toString().trim().length > 0;
 
-      if (hasSelection && railState === 'closed') {
-        setRailState('compact');
+      if (hasSelection && mode === 'closed') {
+        setMode('style');
+        setIsExpanded(false); // Always start in compact (icons-only) view
       }
     };
 
     document.addEventListener('selectionchange', handleSelection);
     return () => document.removeEventListener('selectionchange', handleSelection);
-  }, [railState, isToolbarInteractionRef]);
+  }, [mode, isToolbarInteractionRef]);
 
   // Effect to handle closing the rail (Escape key or click outside)
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (railRef.current && !railRef.current.contains(event.target)) {
-        setRailState('closed');
+        setMode('closed');
       }
     };
     const handleEscape = (e) => {
-      if (e.key === 'Escape') setRailState('closed');
+      if (e.key === 'Escape') setMode('closed');
     };
 
-    if (railState !== 'closed') {
+    if (mode !== 'closed') {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('keydown', handleEscape);
     }
@@ -77,20 +84,44 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [railState]);
+  }, [mode]);
 
-  // Handler for the main hamburger trigger
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (clickTimeout.current) clearTimeout(clickTimeout.current);
+    };
+  }, []);
+
+  // ** REFACTORED INTERACTION LOGIC **
   const handleTriggerClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
 
-    // State machine transitions
-    setRailState(prevState => {
-      if (prevState === 'closed') return 'compact';
-      if (prevState === 'compact') return 'expanded';
-      return 'closed'; // 'expanded' -> 'closed'
-    });
+    // Double-click always toggles expansion state
+    if (clickTimeout.current) {
+      clearTimeout(clickTimeout.current);
+      clickTimeout.current = null;
+      setIsExpanded(prev => !prev);
+      // If closed, a double-click should also open it (default to 'add' mode)
+      if (mode === 'closed') {
+        setMode('add');
+      }
+      return;
+    }
+
+    // Single-click logic
+    clickTimeout.current = setTimeout(() => {
+      clickTimeout.current = null;
+      if (mode === 'closed') {
+        setMode('style'); // From closed, single-click opens style mode
+        setIsExpanded(false);
+      } else {
+        // If already open, single-click toggles between 'style' and 'add' modes
+        setMode(prev => prev === 'style' ? 'add' : 'style');
+      }
+    }, DOUBLE_CLICK_DELAY);
   };
 
   const onAction = (e, action, payload) => {
@@ -98,10 +129,7 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
     e.stopPropagation();
     if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
     handleAction(action, payload);
-    // After a style action in compact mode, close the rail
-    if (railState === 'compact') {
-      setRailState('closed');
-    }
+    // Action no longer closes the rail, giving user more control.
   };
 
   const toggleGroup = (e, groupName) => {
@@ -161,46 +189,48 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
           title={item.label}
         >
           <Icon size={20} className="rail-item-icon" />
-          {railState === 'expanded' && <span className="rail-item-label">{item.label}</span>}
+          {isExpanded && <span className="rail-item-label">{item.label}</span>}
         </button>
       );
     });
   };
+
+  const railClassName = `unified-liquid-rail mode-${mode} ${isExpanded ? 'expanded' : 'compact'}`;
 
   // Always render within a portal to ensure consistent positioning
   return createPortal(
     <>
       <div
         ref={railRef}
-        className={`unified-liquid-rail ${railState}`}
+        className={railClassName}
         onPointerDown={(e) => {
           if (isToolbarInteractionRef) isToolbarInteractionRef.current = true;
         }}
       >
         {/* The hamburger is now always inside the main container */}
         <button
-          className={`rail-hamburger ${railState !== 'closed' ? 'active' : ''}`}
+          className={`rail-hamburger ${mode !== 'closed' ? 'active' : ''}`}
           onPointerDown={handleTriggerClick}
           aria-label="Toggle menu"
-          aria-expanded={railState !== 'closed'}
+          aria-expanded={mode !== 'closed'}
         >
           <Menu size={24} />
         </button>
 
         {/* Only render content when not closed */}
-        {railState !== 'closed' && (
+        {mode !== 'closed' && (
           <div className="rail-content">
-            {railState === 'expanded' && (
+            {isExpanded && (
               <div className="rail-header">
-                <h3>Add Content</h3>
-                <button onPointerDown={(e) => { e.preventDefault(); setRailState('closed'); }} className="rail-close-btn" >
+                <h3>{mode === 'style' ? 'Styling' : 'Add Content'}</h3>
+                <button onPointerDown={(e) => { e.preventDefault(); setMode('closed'); }} className="rail-close-btn" >
                   <X size={20} />
                 </button>
               </div>
             )}
 
             <div className="rail-scroll-area">
-              {railState === 'compact' && (
+              {mode === 'style' && (
                 <div className="rail-items-grid">
                   {renderActions(styleGroups, 'Formatting')}
                   {renderActions(styleGroups, 'Headings')}
@@ -208,32 +238,38 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
                 </div>
               )}
 
-              {railState === 'expanded' && categoryOrder.map(categoryName => {
-                 const items = addGroups[categoryName] || styleGroups[categoryName];
-               if (!items) return null;
-               const isCategoryExpanded = expandedGroups[categoryName];
+              {mode === 'add' && !isExpanded && (
+                <div className="rail-items-grid">
+                  {categoryOrder.map(categoryName => renderActions(addGroups, categoryName))}
+                </div>
+              )}
 
-               return (
-                 <div key={categoryName} className="rail-category">
-                   <button className="rail-category-header" onPointerDown={(e) => toggleGroup(e, categoryName)}>
-                     <span className="rail-category-label">{categoryName}</span>
-                     <ChevronDown size={16} className={`rail-chevron ${isCategoryExpanded ? 'expanded' : ''}`} />
-                   </button>
-                   {isCategoryExpanded && (
-                     <div className="rail-items-grid">
-                        {renderActions(addGroups, categoryName)}
-                        {renderActions(styleGroups, categoryName)}
-                     </div>
-                   )}
-                 </div>
-               );
-            })}
+              {mode === 'add' && isExpanded && categoryOrder.map(categoryName => {
+                 const items = addGroups[categoryName];
+                 if (!items) return null;
+                 const isCategoryExpanded = expandedGroups[categoryName];
+
+                 return (
+                   <div key={categoryName} className="rail-category">
+                     <button className="rail-category-header" onPointerDown={(e) => toggleGroup(e, categoryName)}>
+                       <span className="rail-category-label">{categoryName}</span>
+                       <ChevronDown size={16} className={`rail-chevron ${isCategoryExpanded ? 'expanded' : ''}`} />
+                     </button>
+                     {isCategoryExpanded && (
+                       <div className="rail-items-grid">
+                          {renderActions(addGroups, categoryName)}
+                       </div>
+                     )}
+                   </div>
+                 );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {railState === 'expanded' && (
-        <div className="rail-backdrop" onPointerDown={(e) => { e.preventDefault(); setRailState('closed'); }} />
+      {isExpanded && mode !== 'closed' && (
+        <div className="rail-backdrop" onPointerDown={(e) => { e.preventDefault(); setMode('closed'); }} />
       )}
     </>,
     document.body
