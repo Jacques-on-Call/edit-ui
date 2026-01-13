@@ -80,13 +80,17 @@
   border-top: none; /* Top border is handled by the capsule */
 
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-10px) translateZ(0);
   pointer-events: none;
   z-index: 10001;
 
   border-radius: 12px;
   display: flex;
   flex-direction: column;
+
+  /* Mobile-first constraints */
+  max-height: calc(100dvh - (var(--rail-top) + var(--trigger-group-height) + var(--action-bar-height, 64px) + var(--rail-top)));
+  will-change: transform;
 
   transition: opacity 200ms ease, transform 200ms ease, width 200ms ease;
 }
