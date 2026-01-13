@@ -6,7 +6,8 @@ import {
   Heading2, Heading3, Heading4,
   List, ListOrdered, Image, Table, X, Menu,
   Minus, Columns, ChevronDown,
-  Undo, Redo, Bold, Italic, Underline, Strikethrough, Code, Link
+  Undo, Redo, Bold, Italic, Underline, Strikethrough, Code, Link,
+  Type, Plus
 } from 'lucide-preact';
 import { useVisualViewportFix } from '../hooks/useVisualViewportFix';
 import './UnifiedLiquidRail.css';
@@ -39,70 +40,66 @@ const addActions = toolbarActions.filter(a => addCategories.includes(a.category)
 export default function UnifiedLiquidRail({ onWidthChange }) {
   const { handleAction, isToolbarInteractionRef, selectionState } = useContext(EditorContext);
 
-  const [mode, setMode] = useState('style'); // 'style', 'add'
-  const [isOpen, setOpen] = useState(false);
+  // 'style', 'add', or null (closed)
+  const [activeMode, setActiveMode] = useState(null);
   const [isExpanded, setExpanded] = useState(false);
 
   const railRef = useRef(null);
   const scrollAreaRef = useRef(null);
-  const hamburgerRef = useRef(null);
+  const triggerGroupRef = useRef(null); // Ref for the new container
   const lastTapRef = useRef(0);
 
-  // Pass all relevant refs to the hook for viewport management
-  useVisualViewportFix([hamburgerRef, railRef, scrollAreaRef]);
+  // Pass refs to viewport hook to ensure they stay on screen
+  useVisualViewportFix([triggerGroupRef, railRef]);
 
+  const isOpen = activeMode !== null;
+
+  // Notify parent of width changes
   useEffect(() => {
     onWidthChange?.(isOpen ? (isExpanded ? 240 : 56) : 0);
   }, [isOpen, isExpanded, onWidthChange]);
 
-  // EFFECT 1: Handle Text Selection Changes
+  // Handle Text Selection Changes
   useEffect(() => {
     const handleSelectionChange = () => {
       if (isToolbarInteractionRef.current) return;
       const selection = window.getSelection();
       if (selection && selection.toString().trim().length > 0) {
-        setOpen(true);
-        setMode('style');
-      } else {
-        // Only auto-close if the user was in style mode.
-        // This prevents a manually opened 'add' panel from closing.
-        if (mode === 'style') {
-          setOpen(false);
-        }
+        setActiveMode('style');
       }
     };
     document.addEventListener('selectionchange', handleSelectionChange);
     return () => document.removeEventListener('selectionchange', handleSelectionChange);
-  }, [mode, isToolbarInteractionRef]);
+  }, [isToolbarInteractionRef]);
 
-  // EFFECT 2: Handle Clicking Outside to Close
+  // Handle outside clicks
   useEffect(() => {
     const handlePointerUp = (e) => {
-      // If the click is inside the rail or on the hamburger, do nothing.
-      if (railRef.current?.contains(e.target) || hamburgerRef.current?.contains(e.target)) {
+      if (
+        railRef.current?.contains(e.target) ||
+        triggerGroupRef.current?.contains(e.target)
+      ) {
         return;
       }
-      setOpen(false);
+      setActiveMode(null); // Close
     };
     document.addEventListener('pointerup', handlePointerUp);
     return () => document.removeEventListener('pointerup', handlePointerUp);
   }, []);
 
-  // HANDLER: Hamburger Click Logic
-  const onHamburgerPointerDown = (e) => {
+  // Mode Toggle Logic
+  const toggleMode = (mode, e) => {
     e.preventDefault();
     isToolbarInteractionRef.current = true;
 
+    // Double tap logic for expansion (optional)
     const now = Date.now();
-    if (now - lastTapRef.current < 300) { // Double-tap
-      setExpanded(prev => !prev);
-    } else { // Single-tap
-      if (!isOpen) {
-        setOpen(true);
-        setMode('add');
-      } else {
-        setMode(prev => prev === 'add' ? 'style' : 'add');
-      }
+    if (now - lastTapRef.current < 300 && activeMode === mode) {
+        setExpanded(prev => !prev);
+    } else {
+        // If clicking the active mode, close it. Otherwise switch to it.
+        setActiveMode(prev => (prev === mode ? null : mode));
+        if (!isOpen) setExpanded(false); // Reset expansion on fresh open
     }
     lastTapRef.current = now;
   };
@@ -111,44 +108,60 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
     isToolbarInteractionRef.current = false;
   };
 
-  const renderActions = (actions) => {
-    return actions.map((item) => {
-      const Icon = item.icon;
-      const isActive = (item.action === 'heading' && selectionState?.blockType === item.payload) ||
-                       (selectionState?.[`is${item.label}`]);
-      return (
-        <button
-          key={item.id}
-          className={`rail-item ${isActive ? 'active' : ''}`}
-          onPointerDown={(e) => {
-            e.preventDefault();
-            isToolbarInteractionRef.current = true;
-            handleAction(item.action, item.payload);
-          }}
-          onPointerUp={scheduleClearInteractionRef}
-        >
-          <Icon size={24} className="rail-item-icon" />
-          <span className="rail-item-label">{item.label}</span>
-        </button>
-      );
-    });
-  };
-
-  const railClassName = `unified-liquid-rail ${isOpen ? 'open' : ''} ${isExpanded ? 'expanded' : 'compact'}`;
+  const currentActions = activeMode === 'style' ? styleActions : addActions;
 
   return createPortal(
     <>
-      <button
-        ref={hamburgerRef}
-        className="rail-hamburger-trigger"
-        onPointerDown={onHamburgerPointerDown}
-        onPointerUp={scheduleClearInteractionRef}
+      {/* THE DOUBLE-DECKER TRIGGER */}
+      <div
+        ref={triggerGroupRef}
+        className={`rail-trigger-group ${isOpen ? 'is-open' : ''}`}
       >
-        <Menu size={24} />
-      </button>
-      <div ref={railRef} className={railClassName}>
+        <button
+          className={`rail-btn ${activeMode === 'style' ? 'active' : ''}`}
+          onPointerDown={(e) => toggleMode('style', e)}
+          onPointerUp={scheduleClearInteractionRef}
+        >
+          <Type size={20} />
+        </button>
+
+        <button
+          className={`rail-btn ${activeMode === 'add' ? 'active' : ''}`}
+          onPointerDown={(e) => toggleMode('add', e)}
+          onPointerUp={scheduleClearInteractionRef}
+        >
+          {/* If 'add' is open, show X to close, otherwise show Plus */}
+          {activeMode === 'add' ? <X size={20} /> : <Plus size={20} />}
+        </button>
+      </div>
+
+      {/* THE RAIL */}
+      <div
+        ref={railRef}
+        className={`unified-liquid-rail ${isOpen ? 'open' : ''} ${isExpanded ? 'expanded' : 'compact'}`}
+      >
         <div ref={scrollAreaRef} className="rail-scroll-area">
-          {mode === 'style' ? renderActions(styleActions) : renderActions(addActions)}
+          {isOpen && currentActions.map((item) => {
+             const Icon = item.icon;
+             const isActive = (item.action === 'heading' && selectionState?.blockType === item.payload) ||
+                              (selectionState?.[`is${item.label}`]);
+
+             return (
+               <button
+                 key={item.id}
+                 className={`rail-item ${isActive ? 'active' : ''}`}
+                 onPointerDown={(e) => {
+                   e.preventDefault();
+                   isToolbarInteractionRef.current = true;
+                   handleAction(item.action, item.payload);
+                 }}
+                 onPointerUp={scheduleClearInteractionRef}
+               >
+                 <Icon size={24} className="rail-item-icon" />
+                 <span className="rail-item-label">{item.label}</span>
+               </button>
+             );
+          })}
         </div>
       </div>
     </>,

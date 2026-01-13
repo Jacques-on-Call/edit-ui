@@ -1,102 +1,136 @@
 :root {
-  --rail-compact-w: 56px;
+  --rail-w: 56px;
   --rail-expanded-w: 240px;
-  --rail-top: 16px;
   --rail-left: 12px;
-  --rail-bg: rgba(20, 28, 38, 0.3); /* User request: 30% opacity */
-  --rail-blur: 18px;
+  --rail-top: 16px;
+  --rail-bg: rgba(20, 28, 38, 0.85); /* Slightly more opaque for readability */
+  --rail-blur: 24px;
   --rail-border: rgba(255, 255, 255, 0.1);
+  /* The height of the double-button capsule (44px * 2) */
+  --trigger-group-height: 88px;
 }
 
-.rail-hamburger-trigger {
+/* --- THE DOUBLE-DECKER TRIGGER CAPSULE --- */
+.rail-trigger-group {
   position: fixed;
   top: var(--rail-top);
   left: var(--rail-left);
-  width: 44px;
-  height: 44px;
-  z-index: 10001; /* Above the rail panel */
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
-  transition: background 200ms ease;
-  cursor: pointer;
-}
+  width: var(--rail-w);
+  height: var(--trigger-group-height);
+  z-index: 10002;
 
-.rail-hamburger-trigger:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.unified-liquid-rail {
-  position: fixed;
-  top: calc(var(--rail-top) + 52px); /* Position below the hamburger */
-  left: var(--rail-left);
   display: flex;
   flex-direction: column;
-  width: var(--rail-compact-w);
-  z-index: 10000;
-  border-radius: 14px;
+
   background: var(--rail-bg);
   backdrop-filter: blur(var(--rail-blur));
   -webkit-backdrop-filter: blur(var(--rail-blur));
   border: 1px solid var(--rail-border);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-  overflow: hidden;
-  transition: width 300ms ease, opacity 200ms ease, transform 200ms ease;
-  opacity: 0; /* Hidden by default */
-  transform: scale(0.95);
-  transform-origin: top center;
+  border-radius: 28px; /* Fully rounded capsule */
+
+  transition: border-radius 200ms ease;
+  overflow: hidden; /* Keeps child buttons inside the rounded corners */
+}
+
+/* Glue logic: Flatten bottom when rail is open */
+.rail-trigger-group.is-open {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: transparent;
+}
+
+/* Individual Buttons inside the capsule */
+.rail-btn {
+  flex: 1; /* Takes up 50% height each */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 200ms ease;
+  position: relative;
+}
+
+/* Divider line between the two buttons */
+.rail-btn:first-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rail-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* Active State (The selected mode) */
+.rail-btn.active {
+  color: #fff;
+  background: rgba(80, 150, 255, 0.2);
+}
+
+/* --- THE UNIFIED RAIL --- */
+.unified-liquid-rail {
+  position: fixed;
+  /* Attached exactly to bottom of trigger group */
+  top: calc(var(--rail-top) + var(--trigger-group-height) - 1px);
+  left: var(--rail-left);
+  width: var(--rail-w);
+
+  background: var(--rail-bg);
+  backdrop-filter: blur(var(--rail-blur));
+  -webkit-backdrop-filter: blur(var(--rail-blur));
+  border: 1px solid var(--rail-border);
+
+  /* Initial State: Hidden & Slide Up */
+  opacity: 0;
+  transform: translateY(-10px);
   pointer-events: none;
+  z-index: 10001;
+
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+
+  transition: width 300ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 200ms ease, transform 200ms ease;
 }
 
 .unified-liquid-rail.open {
   opacity: 1;
-  transform: scale(1);
+  transform: translateY(0);
   pointer-events: auto;
+
+  /* Glue logic: Flatten top to merge with trigger */
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-top-color: transparent;
 }
 
 .unified-liquid-rail.expanded {
   width: var(--rail-expanded-w);
 }
 
+/* --- SCROLL & KEYBOARD FIX --- */
 .rail-scroll-area {
+  padding: 8px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 8px;
-  /* max-height is set by the useVisualViewportFix hook */
-  overflow-y: auto;
+
+  /* KEYBOARD FIX:
+     1. dvh adapts to mobile browser bars appearing/disappearing.
+     2. Subtract top offset (16px) + trigger height (88px) + keyboard buffer (20px)
+  */
+  max-height: calc(100dvh - 130px);
+
+  /* Prevent scroll chaining (scrolling the rail won't scroll the page behind it) */
+  overscroll-behavior: contain;
 }
 
-.rail-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px;
-  border-radius: 8px;
-  color: #eee;
-  background: transparent;
-  width: 100%;
-  transition: background 200ms ease;
-  cursor: pointer;
+/* Hide scrollbar but keep functionality */
+.rail-scroll-area::-webkit-scrollbar {
+  width: 4px;
 }
-
-.rail-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.rail-item.active {
-  background: rgba(80, 150, 255, 0.2);
-  color: #fff;
-}
-
-.rail-item-icon {
-  flex-shrink: 0;
-}
-
-.rail-item-label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.rail-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 4px;
 }

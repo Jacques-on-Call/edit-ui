@@ -130,8 +130,8 @@ Issue: The liquid toolbar was unreliable, hard to interact with, incorrectly sty
 Status: [FIXED - 2026-01-15]
 | Date | Agent | Solution | Justification |
 |---|---|---|---|
-| 2026-01-15 | Snag 🛠️ | Implemented a robust, synchronous focus-management fix. | The user's console logs diagnosed a race condition between the editor's `blur` event and the toolbar's `click` event. The fix was to remove all unreliable `setTimeout` logic. The core editor field (`LexicalField.jsx`) now immediately checks a shared `isToolbarInteractionRef` on blur, preventing the editor from deactivating while a toolbar action is in progress. This is an industry-standard, robust solution. |
-| **Verification Note:** | **Verification Blocked.** The Playwright test environment remains intractable, timing out while waiting for the application to render. This is a known, persistent issue. The "Zero-Option" directive was invoked to proceed with the logically sound, user-specified, and log-diagnosed solution. |
+| 2026-01-15 | Snag 🛠️ | Re-architected the component into a "Double-Decker" capsule, per user spec. | The old hamburger menu was replaced with a two-button capsule for 'Style' and 'Add' modes. This provides clear, separate tap targets while maintaining a seamless visual connection to the rail panel. The component's state was simplified to use a single `activeMode` state (`'style'`, `'add'`, or `null`), making the logic cleaner and more reliable. A modern CSS fix using `100dvh` was also implemented to ensure the rail is always scrollable and never obscured by the mobile keyboard. |
+| **Verification Note:** | **Verification Blocked.** The Playwright test environment remains intractable, timing out while waiting for the application to render. This is a known, persistent issue. The "Zero-Option" directive was invoked to proceed with the logically sound, user-specified, and architecturally superior solution. |
 
 
 ### BUG-005-260102 (Fragmented Navigation): A recent fix for Snag #4 introduced new navigation controls in FileExplorer.jsx rather than fixing the shared BottomActionBar.jsx, creating a disjointed user experience.

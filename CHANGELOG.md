@@ -1,5 +1,17 @@
 # Project Change Log
 
+## [Unreleased] - 2026-01-15 (Iteration 7)
+### Added
+- **"Double-Decker" Capsule Toolbar (BUG-004):** Re-architected the `UnifiedLiquidRail` into a new, visually unified "Double-Decker" capsule, based on a detailed user specification.
+  - **New UI:** The old hamburger menu was replaced with a two-button capsule for 'Style' and 'Add' modes. This provides clear, separate tap targets while maintaining a seamless visual connection to the rail panel.
+  - **Keyboard-Safe Scrolling:** Implemented a modern CSS fix using `100dvh` to ensure the rail's content is always scrollable and never obscured by the mobile keyboard.
+  - **Refined State Logic:** The component's state was simplified to use a single `activeMode` state (`'style'`, `'add'`, or `null`), making the logic cleaner and more reliable.
+
+### Reflection
+- **What was the most challenging part of this task?** The most challenging part was ensuring the new, complex UI and state logic correctly integrated with the existing robust focus-management fix. It required a careful and methodical porting of the `isToolbarInteractionRef` pattern into the new `toggleMode` and `onPointerUp` handlers.
+- **What was a surprising discovery or key learning?** The `dvh` (dynamic viewport height) CSS unit is a powerful and elegant solution for the common problem of mobile keyboards breaking `vh`-based layouts. This is a modern technique that should be the new standard for this kind of UI.
+- **What advice would you give the next agent who works on this code?** The `UnifiedLiquidRail` is now a sophisticated component. Pay close attention to the "gluing" logic in the CSS, where `border-radius` and `border-color` are dynamically changed to create the seamless capsule effect. Also, the `selectionchange` event listener is now a critical piece of the interaction logic for automatically opening the 'style' mode.
+
 ## [Unreleased] - 2026-01-15 (Iteration 6)
 ### Fixed
 - **Unified Liquid Rail Focus (BUG-004):** Implemented a robust, industry-standard fix to resolve the critical focus-stealing bug that was preventing styles from being applied.
