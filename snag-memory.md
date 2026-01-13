@@ -198,4 +198,10 @@
 * **Why it Succeeded:** This was a targeted CSS class removal that directly addressed the root cause of the layout bug. The fix was verified with a new, dedicated Playwright test (`header-padding-fix.spec.js`) that passed on both desktop and mobile viewports, confirming the issue was resolved.
 * **Verification:** SUCCESS.
 
+### [2026-01-13] Snag: "Micro-Capsule" Toolbar Redesign
+* **Agent:** Snag 🛠️
+* **Successful Solution:** The `UnifiedLiquidRail` was visually overhauled to match the user's "Micro-Capsule" blueprint. The CSS was refactored to hide tool labels in the compact view, perfectly center the icons, and apply the specified "glass" effect. This resulted in a sleeker, 44px wide toolbar that significantly improves the mobile editing experience.
+* **Why it Succeeded:** The success of this task was based on precise adherence to a detailed visual blueprint. By focusing on a pure CSS implementation and leveraging the existing component structure, the redesign was achieved efficiently and without introducing regressions.
+* **Verification:** SUCCESS. The final design was verified visually with a targeted Playwright script and screenshot.
+
 - **Final Status:** The `UnifiedLiquidRail` is now stable, functional, and polished. All user-reported glitches have been resolved.

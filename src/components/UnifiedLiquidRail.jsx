@@ -122,7 +122,7 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
           onPointerDown={(e) => toggleMode('style', e)}
           onPointerUp={scheduleClearInteractionRef}
         >
-          <Type size={20} />
+          <Type size={22} />
         </button>
 
         <button
@@ -131,7 +131,7 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
           onPointerUp={scheduleClearInteractionRef}
         >
           {/* If 'add' is open, show X to close, otherwise show Plus */}
-          {activeMode === 'add' ? <X size={20} /> : <Plus size={20} />}
+          {activeMode === 'add' ? <X size={22} /> : <Plus size={22} />}
         </button>
       </div>
 
@@ -157,7 +157,7 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
                  }}
                  onPointerUp={scheduleClearInteractionRef}
                >
-                 <Icon size={24} className="rail-item-icon" />
+                 <Icon size={22} className="rail-item-icon" />
                  <span className="rail-item-label">{item.label}</span>
                </button>
              );

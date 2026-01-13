@@ -1,16 +1,15 @@
 :root {
-  --rail-w: 56px;
-  --rail-expanded-w: 240px;
+  --rail-w: 44px; /* Blueprint: Set to ideal width */
+  --rail-expanded-w: 240px; /* Keep expanded for labels */
   --rail-left: 12px;
   --rail-top: 16px;
-  --rail-bg: rgba(20, 28, 38, 0.85); /* Slightly more opaque for readability */
-  --rail-blur: 24px;
-  --rail-border: rgba(255, 255, 255, 0.1);
-  /* The height of the double-button capsule (44px * 2) */
-  --trigger-group-height: 88px;
+  --rail-bg: rgba(20, 28, 38, 0.3); /* Blueprint: Strictly 30% opacity */
+  --rail-blur: 18px; /* Blueprint: 18px blur */
+  --rail-border: rgba(255, 255, 255, 0.1); /* Blueprint: 1px light border */
+  --trigger-group-height: 88px; /* Blueprint: Exactly 88px (44px * 2) */
 }
 
-/* --- THE DOUBLE-DECKER TRIGGER CAPSULE --- */
+/* --- THE MICRO-CAPSULE TRIGGER --- */
 .rail-trigger-group {
   position: fixed;
   top: var(--rail-top);
@@ -26,36 +25,36 @@
   backdrop-filter: blur(var(--rail-blur));
   -webkit-backdrop-filter: blur(var(--rail-blur));
   border: 1px solid var(--rail-border);
-  border-radius: 28px; /* Fully rounded capsule */
+  border-radius: 22px; /* Perfect pill shape for 44px width */
 
-  transition: border-radius 200ms ease;
-  overflow: hidden; /* Keeps child buttons inside the rounded corners */
+  transition: border-radius 200ms ease, border-color 200ms ease;
+  overflow: hidden;
 }
 
-/* Glue logic: Flatten bottom when rail is open */
+/* "Weld" Logic: Flatten bottom edge when rail is open */
 .rail-trigger-group.is-open {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   border-bottom-color: transparent;
 }
 
-/* Individual Buttons inside the capsule */
+/* Buttons are perfect squares */
 .rail-btn {
-  flex: 1; /* Takes up 50% height each */
+  width: 100%;
+  height: 50%; /* Each button is 44px high */
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
   transition: all 200ms ease;
   position: relative;
 }
 
-/* Divider line between the two buttons */
 .rail-btn:first-child {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .rail-btn:hover {
@@ -63,7 +62,6 @@
   color: #fff;
 }
 
-/* Active State (The selected mode) */
 .rail-btn.active {
   color: #fff;
   background: rgba(80, 150, 255, 0.2);
@@ -72,17 +70,16 @@
 /* --- THE UNIFIED RAIL --- */
 .unified-liquid-rail {
   position: fixed;
-  /* Attached exactly to bottom of trigger group */
-  top: calc(var(--rail-top) + var(--trigger-group-height) - 1px);
+  top: calc(var(--rail-top) + var(--trigger-group-height));
   left: var(--rail-left);
-  width: var(--rail-w);
+  width: var(--rail-w); /* Blueprint: Rail stays same width */
 
   background: var(--rail-bg);
   backdrop-filter: blur(var(--rail-blur));
   -webkit-backdrop-filter: blur(var(--rail-blur));
   border: 1px solid var(--rail-border);
+  border-top: none; /* Top border is handled by the capsule */
 
-  /* Initial State: Hidden & Slide Up */
   opacity: 0;
   transform: translateY(-10px);
   pointer-events: none;
@@ -92,7 +89,7 @@
   display: flex;
   flex-direction: column;
 
-  transition: width 300ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 200ms ease, transform 200ms ease;
+  transition: opacity 200ms ease, transform 200ms ease, width 200ms ease;
 }
 
 .unified-liquid-rail.open {
@@ -100,29 +97,70 @@
   transform: translateY(0);
   pointer-events: auto;
 
-  /* Glue logic: Flatten top to merge with trigger */
+  /* "Weld" Logic: Flatten top edge to merge with trigger */
   border-top-left-radius: 0;
   border-top-right-radius: 0;
-  border-top-color: transparent;
 }
 
 .unified-liquid-rail.expanded {
   width: var(--rail-expanded-w);
 }
 
+/* --- RAIL ITEMS --- */
+.rail-item {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Blueprint: Center the icon */
+  width: 100%;
+  height: 44px; /* Consistent height */
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 150ms ease-in-out;
+}
+
+.rail-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.rail-item.active {
+  color: #66aaff; /* A brighter blue for active state */
+}
+
+.rail-item-icon {
+  flex-shrink: 0;
+  margin: 0; /* Reset margin */
+}
+
+/* Blueprint: No Labels in compact mode */
+.rail-item-label {
+  display: none;
+  margin-left: 12px;
+  white-space: nowrap;
+}
+
+.unified-liquid-rail.expanded .rail-item {
+  justify-content: flex-start; /* Left-align content in expanded mode */
+  padding: 0 12px;
+}
+
+.unified-liquid-rail.expanded .rail-item-label {
+  display: inline; /* Show labels only when expanded */
+}
+
+
 /* --- SCROLL & KEYBOARD FIX --- */
 .rail-scroll-area {
-  padding: 8px;
+  padding: 8px 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 
-  /* KEYBOARD FIX:
-     1. dvh adapts to mobile browser bars appearing/disappearing.
-     2. Subtract top offset (16px) + trigger height (88px) + keyboard buffer (20px)
-  */
-  max-height: calc(100dvh - 130px);
-
-  /* Prevent scroll chaining (scrolling the rail won't scroll the page behind it) */
+  /* Blueprint: Keyboard Fix */
+  max-height: calc(100dvh - 120px);
   overscroll-behavior: contain;
 }
 
