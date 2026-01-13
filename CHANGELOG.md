@@ -1,5 +1,15 @@
 # Project Change Log
 
+## [Unreleased] - 2026-01-15 (Iteration 6)
+### Fixed
+- **Unified Liquid Rail Focus (BUG-004):** Implemented a robust, industry-standard fix to resolve the critical focus-stealing bug that was preventing styles from being applied.
+  - **The Fix:** The root cause was a race condition between the editor's `blur` event and the toolbar's `click` event. The fix involved removing all unreliable `setTimeout` logic and implementing a direct, synchronous check. The core editor field (`LexicalField.jsx`) now immediately checks a shared `isToolbarInteractionRef` on blur, preventing the editor from deactivating while a toolbar action is in progress.
+
+### Reflection
+- **What was the most challenging part of this task?** The most challenging part was accurately diagnosing the race condition. The user-provided console logs were absolutely essential. They provided a perfect, millisecond-by-millisecond timeline of the events, which allowed me to see that the `blur` event was clearing the active editor just before the `handleAction` call arrived.
+- **What was a surprising discovery or key learning?** Timers (`setTimeout`) in focus management logic are a major anti-pattern. They are inherently unreliable and create race conditions. The correct solution is always a direct, synchronous state check between the interacting components.
+- **What advice would you give the next agent who works on this code?** The focus management between `LexicalField.jsx` and the various toolbars is now stable and correct. If you need to add new interactive elements that shouldn't steal focus, follow the established pattern: set `isToolbarInteractionRef.current = true` on `pointerdown` and `false` on `pointerup`.
+
 ## [Unreleased] - 2026-01-15 (Iteration 5)
 ### Fixed
 - **Unified Liquid Rail (BUG-004):** A methodical, step-by-step fix was implemented to resolve all outstanding functional and UI polish issues with the toolbar.

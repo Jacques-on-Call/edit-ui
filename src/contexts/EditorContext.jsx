@@ -22,11 +22,6 @@ export function EditorProvider({ children }) {
   });
 
   const setActiveEditor = (editor) => {
-    if (editor) {
-      console.log('[FOCUS-TRACK] Active editor is SET.');
-    } else {
-      console.log('[FOCUS-TRACK] Active editor is CLEARED.');
-    }
     setActiveEditorInternal(editor);
   };
 
@@ -35,10 +30,7 @@ export function EditorProvider({ children }) {
   // NOTE: URL prompts use window.prompt as a temporary solution. 
   // TODO: Replace with proper modal dialogs for better UX and to avoid popup blockers
   const handleAction = (action, ...args) => {
-    console.log(`[ACTION-RECEIVED] Action: ${action}, Payload: ${args}`);
-    console.log(`[EditorContext] handleAction: Received action '${action}' with payload:`, args, `| Active editor is ${activeEditor ? 'PRESENT' : 'MISSING'}.`);
     if (!activeEditor) {
-      console.warn('[EditorContext] handleAction called but no active editor');
       return;
     }
 

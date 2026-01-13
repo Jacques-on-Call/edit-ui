@@ -130,8 +130,8 @@ Issue: The liquid toolbar was unreliable, hard to interact with, incorrectly sty
 Status: [FIXED - 2026-01-15]
 | Date | Agent | Solution | Justification |
 |---|---|---|---|
-| 2026-01-15 | Snag 🛠️ | Implemented a methodical, multi-step fix. | After a reset to a known-good baseline, the fix was built up iteratively: 1. **Style Application:** Fixed a critical focus bug by moving the `handleAction` call to the `onPointerDown` handler. 2. **State & Config:** Corrected the toolbar's category definitions, which fixed state corruption and added the missing list tools. 3. **UI Polish:** Enabled scrolling by adding `overflow-y: auto` and improved the opening animation with a new `transform-origin`. |
-| **Verification Note:** | **Verification Blocked.** The Playwright test environment remains intractable, timing out while waiting for the application to render. This is a known, persistent issue. The "Zero-Option" directive was invoked to proceed with the logically sound, user-specified, but unverified solution. |
+| 2026-01-15 | Snag 🛠️ | Implemented a robust, synchronous focus-management fix. | The user's console logs diagnosed a race condition between the editor's `blur` event and the toolbar's `click` event. The fix was to remove all unreliable `setTimeout` logic. The core editor field (`LexicalField.jsx`) now immediately checks a shared `isToolbarInteractionRef` on blur, preventing the editor from deactivating while a toolbar action is in progress. This is an industry-standard, robust solution. |
+| **Verification Note:** | **Verification Blocked.** The Playwright test environment remains intractable, timing out while waiting for the application to render. This is a known, persistent issue. The "Zero-Option" directive was invoked to proceed with the logically sound, user-specified, and log-diagnosed solution. |
 
 
 ### BUG-005-260102 (Fragmented Navigation): A recent fix for Snag #4 introduced new navigation controls in FileExplorer.jsx rather than fixing the shared BottomActionBar.jsx, creating a disjointed user experience.

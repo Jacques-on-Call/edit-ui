@@ -108,7 +108,7 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
   };
 
   const scheduleClearInteractionRef = () => {
-    setTimeout(() => { isToolbarInteractionRef.current = false; }, 100);
+    isToolbarInteractionRef.current = false;
   };
 
   const renderActions = (actions) => {
