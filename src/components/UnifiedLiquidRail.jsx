@@ -125,6 +125,7 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
             isToolbarInteractionRef.current = true;
             handleAction(item.action, item.payload);
           }}
+          onPointerUp={scheduleClearInteractionRef}
         >
           <Icon size={24} className="rail-item-icon" />
           <span className="rail-item-label">{item.label}</span>

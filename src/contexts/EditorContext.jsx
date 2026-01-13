@@ -23,9 +23,9 @@ export function EditorProvider({ children }) {
 
   const setActiveEditor = (editor) => {
     if (editor) {
-      console.log('[EditorContext] Active editor is SET.');
+      console.log('[FOCUS-TRACK] Active editor is SET.');
     } else {
-      console.log('[EditorContext] Active editor is CLEARED.');
+      console.log('[FOCUS-TRACK] Active editor is CLEARED.');
     }
     setActiveEditorInternal(editor);
   };
