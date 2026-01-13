@@ -1,5 +1,14 @@
 # Project Change Log
 
+## [Unreleased] - 2026-01-13
+### Fixed
+- **Layout (Editor View):** Resolved a bug where a blank space would appear at the top of the editor and preview screens when scrolling. The issue was caused by incorrect CSS padding that was being applied even when the main application header was hidden. This fix removes the unnecessary padding, creating a correct fullscreen experience.
+
+### Reflection
+- **What was the most challenging part of this task?** The initial bug report was slightly ambiguous. The key to solving it was the user-provided screenshots, which clearly showed a layout/scrolling issue rather than an extra component being rendered. This highlights the importance of visual confirmation in UI bug fixing.
+- **What was a surprising discovery or key learning?** A previous agent had correctly implemented the logic to hide the header on the editor page but had missed the corresponding CSS adjustment. This is a classic example of a "half-fix" and a good reminder to always check for related layout or styling rules when changing a component's visibility.
+- **What advice would you give the next agent who works on this code?** When dealing with layout issues, especially on mobile, use the browser's developer tools to inspect computed CSS properties like padding and margins. This is often the fastest way to identify the source of unexpected spacing or layout shifts.
+
 ## [Unreleased] - 2026-01-15 (Iteration 7)
 ### Added
 - **"Double-Decker" Capsule Toolbar (BUG-004):** Re-architected the `UnifiedLiquidRail` into a new, visually unified "Double-Decker" capsule, based on a detailed user specification.

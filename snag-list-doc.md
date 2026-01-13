@@ -170,7 +170,7 @@ The live preview build took too long. Please try refreshing the preview manually
 - **Page:** _Test-4-loss
 - **Component:** Editor
 - **Context:** {"pageId":"_Test-4-loss","viewMode":"livePreview","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":false,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
-- **Status:** [FIXED - 2026-01-15] Rolled into the comprehensive `BUG-004` fix. See above.
+- **Status:** [FIXED - 2026-01-13]
 ---
 
 ## [BUG] - 1/1/2026, 1:36:09 PM
@@ -191,7 +191,7 @@ This was moved from Get to root then to Discover it’s only visible in root wit
 - **Page:** _Test-4-loss
 - **Component:** Editor
 - **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
-- **Status:** [FIXED - 2026-01-15] Rolled into the comprehensive `BUG-004` fix. See above.
+- **Status:** [FIXED - 2026-01-13]
 ---
 
 ## [BUG] - 1/1/2026, 2:21:21 PM
@@ -232,7 +232,7 @@ The live preview build took too long. Please try refreshing the preview manually
 - **Page:** _Test-4-loss
 - **Component:** Editor
 - **Context:** {"pageId":"_Test-4-loss","viewMode":"livePreview","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":false,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
-- **Status:** [NEW]
+- **Status:** [FIXED - 2026-01-13]
 ---
 
 ## [BUG] - 1/1/2026, 1:36:09 PM
@@ -253,7 +253,7 @@ This was moved from Get to root then to Discover it’s only visible in root wit
 - **Page:** _Test-4-loss
 - **Component:** Editor
 - **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
-- **Status:** [NEW]
+- **Status:** [FIXED - 2026-01-13]
 ---
 
 ## [BUG] - 1/1/2026, 2:21:21 PM
@@ -277,7 +277,7 @@ This was moved from Get to root then to Discover it’s only visible in root wit
 - **Page:** _Test-4-rename-
 - **Component:** Editor
 - **Context:** {"pageId":"_Test-4-rename-","viewMode":"livePreview","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
-- **Status:** [FIXED - 2026-01-15] Rolled into the comprehensive `BUG-004` fix. See above.
+- **Status:** [FIXED - 2026-01-13]
 ---
 
 ## [BUG] - 1/3/2026, 2:00:07 PM

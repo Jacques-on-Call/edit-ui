@@ -192,4 +192,10 @@
   2.  **Fix Style Application:** A one-line change to the `onPointerDown` handler fixed the critical style application bug.
   3.  **Fix Configuration:** Correcting the category definitions at the top of the file fixed the state corruption and missing tools.
   4.  **Polish:** Simple, targeted CSS changes fixed the scrolling and animation issues.
+### [2026-01-13] Snag: Editor Header Padding
+* **Agent:** Snag 🛠️
+* **Successful Solution:** The "ghost" header issue, where a blank space appeared at the top of the editor, was resolved by removing the `pt-[var(--header-h)]` class from the main content container in `easy-seo/src/app.jsx`. A previous fix had correctly hidden the header component but had failed to remove the associated padding, which was the root cause of the scrolling issue.
+* **Why it Succeeded:** This was a targeted CSS class removal that directly addressed the root cause of the layout bug. The fix was verified with a new, dedicated Playwright test (`header-padding-fix.spec.js`) that passed on both desktop and mobile viewports, confirming the issue was resolved.
+* **Verification:** SUCCESS.
+
 - **Final Status:** The `UnifiedLiquidRail` is now stable, functional, and polished. All user-reported glitches have been resolved.

@@ -6,7 +6,7 @@ This document lists all significant files in the `easy-seo` project, along with 
 
 ### **Core Application Logic**
 
--   **`src/app.jsx`**: The main application component. Handles routing and global layout. **Modified in this task** to conditionally hide the global `<header>` element on any route starting with `/editor`, providing a more focused, full-screen experience for the editor and live preview.
+-   **`src/app.jsx`**: The main application component. Handles routing and global layout. **Modified in this task** to conditionally hide the global `<header>` and remove its associated top padding on any route starting with `/editor`. This provides a true, full-screen experience and resolves a bug where a blank space would appear when scrolling.
 -   **`src/pages/LoginPage.jsx`**: The user login page.
 -   **`src/pages/RepoSelectPage.jsx`**: The repository selection page.
 -   **`src/pages/FileExplorerPage.jsx`**: The main file explorer page. This is a container component that manages the `currentPath` state for the file explorer and provides the navigation logic (`handleGoBack`, `handleGoHome`) to the `BottomActionBar`.

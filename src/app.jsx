@@ -42,7 +42,7 @@ const AppContent = () => {
   if (isEditorLayout) {
     mainLayoutClasses += " flex flex-col overflow-hidden";
     mainContentClasses = "flex-grow overflow-y-auto";
-    mainContentClasses += " pt-[var(--header-h)] pb-[var(--action-bar-height)]";
+    mainContentClasses += " pb-[var(--action-bar-height)]";
   } else if (isExplorerLayout) {
     mainLayoutClasses += " h-screen flex flex-col overflow-hidden";
     mainContentClasses = "relative z-10 flex-grow overflow-y-auto";
