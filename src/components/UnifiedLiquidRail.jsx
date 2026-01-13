@@ -4,8 +4,8 @@ import { createPortal } from 'preact/compat';
 import { EditorContext } from '../contexts/EditorContext';
 import {
   Heading2, Heading3, Heading4,
-  List, ListOrdered, Image, Table, X, Menu,
-  Minus, Columns, ChevronDown,
+  List, ListOrdered, Image, Video, Table, X, Menu,
+  Minus, Columns, ChevronDown, Target, Info,
   Undo, Redo, Bold, Italic, Underline, Strikethrough, Code, Link,
   Type, Plus
 } from 'lucide-preact';
@@ -26,6 +26,9 @@ const toolbarActions = [
     { id: 'numbered-list', icon: ListOrdered, label: 'Numbered List', action: 'list', payload: 'ol', category: 'Lists' },
     // Undo and Redo have been moved to BottomActionBar
     { id: 'image', icon: Image, label: 'Image', action: 'image', category: 'Media' },
+    { id: 'video', icon: Video, label: 'Video', action: 'video', category: 'Media' },
+    { id: 'cta', icon: Target, label: 'CTA', action: 'cta', category: 'Structure' },
+    { id: 'callout', icon: Info, label: 'Callout', action: 'callout', category: 'Structure' },
     { id: 'table', icon: Table, label: 'Table', action: 'table', category: 'Structure' },
     { id: 'horizontal-rule', icon: Minus, label: 'Divider', action: 'horizontalRule', category: 'Structure' },
     { id: 'columns', icon: Columns, label: 'Columns', action: 'columns', payload: 2, category: 'Layout' },

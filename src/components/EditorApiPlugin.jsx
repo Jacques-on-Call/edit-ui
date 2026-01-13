@@ -35,6 +35,10 @@ import {
   $patchStyleText,
   $getSelectionStyleValueForProperty
 } from '@lexical/selection';
+import { $createImageNode } from '../nodes/ImageNode';
+import { $createVideoNode } from '../nodes/VideoNode';
+import { $createCtaNode } from '../nodes/CtaNode';
+import { $createCalloutNode } from '../nodes/CalloutNode';
 
 export default function EditorApiPlugin({ apiRef }) {
   const [editor] = useLexicalComposerContext();
@@ -67,6 +71,26 @@ export default function EditorApiPlugin({ apiRef }) {
           } else {
             $setBlocksType(selection, () => $createParagraphNode());
           }
+        }
+      });
+    },
+    // Insert a Callout box node into the editor
+    insertCallout: (text) => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          const calloutNode = $createCalloutNode(text);
+          selection.insertNodes([calloutNode]);
+        }
+      });
+    },
+    // Insert a CTA button node into the editor
+    insertCta: (text, url) => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          const ctaNode = $createCtaNode(text, url);
+          selection.insertNodes([ctaNode]);
         }
       });
     },
@@ -175,15 +199,24 @@ export default function EditorApiPlugin({ apiRef }) {
         }
       });
     },
-    // Insert inline image placeholder (user will provide URL)
-    insertImage: (src, alt = '', width = 'auto') => {
+    // Insert an image node into the editor
+    insertImage: (payload) => {
+       const { src, altText } = payload;
+       editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          const imageNode = $createImageNode({ src, altText });
+          selection.insertNodes([imageNode]);
+        }
+       });
+    },
+    // Insert a video node into the editor
+    insertVideo: (src) => {
       editor.update(() => {
         const selection = $getSelection();
         if ($isRangeSelection(selection)) {
-          // For now, insert as a placeholder text with image notation
-          // Full image node implementation would require custom Lexical node
-          const imageText = `[Image: ${alt || src}]`;
-          selection.insertText(imageText);
+          const videoNode = $createVideoNode(src);
+          selection.insertNodes([videoNode]);
         }
       });
     },

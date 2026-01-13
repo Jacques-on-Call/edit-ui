@@ -13,6 +13,10 @@ import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
 import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { ImageNode } from '../nodes/ImageNode';
+import { VideoNode } from '../nodes/VideoNode';
+import { CtaNode } from '../nodes/CtaNode';
+import { CalloutNode } from '../nodes/CalloutNode';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { ListItemNode, ListNode } from '@lexical/list';
 import { CodeHighlightNode, CodeNode } from '@lexical/code';
@@ -70,6 +74,10 @@ const editorConfig = {
     TableNode,
     TableCellNode,
     TableRowNode,
+    ImageNode, // Register the custom image node
+    VideoNode, // Register the custom video node
+    CtaNode,   // Register the custom CTA node
+    CalloutNode, // Register the custom Callout node
   ],
 };
 
@@ -136,7 +144,7 @@ const LexicalEditor = forwardRef(({ slug, initialContent, onChange, onSelectionC
         <RichTextPlugin
           contentEditable={
             <div class="px-2">
-              <ContentEditable className={finalEditorInputClass} onFocus={onFocus} onBlur={onBlur} />
+              <ContentEditable data-testid="lexical-editor" className={finalEditorInputClass} onFocus={onFocus} onBlur={onBlur} />
             </div>
           }
           placeholder={

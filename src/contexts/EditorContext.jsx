@@ -85,12 +85,35 @@ export function EditorProvider({ children }) {
         activeEditor.clearFormatting?.();
         break;
       case 'image':
-        // TODO: Replace sequential window.prompt calls with a single modal dialog form
-        // Current implementation provides poor UX with two separate popups
-        const imgSrc = window.prompt('Enter image URL:');
-        if (imgSrc) {
-          const alt = window.prompt('Enter image alt text (optional):') || '';
-          activeEditor.insertImage?.(imgSrc, alt);
+        // TODO: Replace window.prompt with a proper modal dialog
+        const src = window.prompt('Enter image URL:');
+        if (src) {
+          const altText = window.prompt('Enter alt text:') || '';
+          activeEditor.insertImage?.({ src, altText });
+        }
+        break;
+      case 'video':
+        // TODO: Replace window.prompt with a proper modal dialog
+        const videoSrc = window.prompt('Enter video URL (YouTube, Vimeo):');
+        if (videoSrc) {
+          activeEditor.insertVideo?.(videoSrc);
+        }
+        break;
+      case 'cta':
+        // TODO: Replace window.prompt with a proper modal dialog
+        const text = window.prompt('Enter button text:');
+        if (text) {
+          const url = window.prompt('Enter URL:');
+          if (url) {
+            activeEditor.insertCta?.(text, url);
+          }
+        }
+        break;
+      case 'callout':
+        // TODO: Replace window.prompt with a proper modal dialog
+        const calloutText = window.prompt('Enter callout text:');
+        if (calloutText) {
+          activeEditor.insertCallout?.(calloutText);
         }
         break;
       case 'table':
