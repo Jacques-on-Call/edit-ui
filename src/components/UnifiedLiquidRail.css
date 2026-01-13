@@ -47,7 +47,7 @@
   transition: width 300ms ease, opacity 200ms ease, transform 200ms ease;
   opacity: 0; /* Hidden by default */
   transform: scale(0.95);
-  transform-origin: top left;
+  transform-origin: top center;
   pointer-events: none;
 }
 
@@ -66,6 +66,7 @@
   -webkit-overflow-scrolling: touch;
   padding: 8px;
   /* max-height is set by the useVisualViewportFix hook */
+  overflow-y: auto;
 }
 
 .rail-item {

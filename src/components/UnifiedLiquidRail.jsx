@@ -31,8 +31,8 @@ const toolbarActions = [
     { id: 'columns', icon: Columns, label: 'Columns', action: 'columns', payload: 2, category: 'Layout' },
 ];
 
-const styleCategories = ['Formatting', 'Headings', 'Lists'];
-const addCategories = ['History', 'Media', 'Structure', 'Layout'];
+const styleCategories = ['Formatting', 'Headings'];
+const addCategories = ['History', 'Lists', 'Media', 'Structure', 'Layout'];
 const styleActions = toolbarActions.filter(a => styleCategories.includes(a.category));
 const addActions = toolbarActions.filter(a => addCategories.includes(a.category));
 
@@ -123,9 +123,6 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
           onPointerDown={(e) => {
             e.preventDefault();
             isToolbarInteractionRef.current = true;
-          }}
-          onClick={(e) => {
-            e.preventDefault();
             handleAction(item.action, item.payload);
           }}
         >

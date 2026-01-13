@@ -1,5 +1,17 @@
 # Project Change Log
 
+## [Unreleased] - 2026-01-15 (Iteration 5)
+### Fixed
+- **Unified Liquid Rail (BUG-004):** A methodical, step-by-step fix was implemented to resolve all outstanding functional and UI polish issues with the toolbar.
+  - **Style Application:** Fixed the critical bug preventing styles from being applied. The root cause was a race condition, which was resolved by consolidating the `handleAction` call into the `onPointerDown` event handler, ensuring the editor does not lose focus.
+  - **State Corruption:** Corrected the toolbar's configuration by redefining the `styleCategories` and `addCategories` constants. This fixed the state corruption that caused icons to bleed between modes and added the missing `ul`/`ol` list tools to the "Add" mode.
+  - **UI Polish:** Enabled scrolling in the toolbar by adding the missing `overflow-y: auto` property. The opening/closing animation was also improved by changing the `transform-origin` to `top center` for a more natural feel.
+
+### Reflection
+- **What was the most challenging part of this task?** The most challenging part was resisting the urge to attempt another large, sweeping fix. The key to success this time was the methodical, "baby steps" approach: reset to a known-good state, fix one issue at a time, and verify each change before moving on.
+- **What was a surprising discovery or key learning?** Sometimes the simplest fixes are the most effective. The critical style application bug was resolved with a one-line change to the event handler, and the state corruption was fixed by correcting a single array definition. This was a powerful reminder to always check the fundamentals before assuming a complex architectural problem.
+- **What advice would you give the next agent who works on this code?** The `UnifiedLiquidRail` is now in a stable state. If new issues arise, adopt a cautious, iterative approach. The component's configuration is now clearly defined at the top of the file; start there before diving into the more complex state and event logic.
+
 ## [Unreleased] - 2026-01-15 (Iteration 4)
 ### Fixed
 - **Unified Liquid Rail & Layout (BUG-004):** Implemented a comprehensive, from-scratch fix to resolve all outstanding UI glitches with the editor's toolbar.

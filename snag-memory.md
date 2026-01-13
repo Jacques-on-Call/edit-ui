@@ -164,27 +164,32 @@
 
 ## Phase 4: Unified Liquid Rail Polish
 
-### [2026-01-15] Snag: BUG-004 - Unified Toolbar Glitches (ATTEMPT 1)
+### [2026-01-15] Snag: BUG-004 - Unified Toolbar Glitches (ATTEMPT 1 - FAILED)
 - **Agent:** Snag 🛠️
-- **The Fix:** The agent implemented a series of fixes targeting the toolbar's reliability, styling, and the unwanted header.
-- **Why it Failed:** The implementation was architecturally flawed. It merged the "Add" and "Style" modes into a single state, removing the intended separation. The hamburger button was also not persistently visible, which was a core requirement.
+- **The Fix:** A from-scratch rewrite that attempted to implement a separated hamburger trigger and a unified toolbar panel.
+- **Why it Failed:** The implementation was architecturally flawed. It merged the "Add" and "Style" modes into a single state, removing the intended separation. It also failed to keep the hamburger button persistently visible.
 
-### [2026-01-15] Snag: BUG-004 - Unified Toolbar Glitches (ATTEMPT 2)
+### [2026-01-15] Snag: BUG-004 - Unified Toolbar Glitches (ATTEMPT 2 - FAILED)
 - **Agent:** Snag 🛠️
-- **The Fix:** The agent correctly identified the need to separate the hamburger trigger from the toolbar panel.
-- **Why it Failed:** The implementation was flawed. The new trigger was still rendered *inside* the portal container that was being faded out, which meant that as soon as the toolbar closed, the trigger also became invisible and unusable. This created a severe regression where the toolbar could not be reopened.
+- **The Fix:** A second from-scratch rewrite that correctly identified the need to separate the hamburger trigger from the toolbar panel.
+- **Why it Failed:** The new trigger was still rendered *inside* the portal container that was being faded out, which meant that as soon as the toolbar closed, the trigger also became invisible and unusable. This created a severe regression.
 
-### [2026-01-15] Snag: BUG-004 - Unified Toolbar Glitches (ATTEMPT 3)
+### [2026-01-15] Snag: BUG-004 - Unified Toolbar Glitches (ATTEMPT 3 - FAILED)
 - **Agent:** Snag 🛠️
-- **The Fix:** The agent attempted a surgical fix to the previous flawed architecture, focusing on moving the hamburger button outside the conditional rendering block.
-- **Why it Failed:** This was a catastrophic failure. The small change created a cascade of regressions that resulted in the toolbar failing to appear under any circumstances. The component's state logic was too intertwined to be patched.
+- **The Fix:** A surgical patch to the previous flawed architecture, attempting to move the hamburger button outside the conditional rendering block.
+- **Why it Failed:** This was a catastrophic failure that created a cascade of regressions, resulting in the toolbar failing to appear under any circumstances.
 
-### [2026-01-15] Snag: BUG-004 - Unified Toolbar Glitches (ATTEMPT 4 - SUCCESS)
+### [2026-01-15] Snag: BUG-004 - Unified Toolbar Glitches (ATTEMPT 4 - FAILED)
 - **Agent:** Snag 🛠️
-- **The Fix:** After three failed attempts, the agent performed a full reset on `UnifiedLiquidRail.jsx`, `UnifiedLiquidRail.css`, and `useVisualViewportFix.js`. A complete, from-scratch rewrite was implemented based on the final, definitive user feedback.
-- **Why it Succeeded:** This approach succeeded because it addressed the root architectural flaws instead of patching symptoms.
-  1.  **True Separation:** The hamburger trigger and the toolbar panel are now rendered as completely separate top-level elements within the portal, ensuring the trigger is always visible and interactive.
-  2.  **Aware Click-Outside:** The `useClickOutside` hook is now passed a ref to the new, separate trigger, preventing the toolbar from incorrectly closing itself.
-  3.  **Robust Viewport Hook:** The `useVisualViewportFix` hook was rewritten to correctly calculate the `max-height` of the toolbar's scrollable area, fixing the mobile keyboard overlap issue.
-  4.  **Simplified Events:** The event listeners were simplified to be more reliable and less prone to accidental activation, resolving all user-reported interaction glitches.
-- **Final Status:** The `UnifiedLiquidRail` is now considered stable and architecturally sound. All user-reported glitches have been resolved.
+- **The Fix:** A fourth from-scratch rewrite that correctly separated the hamburger trigger and the toolbar panel at the architectural level.
+- **Why it Failed:** While architecturally sound, this attempt introduced a new, critical bug: style application failed completely, and the toolbar's state became corrupted, showing a mix of "Add" and "Style" icons.
+
+### [2026-01-15] Snag: BUG-004 - Unified Toolbar Glitches (ATTEMPT 5 - SUCCESS)
+- **Agent:** Snag 🛠️
+- **The Fix:** A methodical, iterative fix built upon a clean baseline.
+- **Why it Succeeded:** Instead of another rewrite, this attempt succeeded by taking "baby steps":
+  1.  **Reset:** The component was reverted to a known-good state.
+  2.  **Fix Style Application:** A one-line change to the `onPointerDown` handler fixed the critical style application bug.
+  3.  **Fix Configuration:** Correcting the category definitions at the top of the file fixed the state corruption and missing tools.
+  4.  **Polish:** Simple, targeted CSS changes fixed the scrolling and animation issues.
+- **Final Status:** The `UnifiedLiquidRail` is now stable, functional, and polished. All user-reported glitches have been resolved.
