@@ -24,16 +24,15 @@ const toolbarActions = [
     { id: 'heading-4', icon: Heading4, label: 'H4', action: 'heading', payload: 'h4', category: 'Headings' },
     { id: 'bullet-list', icon: List, label: 'Bullet List', action: 'list', payload: 'ul', category: 'Lists' },
     { id: 'numbered-list', icon: ListOrdered, label: 'Numbered List', action: 'list', payload: 'ol', category: 'Lists' },
-    { id: 'undo', icon: Undo, label: 'Undo', action: 'undo', category: 'History' },
-    { id: 'redo', icon: Redo, label: 'Redo', action: 'redo', category: 'History' },
+    // Undo and Redo have been moved to BottomActionBar
     { id: 'image', icon: Image, label: 'Image', action: 'image', category: 'Media' },
     { id: 'table', icon: Table, label: 'Table', action: 'table', category: 'Structure' },
     { id: 'horizontal-rule', icon: Minus, label: 'Divider', action: 'horizontalRule', category: 'Structure' },
     { id: 'columns', icon: Columns, label: 'Columns', action: 'columns', payload: 2, category: 'Layout' },
 ];
 
-const styleCategories = ['Formatting', 'Headings'];
-const addCategories = ['History', 'Lists', 'Media', 'Structure', 'Layout'];
+const styleCategories = ['Formatting', 'Headings', 'Lists'];
+const addCategories = ['Media', 'Structure', 'Layout'];
 const styleActions = toolbarActions.filter(a => styleCategories.includes(a.category));
 const addActions = toolbarActions.filter(a => addCategories.includes(a.category));
 
@@ -42,7 +41,6 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
 
   // 'style', 'add', or null (closed)
   const [activeMode, setActiveMode] = useState(null);
-  const [isExpanded, setExpanded] = useState(false);
 
   const railRef = useRef(null);
   const scrollAreaRef = useRef(null);
@@ -56,8 +54,8 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
 
   // Notify parent of width changes
   useEffect(() => {
-    onWidthChange?.(isOpen ? (isExpanded ? 240 : 56) : 0);
-  }, [isOpen, isExpanded, onWidthChange]);
+    onWidthChange?.(isOpen ? 44 : 0);
+  }, [isOpen, onWidthChange]);
 
   // Handle Text Selection Changes
   useEffect(() => {
@@ -92,16 +90,10 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
     e.preventDefault();
     isToolbarInteractionRef.current = true;
 
-    // Double tap logic for expansion (optional)
-    const now = Date.now();
-    if (now - lastTapRef.current < 300 && activeMode === mode) {
-        setExpanded(prev => !prev);
-    } else {
-        // If clicking the active mode, close it. Otherwise switch to it.
-        setActiveMode(prev => (prev === mode ? null : mode));
-        if (!isOpen) setExpanded(false); // Reset expansion on fresh open
-    }
-    lastTapRef.current = now;
+    // If clicking the active mode, close it. Otherwise switch to it.
+    setActiveMode(prev => (prev === mode ? null : mode));
+
+    lastTapRef.current = Date.now();
   };
 
   const scheduleClearInteractionRef = () => {
@@ -138,7 +130,7 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
       {/* THE RAIL */}
       <div
         ref={railRef}
-        className={`unified-liquid-rail ${isOpen ? 'open' : ''} ${isExpanded ? 'expanded' : 'compact'}`}
+        className={`unified-liquid-rail ${isOpen ? 'open' : ''} compact`}
       >
         <div ref={scrollAreaRef} className="rail-scroll-area">
           {isOpen && currentActions.map((item) => {

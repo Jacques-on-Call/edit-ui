@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { memo } from 'preact/compat';
 import { route } from 'preact-router';
-import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil, LifeBuoy, ArrowLeft } from 'lucide-preact';
+import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil, LifeBuoy, ArrowLeft, Undo, Redo } from 'lucide-preact';
 import './BottomActionBar.css';
 import { getPageScoreColor } from '../lib/pageScoring';
 
@@ -17,6 +17,8 @@ const BottomActionBar = memo((props) => {
     onPreview,
     onRefreshPreview,
     onReport,
+    onUndo,
+    onRedo,
     needsDeployment,
     // New props for file navigation
     onGoBack,
@@ -91,6 +93,17 @@ const BottomActionBar = memo((props) => {
       <button type="button" onClick={onReport} className="bar-btn" aria-label="Report Issue" title="Report Bug / Request Feature">
         <LifeBuoy size={28} className="text-gray-400 hover:text-white transition-colors" />
       </button>
+
+      {onUndo && (
+          <button type="button" onClick={onUndo} className="bar-btn" aria-label="Undo">
+            <Undo size={28} />
+          </button>
+      )}
+      {onRedo && (
+          <button type="button" onClick={onRedo} className="bar-btn" aria-label="Redo">
+            <Redo size={28} />
+          </button>
+      )}
 
       <button type="button" onClick={onAdd} className="bar-btn bar-add" aria-label="Add Section">
         <Plus size={32} />

@@ -72,6 +72,8 @@ export default function EditorCanvas(props) {
         onSync={editorMode === 'json' ? handleSync : null}
         onRefreshPreview={handleRefreshPreview}
         onReport={() => setIsReportModalOpen(true)}
+        onUndo={() => handleAction('undo')}
+        onRedo={() => handleAction('redo')}
       />
       <ReportIssueModal
         isOpen={isReportModalOpen}
