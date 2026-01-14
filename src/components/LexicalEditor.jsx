@@ -13,7 +13,7 @@ import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
 import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { StyledImageNode } from '../nodes/StyledImageNode';
+import { StyledImageNode } from '../nodes/StyledImageNode.jsx';
 import { ImageNode } from '../nodes/ImageNode';
 import { VideoNode } from '../nodes/VideoNode';
 import { CtaNode } from '../nodes/CtaNode';

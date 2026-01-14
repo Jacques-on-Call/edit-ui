@@ -35,7 +35,7 @@ import {
   $patchStyleText,
   $getSelectionStyleValueForProperty
 } from '@lexical/selection';
-import { $createStyledImageNode } from '../nodes/StyledImageNode';
+import { $createStyledImageNode } from '../nodes/StyledImageNode.jsx';
 import { $createImageNode } from '../nodes/ImageNode';
 import { $createVideoNode } from '../nodes/VideoNode';
 import { $createCtaNode } from '../nodes/CtaNode';
