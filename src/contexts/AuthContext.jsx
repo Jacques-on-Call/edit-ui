@@ -61,16 +61,15 @@ export const AuthProvider = ({ children }) => {
 
   // Load selected repo from localStorage on mount
   useEffect(() => {
-    const savedRepo = localStorage.getItem('selectedRepo');
-    if (savedRepo && repositories.length > 0) {
-      // Find the full repo object from the repositories list
-      const repoObj = repositories.find(r => r.full_name === savedRepo);
-      if (repoObj) {
-        setSelectedRepo(repoObj);
-        console.log('[AuthContext] Restored repo from localStorage:', savedRepo);
-      }
+    const savedRepoName = localStorage.getItem('selectedRepo');
+    if (savedRepoName) {
+      // Restore the repo object immediately from what we have in localStorage.
+      // The full object is not strictly necessary for many API calls, which only need `full_name`.
+      // The full, up-to-date repo object will be set later by the effect that depends on `repositories`.
+      setSelectedRepo({ full_name: savedRepoName });
+      console.log('[AuthContext] Immediately restored repo name from localStorage:', savedRepoName);
     }
-  }, [repositories]);
+  }, []); // Run only once on initial mount
 
   const value = { user, isAuthenticated, isLoading, repositories, selectedRepo, selectRepo, checkAuthStatus };
 
