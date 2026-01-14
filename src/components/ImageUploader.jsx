@@ -125,8 +125,11 @@ export default function ImageUploader({ pageSlug, onComplete }) {
     if (selectedFile) {
       setFile(selectedFile);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
+      reader.onload = (e) => {
+        setPreview(e.target.result);
+      };
+      reader.onerror = () => {
+        console.error('[ImageUploader] FileReader error.');
       };
       reader.readAsDataURL(selectedFile);
       setStatus('idle');
@@ -141,9 +144,7 @@ export default function ImageUploader({ pageSlug, onComplete }) {
   };
 
   const handleUpload = async () => {
-    console.log('[ImageUploader] handleUpload triggered.');
     if (!file || !selectedRepo) {
-      console.error('[ImageUploader] Pre-flight check failed. File or repo missing.', { hasFile: !!file, hasRepo: !!selectedRepo });
       setError('Please select a file and ensure a repository is selected.');
       return;
     }
@@ -153,7 +154,6 @@ export default function ImageUploader({ pageSlug, onComplete }) {
       return;
     }
 
-    console.log('[ImageUploader] Setting status to "uploading".');
     setStatus('uploading');
     setError(null);
 
@@ -162,7 +162,6 @@ export default function ImageUploader({ pageSlug, onComplete }) {
 
       // Resize image if dimensions are specified
       if (maxWidth || maxHeight) {
-        console.log('[ImageUploader] Resizing image...');
         const resizeResult = await resizeImage(
           file,
           maxWidth ? parseInt(maxWidth) : null,
@@ -183,27 +182,20 @@ export default function ImageUploader({ pageSlug, onComplete }) {
       formData.append('repo', selectedRepo.full_name);
       formData.append('pageSlug', pageSlug);
       formData.append('customFilename', filename); // Send custom filename
-      console.log('[ImageUploader] FormData prepared.', { fileName: filename, repo: selectedRepo.full_name, pageSlug });
 
-      console.log('[ImageUploader] Initiating fetch to /api/image/upload...');
       const response = await fetch('/api/image/upload', {
         method: 'POST',
         body: formData,
       });
-      console.log('[ImageUploader] Fetch call completed.', { status: response.status, ok: response.ok });
 
       const result = await response.json();
-      console.log('[ImageUploader] Response JSON parsed.', { result });
 
       if (!response.ok) {
-        console.error('[ImageUploader] Response was not OK. Throwing error.');
         throw new Error(result.message || `Upload failed with status ${response.status}`);
       }
 
-      console.log('[ImageUploader] Upload successful. Setting status to "success".');
       setStatus('success');
       if (onComplete) {
-        console.log('[ImageUploader] Calling onComplete callback with result.');
         onComplete({
           path: result.path,
           alt: altText,
@@ -483,7 +475,7 @@ export default function ImageUploader({ pageSlug, onComplete }) {
         class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed transition-colors"
       >
         {renderStatusIcon()}
-        {status === 'uploading' ? 'Uploading...' : 'Upload Image'}
+        {status === 'uploading' ? 'Uploading...' : (!altText.trim() && file ? 'Alt Text is Required' : 'Upload Image')}
       </button>
 
       {/* Error Message */}
