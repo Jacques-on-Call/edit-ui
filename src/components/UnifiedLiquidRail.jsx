@@ -2,6 +2,7 @@ import { h } from 'preact';
 import { useState, useEffect, useRef, useContext } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import { EditorContext } from '../contexts/EditorContext';
+import ImageInsertModal from './ImageInsertModal';
 import {
   Heading2, Heading3, Heading4,
   List, ListOrdered, Image, Video, Table, X, Menu,
@@ -40,10 +41,11 @@ const styleActions = toolbarActions.filter(a => styleCategories.includes(a.categ
 const addActions = toolbarActions.filter(a => addCategories.includes(a.category));
 
 export default function UnifiedLiquidRail({ onWidthChange }) {
-  const { handleAction, isToolbarInteractionRef, selectionState } = useContext(EditorContext);
+  const { handleAction, isToolbarInteractionRef, selectionState, pageId } = useContext(EditorContext);
 
   // 'style', 'add', or null (closed)
   const [activeMode, setActiveMode] = useState(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   const railRef = useRef(null);
   const scrollAreaRef = useRef(null);
@@ -103,10 +105,26 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
     isToolbarInteractionRef.current = false;
   };
 
+  const handleImageInsert = (imageData) => {
+    handleAction('insertStyledImage', {
+        src: imageData.path,
+        alt: imageData.alt,
+        width: imageData.width,
+        alignment: imageData.alignment,
+    });
+    setIsImageModalOpen(false);
+  };
+
   const currentActions = activeMode === 'style' ? styleActions : addActions;
 
   return createPortal(
     <>
+      <ImageInsertModal
+        isOpen={isImageModalOpen}
+        onClose={() => setIsImageModalOpen(false)}
+        pageSlug={pageId}
+        onInsert={handleImageInsert}
+      />
       {/* THE DOUBLE-DECKER TRIGGER */}
       <div
         ref={triggerGroupRef}
@@ -146,9 +164,13 @@ export default function UnifiedLiquidRail({ onWidthChange }) {
                  key={item.id}
                  className={`rail-item ${isActive ? 'active' : ''}`}
                  onPointerDown={(e) => {
-                   e.preventDefault();
-                   isToolbarInteractionRef.current = true;
-                   handleAction(item.action, item.payload);
+                    e.preventDefault();
+                    isToolbarInteractionRef.current = true;
+                    if (item.action === 'image') {
+                        setIsImageModalOpen(true);
+                    } else {
+                        handleAction(item.action, item.payload);
+                    }
                  }}
                  onPointerUp={scheduleClearInteractionRef}
                >

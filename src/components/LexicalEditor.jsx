@@ -13,6 +13,7 @@ import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
 import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { StyledImageNode } from '../nodes/StyledImageNode';
 import { ImageNode } from '../nodes/ImageNode';
 import { VideoNode } from '../nodes/VideoNode';
 import { CtaNode } from '../nodes/CtaNode';
@@ -74,6 +75,7 @@ const editorConfig = {
     TableNode,
     TableCellNode,
     TableRowNode,
+    StyledImageNode, // Register the new styled image node
     ImageNode, // Register the custom image node
     VideoNode, // Register the custom video node
     CtaNode,   // Register the custom CTA node

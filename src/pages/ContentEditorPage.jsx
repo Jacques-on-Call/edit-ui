@@ -727,11 +727,12 @@ export default function ContentEditorPage(props) {
     setActiveEditor: () => {}, // Placeholder function
     // Pass down the state needed by the toolbar
     sections: sections,
+    pageId: pageId, // Pass pageId to the context
     // Pass down the handlers
     onAddSection: handleAddSection,
     onEditSection: handleEditSection,
     onUpdateSection: handleUpdateSection,
-  }), [sections, handleAddSection, handleEditSection, handleUpdateSection]);
+  }), [sections, pageId, handleAddSection, handleEditSection, handleUpdateSection]);
 
   return (
     <EditorProvider value={editorContextValue}>

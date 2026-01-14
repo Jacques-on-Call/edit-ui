@@ -35,6 +35,7 @@ import {
   $patchStyleText,
   $getSelectionStyleValueForProperty
 } from '@lexical/selection';
+import { $createStyledImageNode } from '../nodes/StyledImageNode';
 import { $createImageNode } from '../nodes/ImageNode';
 import { $createVideoNode } from '../nodes/VideoNode';
 import { $createCtaNode } from '../nodes/CtaNode';
@@ -209,6 +210,15 @@ export default function EditorApiPlugin({ apiRef }) {
           selection.insertNodes([imageNode]);
         }
        });
+    },
+    insertStyledImage: (payload) => {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          const imageNode = $createStyledImageNode(payload);
+          selection.insertNodes([imageNode]);
+        }
+      });
     },
     // Insert a video node into the editor
     insertVideo: (src) => {

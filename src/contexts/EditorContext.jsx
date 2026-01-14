@@ -92,6 +92,9 @@ export function EditorProvider({ children }) {
           activeEditor.insertImage?.({ src, altText });
         }
         break;
+      case 'insertStyledImage':
+        activeEditor.insertStyledImage?.(args[0]);
+        break;
       case 'video':
         // TODO: Replace window.prompt with a proper modal dialog
         const videoSrc = window.prompt('Enter video URL (YouTube, Vimeo):');
