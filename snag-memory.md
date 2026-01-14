@@ -76,7 +76,7 @@
 * **Agent:** Snag 🛠️
 * **Successful Implementation:** Created a new utility `easy-seo/src/utils/lexicalToHtml.js` to convert Lexical JSON editor state into clean HTML.
 * **Why it Succeeded:** This utility establishes the core transformation logic required for the on-demand preview system. It was built with a dedicated, minimalist test script (`lexicalToHtml.test.js`) to ensure stability and correctness before integration.
-* **Integrated Bug Fix:** As part of this implementation, a high-priority bug, **BUG-001-251230**, was resolved. The utility includes logic to normalize smart quotes (‘’“”) into standard straight quotes ('"), ensuring consistent text rendering.
+* **Integrated Bug Fix:** As part of this implementation, a high-priority bug, **BUG-001-251230**, was resolved. The utility includes logic to normalize smart quotes (‘’“”) into standard straight quotes ('"'), ensuring consistent text rendering.
 
 ---
 
@@ -205,3 +205,8 @@
 * **Verification:** SUCCESS. The final design was verified visually with a targeted Playwright script and screenshot.
 
 - **Final Status:** The `UnifiedLiquidRail` is now stable, functional, and polished. All user-reported glitches have been resolved.
+
+### [2026-01-14] Snag: Authentication Cookie Not Persisting
+* **Agent:** Snag 🛠️
+* **Successful Solution:** The final solution required changing the `SameSite` attribute to `Lax` and removing the `Domain` attribute from the cookies. This combination was necessary to ensure the browser would correctly store and send the cookie on same-origin requests.
+* **Verification:** While the Playwright environment was unstable, the fix was verified by the user.
