@@ -73,108 +73,112 @@ const BottomActionBar = memo((props) => {
   const isInPreviewMode = viewMode === 'livePreview';
 
   return (
-    <footer className="bottom-action-bar" role="toolbar" aria-label="Editor actions">
-      {showFileNav ? (
-        <>
-          <button type="button" onClick={onGoHome} className="bar-btn" aria-label="Home">
+    <footer className="bottom-action-bar" role="toolbar" aria-label="Editor actions" data-testid="bottom-action-bar">
+      <div className="flex items-center gap-2">
+        {showFileNav ? (
+          <>
+            <button type="button" onClick={onGoHome} className="bar-btn" aria-label="Home">
+              <Home size={28} />
+            </button>
+            {currentPath && currentPath !== 'src/pages' && (
+              <button type="button" onClick={onGoBack} className="bar-btn" aria-label="Go Back">
+                <ArrowLeft size={28} />
+              </button>
+            )}
+          </>
+        ) : (
+          <button type="button" onClick={() => route('/explorer')} className="bar-btn" aria-label="Home">
             <Home size={28} />
           </button>
-          {currentPath && currentPath !== 'src/pages' && (
-            <button type="button" onClick={onGoBack} className="bar-btn" aria-label="Go Back">
-              <ArrowLeft size={28} />
+        )}
+
+        <button type="button" onClick={onReport} className="bar-btn" aria-label="Report Issue" title="Report Bug / Request Feature">
+          <LifeBuoy size={28} className="text-gray-400 hover:text-white transition-colors" />
+        </button>
+
+        {onUndo && (
+            <button type="button" onClick={onUndo} className="bar-btn" aria-label="Undo">
+              <Undo size={28} />
             </button>
-          )}
-        </>
-      ) : (
-        <button type="button" onClick={() => route('/explorer')} className="bar-btn" aria-label="Home">
-          <Home size={28} />
+        )}
+        {onRedo && (
+            <button type="button" onClick={onRedo} className="bar-btn" aria-label="Redo">
+              <Redo size={28} />
+            </button>
+        )}
+
+        <button type="button" onClick={onAdd} className="bar-btn bar-add" aria-label="Add Section">
+          <Plus size={32} />
         </button>
-      )}
 
-      <button type="button" onClick={onReport} className="bar-btn" aria-label="Report Issue" title="Report Bug / Request Feature">
-        <LifeBuoy size={28} className="text-gray-400 hover:text-white transition-colors" />
-      </button>
-
-      {onSettingsClick && (
-        <button type="button" onClick={onSettingsClick} className="bar-btn" aria-label="Settings">
-          <Settings size={28} />
-        </button>
-      )}
-
-      {onUndo && (
-          <button type="button" onClick={onUndo} className="bar-btn" aria-label="Undo">
-            <Undo size={28} />
+        {onPreview && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onPreview(e);
+            }}
+            className={`bar-btn relative ${isInPreviewMode ? 'bg-blue-600 text-white' : ''}`}
+            aria-label={getPreviewLabel()}
+            disabled={previewState === 'building'}
+          >
+            {renderPreviewIcon()}
           </button>
-      )}
-      {onRedo && (
-          <button type="button" onClick={onRedo} className="bar-btn" aria-label="Redo">
-            <Redo size={28} />
+        )}
+
+        {/* Refresh button - only visible in preview mode */}
+        {isInPreviewMode && onRefreshPreview && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onRefreshPreview(e);
+            }}
+            className="bar-btn"
+            aria-label="Refresh Preview"
+            disabled={previewState === 'building'}
+          >
+            <RefreshCw size={28} className={previewState === 'building' ? 'animate-spin' : ''} />
           </button>
-      )}
+        )}
+      </div>
 
-      <button type="button" onClick={onAdd} className="bar-btn bar-add" aria-label="Add Section">
-        <Plus size={32} />
-      </button>
+      <div className="flex items-center gap-2">
+        {showFileNav && (
+            <button type="button" onClick={onSettingsClick} className="bar-btn" aria-label="Settings" data-testid="settings-button">
+                <Settings size={28} />
+            </button>
+        )}
 
-      {onPreview && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onPreview(e);
-          }}
-          className={`bar-btn relative ${isInPreviewMode ? 'bg-blue-600 text-white' : ''}`}
-          aria-label={getPreviewLabel()}
-          disabled={previewState === 'building'}
-        >
-          {renderPreviewIcon()}
-        </button>
-      )}
+        {onSync && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onSync(e);
+            }}
+            className="bar-btn relative"
+            aria-label="Sync Publish"
+            disabled={syncStatus === 'syncing'}
+          >
+            {renderSyncIcon()}
+            {/* Save status dot positioned relative to sync button */}
+            <span className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border border-black/50 ${getStatusColor()}`}></span>
+          </button>
+        )}
 
-      {/* Refresh button - only visible in preview mode */}
-      {isInPreviewMode && onRefreshPreview && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onRefreshPreview(e);
-          }}
-          className="bar-btn"
-          aria-label="Refresh Preview"
-          disabled={previewState === 'building'}
-        >
-          <RefreshCw size={28} className={previewState === 'building' ? 'animate-spin' : ''} />
-        </button>
-      )}
-
-      {onSync && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onSync(e);
-          }}
-          className="bar-btn relative"
-          aria-label="Sync Publish"
-          disabled={syncStatus === 'syncing'}
-        >
-          {renderSyncIcon()}
-          {/* Save status dot positioned relative to sync button */}
-          <span className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border border-black/50 ${getStatusColor()}`}></span>
-        </button>
-      )}
-
-      {/* Page Score display */}
-      {pageScore !== null && (
-        <div className="page-score-indicator" title={`Page Score: ${pageScore}/100`}>
-          <span className={`text-sm font-bold ${getPageScoreColor(pageScore)}`}>
-            {pageScore}
-          </span>
-        </div>
-      )}
+        {/* Page Score display */}
+        {pageScore !== null && (
+          <div className="page-score-indicator" title={`Page Score: ${pageScore}/100`}>
+            <span className={`text-sm font-bold ${getPageScoreColor(pageScore)}`}>
+              {pageScore}
+            </span>
+          </div>
+        )}
+      </div>
     </footer>
   );
 });

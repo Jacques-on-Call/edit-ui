@@ -1,5 +1,5 @@
 import { route } from 'preact-router';
-import { Home, ArrowLeft, Plus, List } from 'lucide-preact';
+import { Home, ArrowLeft, Plus } from 'lucide-preact';
 import LiquidGlassButton from './LiquidGlassButton';
 import { useUI } from '../contexts/UIContext';
 
@@ -27,14 +27,6 @@ export function BottomToolbar() {
           aria-label="Home (File Explorer)"
         >
           <Home size={24} />
-        </button>
-
-        <button
-          onClick={() => route('/leads')}
-          className="p-3 text-white transition-transform duration-150 ease-in-out rounded-full hover:bg-white/10 active:scale-90"
-          aria-label="Leads"
-        >
-          <List size={24} />
         </button>
 
         <LiquidGlassButton onClick={() => setCreateOpen(true)}>
