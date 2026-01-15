@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { memo } from 'preact/compat';
 import { route } from 'preact-router';
-import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil, LifeBuoy, ArrowLeft, Undo, Redo, Settings } from 'lucide-preact';
+import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil, LifeBuoy, ArrowLeft, Undo, Redo } from 'lucide-preact';
 import './BottomActionBar.css';
 import { getPageScoreColor } from '../lib/pageScoring';
 
@@ -73,7 +73,7 @@ const BottomActionBar = memo((props) => {
   const isInPreviewMode = viewMode === 'livePreview';
 
   return (
-    <footer className="bottom-action-bar" role="toolbar" aria-label="Editor actions" data-testid="bottom-action-bar">
+    <footer className="bottom-action-bar" role="toolbar" aria-label="Editor actions" data-testid="editor-action-bar">
       <div className="flex items-center gap-2">
         {showFileNav ? (
           <>
@@ -146,12 +146,6 @@ const BottomActionBar = memo((props) => {
       </div>
 
       <div className="flex items-center gap-2">
-        {showFileNav && (
-            <button type="button" onClick={onSettingsClick} className="bar-btn" aria-label="Settings" data-testid="settings-button">
-                <Settings size={28} />
-            </button>
-        )}
-
         {onSync && (
           <button
             type="button"

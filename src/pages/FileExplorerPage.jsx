@@ -194,7 +194,6 @@ import pageData from '${dataPath}';
         onGoBack={handleGoBack}
         onGoHome={handleGoHome}
         onAdd={() => setCreateOpen(true)}
-        onSettingsClick={() => route('/settings')}
       />
     </div>
   );

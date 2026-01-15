@@ -1,8 +1,8 @@
 
 import { test, expect } from '@playwright/test';
 
-test.describe('File Explorer Page', () => {
-  test('should display the settings button in the action bar', async ({ page }) => {
+test.describe('Content Editor Page', () => {
+  test('should not display the settings button in the action bar', async ({ page }) => {
     // Start the server and navigate to the page
     await page.goto('http://localhost:5173');
 
@@ -28,17 +28,17 @@ test.describe('File Explorer Page', () => {
       });
     });
 
-    // Navigate to the file explorer page
-    await page.goto('http://localhost:5173/explorer');
+    // Navigate to the content editor page
+    await page.goto('http://localhost:5173/editor/mock_page');
 
     // Wait for the page to load and the action bar to be visible
-    await page.waitForSelector('[data-testid="explorer-action-bar"]');
+    await page.waitForSelector('[data-testid="editor-action-bar"]');
 
     // Take a screenshot to verify the UI
-    await page.screenshot({ path: 'verification/screenshot.png' });
+    await page.screenshot({ path: 'verification/no-settings-button.png' });
 
-    // Check if the settings button is visible
+    // Check that the settings button is not visible
     const settingsButton = page.locator('[data-testid="settings-button"]');
-    await expect(settingsButton).toBeVisible();
+    await expect(settingsButton).not.toBeVisible();
   });
 });
