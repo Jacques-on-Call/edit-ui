@@ -69,14 +69,10 @@ export function FileExplorerPage() {
   }
 
   const handleCreate = async (pageName, designType) => {
-    // For now, designType is ignored as per Milestone 3.1.
-    // It will be used in Milestone 3.2 for smart folder suggestions.
     try {
-      // 1. Prepare file names and paths from pageName
       const fileName = pageName.replace(/\s+/g, '-').toLowerCase();
       const slug = fileName;
 
-      // Determine the relative path from either `src/pages` or `content/pages`
       let relativePath = '';
       if (currentPath.startsWith('src/pages')) {
         relativePath = currentPath.substring('src/pages'.length);
@@ -84,29 +80,53 @@ export function FileExplorerPage() {
         relativePath = currentPath.substring('content/pages'.length);
       }
 
-      // Ensure relativePath is consistent (e.g., starts with '/' or is empty)
       const pathSuffix = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
-      const cleanSuffix = pathSuffix === '/' ? '' : pathSuffix.replace(/\/$/, ''); // handle root and remove trailing slash
+      const cleanSuffix = pathSuffix === '/' ? '' : pathSuffix.replace(/\/$/, '');
 
+      if (designType === 'Contact') {
+        const astroPath = `src/pages${cleanSuffix}/${slug}.astro`;
+        const astroContent = `---
+import MainLayout from '~/layouts/MainLayout.astro';
+import SmartForm from '~/components/SmartForm.astro';
+---
+<MainLayout title="${pageName}">
+  <SmartForm title="${pageName}" />
+</MainLayout>
+`;
+        await fetchJson('/api/file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            repo: repoName,
+            path: astroPath,
+            content: astroContent,
+            message: `feat: create new contact page ${slug}`
+          })
+        });
+        setCreateOpen(false);
+        setRefreshTrigger(prev => prev + 1);
+        route(`/editor/${encodeURIComponent(astroPath)}`);
+        return;
+      }
+
+      // Default page creation logic for other design types
       const jsonPath = `content/pages${cleanSuffix}/_${slug}.json`;
       const astroPath = `src/pages${cleanSuffix}/_${slug}.astro`;
 
-      // 2. Create the JSON content payload
       const pageData = {
         slug,
-        meta: { title: pageName }, // Use the original pageName for the title
+        meta: { title: pageName },
         sections: [
           {
             id: `section-${Date.now()}`,
             type: 'hero',
-            props: { title: '', subtitle: '', body: '' },
+            props: { title: pageName, subtitle: '', body: '' },
           },
         ],
       };
 
-      // 3. Call the backend to create the .json file
       const jsonContent = JSON.stringify(pageData, null, 2);
-      const jsonResponse = await fetchJson('/api/file', {
+      await fetchJson('/api/file', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -117,11 +137,6 @@ export function FileExplorerPage() {
         }),
       });
 
-      if (!jsonResponse) {
-         throw new Error('Failed to create JSON file on the server.');
-      }
-
-      // 4. Create the Astro file content with robust relative paths
       const astroDir = astroPath.substring(0, astroPath.lastIndexOf('/'));
       const astroDirDepth = astroDir.split('/').length;
       const dataPath = '../'.repeat(astroDirDepth) + jsonPath;
@@ -136,8 +151,7 @@ import pageData from '${dataPath}';
 </MainLayout>
 `;
 
-      // 5. Call the backend to create the .astro file
-      const astroResponse = await fetchJson('/api/file', {
+      await fetchJson('/api/file', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -148,11 +162,6 @@ import pageData from '${dataPath}';
           })
       });
 
-      if (!astroResponse) {
-          throw new Error('Failed to create Astro file on the server.');
-      }
-
-      // 6. Success: close modal, trigger refresh, and navigate
       setCreateOpen(false);
       setRefreshTrigger(prev => prev + 1);
       route(`/editor/${encodeURIComponent(astroPath)}`);

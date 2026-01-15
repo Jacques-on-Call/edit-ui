@@ -1,0 +1,155 @@
+---
+// easy-seo/src/components/SmartForm.astro
+import { Turnstile } from 'astro-turnstile/components';
+
+export interface Props {
+  fields?: string[];
+  title?: string;
+}
+
+const {
+  fields = ["name", "email", "message"],
+  title = "Contact Us",
+} = Astro.props;
+
+const TURNSTILE_SITE_KEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+
+if (!TURNSTILE_SITE_KEY) {
+  console.error("PUBLIC_TURNSTILE_SITE_KEY is not set. The contact form will not render.");
+}
+---
+
+{TURNSTILE_SITE_KEY && (
+  <div class="contact-form-container">
+    <h2 class="form-title">{title}</h2>
+    <form id="smart-form" class="smart-form">
+      <!-- Honeypot Field -->
+      <div style="display:none;">
+        <label>Keep this field blank</label>
+        <input name="bot-field" type="text" />
+      </div>
+
+      <!-- Timestamp Field -->
+      <input type="hidden" name="submit-timestamp" value={Date.now()} />
+
+      {fields.map(field => {
+        if (field === 'message') {
+          return (
+            <div class="form-group">
+              <label for={field}>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
+              <textarea id={field} name={field} required></textarea>
+            </div>
+          )
+        }
+        return (
+          <div class="form-group">
+            <label for={field}>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
+            <input type={field === 'email' ? 'email' : 'text'} id={field} name={field} required />
+          </div>
+        )
+      })}
+
+      <Turnstile sitekey={TURNSTILE_SITE_KEY} />
+
+      <button type="submit" class="submit-button">Send Message</button>
+      <div id="form-status" class="form-status"></div>
+    </form>
+  </div>
+)}
+
+<style>
+  /* Add some basic styling for the form */
+  .contact-form-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  .form-title {
+    margin-bottom: 1.5rem;
+    font-size: 1.75rem;
+    text-align: center;
+  }
+  .smart-form .form-group {
+    margin-bottom: 1rem;
+  }
+  .smart-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+  .smart-form input,
+  .smart-form textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  .smart-form textarea {
+    min-height: 150px;
+  }
+  .submit-button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .submit-button:hover {
+    background-color: #0056b3;
+  }
+  .form-status {
+    margin-top: 1rem;
+    text-align: center;
+  }
+  .form-status.success {
+    color: green;
+  }
+  .form-status.error {
+    color: red;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('smart-form');
+    const statusDiv = document.getElementById('form-status');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      statusDiv.textContent = 'Sending...';
+      statusDiv.className = 'form-status';
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('/api/submit', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          statusDiv.textContent = result.message;
+          statusDiv.classList.add('success');
+          form.reset();
+        } else {
+          statusDiv.textContent = result.message || 'An error occurred.';
+          statusDiv.classList.add('error');
+        }
+      } catch (error) {
+        console.error('Form submission error:', error);
+        statusDiv.textContent = 'An unexpected error occurred. Please try again.';
+        statusDiv.classList.add('error');
+      }
+    });
+  });
+</script>

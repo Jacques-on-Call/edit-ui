@@ -50,6 +50,7 @@ function CreatePageModal({ isOpen, onClose, onCreate }) {
             <option value="General">General</option>
             <option value="Blog">Blog</option>
             <option value="Service">Service</option>
+            <option value="Contact">Contact</option>
           </select>
         </div>
 
