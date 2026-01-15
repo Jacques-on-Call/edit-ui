@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { memo } from 'preact/compat';
 import { route } from 'preact-router';
-import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil, LifeBuoy, ArrowLeft, Undo, Redo } from 'lucide-preact';
+import { Home, Plus, UploadCloud, CheckCircle, AlertCircle, RefreshCw, Eye, Pencil, LifeBuoy, ArrowLeft, Undo, Redo, Settings } from 'lucide-preact';
 import './BottomActionBar.css';
 import { getPageScoreColor } from '../lib/pageScoring';
 
@@ -24,7 +24,8 @@ const BottomActionBar = memo((props) => {
     onGoBack,
     onGoHome,
     showFileNav,
-    currentPath
+    currentPath,
+    onSettingsClick,
   } = props;
   const getStatusColor = () => {
     if (saveStatus === 'saved') return 'bg-yellow-green';
@@ -93,6 +94,12 @@ const BottomActionBar = memo((props) => {
       <button type="button" onClick={onReport} className="bar-btn" aria-label="Report Issue" title="Report Bug / Request Feature">
         <LifeBuoy size={28} className="text-gray-400 hover:text-white transition-colors" />
       </button>
+
+      {onSettingsClick && (
+        <button type="button" onClick={onSettingsClick} className="bar-btn" aria-label="Settings">
+          <Settings size={28} />
+        </button>
+      )}
 
       {onUndo && (
           <button type="button" onClick={onUndo} className="bar-btn" aria-label="Undo">
