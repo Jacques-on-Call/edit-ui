@@ -25,7 +25,6 @@ const BottomActionBar = memo((props) => {
     onGoHome,
     showFileNav,
     currentPath,
-    onSettingsClick,
   } = props;
   const getStatusColor = () => {
     if (saveStatus === 'saved') return 'bg-yellow-green';
