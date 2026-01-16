@@ -1,5 +1,5 @@
 import { route } from 'preact-router';
-import { Home, ArrowLeft, Plus, Settings } from 'lucide-preact';
+import { Home, ArrowLeft, Plus } from 'lucide-preact';
 import LiquidGlassButton from './LiquidGlassButton';
 import { useUI } from '../contexts/UIContext';
 
@@ -19,7 +19,6 @@ export function BottomToolbar() {
         WebkitBackdropFilter: 'blur(12px)',
         backgroundColor: 'rgba(0, 0, 10, 0.7)',
       }}
-      data-testid="explorer-action-bar"
     >
       <div className="flex items-center justify-around h-full px-4 max-w-screen-xl mx-auto">
         <button
@@ -40,15 +39,6 @@ export function BottomToolbar() {
           aria-label="Back"
         >
           <ArrowLeft size={24} />
-        </button>
-
-        <button
-          onClick={() => route('/settings')}
-          className="p-3 text-white transition-transform duration-150 ease-in-out rounded-full hover:bg-white/10 active:scale-90"
-          aria-label="Settings"
-          data-testid="settings-button"
-        >
-          <Settings size={24} />
         </button>
       </div>
     </footer>

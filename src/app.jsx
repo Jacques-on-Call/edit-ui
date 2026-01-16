@@ -6,7 +6,6 @@ import { Router, useRouter } from 'preact-router';
 import { LoginPage } from './pages/LoginPage';
 import { RepoSelectPage } from './pages/RepoSelectPage';
 import { FileExplorerPage } from './pages/FileExplorerPage';
-import { SettingsPage } from './pages/SettingsPage';
 import ContentEditorPage from './pages/ContentEditorPage';
 import { CallbackPage } from './pages/CallbackPage';
 import AuthDebugMonitor from './components/AuthDebugMonitor';
@@ -86,7 +85,6 @@ const AppContent = () => {
               <CallbackPage path="/" />
               <RepoSelectPage path="/repo-select" />
               <FileExplorerPage path="/explorer" />
-              <SettingsPage path="/settings" />
               <ContentEditorPage path="/editor/:pageId" />
               <LoginPage default />
             </Router>
