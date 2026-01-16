@@ -77,6 +77,50 @@ export function SettingsPage() {
     }
   };
 
+  const handleSaveSecrets = async (e) => {
+    e.preventDefault();
+    setSecretsStatus('Saving...');
+    try {
+      await fetchJson('/api/secrets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'save',
+          repoName: selectedRepo.full_name.split('/')[1],
+          cfAccountId,
+          cfApiToken,
+          resendApiKey,
+        }),
+      });
+      setSecretsStatus('Secrets saved successfully!');
+    } catch (error) {
+      console.error('Failed to save secrets:', error);
+      setSecretsStatus('Failed to save secrets.');
+    } finally {
+      setTimeout(() => setSecretsStatus(''), 3000);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    setSecretsStatus('Testing connection...');
+    try {
+      const response = await fetchJson('/api/secrets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'test',
+          cfApiToken,
+        }),
+      });
+      setSecretsStatus(response.message || 'Connection successful!');
+    } catch (error) {
+      console.error('Connection test failed:', error);
+      setSecretsStatus('Connection test failed.');
+    } finally {
+      setTimeout(() => setSecretsStatus(''), 3000);
+    }
+  };
+
   const TabButton = ({ tabName, label }) => (
     <button
       onClick={() => setActiveTab(tabName)}
@@ -157,50 +201,6 @@ export function SettingsPage() {
           </form>
         </div>
       )}
-
-  const handleSaveSecrets = async (e) => {
-    e.preventDefault();
-    setSecretsStatus('Saving...');
-    try {
-      await fetchJson('/api/secrets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'save',
-          repoName: selectedRepo.full_name.split('/')[1],
-          cfAccountId,
-          cfApiToken,
-          resendApiKey,
-        }),
-      });
-      setSecretsStatus('Secrets saved successfully!');
-    } catch (error) {
-      console.error('Failed to save secrets:', error);
-      setSecretsStatus('Failed to save secrets.');
-    } finally {
-      setTimeout(() => setSecretsStatus(''), 3000);
-    }
-  };
-
-  const handleTestConnection = async () => {
-    setSecretsStatus('Testing connection...');
-    try {
-      const response = await fetchJson('/api/secrets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'test',
-          cfApiToken,
-        }),
-      });
-      setSecretsStatus(response.message || 'Connection successful!');
-    } catch (error) {
-      console.error('Connection test failed:', error);
-      setSecretsStatus('Connection test failed.');
-    } finally {
-      setTimeout(() => setSecretsStatus(''), 3000);
-    }
-  };
 
       {activeTab === 'integrations' && (
         <div>
