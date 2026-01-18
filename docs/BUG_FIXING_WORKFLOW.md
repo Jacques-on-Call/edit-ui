@@ -25,14 +25,13 @@ We work on a single, shared branch (`snag-squad`) in a sequential relay. The wor
 
 3.  **Choose a bug from the `snag-list-doc.md`**. Select an open bug to work on and update its status to `[IN PROGRESS - YourName]`.
     ```bash
-    # Location: easy-seo/snag-list-doc.md
+    # Location: snag-list-doc.md
     ```
 
 ### Step 2: The Work (The Build)
 
-1.  **Prepare the Local Environment**. Ensure your `easy-seo` directory is ready.
+1.  **Prepare the Local Environment**. Ensure your `root/src` directory is ready.
     ```bash
-    cd easy-seo
     npm install
     npx playwright install --with-deps
     ```
