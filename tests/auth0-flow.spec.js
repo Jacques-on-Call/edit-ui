@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Auth0 Authentication Flow', () => {
 
-  test('user should be redirected to the repo selection page after a successful login', async ({ page }) => {
+  test('user should be able to log in, select a repo, and see the file explorer', async ({ page }) => {
     // Mock the initial state: user is not authenticated
     await page.route('/Get/ShowUp/api/me', route => {
       route.fulfill({ status: 401, json: { error: 'Unauthorized' } });
@@ -49,10 +49,19 @@ test.describe('Auth0 Authentication Flow', () => {
 
     // After the simulated login and callback, the app should land on the repo-select page
     // Look for a heading or unique element on the repository selection page.
-    await expect(page.locator('h2:has-text("Select Your Repository")')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('h1:has-text("Welcome, testuser")')).toBeVisible({ timeout: 10000 });
 
     // Verify that the URL is correct
     await expect(page).toHaveURL('/Get/ShowUp/repo-select', { timeout: 5000 });
+
+    // Click the repository button
+    await page.locator('button:has-text("test-repo")').click();
+
+    // Verify that the URL is now the file explorer
+    await expect(page).toHaveURL('/Get/ShowUp/explorer', { timeout: 5000 });
+
+    // Verify that the file explorer is visible
+    await expect(page.locator('h2:has-text("File Explorer")')).toBeVisible({ timeout: 10000 });
   });
 
 });
