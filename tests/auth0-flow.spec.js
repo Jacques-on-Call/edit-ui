@@ -54,14 +54,30 @@ test.describe('Auth0 Authentication Flow', () => {
     // Verify that the URL is correct
     await expect(page).toHaveURL('/Get/ShowUp/repo-select', { timeout: 5000 });
 
+    // Mock the file list API before clicking the button
+    await page.route('**/api/files?repo=testuser/test-repo&path=src/pages', route => {
+      route.fulfill({
+        status: 200,
+        json: [
+          { name: 'index.astro', path: 'src/pages/index.astro', type: 'file', sha: '123' },
+          { name: 'about.md', path: 'src/pages/about.md', type: 'file', sha: '456' },
+        ]
+      });
+    });
+
+    await page.route('**/api/files?repo=testuser/test-repo&path=content/pages', route => {
+      route.fulfill({ status: 200, json: [] });
+    });
+
     // Click the repository button
     await page.locator('button:has-text("test-repo")').click();
 
     // Verify that the URL is now the file explorer
     await expect(page).toHaveURL('/Get/ShowUp/explorer', { timeout: 5000 });
 
-    // Verify that the file explorer is visible
-    await expect(page.locator('h2:has-text("File Explorer")')).toBeVisible({ timeout: 10000 });
+    // Verify that the file explorer is visible and displays the mocked files
+    await expect(page.locator('text=index.astro')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=about.md')).toBeVisible({ timeout: 10000 });
   });
 
 });
