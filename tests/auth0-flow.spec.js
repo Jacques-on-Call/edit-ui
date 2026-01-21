@@ -50,6 +50,9 @@ test.describe('Auth0 Authentication Flow', () => {
     // After the simulated login and callback, the app should land on the repo-select page
     // Look for a heading or unique element on the repository selection page.
     await expect(page.locator('h2:has-text("Select Your Repository")')).toBeVisible({ timeout: 10000 });
+
+    // Verify that the URL is correct
+    await expect(page).toHaveURL('/Get/ShowUp/repo-select', { timeout: 5000 });
   });
 
 });
