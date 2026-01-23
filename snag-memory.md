@@ -122,7 +122,7 @@
 *   **Goal:** Enable the `AuthDebugMonitor` component in the production environment to capture detailed logs for `401 Unauthorized` errors.
 *   **Successful Solution**: Modified `easy-seo/src/app.jsx` to unconditionally render the `<AuthDebugMonitor />` component, removing the `{import.meta.env.DEV}` check that previously restricted it to development mode.
 *   **Why it Succeeded**: The component is designed to be production-safe, starting in a minimized state by default. This change makes its powerful debugging capabilities (fetch interception, global logging) available in any environment without disrupting the user experience, directly addressing the need for better production diagnostics.
-*   **Verification**: **SUCCESS.** Despite previous environment instability, a full verification was performed. A new, targeted Playwright test (`tests/auth-debug-monitor.spec.js`) was created to assert that the monitor's trigger button was visible on the page. The test passed successfully, confirming the fix.
+*   **Verification**: **SUCCESS.** Despite previous environment instability, a full verification was performed. A new, targeted Playwright test (`tests/auth-debug-monitor.spec.js`) was created to assert that the monitor's trigger button was visible on the. The test passed successfully, confirming the fix.
 
 ### [2026-01-07] SNAG-010-27-01-07: Add Diagnostic Logging to Worker
 *   **Agent:** Snag 🛠️
@@ -210,3 +210,14 @@
 * **Agent:** Snag 🛠️
 * **Successful Solution:** The final solution required changing the `SameSite` attribute to `Lax` and removing the `Domain` attribute from the cookies. This combination was necessary to ensure the browser would correctly store and send the cookie on same-origin requests.
 * **Verification:** While the Playwright environment was unstable, the fix was verified by the user.
+
+### [2026-01-23] Snag: Comprehensive Authentication Overhaul
+*   **Agent:** Jules
+*   **Status:** [FIXED]
+*   **Goal:** Resolve a cascading authentication failure where the session cookie was not being set, and the application was not using the correct user-specific GitHub token for API calls.
+*   **Successful Solution**: A multi-stage, comprehensive fix was implemented.
+    1.  **Cookie Pathing & Headers:** The root cause of the cookie not being saved was determined to be a combination of browser security policies (ITP) and how the Cloudflare/Astro environment handled response headers. The final, successful fix involved manually constructing a `302 Redirect` response and then using `response.headers.append()` to add two distinct `Set-Cookie` headers, one for the session and one to expire the state. Crucially, the cookie was given a `Path=/` attribute.
+    2.  **Auth0 Management API:** It was discovered that the user's GitHub access token was not available via the standard `/userinfo` endpoint. The callback was re-architected to use the correct, secure pattern: it authenticates the user, then uses a dedicated M2M application's credentials to call the Auth0 Management API (`/api/v2/users/{user_id}`) to retrieve the full user profile, which contains the Identity Provider (GitHub) access token.
+    3.  **Composite Session:** The session cookie (`su_sess`) was re-designed to store an encrypted JSON object containing both the `auth0AccessToken` (for `/me` calls) and the `githubAccessToken` (for GitHub API calls). The middleware and all downstream API endpoints were updated to correctly parse this session and use the appropriate token.
+*   **Why it Succeeded**: This solution succeeded because it was the result of a persistent, iterative debugging process that addressed each failure point in the chain: the browser's rejection of the cookie, the application's inability to get the GitHub token, and a server crash caused by an unhandled edge case. The final architecture is robust, secure, and aligns with all documented best practices for the technologies involved.
+*   **Verification**: **SUCCESS.** The fix was verified by the user, who confirmed that the `su_sess` cookie was present in the `rawCookieHeader` and that the application successfully navigated to the repo selection page.
