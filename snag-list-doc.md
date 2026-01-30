@@ -178,7 +178,7 @@ The live preview build took too long. Please try refreshing the preview manually
 
 Failed to move _Test-4-loss.astro: A file with that name already exists in the destination folder.
 
-Try Again
+Try Again 
 This was moved from Get to root then to Discover it’s only visible in root with this error pointing to the logic not matching both directories src/pages and content/psges
 - **Page:** _Test-4-loss
 - **Component:** Editor
@@ -187,7 +187,7 @@ This was moved from Get to root then to Discover it’s only visible in root wit
 ---
 
 ## [BUG] - 1/1/2026, 1:37:29 PM
-- **Description:** There is a header in content editor and preview both are empty and should be collapsed and not visible
+- **Description:** There is a header in content editor and preview both are empty and should be collapsed and not visible 
 - **Page:** _Test-4-loss
 - **Component:** Editor
 - **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
@@ -195,7 +195,7 @@ This was moved from Get to root then to Discover it’s only visible in root wit
 ---
 
 ## [BUG] - 1/1/2026, 2:21:21 PM
-- **Description:** Let’s is still not findable in file explorer search only let works which means ‘ is still an issue ’ ‘ ` - / : ; ( ) ! ? @ & $ all need to work in search as content can include any number of variables
+- **Description:** Let’s is still not findable in file explorer search only let works which means ‘ is still an issue ’ ‘ ` - / : ; ( ) ! ? @ & $ all need to work in search as content can include any number of variables 
 - **Page:** _Test-4-loss
 - **Component:** Editor
 - **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
@@ -203,7 +203,7 @@ This was moved from Get to root then to Discover it’s only visible in root wit
 ---
 
 ## [BUG] - 12/31/2025, 12:42:03 PM
-- **Description:** Testing if this sends new bug feature to GitHub
+- **Description:** Testing if this sends new bug feature to GitHub 
 - **Page:** _Test-4-loss-2
 - **Component:** Editor
 - **Context:** {"pageId":"_Test-4-loss-2","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
@@ -240,7 +240,7 @@ The live preview build took too long. Please try refreshing the preview manually
 
 Failed to move _Test-4-loss.astro: A file with that name already exists in the destination folder.
 
-Try Again
+Try Again 
 This was moved from Get to root then to Discover it’s only visible in root with this error pointing to the logic not matching both directories src/pages and content/psges
 - **Page:** _Test-4-loss
 - **Component:** Editor
@@ -249,7 +249,7 @@ This was moved from Get to root then to Discover it’s only visible in root wit
 ---
 
 ## [BUG] - 1/1/2026, 1:37:29 PM
-- **Description:** There is a header in content editor and preview both are empty and should be collapsed and not visible
+- **Description:** There is a header in content editor and preview both are empty and should be collapsed and not visible 
 - **Page:** _Test-4-loss
 - **Component:** Editor
 - **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
@@ -257,7 +257,7 @@ This was moved from Get to root then to Discover it’s only visible in root wit
 ---
 
 ## [BUG] - 1/1/2026, 2:21:21 PM
-- **Description:** Let’s is still not findable in file explorer search only let works which means ‘ is still an issue ’ ‘ ` - / : ; ( ) ! ? @ & $ all need to work in search as content can include any number of variables
+- **Description:** Let’s is still not findable in file explorer search only let works which means ‘ is still an issue ’ ‘ ` - / : ; ( ) ! ? @ & $ all need to work in search as content can include any number of variables 
 - **Page:** _Test-4-loss
 - **Component:** Editor
 - **Context:** {"pageId":"_Test-4-loss","viewMode":"editor","editorMode":"json","saveStatus":"saved","syncStatus":"idle","selectionState":{"blockType":"paragraph","alignment":"","isBold":false,"isItalic":false,"isUnderline":false,"isStrikethrough":false,"isCode":false,"isHighlight":false,"isCollapsed":true,"hasH1InDocument":false,"textColor":null,"highlightColor":null}}
@@ -281,7 +281,7 @@ This was moved from Get to root then to Discover it’s only visible in root wit
 ---
 
 ## [BUG] - 1/3/2026, 2:00:07 PM
-- **Description:** Move still gives a error popup:
+- **Description:** Move still gives a error popup: 
 [FileExplorer.jsx] searchQuery prop: ""
 [FileExplorer] fileState -> slug: Consider, draft: false, published: false
 [FileExplorer] fileState -> slug: Discover, draft: false, published: false

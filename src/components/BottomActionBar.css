@@ -1,0 +1,73 @@
+/* CSS Custom Property for action bar height - used for consistent padding in other components */
+:root {
+  --action-bar-height: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+
+.bottom-action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--action-bar-height);
+  background: rgba(16, 24, 39, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(56, 189, 248, 0.3);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 50;
+  padding: 0 1rem env(safe-area-inset-bottom, 0px);
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.bar-btn {
+  color: white;
+  background: transparent;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bar-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.bar-btn:active {
+  transform: scale(0.9);
+}
+
+.save-status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+/* Page Score indicator */
+.page-score-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  padding: 0.25rem 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0.5rem;
+  cursor: default;
+}
+
+.bg-yellow-green {
+  background-color: #ADFF2F;
+}
+
+/* yellow-green */
+.bg-scarlet {
+  background-color: #FF2400;
+}
+
+/* scarlet */

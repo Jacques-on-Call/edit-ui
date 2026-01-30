@@ -1,0 +1,132 @@
+import { h } from 'preact';
+import { useState, useEffect } from 'preact/hooks';
+import editorComponentRegistry from './editor-components/registry';
+import Icon from './Icon';
+
+export default function SectionsEditor({ sections = [], onChange, onEdit, onReady }) {
+  const [local, setLocal] = useState(JSON.parse(JSON.stringify(sections)));
+
+  // Signal that the editor is ready on initial mount
+  useEffect(() => {
+    if (onReady) {
+      onReady();
+    }
+  }, [onReady]);
+
+  // This effect synchronizes the internal state with the parent's prop only when it actually changes from the outside.
+  useEffect(() => {
+    // We only update local if the JSON representation changed, to avoid loops
+    const sectionsJson = JSON.stringify(sections);
+    if (sectionsJson !== JSON.stringify(local)) {
+      setLocal(JSON.parse(sectionsJson));
+    }
+  }, [sections]);
+
+  const updateSectionProp = (index, propPath, value) => {
+    const next = [...local];
+    if (!next[index]) return;
+
+    // If propPath is 'props', it means the whole props object is being updated.
+    if (propPath === 'props') {
+      next[index].props = { ...next[index].props, ...value };
+    } else {
+      // Handle nested paths like 'props.title' for the generic fallback
+      const [root, key] = propPath.split('.');
+      if (root === 'props' && key) {
+        next[index].props = { ...next[index].props, [key]: value };
+      } else {
+        next[index][propPath] = value;
+      }
+    }
+
+    setLocal(next);
+    onChange(next);
+  };
+
+  const handleRemove = (i) => {
+    const next = local.filter((_, index) => index !== i);
+    setLocal(next);
+    onChange(next);
+  };
+
+  const moveSection = (currentIndex, direction) => {
+    const newSections = [...local];
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+    // Swap the elements
+    [newSections[currentIndex], newSections[targetIndex]] = [newSections[targetIndex], newSections[currentIndex]];
+
+    setLocal(newSections);
+    onChange(newSections);
+  };
+
+  return (
+    <div>
+      {local.map((s, i) => {
+        const EditorComponent = editorComponentRegistry[s.type];
+        return (
+          <div key={s.id || i} class="group relative py-1 border-l-4 border-transparent hover:border-gray-700 transition-colors duration-200">
+            <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center z-10">
+              <span class="text-xs text-gray-500 mr-2 uppercase">{s.type.replace(/_/g, ' ')}</span>
+              <button
+                onClick={() => onEdit && onEdit(i)}
+                class="text-gray-500 hover:text-blue-500 transition-colors p-1"
+                aria-label="Edit section settings"
+                title="Edit section settings"
+              >
+                <Icon name="Settings" size={18} />
+              </button>
+              <button
+                onClick={() => moveSection(i, 'up')}
+                disabled={i === 0}
+                class="text-gray-500 hover:text-blue-500 disabled:opacity-50 transition-colors p-1"
+                aria-label="Move section up"
+              >
+                <Icon name="ChevronUp" size={18} />
+              </button>
+              <button
+                onClick={() => moveSection(i, 'down')}
+                disabled={i === local.length - 1}
+                class="text-gray-500 hover:text-blue-500 disabled:opacity-50 transition-colors p-1"
+                aria-label="Move section down"
+              >
+                <Icon name="ChevronDown" size={18} />
+              </button>
+              <button
+                onClick={() => handleRemove(i)}
+                class="text-gray-500 hover:text-red-500 transition-colors p-1"
+                aria-label="Remove section"
+              >
+                <Icon name="Trash2" size={18} />
+              </button>
+            </div>
+
+            <div>
+              {EditorComponent ? (
+                <EditorComponent
+                  props={s.props}
+                  onChange={(newProps) => updateSectionProp(i, 'props', newProps)}
+                />
+              ) : (
+                <div class="space-y-3 p-4 border border-dashed border-gray-600 rounded-lg">
+                  <h4 class="text-sm font-semibold text-gray-400">Generic Editor (type: {s.type})</h4>
+                  {Object.entries(s.props || {}).map(([key, value]) => (
+                    <div key={key}>
+                      <label class="block text-sm font-medium text-gray-300 mb-1 capitalize">{key}</label>
+                      <input
+                        type="text"
+                        class="w-full p-2 rounded bg-gray-900 border border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+                        value={value}
+                        onInput={(e) => updateSectionProp(i, `props.${key}`, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
