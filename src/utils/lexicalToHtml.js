@@ -23,6 +23,11 @@ export function lexicalToHtml(data) {
     // Process a TEXT node, applying formatting.
     if (node.type === 'text') {
       let text = node.text || '';
+      // Normalize smart quotes to standard quotes (BUG-001-251230)
+      text = text
+        .replace(/[“”]/g, '"')
+        .replace(/[‘’]/g, "'");
+
       // Apply bitwise format flags.
       if (node.format) {
         if (node.format & 1) text = `<strong>${text}</strong>`; // Bold

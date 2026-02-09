@@ -6,7 +6,7 @@ This guide provides the official standards and best practices for writing Playwr
 
 Our primary goal for testing is **stability and determinism**. E2E tests must be able to run reliably in any environment without depending on live backend services. To achieve this, our entire testing strategy is built on a single principle: **isolate the frontend and mock all API calls.**
 
--   **Isolate:** We run the Vite dev server with a special configuration (`vite.config.test.js`) that completely removes the API proxy. This prevents the dev server from trying to contact a live backend, which is a major source of test flakiness.
+-   **Isolate:** We run the Vite dev server with a special configuration (`vite.config.testing.mjs`) that completely removes the API proxy. This prevents the dev server from trying to contact a live backend, which is a major source of test flakiness.
 -   **Mock:** We use Playwright's `page.route()` to intercept every `fetch` request the application makes. We provide a predictable, static JSON response for each API endpoint. This ensures our tests are fast, repeatable, and only test the frontend UI's reaction to a known data state.
 
 ## Core Requirements for a Valid Test
